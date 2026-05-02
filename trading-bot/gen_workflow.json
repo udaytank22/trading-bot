@@ -1,0 +1,1197 @@
+{
+  "name": "TradeMind Bot Workflow",
+  "nodes": [
+    {
+      "id": "node-1",
+      "name": "Watch Buyer Inbox",
+      "type": "n8n-nodes-base.microsoftOutlookTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ],
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute",
+              "value": 5
+            }
+          ]
+        },
+        "filters": {
+          "subject": "inquiry, price request, quotation needed, need price, product required, rate required, kindly quote, please quote, require quotation"
+        }
+      }
+    },
+    {
+      "id": "node-2",
+      "name": "Is Valid Inquiry?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        400,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.body.length}}",
+              "operation": "larger",
+              "value2": "20"
+            },
+            {
+              "value1": "={{$json.from}}",
+              "operation": "notEqual",
+              "value2": "={{$env.BUSINESS_EMAIL}}"
+            },
+            {
+              "value1": "={{$json.from}}",
+              "operation": "notEqual",
+              "value2": "={{$env.SELLER_EMAIL}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-3",
+      "name": "AI: Extract Product List",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        600,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "geminiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-goog-api-key",
+              "value": "={{$env.GEMINI_API_KEY}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "{\n  \"system_instruction\": {\n    \"parts\": [{\n      \"text\": \"You are a product extraction assistant for a trading business. Your job is to read buyer inquiry emails and extract every product mentioned. You must return ONLY a valid JSON array with no explanation, no markdown, no backticks. Each product object must have exactly these fields: product_name (string, clean title case), quantity (number only, no units, if vague like 'some' use 1, 'few' use 5, 'bulk' use 100), unit (string: kg, pcs, mtr, ltr, box, set, nos — pick the most appropriate), specs (string, any specifications mentioned, empty string if none). Handle Hindi-English mixed language emails. If no products found return empty array [].\"\n    }]\n  },\n  \"contents\": [{\n    \"role\": \"user\",\n    \"parts\": [{\n      \"text\": \"Here is the buyer inquiry email:\\n---\\nFrom: ={{$json.from}}\\nSubject: ={{$json.subject}}\\nBody:\\n={{$json.body}}\\n---\\nExtract all products from this email and return as JSON array only.\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.2,\n    \"maxOutputTokens\": 1024\n  }\n}"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-4",
+      "name": "Parse Products + Assign Inquiry ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        800,
+        300
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Get Gemini response text\nconst geminiText = $input.first().json.candidates[0].content.parts[0].text;\n\n// Clean any markdown if Gemini added it\nconst cleaned = geminiText.replace(/```json/g, '').replace(/```/g, '').trim();\n\n// Parse the product array\nlet products = [];\ntry {\n  products = JSON.parse(cleaned);\n} catch(e) {\n  products = [];\n}\n\n// Generate unique inquiry ID\nconst now = new Date();\nconst pad = (n) => String(n).padStart(2, '0');\nconst inquiry_id = \n  \"INQ-\" + \n  now.getFullYear() +\n  pad(now.getMonth() + 1) +\n  pad(now.getDate()) + \"-\" +\n  pad(now.getHours()) +\n  pad(now.getMinutes()) +\n  pad(now.getSeconds());\n\n// Get buyer info from Outlook trigger\nconst outlookData = $(\"Watch Buyer Inbox\").first().json;\n\nreturn {\n  inquiry_id,\n  buyer_email: outlookData.from,\n  buyer_name: outlookData.fromName || outlookData.from.split('@')[0],\n  buyer_subject: outlookData.subject,\n  buyer_email_body: outlookData.body,\n  products: products,\n  product_count: products.length,\n  date_received: now.toISOString(),\n  status: \"PENDING\"\n};"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-5",
+      "name": "Log Inquiry to Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        300
+      ],
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "value": "={{$env.GOOGLE_SHEET_ID}}"
+        },
+        "sheetName": {
+          "value": "Inquiries"
+        },
+        "options": {},
+        "dataMode": "defineBelow",
+        "valuesUi": {
+          "mappingMode": "defineBelow",
+          "values": [
+            {
+              "column": "A",
+              "value": "={{$json.inquiry_id}}"
+            },
+            {
+              "column": "B",
+              "value": "={{$json.buyer_name}}"
+            },
+            {
+              "column": "C",
+              "value": "={{$json.buyer_email}}"
+            },
+            {
+              "column": "D",
+              "value": "={{JSON.stringify($json.products)}}"
+            },
+            {
+              "column": "E",
+              "value": "={{$json.date_received}}"
+            },
+            {
+              "column": "F",
+              "value": "PENDING"
+            },
+            {
+              "column": "G",
+              "value": ""
+            },
+            {
+              "column": "H",
+              "value": ""
+            },
+            {
+              "column": "I",
+              "value": ""
+            },
+            {
+              "column": "J",
+              "value": ""
+            },
+            {
+              "column": "K",
+              "value": ""
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "TradeMind Sheets",
+          "name": "TradeMind Sheets"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-6",
+      "name": "AI: Write RFQ Email to Seller",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        1200,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "geminiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-goog-api-key",
+              "value": "={{$env.GEMINI_API_KEY}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "{\n  \"system_instruction\": {\n    \"parts\": [{\n      \"text\": \"You are a professional business email writer for a trading company. Write formal Request for Quotation (RFQ) emails to suppliers. Write only the email body — no subject line, no explanation outside the email. Use professional business English. Always include a product table. End with a professional closing.\"\n    }]\n  },\n  \"contents\": [{\n    \"role\": \"user\",\n    \"parts\": [{\n      \"text\": \"Write a professional RFQ email to our seller/supplier.\\n\\nInquiry Reference ID: ={{$json.inquiry_id}}\\nBuyer has requested these products:\\n={{JSON.stringify($json.products, null, 2)}}\\n\\nThe email should:\\n1. Start with Dear Sir/Madam,\\n2. State we need quotation for the listed products\\n3. Include a clean product table with columns: Sr.No, Product Name, Quantity, Unit, Specifications\\n4. Ask for: unit price per item, MOQ, lead time in days, payment terms\\n5. Mention our reference ID: ={{$json.inquiry_id}}\\n6. Request reply within 24 hours\\n7. End with: Regards, ={{$env.BUSINESS_NAME}}\\n\\nReturn only the email body text.\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.3,\n    \"maxOutputTokens\": 1024\n  }\n}"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-7",
+      "name": "Extract RFQ Email Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1400,
+        300
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Get Gemini written email\nconst rfqBody = $input.first().json.candidates[0].content.parts[0].text;\n\n// Pass through all previous data + add rfq body\nconst prevData = $(\"Parse Products + Assign Inquiry ID\").first().json;\n\nreturn {\n  ...prevData,\n  rfq_email_body: rfqBody,\n  rfq_sent_at: new Date().toISOString()\n};"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-8",
+      "name": "Send RFQ to Seller",
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        300
+      ],
+      "parameters": {
+        "operation": "sendMessage",
+        "to": "={{$env.SELLER_EMAIL}}",
+        "subject": "RFQ — ={{$json.inquiry_id}} — Quotation Required",
+        "body": "={{$json.rfq_email_body}}",
+        "bodyType": "text",
+        "options": {
+          "customHeaders": {
+            "header": [
+              {
+                "name": "x-inquiry-id",
+                "value": "={{$json.inquiry_id}}"
+              }
+            ]
+          }
+        }
+      },
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "TradeMind Outlook",
+          "name": "TradeMind Outlook"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-9",
+      "name": "Update Status to RFQ Sent",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 2,
+      "position": [
+        1800,
+        300
+      ],
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "value": "={{$env.GOOGLE_SHEET_ID}}"
+        },
+        "sheetName": {
+          "value": "Inquiries"
+        },
+        "filtersUi": {
+          "filterType": "manual",
+          "conditions": [
+            {
+              "column": "A",
+              "condition": "equals",
+              "value": "={{$json.inquiry_id}}"
+            }
+          ]
+        },
+        "columnsUi": {
+          "mappingMode": "defineBelow",
+          "columnValues": [
+            {
+              "column": "F",
+              "value": "RFQ_SENT"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "TradeMind Sheets",
+          "name": "TradeMind Sheets"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-10",
+      "name": "Wait for Seller Reply",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        300
+      ],
+      "parameters": {
+        "resume": "webhook",
+        "webhookSuffix": "={{$json.inquiry_id}}",
+        "timeout": {
+          "amount": 48,
+          "unit": "hours"
+        },
+        "timeoutAction": "continueWorkflow"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-11",
+      "name": "Seller Replied or Timeout?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        2200,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$execution.resumeReason}}",
+              "operation": "equals",
+              "value2": "webhook"
+            }
+          ]
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-11B",
+      "name": "Send Follow Up to Seller",
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        500
+      ],
+      "parameters": {
+        "operation": "sendMessage",
+        "to": "={{$env.SELLER_EMAIL}}",
+        "subject": "Follow Up — RFQ ={{$json.inquiry_id}} — Awaiting Your Quote",
+        "body": "Dear Sir/Madam,\\n\\nThis is a gentle reminder regarding our Request for Quotation sent 48 hours ago with reference ID: ={{$json.inquiry_id}}\\n\\nKindly send us your quotation at the earliest as our buyer is waiting.\\n\\nRegards,\\n={{$env.BUSINESS_NAME}}",
+        "bodyType": "text"
+      },
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "TradeMind Outlook",
+          "name": "TradeMind Outlook"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-11C",
+      "name": "Wait Another 24 Hours",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        2400,
+        500
+      ],
+      "parameters": {
+        "resume": "webhook",
+        "webhookSuffix": "={{$json.inquiry_id}}",
+        "timeout": {
+          "amount": 24,
+          "unit": "hours"
+        },
+        "timeoutAction": "continueWorkflow"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-12",
+      "name": "AI: Extract Seller Quote Prices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        2600,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "geminiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-goog-api-key",
+              "value": "={{$env.GEMINI_API_KEY}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "{\n  \"system_instruction\": {\n    \"parts\": [{\n      \"text\": \"You are a price extraction assistant for a trading business. Read seller quotation emails and extract pricing details. Return ONLY a valid JSON array with no explanation, no markdown, no backticks. Each product object must have exactly: product_name (string), seller_unit_price (number in INR, numbers only no symbols), quantity (number), unit (string), moq (number, minimum order quantity), lead_time_days (number), payment_terms (string). If any field is not mentioned use: moq=1, lead_time_days=7, payment_terms='advance'.\"\n    }]\n  },\n  \"contents\": [{\n    \"role\": \"user\",\n    \"parts\": [{\n      \"text\": \"Here is the seller quotation email:\\n---\\n={{$json.body}}\\n---\\nExtract all product prices from this email and return as JSON array only.\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.1,\n    \"maxOutputTokens\": 1024\n  }\n}"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-13",
+      "name": "Calculate My Prices with Margin",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        2800,
+        300
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Get Gemini extracted seller prices\nconst geminiText = $input.first().json.candidates[0].content.parts[0].text;\n\nconst cleaned = geminiText.replace(/```json/g, '').replace(/```/g, '').trim();\n\nlet sellerProducts = [];\ntry {\n  sellerProducts = JSON.parse(cleaned);\n} catch(e) {\n  sellerProducts = [];\n}\n\n// Get settings\nconst defaultMargin = parseFloat($env.DEFAULT_MARGIN) || 15;\nconst minMargin = 10;\n\n// Margin calculation engine\nfunction getMargin(productName, unitPrice) {\n  const name = productName.toLowerCase();\n  let margin = defaultMargin;\n  \n  if (name.match(/pipe|rod|bar|sheet|plate/)) {\n    margin = Math.max(margin, 12);\n  }\n  if (name.match(/bolt|nut|screw|fastener|washer/)) {\n    margin = Math.max(margin, 18);\n  }\n  \n  if (unitPrice < 100) margin = Math.max(margin, 25);\n  else if (unitPrice < 500) margin = Math.max(margin, 18);\n  else if (unitPrice < 2000) margin = Math.max(margin, 15);\n  else margin = Math.max(margin, 12);\n  \n  return margin;\n}\n\nfunction roundUpToTen(num) {\n  return Math.ceil(num / 10) * 10;\n}\n\nfunction formatINR(amount) {\n  return '₹ ' + amount.toLocaleString('en-IN');\n}\n\n// Calculate for each product\nlet totalSellerCost = 0;\nlet totalMyPrice = 0;\n\nconst products = sellerProducts.map(product => {\n  const margin = getMargin(product.product_name, product.seller_unit_price);\n  \n  let finalMargin = margin;\n  if (product.quantity > 5000) finalMargin -= 4;\n  else if (product.quantity > 1000) finalMargin -= 2;\n  finalMargin = Math.max(finalMargin, minMargin);\n  \n  const myUnitPrice = roundUpToTen(product.seller_unit_price * (1 + finalMargin / 100));\n  \n  const totalSeller = product.seller_unit_price * product.quantity;\n  const totalMy = myUnitPrice * product.quantity;\n  const totalProfit = totalMy - totalSeller;\n  \n  totalSellerCost += totalSeller;\n  totalMyPrice += totalMy;\n  \n  return {\n    ...product,\n    applied_margin_percent: finalMargin,\n    my_unit_price: myUnitPrice,\n    my_unit_price_formatted: formatINR(myUnitPrice),\n    total_seller_cost: totalSeller,\n    total_my_price: totalMy,\n    total_profit: totalProfit,\n    profit_per_unit: myUnitPrice - product.seller_unit_price,\n    lead_time_days: product.lead_time_days || 7,\n    payment_terms: product.payment_terms || 'Advance'\n  };\n});\n\nconst totalProfit = totalMyPrice - totalSellerCost;\nconst avgMargin = ((totalProfit / totalSellerCost) * 100).toFixed(1);\n\n// Get inquiry data from earlier node\nconst inquiryData = $(\"Parse Products + Assign Inquiry ID\").first().json;\n\nreturn {\n  ...inquiryData,\n  seller_products: products,\n  summary: {\n    total_seller_cost: totalSellerCost,\n    total_my_price: totalMyPrice,\n    total_profit: totalProfit,\n    average_margin_percent: avgMargin,\n    total_seller_cost_formatted: formatINR(totalSellerCost),\n    total_my_price_formatted: formatINR(totalMyPrice),\n    total_profit_formatted: formatINR(totalProfit),\n    currency: 'INR'\n  },\n  seller_reply_received_at: new Date().toISOString()\n};"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-14",
+      "name": "AI: Write Buyer Quotation Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        3000,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "geminiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-goog-api-key",
+              "value": "={{$env.GEMINI_API_KEY}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "{\n  \"system_instruction\": {\n    \"parts\": [{\n      \"text\": \"You are a professional business email writer for a trading company. Write formal quotation emails to buyers/clients. Write only the email body — no subject line, no explanation outside the email. Use professional business English. Always include a clear product quotation table. Make the email sound confident and professional.\"\n    }]\n  },\n  \"contents\": [{\n    \"role\": \"user\",\n    \"parts\": [{\n      \"text\": \"Write a professional quotation email to our buyer.\\n\\nBuyer Name: ={{$json.buyer_name}}\\nInquiry Reference: ={{$json.inquiry_id}}\\nOriginal Subject: ={{$json.buyer_subject}}\\n\\nProducts with our prices:\\n={{JSON.stringify($json.seller_products, null, 2)}}\\n\\nTotal Quote Value: ={{$json.summary.total_my_price_formatted}}\\n\\nThe email should:\\n1. Start with Dear ={{$json.buyer_name}},\\n2. Thank them for their inquiry\\n3. Reference their inquiry with our ID: ={{$json.inquiry_id}}\\n4. Include a quotation table with columns: Sr.No, Product Name, Quantity, Unit, Unit Price, Total Amount, Lead Time\\n5. Use MY prices (my_unit_price) NOT seller prices\\n6. Add total amount row at bottom\\n7. State: Prices valid for 7 days from today\\n8. State payment terms for each product\\n9. Invite them to contact for any queries\\n10. End with: Regards, ={{$env.BUSINESS_NAME}}\\n\\nReturn only the email body text.\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.3,\n    \"maxOutputTokens\": 1500\n  }\n}"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-15",
+      "name": "Prepare Final Quote Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        3200,
+        300
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const quoteBody = $input.first().json.candidates[0].content.parts[0].text;\n\nconst prevData = $(\"Calculate My Prices with Margin\").first().json;\n\nreturn {\n  ...prevData,\n  buyer_quote_email_body: quoteBody,\n  quote_sent_at: new Date().toISOString()\n};"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-16",
+      "name": "Send Quotation to Buyer",
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [
+        3400,
+        300
+      ],
+      "parameters": {
+        "operation": "sendMessage",
+        "to": "={{$json.buyer_email}}",
+        "subject": "Quotation for Your Inquiry — Ref: ={{$json.inquiry_id}}",
+        "body": "={{$json.buyer_quote_email_body}}",
+        "bodyType": "text"
+      },
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "TradeMind Outlook",
+          "name": "TradeMind Outlook"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-17",
+      "name": "Update Deal in Inquiries Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 2,
+      "position": [
+        3600,
+        300
+      ],
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "value": "={{$env.GOOGLE_SHEET_ID}}"
+        },
+        "sheetName": {
+          "value": "Inquiries"
+        },
+        "filtersUi": {
+          "filterType": "manual",
+          "conditions": [
+            {
+              "column": "A",
+              "condition": "equals",
+              "value": "={{$json.inquiry_id}}"
+            }
+          ]
+        },
+        "columnsUi": {
+          "mappingMode": "defineBelow",
+          "columnValues": [
+            {
+              "column": "F",
+              "value": "QUOTE_SENT"
+            },
+            {
+              "column": "G",
+              "value": "={{$json.summary.total_seller_cost}}"
+            },
+            {
+              "column": "H",
+              "value": "={{$json.summary.total_my_price}}"
+            },
+            {
+              "column": "I",
+              "value": "={{$json.summary.total_profit}}"
+            },
+            {
+              "column": "J",
+              "value": "={{$json.summary.average_margin_percent}}"
+            },
+            {
+              "column": "K",
+              "value": "={{$json.quote_sent_at}}"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "TradeMind Sheets",
+          "name": "TradeMind Sheets"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-18",
+      "name": "Log to ClosedDeals Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 2,
+      "position": [
+        3800,
+        300
+      ],
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "value": "={{$env.GOOGLE_SHEET_ID}}"
+        },
+        "sheetName": {
+          "value": "ClosedDeals"
+        },
+        "options": {},
+        "dataMode": "defineBelow",
+        "valuesUi": {
+          "mappingMode": "defineBelow",
+          "values": [
+            {
+              "column": "A",
+              "value": "={{$json.inquiry_id}}"
+            },
+            {
+              "column": "B",
+              "value": "={{$json.buyer_name}}"
+            },
+            {
+              "column": "C",
+              "value": "={{$json.products[0].product_name}}"
+            },
+            {
+              "column": "D",
+              "value": "={{$json.summary.total_seller_cost}}"
+            },
+            {
+              "column": "E",
+              "value": "={{$json.summary.total_my_price}}"
+            },
+            {
+              "column": "F",
+              "value": "={{$json.summary.average_margin_percent}}"
+            },
+            {
+              "column": "G",
+              "value": "={{$json.summary.total_profit}}"
+            },
+            {
+              "column": "H",
+              "value": "={{$json.quote_sent_at}}"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "TradeMind Sheets",
+          "name": "TradeMind Sheets"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "node-error",
+      "name": "Send Error Alert to Self",
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        800
+      ],
+      "parameters": {
+        "operation": "sendMessage",
+        "to": "={{$env.BUSINESS_EMAIL}}",
+        "subject": "TradeMind Bot Error — Manual Action Needed",
+        "body": "Bot encountered an error.\\n\\nInquiry ID: ={{$json.inquiry_id || 'Unknown'}}\\nBuyer: ={{$json.buyer_email || 'Unknown'}}\\nFailed Node: ={{$node.name}}\\nError: ={{$json.error.message}}\\nTime: ={{new Date().toISOString()}}\\n\\nPlease handle this inquiry manually.",
+        "bodyType": "text"
+      },
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "TradeMind Outlook",
+          "name": "TradeMind Outlook"
+        }
+      }
+    },
+    {
+      "id": "wh-1",
+      "name": "Webhook: Get Inquiries",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        1000
+      ],
+      "parameters": {
+        "path": "get-inquiries",
+        "httpMethod": "GET",
+        "responseMode": "onReceived",
+        "options": {}
+      }
+    },
+    {
+      "id": "wh-1-sheets",
+      "name": "Read Inquiries Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 2,
+      "position": [
+        400,
+        1000
+      ],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "value": "={{$env.GOOGLE_SHEET_ID}}"
+        },
+        "sheetName": {
+          "value": "Inquiries"
+        }
+      }
+    },
+    {
+      "id": "wh-2",
+      "name": "Webhook: Send RFQ",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        1200
+      ],
+      "parameters": {
+        "path": "send-rfq",
+        "httpMethod": "POST",
+        "responseMode": "onReceived",
+        "options": {}
+      }
+    },
+    {
+      "id": "wh-3",
+      "name": "Webhook: Send Quote",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        1400
+      ],
+      "parameters": {
+        "path": "send-quote",
+        "httpMethod": "POST",
+        "responseMode": "onReceived",
+        "options": {}
+      }
+    },
+    {
+      "id": "wh-4",
+      "name": "Webhook: Update Status",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        1600
+      ],
+      "parameters": {
+        "path": "update-status",
+        "httpMethod": "POST",
+        "responseMode": "onReceived",
+        "options": {}
+      }
+    },
+    {
+      "id": "wh-4-sheets",
+      "name": "Update Status in Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 2,
+      "position": [
+        400,
+        1600
+      ],
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "value": "={{$env.GOOGLE_SHEET_ID}}"
+        },
+        "sheetName": {
+          "value": "Inquiries"
+        }
+      }
+    },
+    {
+      "id": "wh-5",
+      "name": "Webhook: Get Profit Data",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        1800
+      ],
+      "parameters": {
+        "path": "get-profit-data",
+        "httpMethod": "GET",
+        "responseMode": "onReceived",
+        "options": {}
+      }
+    },
+    {
+      "id": "wh-5-sheets",
+      "name": "Read ClosedDeals Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 2,
+      "position": [
+        400,
+        1800
+      ],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "value": "={{$env.GOOGLE_SHEET_ID}}"
+        },
+        "sheetName": {
+          "value": "ClosedDeals"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Watch Buyer Inbox": {
+      "main": [
+        [
+          {
+            "node": "Is Valid Inquiry?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Valid Inquiry?": {
+      "main": [
+        [
+          {
+            "node": "AI: Extract Product List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI: Extract Product List": {
+      "main": [
+        [
+          {
+            "node": "Parse Products + Assign Inquiry ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error Alert to Self",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Products + Assign Inquiry ID": {
+      "main": [
+        [
+          {
+            "node": "Log Inquiry to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error Alert to Self",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Inquiry to Sheet": {
+      "main": [
+        [
+          {
+            "node": "AI: Write RFQ Email to Seller",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error Alert to Self",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI: Write RFQ Email to Seller": {
+      "main": [
+        [
+          {
+            "node": "Extract RFQ Email Body",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error Alert to Self",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract RFQ Email Body": {
+      "main": [
+        [
+          {
+            "node": "Send RFQ to Seller",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error Alert to Self",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send RFQ to Seller": {
+      "main": [
+        [
+          {
+            "node": "Update Status to RFQ Sent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error Alert to Self",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status to RFQ Sent": {
+      "main": [
+        [
+          {
+            "node": "Wait for Seller Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error Alert to Self",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Seller Reply": {
+      "main": [
+        [
+          {
+            "node": "Seller Replied or Timeout?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error Alert to Self",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seller Replied or Timeout?": {
+      "main": [
+        [
+          {
+            "node": "AI: Extract Seller Quote Prices",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Follow Up to Seller",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Follow Up to Seller": {
+      "main": [
+        [
+          {
+            "node": "Wait Another 24 Hours",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error Alert to Self",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Another 24 Hours": {
+      "main": [
+        [
+          {
+            "node": "AI: Extract Seller Quote Prices",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error Alert to Self",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI: Extract Seller Quote Prices": {
+      "main": [
+        [
+          {
+            "node": "Calculate My Prices with Margin",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error Alert to Self",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate My Prices with Margin": {
+      "main": [
+        [
+          {
+            "node": "AI: Write Buyer Quotation Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error Alert to Self",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI: Write Buyer Quotation Email": {
+      "main": [
+        [
+          {
+            "node": "Prepare Final Quote Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error Alert to Self",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Final Quote Email": {
+      "main": [
+        [
+          {
+            "node": "Send Quotation to Buyer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error Alert to Self",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Quotation to Buyer": {
+      "main": [
+        [
+          {
+            "node": "Update Deal in Inquiries Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error Alert to Self",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Deal in Inquiries Sheet": {
+      "main": [
+        [
+          {
+            "node": "Log to ClosedDeals Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Error Alert to Self",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to ClosedDeals Sheet": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Send Error Alert to Self",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Get Inquiries": {
+      "main": [
+        [
+          {
+            "node": "Read Inquiries Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Send RFQ": {
+      "main": [
+        [
+          {
+            "node": "AI: Write RFQ Email to Seller",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Send Quote": {
+      "main": [
+        [
+          {
+            "node": "AI: Extract Seller Quote Prices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Update Status": {
+      "main": [
+        [
+          {
+            "node": "Update Status in Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Get Profit Data": {
+      "main": [
+        [
+          {
+            "node": "Read ClosedDeals Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "trade-mind-bot-1234",
+  "tags": [],
+  "active": false
+}
