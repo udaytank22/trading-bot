@@ -1,0 +1,253 @@
+{
+  "name": "TradeMind Bot (Fixed - No 429)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-goog-api-key",
+              "value": "={{ $env.GEMINI_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "{ \"contents\": [{ \"role\": \"user\", \"parts\": [{ \"text\": \"Extract products from this email\" }] }] }"
+      },
+      "id": "extractProducts",
+      "name": "AI: Extract Products",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        300,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
+      },
+      "id": "wait1",
+      "name": "Wait 2s",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-goog-api-key",
+              "value": "={{ $env.GEMINI_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ {\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"Write RFQ email\"}]}]} }}"
+      },
+      "id": "rfq",
+      "name": "AI: Write RFQ",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        700,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
+      },
+      "id": "wait2",
+      "name": "Wait 2s Again",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-goog-api-key",
+              "value": "={{ $env.GEMINI_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ {\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"Extract pricing\"}]}]} }}"
+      },
+      "id": "extractPrices",
+      "name": "AI: Extract Prices",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
+      },
+      "id": "wait3",
+      "name": "Wait Final",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        1300,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-goog-api-key",
+              "value": "={{ $env.GEMINI_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ {\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"Write final quotation email\"}]}]} }}"
+      },
+      "id": "finalEmail",
+      "name": "AI: Final Quote",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1500,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI: Extract Products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI: Extract Products": {
+      "main": [
+        [
+          {
+            "node": "Wait 2s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 2s": {
+      "main": [
+        [
+          {
+            "node": "AI: Write RFQ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI: Write RFQ": {
+      "main": [
+        [
+          {
+            "node": "Wait 2s Again",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 2s Again": {
+      "main": [
+        [
+          {
+            "node": "AI: Extract Prices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI: Extract Prices": {
+      "main": [
+        [
+          {
+            "node": "Wait Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Final": {
+      "main": [
+        [
+          {
+            "node": "AI: Final Quote",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
