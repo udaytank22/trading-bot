@@ -3,7 +3,7 @@ export const mockInquiries = [
     inquiry_id: "INQ-20260416-001",
     buyer_name: "Shree Ganesha Enterprises",
     buyer_email: "purchase@shreeganesha.in",
-    date_received: "2026-04-16T10:30:00Z",
+    date_received: "2026-05-10T10:30:00Z",
     status: "CLOSED",
     products: [
       { product_name: "Mild Steel Sheets 2mm", quantity: 5000, unit: "kg", specs: "IS 2062 Grade B" },
@@ -29,7 +29,7 @@ export const mockInquiries = [
     inquiry_id: "INQ-20260417-002",
     buyer_name: "Om Sai Manufacturing",
     buyer_email: "info@omsaimfg.com",
-    date_received: "2026-04-17T11:15:00Z",
+    date_received: "2026-05-10T11:15:00Z",
     status: "QUOTE_SENT",
     products: [
       { product_name: "Copper Wires 1.5 sqmm", quantity: 200, unit: "roll", specs: "FR Grade, Red" }
@@ -52,8 +52,8 @@ export const mockInquiries = [
     inquiry_id: "INQ-20260418-003",
     buyer_name: "Balaji Impex",
     buyer_email: "procurement@balajiimpex.in",
-    date_received: "2026-04-18T14:45:00Z",
-    status: "RFQ_RECEIVED",
+    date_received: "2026-05-10T14:45:00Z",
+    status: "PENDING",
     products: [
       { product_name: "Industrial Safety Helmets", quantity: 500, unit: "pcs", specs: "IS:2925 certified, Yellow" },
       { product_name: "Safety Shoes", quantity: 150, unit: "pair", specs: "Steel toe, PU sole, Size 8-10" }
@@ -73,7 +73,7 @@ export const mockInquiries = [
     inquiry_id: "INQ-20260419-004",
     buyer_name: "Krishna Engineering Works",
     buyer_email: "contact@krishnaengineering.co.in",
-    date_received: "2026-04-19T09:30:00Z",
+    date_received: "2026-05-09T09:30:00Z",
     status: "PENDING",
     products: [
       { product_name: "CNC Router Tool Bits", quantity: 50, unit: "pcs", specs: "Carbide tipped, 6mm shank" }
@@ -108,7 +108,7 @@ export const mockInquiries = [
     inquiry_id: "INQ-20260420-006",
     buyer_name: "Prakash Industrial Supplies",
     buyer_email: "rfq@prakashsupplies.in",
-    date_received: "2026-04-20T11:05:00Z",
+    date_received: "2026-05-08T11:05:00Z",
     status: "PENDING",
     products: [
       { product_name: "PTFE Thread Seal Tape", quantity: 1000, unit: "roll", specs: "12mm x 0.075mm x 10m" },

@@ -10,6 +10,7 @@ export default function SupplyPage() {
   const { supplyData, setSupplyData } = React.useContext(AppContext);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
+  const [dateFilter, setDateFilter] = useState(new Date().toISOString().split('T')[0]);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 5;
 
@@ -32,6 +33,11 @@ export default function SupplyPage() {
         return false;
       }
 
+      // Date Filter
+      if (dateFilter && item.date !== dateFilter) {
+        return false;
+      }
+
       // Search Filter
       return (
         item.supplier.toLowerCase().includes(q) ||
@@ -39,7 +45,7 @@ export default function SupplyPage() {
         item.destination.toLowerCase().includes(q)
       );
     });
-  }, [search, filter, supplyData]);
+  }, [search, filter, dateFilter, supplyData]);
 
   const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
   const currentItems = useMemo(() => {
@@ -130,6 +136,19 @@ export default function SupplyPage() {
                 d="m19.5 8.25-7.5 7.5-7.5-7.5"
               />
             </svg>
+          </div>
+
+          {/* Date Filter */}
+          <div className="relative">
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => {
+                setDateFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="bg-[#1a1d23] border border-[#2a2d33] rounded-lg h-10 px-4 text-sm text-gray-300 font-medium focus:outline-none focus:border-purple-500 transition-colors cursor-pointer shadow-sm hover:border-gray-600 [color-scheme:dark]"
+            />
           </div>
 
           {/* Add Button */}

@@ -17,6 +17,8 @@ import { useToast } from "../hooks/useToast";
 import Tooltip from "../components/ui/Tooltip";
 import InquiryTable from "../components/InquiryTable";
 import QuoteModal from "../components/QuoteModal";
+import RFQModal from "../components/RFQModal";
+import MultiEmailPreviewModal from "../components/MultiEmailPreviewModal";
 
 
 function EmptyState() {
@@ -55,6 +57,7 @@ export default function InquiriesPage() {
   // Filters & pagination
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState(location.state?.filter ?? "All");
+  const [dateFilter, setDateFilter] = useState(new Date().toISOString().split('T')[0]);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 8;
 
@@ -118,6 +121,12 @@ export default function InquiriesPage() {
         !inq.date_received.startsWith(todayStr)
       )
         return false;
+      
+      // Manual Date Filter
+      if (dateFilter && !inq.date_received.startsWith(dateFilter)) {
+        return false;
+      }
+
       if (search.trim()) {
         const q = search.toLowerCase();
         const hit =
@@ -128,7 +137,7 @@ export default function InquiriesPage() {
       }
       return true;
     });
-  }, [inquiriesData, search, filter, location.state?.date]);
+  }, [inquiriesData, search, filter, dateFilter, location.state?.date]);
 
   const totalPages = Math.ceil(filteredInquiries.length / ITEMS_PER_PAGE);
   const currentItems = useMemo(() => {
@@ -150,6 +159,12 @@ export default function InquiriesPage() {
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
   const [quoteModalDeal, setQuoteModalDeal] = useState(null);
 
+  const [isRFQModalOpen, setIsRFQModalOpen] = useState(false);
+  const [rfqModalDeal, setRfqModalDeal] = useState(null);
+
+  const [pendingRFQs, setPendingRFQs] = useState([]);
+  const [isMultiEmailModalOpen, setIsMultiEmailModalOpen] = useState(false);
+
   // Inline action state
   const [inlineActionRow, setInlineActionRow] = useState(null);
   const [rowActionLoading, setRowActionLoading] = useState(false);
@@ -170,8 +185,8 @@ export default function InquiriesPage() {
 
   const handleSendQuoteClick = (deal) => {
     if (deal.status === "PENDING") {
-      updateDealStatus(deal.inquiry_id, "RFQ_SENT");
-      showToast("RFQ sent to suppliers", "success");
+      setRfqModalDeal(deal);
+      setIsRFQModalOpen(true);
     } else if (deal.status === "RFQ_RECEIVED") {
       setQuoteModalDeal(deal);
       setIsQuoteModalOpen(true);
@@ -199,6 +214,13 @@ export default function InquiriesPage() {
     if (quoteModalDeal) {
       updateDealStatus(quoteModalDeal.inquiry_id, "QUOTE_SENT");
       showToast("Quote sent to buyer", "success");
+    }
+  };
+
+  const handleRFQSubmit = (stagedRFQs) => {
+    if (stagedRFQs.length > 0) {
+      setPendingRFQs(stagedRFQs);
+      setIsMultiEmailModalOpen(true);
     }
   };
 
@@ -301,6 +323,19 @@ export default function InquiriesPage() {
               />
             </svg>
           </div>
+
+          {/* Date Filter */}
+          <div className="relative">
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => {
+                setDateFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="bg-[#1a1d23] border border-[#2a2d33] rounded-lg h-10 px-4 text-sm text-gray-300 font-medium focus:outline-none focus:border-purple-500 transition-colors cursor-pointer shadow-sm hover:border-gray-600 [color-scheme:dark]"
+            />
+          </div>
           <button
             className="absolute right-0 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
             onClick={() => {
@@ -380,6 +415,19 @@ export default function InquiriesPage() {
         onClose={() => setIsQuoteModalOpen(false)}
         onSubmit={handleQuoteSubmit}
         deal={quoteModalDeal}
+      />
+      <RFQModal
+        isOpen={isRFQModalOpen}
+        onClose={() => setIsRFQModalOpen(false)}
+        onSubmit={handleRFQSubmit}
+        deal={rfqModalDeal}
+      />
+      <MultiEmailPreviewModal
+        isOpen={isMultiEmailModalOpen}
+        onClose={() => setIsMultiEmailModalOpen(false)}
+        stagedRFQs={pendingRFQs}
+        inquiryDeal={rfqModalDeal}
+        onStatusUpdate={updateDealStatus}
       />
     </div>
   );
