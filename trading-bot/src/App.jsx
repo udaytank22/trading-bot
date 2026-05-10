@@ -2,6 +2,7 @@ import React, { Suspense } from "react";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import { AppContext } from "./context";
 import { mockInquiries } from "./data/mockInquiries";
+import { mockSupply } from "./data/mockSupply";
 import Sidebar from "./components/layout/Sidebar";
 import Topbar from "./components/layout/Topbar";
 import SupplyPage from "./pages/SupplyPage";
@@ -41,11 +42,12 @@ function PageLoader() {
 
 export default function App() {
   const [inquiriesData, setInquiriesData] = React.useState(mockInquiries);
+  const [supplyData, setSupplyData] = React.useState(mockSupply);
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
   return (
-    <AppContext.Provider value={{ inquiriesData, setInquiriesData }}>
+    <AppContext.Provider value={{ inquiriesData, setInquiriesData, supplyData, setSupplyData }}>
       <HashRouter>
         <div className="flex w-screen h-screen bg-[#0f1117] text-white overflow-hidden font-sans">
           <Sidebar isOpen={isSidebarOpen} />

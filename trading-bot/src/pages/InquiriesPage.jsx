@@ -14,25 +14,10 @@ import { formatDateString } from "../services/marginEngine";
 import StatusBadge from "../components/ui/StatusBadge";
 import Toast from "../components/ui/Toast";
 import { useToast } from "../hooks/useToast";
+import Tooltip from "../components/ui/Tooltip";
+import InquiryTable from "../components/InquiryTable";
+import QuoteModal from "../components/QuoteModal";
 
-/* ── Helpers ─────────────────────────────────────────────────────── */
-function DateCell({ isoString }) {
-  if (!isoString) return null;
-  const d = new Date(isoString);
-  const timeStr = new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).format(d);
-  return (
-    <div className="flex flex-col">
-      <span className="text-white font-bold leading-tight">
-        {formatDateString(isoString)}
-      </span>
-      <span className="text-gray-500 text-xs mt-[1px]">{timeStr}</span>
-    </div>
-  );
-}
 
 function EmptyState() {
   return (
@@ -64,7 +49,7 @@ function EmptyState() {
 /* ── Main page ───────────────────────────────────────────────────── */
 export default function InquiriesPage() {
   const location = useLocation();
-  const { inquiriesData, setInquiriesData } = useContext(AppContext);
+  const { inquiriesData, setInquiriesData, setSupplyData } = useContext(AppContext);
   const { toast, showToast } = useToast();
 
   // Filters & pagination
@@ -162,6 +147,9 @@ export default function InquiriesPage() {
   const [emailModalType, setEmailModalType] = useState("RFQ");
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
+  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+  const [quoteModalDeal, setQuoteModalDeal] = useState(null);
+
   // Inline action state
   const [inlineActionRow, setInlineActionRow] = useState(null);
   const [rowActionLoading, setRowActionLoading] = useState(false);
@@ -182,14 +170,35 @@ export default function InquiriesPage() {
 
   const handleSendQuoteClick = (deal) => {
     if (deal.status === "PENDING") {
-      setInlineActionRow({ id: deal.inquiry_id, type: "PENDING_WARNING" });
-    } else if (deal.status === "RFQ_SENT") {
-      setEmailModalDeal(deal);
-      setEmailModalType("RFQ");
-      setIsEmailModalOpen(true);
-      setInlineActionRow(null);
-    } else {
-      setInlineActionRow({ id: deal.inquiry_id, type: "QUOTE_WARNING" });
+      updateDealStatus(deal.inquiry_id, "RFQ_SENT");
+      showToast("RFQ sent to suppliers", "success");
+    } else if (deal.status === "RFQ_RECEIVED") {
+      setQuoteModalDeal(deal);
+      setIsQuoteModalOpen(true);
+    } else if (deal.status === "QUOTE_SENT") {
+      // Confirm Deal & Move to Supply
+      const newCargo = {
+        inquiry_id: deal.inquiry_id,
+        supplier: "Assigned Supplier", // This would normally come from the RFQ responses
+        buyer_name: deal.buyer_name,
+        buyer_email: deal.buyer_email,
+        cargo: deal.products[0]?.product_name || "Unknown Cargo",
+        quantity: "See Details",
+        destination: "TBD",
+        status: "PENDING",
+        products: deal.products,
+      };
+
+      setSupplyData((prev) => [...prev, newCargo]);
+      updateDealStatus(deal.inquiry_id, "CONFIRMED");
+      showToast("Deal confirmed and moved to Supply", "success");
+    }
+  };
+
+  const handleQuoteSubmit = ({ discount, margin, narrative }) => {
+    if (quoteModalDeal) {
+      updateDealStatus(quoteModalDeal.inquiry_id, "QUOTE_SENT");
+      showToast("Quote sent to buyer", "success");
     }
   };
 
@@ -307,101 +316,14 @@ export default function InquiriesPage() {
       {/* Table */}
       <div className="flex-1 w-full bg-[#1a1d23] border border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg">
         {filteredInquiries.length > 0 ? (
-          <div className="w-full overflow-hidden rounded-xl">
-            <table className="w-full text-left text-sm table-auto">
-              <thead className="bg-[#242830]/80 text-gray-400 text-[11px] font-bold uppercase tracking-wider border-b border-[#2a2d33]">
-                <tr>
-                  <th className="px-3 md:px-6 py-4">Inquiry ID</th>
-                  <th className="px-3 md:px-6 py-4">Buyer</th>
-                  <th className="px-3 md:px-6 py-4">Products</th>
-                  <th className="px-3 md:px-6 py-4 hidden lg:table-cell">
-                    Received
-                  </th>
-                  <th className="px-3 md:px-6 py-4">Status</th>
-                  <th className="px-3 md:px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-[#2a2d33]/50">
-                {currentItems.map((inq, idx) => (
-                  <tr
-                    key={inq.inquiry_id}
-                    className={`hover:bg-white/[0.04] transition-colors ${
-                      idx % 2 !== 0 ? "bg-[#242830]/20" : ""
-                    }`}
-                  >
-                    {/* Inquiry ID */}
-                    <td className="px-3 md:px-6 py-4 font-mono text-gray-400 text-[12px] break-words">
-                      {inq.inquiry_id}
-                    </td>
-
-                    {/* Buyer */}
-                    <td className="px-3 md:px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="text-white font-bold text-sm break-words">
-                          {inq.buyer_name}
-                        </span>
-
-                        <span className="text-gray-500 text-[11px] break-all">
-                          {inq.buyer_email}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Products */}
-                    <td className="px-3 md:px-6 py-4">
-                      <div className="flex flex-col gap-1">
-                        <span
-                          className="text-gray-300 text-sm break-words"
-                          title={inq.products[0]?.product_name}
-                        >
-                          {inq.products[0]?.product_name}
-                        </span>
-
-                        {inq.products.length > 1 && (
-                          <span className="inline-block w-fit px-2 py-[2px] bg-gray-700/60 text-gray-300 text-[10px] font-bold rounded-lg">
-                            +{inq.products.length - 1} more
-                          </span>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Received */}
-                    <td className="px-3 md:px-6 py-4 hidden lg:table-cell">
-                      <DateCell isoString={inq.date_received} />
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-3 md:px-6 py-4">
-                      <StatusBadge status={inq.status} />
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-3 md:px-6 py-4">
-                      <div className="flex flex-col md:flex-row items-end justify-end gap-2">
-                        <button
-                          onClick={() => {
-                            setSelectedDeal(inq);
-                            setIsDrawerOpen(true);
-                          }}
-                          className="w-full md:w-auto px-3 py-2 text-xs font-bold text-blue-400 border border-blue-500/40 rounded-lg hover:bg-blue-500/10 transition-all"
-                        >
-                          View
-                        </button>
-
-                        <button
-                          onClick={() => handleSendQuoteClick(inq)}
-                          className="w-full md:w-auto px-3 py-2 text-xs font-bold text-emerald-400 border border-emerald-500/40 rounded-lg hover:bg-emerald-500/10 transition-all"
-                        >
-                          Send Quote
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <InquiryTable
+            items={currentItems}
+            onView={(inq) => {
+              setSelectedDeal(inq);
+              setIsDrawerOpen(true);
+            }}
+            onSendQuote={handleSendQuoteClick}
+          />
         ) : (
           <EmptyState />
         )}
@@ -452,6 +374,12 @@ export default function InquiriesPage() {
         isOpen={isEmailModalOpen}
         onClose={() => setIsEmailModalOpen(false)}
         onStatusUpdate={updateDealStatus}
+      />
+      <QuoteModal
+        isOpen={isQuoteModalOpen}
+        onClose={() => setIsQuoteModalOpen(false)}
+        onSubmit={handleQuoteSubmit}
+        deal={quoteModalDeal}
       />
     </div>
   );

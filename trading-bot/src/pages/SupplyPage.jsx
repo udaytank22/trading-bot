@@ -1,94 +1,51 @@
 import React, { useMemo, useState } from "react";
-import EmailPreviewModal from "../components/EmailPreviewModal";
-import DealDrawer from "../components/DealDrawer";
+import ContactModal from "../components/ContactModal";
+import SupplyViewModal from "../components/SupplyViewModal";
+import Tooltip from "../components/ui/Tooltip";
+import SupplyTable from "../components/SupplyTable";
+import { AppContext } from "../context";
 
-const cargoData = [
-  {
-    inquiry_id: "CGO-1001",
-    supplier: "Oceanic Logistics",
-    buyer_name: "Oceanic Logistics",
-    buyer_email: "oceanic@example.com",
-    cargo: "Steel Pipes",
-    quantity: "120 MT",
-    destination: "Dubai",
-    status: "IN_TRANSIT",
-    products: [
-      {
-        product_name: "Steel Pipes",
-      },
-    ],
-  },
-  {
-    inquiry_id: "CGO-1002",
-    supplier: "Global Marine",
-    buyer_name: "Global Marine",
-    buyer_email: "global@example.com",
-    cargo: "Copper Wire",
-    quantity: "45 MT",
-    destination: "Singapore",
-    status: "PENDING",
-    products: [
-      {
-        product_name: "Copper Wire",
-      },
-    ],
-  },
-  {
-    inquiry_id: "CGO-1003",
-    supplier: "BlueWave Cargo",
-    buyer_name: "BlueWave Cargo",
-    buyer_email: "bluewave@example.com",
-    cargo: "Industrial Valves",
-    quantity: "80 Units",
-    destination: "Rotterdam",
-    status: "DELIVERED",
-    products: [
-      {
-        product_name: "Industrial Valves",
-      },
-    ],
-  },
-  {
-    inquiry_id: "CGO-1004",
-    supplier: "Atlantic Freight",
-    buyer_name: "Atlantic Freight",
-    buyer_email: "atlantic@example.com",
-    cargo: "Engine Parts",
-    quantity: "25 Boxes",
-    destination: "Hamburg",
-    status: "LOADING",
-    products: [
-      {
-        product_name: "Engine Parts",
-      },
-    ],
-  },
-];
 
 export default function SupplyPage() {
+  const { supplyData, setSupplyData } = React.useContext(AppContext);
   const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
 
   /* Drawer State */
   const [selectedDeal, setSelectedDeal] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  /* Email Modal State */
-  const [emailModalDeal, setEmailModalDeal] = useState(null);
-  const [emailModalType, setEmailModalType] = useState("SUPPLY");
-  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  /* Contact Modal State */
+  const [contactModalDeal, setContactModalDeal] = useState(null);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
   /* Search Filter */
   const filteredData = useMemo(() => {
-    return cargoData.filter((item) => {
+    return supplyData.filter((item) => {
       const q = search.toLowerCase();
 
+      // Status Filter
+      if (filter !== "All" && item.status !== filter) {
+        return false;
+      }
+
+      // Search Filter
       return (
         item.supplier.toLowerCase().includes(q) ||
         item.cargo.toLowerCase().includes(q) ||
         item.destination.toLowerCase().includes(q)
       );
     });
-  }, [search]);
+  }, [search, filter, supplyData]);
+
+  const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+  const currentItems = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredData.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredData, currentPage]);
 
   /* Dummy Update Function */
   const updateDealStatus = (id, status) => {
@@ -114,28 +71,69 @@ export default function SupplyPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Supply Of Cargo</h1>
-
-          <p className="text-sm text-gray-500 mt-1">
-            Track cargo supply and shipment details
-          </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-3">
+      {/* Header & Toolbar */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-4 relative w-full">
           {/* Search */}
-          <input
-            type="text"
-            placeholder="Search cargo..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="h-10 w-full sm:w-[280px] px-4 rounded-lg bg-[#1a1d23] border border-[#2a2d33] text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
-          />
+          <div className="relative w-[340px]">
+            <svg
+              className="absolute left-3.5 top-2.5 w-5 h-5 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+              />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search by supplier, cargo or destination..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full bg-[#1a1d23] border border-[#2a2d33] rounded-lg h-10 pl-11 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors shadow-sm"
+            />
+          </div>
+
+          {/* Filter */}
+          <div className="relative">
+            <select
+              value={filter}
+              onChange={(e) => {
+                setFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="appearance-none bg-[#1a1d23] border border-[#2a2d33] rounded-lg h-10 pl-4 pr-11 text-sm text-gray-300 font-medium focus:outline-none focus:border-purple-500 transition-colors cursor-pointer shadow-sm hover:border-gray-600"
+            >
+              <option value="All">All Status</option>
+              <option value="PENDING">Pending</option>
+              <option value="LOADING">Loading</option>
+              <option value="IN_TRANSIT">In Transit</option>
+              <option value="DELIVERED">Delivered</option>
+            </select>
+            <svg
+              className="absolute right-3.5 top-3 w-4 h-4 text-gray-500 pointer-events-none"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2.5}
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m19.5 8.25-7.5 7.5-7.5-7.5"
+              />
+            </svg>
+          </div>
 
           {/* Add Button */}
-          <button className="h-10 px-4 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold transition-colors">
+          <button className="absolute right-0 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors">
             Add Cargo
           </button>
         </div>
@@ -143,137 +141,58 @@ export default function SupplyPage() {
 
       {/* Table */}
       <div className="bg-[#1a1d23] border border-[#2a2d33] rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full table-auto">
-            <thead className="bg-[#242830] border-b border-[#2a2d33]">
-              <tr className="text-left text-[11px] uppercase text-gray-400">
-                <th className="px-4 md:px-6 py-4">Cargo ID</th>
+        <SupplyTable
+          items={currentItems}
+          getStatusStyle={getStatusStyle}
+          onView={(item) => {
+            setSelectedDeal(item);
+            setIsModalOpen(true);
+          }}
+          onContact={(item) => {
+            setContactModalDeal(item);
+            setIsContactModalOpen(true);
+          }}
+        />
 
-                <th className="px-4 md:px-6 py-4">Supplier</th>
+        {/* Footer with Pagination */}
+        <div className="flex items-center justify-between px-6 py-4 border-t border-[#2a2d33] bg-[#0c0e12]/30">
+          <span className="text-sm text-gray-500 font-medium">
+            Total Cargo Supplies:
+            <span className="text-gray-300 ml-1">{filteredData.length}</span>
+          </span>
 
-                <th className="px-4 md:px-6 py-4">Cargo</th>
-
-                <th className="px-4 md:px-6 py-4 hidden md:table-cell">
-                  Quantity
-                </th>
-
-                <th className="px-4 md:px-6 py-4 hidden lg:table-cell">
-                  Destination
-                </th>
-
-                <th className="px-4 md:px-6 py-4">Status</th>
-
-                <th className="px-4 md:px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-[#2a2d33]/50">
-              {filteredData.map((item, idx) => (
-                <tr
-                  key={item.inquiry_id}
-                  className={`hover:bg-white/[0.04] transition-colors ${
-                    idx % 2 !== 0 ? "bg-[#242830]/20" : ""
-                  }`}
-                >
-                  {/* Cargo ID */}
-                  <td className="px-4 md:px-6 py-4 text-sm text-gray-400">
-                    {item.inquiry_id}
-                  </td>
-
-                  {/* Supplier */}
-                  <td className="px-4 md:px-6 py-4">
-                    <div className="flex flex-col">
-                      <span className="text-white font-semibold text-sm">
-                        {item.supplier}
-                      </span>
-
-                      <span className="text-gray-500 text-[11px] break-all">
-                        {item.buyer_email}
-                      </span>
-                    </div>
-                  </td>
-
-                  {/* Cargo */}
-                  <td className="px-4 md:px-6 py-4 text-sm text-gray-300">
-                    {item.cargo}
-                  </td>
-
-                  {/* Quantity */}
-                  <td className="px-4 md:px-6 py-4 text-sm text-gray-300 hidden md:table-cell">
-                    {item.quantity}
-                  </td>
-
-                  {/* Destination */}
-                  <td className="px-4 md:px-6 py-4 text-sm text-gray-300 hidden lg:table-cell">
-                    {item.destination}
-                  </td>
-
-                  {/* Status */}
-                  <td className="px-4 md:px-6 py-4">
-                    <span
-                      className={`px-2 py-1 rounded-lg text-xs font-semibold ${getStatusStyle(
-                        item.status,
-                      )}`}
-                    >
-                      {item.status.replace("_", " ")}
-                    </span>
-                  </td>
-
-                  {/* Actions */}
-                  <td className="px-4 md:px-6 py-4">
-                    <div className="flex flex-col md:flex-row justify-end gap-2">
-                      {/* View */}
-                      <button
-                        onClick={() => {
-                          setSelectedDeal(item);
-                          setIsDrawerOpen(true);
-                        }}
-                        className="px-3 py-2 text-xs font-semibold cursor-pointer border border-blue-500/40 text-blue-400 rounded-lg hover:bg-blue-500/10 transition-all"
-                      >
-                        View
-                      </button>
-
-                      {/* Contact */}
-                      <button
-                        onClick={() => {
-                          setEmailModalDeal(item);
-                          setEmailModalType("SUPPLY");
-                          setIsEmailModalOpen(true);
-                        }}
-                        className="px-3 py-2 text-xs font-semibold cursor-pointer border border-emerald-500/40 text-emerald-400 rounded-lg hover:bg-emerald-500/10 transition-all"
-                      >
-                        Contact
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Footer */}
-        <div className="px-5 py-4 border-t border-[#2a2d33] text-sm text-gray-500">
-          Total Cargo Supplies:
-          <span className="text-gray-300 ml-1">{filteredData.length}</span>
+          <div className="flex gap-2">
+            <button
+              disabled={currentPage === 1 || filteredData.length === 0}
+              onClick={() => setCurrentPage((p) => p - 1)}
+              className="px-4 py-2 border border-[#2a2d33] rounded-lg text-sm text-gray-300 font-bold hover:bg-white/[0.04] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+              ← Previous
+            </button>
+            <button
+              disabled={currentPage === totalPages || filteredData.length === 0}
+              onClick={() => setCurrentPage((p) => p + 1)}
+              className="px-4 py-2 border border-[#2a2d33] rounded-lg text-sm text-gray-300 font-bold hover:bg-white/[0.04] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            >
+              Next →
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Drawer */}
-      <DealDrawer
+      {/* Modal View */}
+      <SupplyViewModal
         deal={selectedDeal}
-        isOpen={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         onStatusUpdate={updateDealStatus}
       />
 
-      {/* Email Modal */}
-      <EmailPreviewModal
-        deal={emailModalDeal}
-        initialEmailType={emailModalType}
-        isOpen={isEmailModalOpen}
-        onClose={() => setIsEmailModalOpen(false)}
-        onStatusUpdate={updateDealStatus}
+      {/* Contact Modal */}
+      <ContactModal
+        deal={contactModalDeal}
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
       />
     </div>
   );

@@ -53,7 +53,7 @@ export const mockInquiries = [
     buyer_name: "Balaji Impex",
     buyer_email: "procurement@balajiimpex.in",
     date_received: "2026-04-18T14:45:00Z",
-    status: "RFQ_SENT",
+    status: "RFQ_RECEIVED",
     products: [
       { product_name: "Industrial Safety Helmets", quantity: 500, unit: "pcs", specs: "IS:2925 certified, Yellow" },
       { product_name: "Safety Shoes", quantity: 150, unit: "pair", specs: "Steel toe, PU sole, Size 8-10" }
