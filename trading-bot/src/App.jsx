@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppContext } from "./context";
 import { mockInquiries } from "./data/mockInquiries";
 import { mockSupply } from "./data/mockSupply";
+import { mockPurchaseOrders } from "./data/mockPurchaseOrders";
 import Sidebar from "./components/layout/Sidebar";
 import Topbar from "./components/layout/Topbar";
 import SupplyPage from "./pages/SupplyPage";
@@ -13,6 +14,7 @@ const InquiriesPage = React.lazy(() => import("./pages/InquiriesPage"));
 const ProfitPage = React.lazy(() => import("./pages/ProfitPage"));
 const SettingsPage = React.lazy(() => import("./pages/SettingsPage"));
 const LoginPage = React.lazy(() => import("./pages/LoginPage"));
+const PurchaseOrdersPage = React.lazy(() => import("./pages/PurchaseOrdersPage"));
 
 function PageLoader() {
   return (
@@ -44,6 +46,7 @@ function PageLoader() {
 export default function App() {
   const [inquiriesData, setInquiriesData] = React.useState(mockInquiries);
   const [supplyData, setSupplyData] = React.useState(mockSupply);
+  const [purchaseOrdersData, setPurchaseOrdersData] = React.useState(mockPurchaseOrders);
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
   const [isAuthenticated, setIsAuthenticated] = React.useState(() => {
     return localStorage.getItem("is_auth") === "true";
@@ -67,7 +70,9 @@ export default function App() {
         inquiriesData, 
         setInquiriesData, 
         supplyData, 
-        setSupplyData, 
+        setSupplyData,
+        purchaseOrdersData,
+        setPurchaseOrdersData,
         isAuthenticated, 
         login, 
         logout 
@@ -92,6 +97,7 @@ export default function App() {
                             <Route path="/inquiries" element={<InquiriesPage />} />
                             <Route path="/supply" element={<SupplyPage />} />
                             <Route path="/profit" element={<ProfitPage />} />
+                            <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
                             <Route path="/settings" element={<SettingsPage />} />
                           </Routes>
                         </div>

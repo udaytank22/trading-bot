@@ -19,6 +19,7 @@ import InquiryTable from "../components/InquiryTable";
 import QuoteModal from "../components/QuoteModal";
 import RFQModal from "../components/RFQModal";
 import MultiEmailPreviewModal from "../components/MultiEmailPreviewModal";
+import AddInquiryModal from "../components/AddInquiryModal";
 
 
 function EmptyState() {
@@ -57,7 +58,6 @@ export default function InquiriesPage() {
   // Filters & pagination
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState(location.state?.filter ?? "All");
-  const [dateFilter, setDateFilter] = useState(new Date().toISOString().split('T')[0]);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 8;
 
@@ -99,8 +99,7 @@ export default function InquiriesPage() {
 
   // Filtering
   const filteredInquiries = useMemo(() => {
-    const todayStr = new Date().toISOString().split("T")[0];
-    return inquiriesData.filter((inq) => {
+    let result = inquiriesData.filter((inq) => {
       if (
         filter === "QUOTE_SENT_ONLY" &&
         !["QUOTE_SENT", "CLOSED"].includes(inq.status)
@@ -116,16 +115,6 @@ export default function InquiriesPage() {
         inq.status !== filter
       )
         return false;
-      if (
-        location.state?.date === "today" &&
-        !inq.date_received.startsWith(todayStr)
-      )
-        return false;
-      
-      // Manual Date Filter
-      if (dateFilter && !inq.date_received.startsWith(dateFilter)) {
-        return false;
-      }
 
       if (search.trim()) {
         const q = search.toLowerCase();
@@ -137,7 +126,10 @@ export default function InquiriesPage() {
       }
       return true;
     });
-  }, [inquiriesData, search, filter, dateFilter, location.state?.date]);
+
+    // Sort by latest date first
+    return result.sort((a, b) => new Date(b.date_received) - new Date(a.date_received));
+  }, [inquiriesData, search, filter]);
 
   const totalPages = Math.ceil(filteredInquiries.length / ITEMS_PER_PAGE);
   const currentItems = useMemo(() => {
@@ -164,6 +156,7 @@ export default function InquiriesPage() {
 
   const [pendingRFQs, setPendingRFQs] = useState([]);
   const [isMultiEmailModalOpen, setIsMultiEmailModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   // Inline action state
   const [inlineActionRow, setInlineActionRow] = useState(null);
@@ -224,17 +217,24 @@ export default function InquiriesPage() {
     }
   };
 
-  const handleDirectSendRFQ = async (deal) => {
-    setRowActionLoading(true);
-    try {
-      await triggerRFQ(deal);
-      updateDealStatus(deal.inquiry_id, "RFQ_SENT");
-      setInlineActionRow(null);
-    } catch {
-      showToast("Failed to send. Please try again.", "error");
-    } finally {
-      setRowActionLoading(false);
-    }
+  const handleAddInquiry = (newInquiry) => {
+    // Generate a temporary ID
+    const tempInquiry = {
+      ...newInquiry,
+      inquiry_id: `INQ-${Date.now()}`,
+      status: "PENDING",
+      date_received: new Date().toISOString(),
+      buyer_name: newInquiry.customer,
+      buyer_email: "pending@example.com", // Fallback
+      products: newInquiry.products.map(p => ({
+        product_name: p.description,
+        quantity: p.quantity,
+        unit: p.unit
+      }))
+    };
+    
+    setInquiriesData(prev => [tempInquiry, ...prev]);
+    showToast("New inquiry created successfully", "success");
   };
 
   const startShowing =
@@ -323,29 +323,14 @@ export default function InquiriesPage() {
               />
             </svg>
           </div>
-
-          {/* Date Filter */}
-          <div className="relative">
-            <input
-              type="date"
-              value={dateFilter}
-              onChange={(e) => {
-                setDateFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="bg-[#1a1d23] border border-[#2a2d33] rounded-lg h-10 px-4 text-sm text-gray-300 font-medium focus:outline-none focus:border-purple-500 transition-colors cursor-pointer shadow-sm hover:border-gray-600 [color-scheme:dark]"
-            />
-          </div>
-          <button
-            className="absolute right-0 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-            onClick={() => {
-              // TODO: implement add inquiry action
-              console.log("Add Inquiry clicked");
-            }}
-          >
-            Add Inquiry
-          </button>
         </div>
+
+        <button
+          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors shadow-lg active:scale-95 transform"
+          onClick={() => setIsAddModalOpen(true)}
+        >
+          Add Inquiry
+        </button>
       </div>
 
       {/* Table */}
@@ -428,6 +413,11 @@ export default function InquiriesPage() {
         stagedRFQs={pendingRFQs}
         inquiryDeal={rfqModalDeal}
         onStatusUpdate={updateDealStatus}
+      />
+      <AddInquiryModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSubmit={handleAddInquiry}
       />
     </div>
   );

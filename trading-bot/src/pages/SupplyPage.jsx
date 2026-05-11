@@ -5,12 +5,10 @@ import Tooltip from "../components/ui/Tooltip";
 import SupplyTable from "../components/SupplyTable";
 import { AppContext } from "../context";
 
-
 export default function SupplyPage() {
   const { supplyData, setSupplyData } = React.useContext(AppContext);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
-  const [dateFilter, setDateFilter] = useState(new Date().toISOString().split('T')[0]);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 5;
 
@@ -25,16 +23,11 @@ export default function SupplyPage() {
 
   /* Search Filter */
   const filteredData = useMemo(() => {
-    return supplyData.filter((item) => {
+    let result = supplyData.filter((item) => {
       const q = search.toLowerCase();
 
       // Status Filter
       if (filter !== "All" && item.status !== filter) {
-        return false;
-      }
-
-      // Date Filter
-      if (dateFilter && item.date !== dateFilter) {
         return false;
       }
 
@@ -45,7 +38,10 @@ export default function SupplyPage() {
         item.destination.toLowerCase().includes(q)
       );
     });
-  }, [search, filter, dateFilter, supplyData]);
+
+    // Sort by latest date first
+    return result.sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [search, filter, supplyData]);
 
   const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
   const currentItems = useMemo(() => {
@@ -137,25 +133,18 @@ export default function SupplyPage() {
               />
             </svg>
           </div>
-
-          {/* Date Filter */}
-          <div className="relative">
-            <input
-              type="date"
-              value={dateFilter}
-              onChange={(e) => {
-                setDateFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="bg-[#1a1d23] border border-[#2a2d33] rounded-lg h-10 px-4 text-sm text-gray-300 font-medium focus:outline-none focus:border-purple-500 transition-colors cursor-pointer shadow-sm hover:border-gray-600 [color-scheme:dark]"
-            />
-          </div>
-
-          {/* Add Button */}
-          <button className="absolute right-0 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors">
-            Add Cargo
-          </button>
         </div>
+
+        {/* Add Button */}
+        <button
+          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors shadow-lg active:scale-95 transform"
+          onClick={() => {
+            // TODO: implement add inquiry action
+            console.log("Add Supply clicked");
+          }}
+        >
+          Add Supply
+        </button>
       </div>
 
       {/* Table */}
