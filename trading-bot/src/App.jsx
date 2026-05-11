@@ -1,5 +1,5 @@
 import React, { Suspense } from "react";
-import { HashRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppContext } from "./context";
 import { mockInquiries } from "./data/mockInquiries";
 import { mockSupply } from "./data/mockSupply";
@@ -12,6 +12,7 @@ const DashboardPage = React.lazy(() => import("./pages/DashboardPage"));
 const InquiriesPage = React.lazy(() => import("./pages/InquiriesPage"));
 const ProfitPage = React.lazy(() => import("./pages/ProfitPage"));
 const SettingsPage = React.lazy(() => import("./pages/SettingsPage"));
+const LoginPage = React.lazy(() => import("./pages/LoginPage"));
 
 function PageLoader() {
   return (
@@ -44,31 +45,69 @@ export default function App() {
   const [inquiriesData, setInquiriesData] = React.useState(mockInquiries);
   const [supplyData, setSupplyData] = React.useState(mockSupply);
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
+  const [isAuthenticated, setIsAuthenticated] = React.useState(() => {
+    return localStorage.getItem("is_auth") === "true";
+  });
+
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
 
+  const login = () => {
+    setIsAuthenticated(true);
+    localStorage.setItem("is_auth", "true");
+  };
+
+  const logout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem("is_auth");
+  };
+
   return (
-    <AppContext.Provider value={{ inquiriesData, setInquiriesData, supplyData, setSupplyData }}>
+    <AppContext.Provider 
+      value={{ 
+        inquiriesData, 
+        setInquiriesData, 
+        supplyData, 
+        setSupplyData, 
+        isAuthenticated, 
+        login, 
+        logout 
+      }}
+    >
       <HashRouter>
-        <div className="flex w-screen h-screen bg-[#0f1117] text-white overflow-hidden font-sans">
-          <Sidebar isOpen={isSidebarOpen} />
-          <main className="flex-1 flex flex-col h-full bg-[#0f1117] relative overflow-hidden">
-            <Topbar onToggleSidebar={toggleSidebar} />
-            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-              <div className="max-w-[1280px] min-w-[1024px] mx-auto h-full">
-                <Suspense fallback={<PageLoader />}>
-                  <Routes>
-                    <Route path="/" element={<DashboardPage />} />
-                    <Route path="/inquiries" element={<InquiriesPage />} />
-                    <Route path="/supply" element={<SupplyPage />} />
-                    <Route path="/profit" element={<ProfitPage />} />
-                    <Route path="/settings" element={<SettingsPage />} />
-                  </Routes>
-                </Suspense>
-              </div>
-            </div>
-          </main>
-        </div>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route
+              path="*"
+              element={
+                isAuthenticated ? (
+                  <div className="flex w-screen h-screen bg-[#0f1117] text-white overflow-hidden font-sans">
+                    <Sidebar isOpen={isSidebarOpen} />
+                    <main className="flex-1 flex flex-col h-full bg-[#0f1117] relative overflow-hidden">
+                      <Topbar onToggleSidebar={toggleSidebar} />
+                      <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                        <div className="max-w-[1280px] min-w-[1024px] mx-auto h-full">
+                          <Routes>
+                            <Route path="/" element={<DashboardPage />} />
+                            <Route path="/inquiries" element={<InquiriesPage />} />
+                            <Route path="/supply" element={<SupplyPage />} />
+                            <Route path="/profit" element={<ProfitPage />} />
+                            <Route path="/settings" element={<SettingsPage />} />
+                          </Routes>
+                        </div>
+                      </div>
+                    </main>
+                  </div>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+          </Routes>
+        </Suspense>
       </HashRouter>
     </AppContext.Provider>
   );
 }
+
+
