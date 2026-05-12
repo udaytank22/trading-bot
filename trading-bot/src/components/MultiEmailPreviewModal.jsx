@@ -65,7 +65,7 @@ export default function MultiEmailPreviewModal({ isOpen, onClose, stagedRFQs, in
       // Send all RFQs in parallel
       await Promise.all(stagedRFQs.map(() => triggerRFQ(inquiryDeal)));
 
-      if (onStatusUpdate) onStatusUpdate(inquiryDeal.inquiry_id, 'RFQ_SENT');
+      if (onStatusUpdate) onStatusUpdate(inquiryDeal.inquiry_id, 'CLIENT_QUOTING');
 
       setSendState('success');
       setTimeout(() => {

@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import EmailPreviewModal from "./EmailPreviewModal";
 import { calculateMargin, formatINR } from "../services/marginEngine";
 import { CONFIG } from "../config";
+import { StatusBadge } from "./ui";
 
 export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
   const [activeTab, setActiveTab] = useState("RFQ");
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [localMyQuote, setLocalMyQuote] = useState(null); // Used to store calculated quote before sending
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -23,39 +25,40 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
     }
   }, [deal]);
 
-  if (!deal && !isOpen) return null;
+  if (!deal || !isOpen) return null;
 
   const formatCurrency = formatINR;
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case "PENDING":
-        return (
-          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-500 border border-amber-500/20 tracking-wide uppercase">
-            PENDING
-          </span>
-        );
-      case "RFQ_SENT":
-        return (
-          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-500/20 text-blue-500 border border-blue-500/20 tracking-wide uppercase">
-            RFQ SENT
-          </span>
-        );
-      case "QUOTE_SENT":
-        return (
-          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-green-500/20 text-green-500 border border-green-500/20 tracking-wide uppercase">
-            QUOTE SENT
-          </span>
-        );
-      case "CLOSED":
-        return (
-          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-gray-500/20 text-gray-400 border border-gray-500/20 tracking-wide uppercase">
-            CLOSED
-          </span>
-        );
-      default:
-        return null;
-    }
+  const getWorkflowSteps = (status) => {
+    const steps = [
+      { id: 'PENDING', label: 'Created' },
+      { id: 'RFQ_READY', label: 'Stock Checked' },
+      { id: 'CLIENT_QUOTING', label: 'Client Quoting' },
+      { id: 'TL_REVIEW', label: 'TL Review' },
+      { id: 'ADMIN_APPROVAL', label: 'Admin Approval' },
+      { id: 'EMPLOYEE_VERIFY', label: 'Employee Verify' },
+      { id: 'CLIENT_FINAL_APPROVAL', label: 'Final Approval' },
+      { id: 'QUOTE_SENT', label: 'Quoted' },
+      { id: 'CONFIRMED', label: 'Confirmed' },
+    ];
+
+    const currentIdx = steps.findIndex(s => s.id === status);
+    
+    return (
+      <div className="flex items-center gap-1 mt-4 mb-2 overflow-x-auto pb-2 scrollbar-hide">
+        {steps.map((step, idx) => (
+          <React.Fragment key={step.id}>
+            <div className="flex flex-col items-center min-w-[70px]">
+              <div className={`w-3 h-3 rounded-full border-2 ${idx <= currentIdx ? 'bg-purple-500 border-purple-500' : 'bg-transparent border-gray-600'}`} />
+              <span className={`text-[8px] mt-1 font-bold uppercase ${idx <= currentIdx ? 'text-purple-400' : 'text-gray-600'}`}>{step.label}</span>
+            </div>
+            {idx < steps.length - 1 && (
+              <div className={`h-[1px] w-4 mt-[-14px] ${idx < currentIdx ? 'bg-purple-500' : 'bg-gray-600'}`} />
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+    );
   };
 
   let totalDealValue = 0;
@@ -77,7 +80,7 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
   };
 
   const handleCalculateQuote = () => {
-    if (!deal.seller_quote) return;
+    if (!deal || !deal.seller_quote) return;
     const settings = { default_margin_percent: CONFIG.defaultMargin || 50 };
     const calculated = calculateMargin(deal.seller_quote.products, settings);
     setLocalMyQuote(calculated);
@@ -88,6 +91,7 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
   const currentDealWithLocalQuote = deal
     ? { ...deal, my_quote: displayQuote }
     : null;
+
 
   return (
     <>
@@ -127,7 +131,7 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
                 <div className="font-mono text-gray-400 text-lg tracking-wide">
                   {deal.inquiry_id}
                 </div>
-                {getStatusBadge(deal.status)}
+                <StatusBadge status={deal.status} />
               </div>
               <div className="text-white text-[20px] font-bold leading-tight tracking-wide">
                 {deal.buyer_name}
@@ -135,6 +139,10 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
               <div className="text-gray-400 text-[14px] mt-1 tracking-wide">
                 {deal.buyer_email}
               </div>
+              
+              {/* Workflow Visualization */}
+              {getWorkflowSteps(deal.status)}
+
               <div className="text-gray-500 text-[13px] mt-1.5 font-medium">
                 {new Date(deal.date_received).toLocaleString("en-US", {
                   day: "numeric",
@@ -150,8 +158,32 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
 
             {/* SECTION 2: Products Requested */}
             <div className="p-6">
-              <div className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-4">
-                Products Requested
+              <div className="flex justify-between items-center mb-4">
+                <div className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">
+                  Products Requested ({deal.products.length})
+                </div>
+                {deal.products.length > 4 && (
+                  <button 
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="text-[10px] font-bold text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1"
+                  >
+                    {isExpanded ? (
+                      <>
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" />
+                        </svg>
+                        Show Less
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                        </svg>
+                        Show All
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
               <div className="overflow-x-auto rounded-lg border border-[#2a2d36] bg-[#242830]/50 shadow-sm">
                 <table className="w-full text-left text-sm text-gray-300">
@@ -172,7 +204,7 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#2a2d36]/50">
-                    {deal.products.map((p, i) => (
+                    {(isExpanded ? deal.products : deal.products.slice(0, 4)).map((p, i) => (
                       <tr
                         key={i}
                         className="hover:bg-white/[0.03] bg-white/[0.01]"

@@ -43,21 +43,76 @@ const COLUMNS = [
  * Returns the action button props for the dynamic action button.
  * The button text and colour changes based on the inquiry's current status.
  */
-function getActionBtn(inq, onSendQuote) {
+function getActionBtn(inq, onAction, currentUser) {
+  const role = currentUser?.role || "Admin";
+  const status = inq.status;
+
+  // Admin has full rights
+  const isAdmin = role === "Admin" || role === "Administrator";
+
   const map = {
-    PENDING:      { label: "Send RFQ",     variant: "secondary", color: "amber"  },
-    RFQ_RECEIVED: { label: "Send Quote",   variant: "secondary", color: "green"  },
-    QUOTE_SENT:   { label: "Confirm Deal", variant: "secondary", color: "purple" },
+    PENDING: {
+      label: "Check Stock",
+      variant: "secondary",
+      color: "amber",
+      allowedRoles: ["Sales Executive", "Sourcing Manager", "Admin"],
+    },
+    RFQ_READY: {
+      label: "Create RFQ",
+      variant: "secondary",
+      color: "blue",
+      allowedRoles: ["Sales Executive", "Sourcing Manager", "Admin"],
+    },
+    CLIENT_QUOTING: {
+      label: "Quote Prices",
+      variant: "secondary",
+      color: "cyan",
+      allowedRoles: ["Client", "Admin"],
+    },
+    TL_REVIEW: {
+      label: "Set Margin",
+      variant: "secondary",
+      color: "rose",
+      allowedRoles: ["Sourcing Manager", "Admin"], // Assuming Sourcing Manager as TL
+    },
+    ADMIN_APPROVAL: {
+      label: "Approve",
+      variant: "secondary",
+      color: "orange",
+      allowedRoles: ["Admin"],
+    },
+    EMPLOYEE_VERIFY: {
+      label: "Verify & Quote",
+      variant: "secondary",
+      color: "sky",
+      allowedRoles: ["Sales Executive", "Sourcing Manager", "Admin"],
+    },
+    CLIENT_FINAL_APPROVAL: {
+      label: "Final Decision",
+      variant: "secondary",
+      color: "violet",
+      allowedRoles: ["Client", "Admin"],
+    },
+    QUOTE_SENT: {
+      label: "Confirm Deal",
+      variant: "secondary",
+      color: "emerald",
+      allowedRoles: ["Admin", "Sales Executive"],
+    },
   };
-  const cfg = map[inq.status];
-  if (!cfg) return null; // No dynamic action for CONFIRMED / CLOSED
+
+  const cfg = map[status];
+  if (!cfg) return null;
+
+  const isAllowed = isAdmin || cfg.allowedRoles.includes(role);
+  if (!isAllowed) return null;
 
   return (
     <Button
       variant="secondary"
       size="sm"
-      className={`border-${cfg.color === "amber" ? "amber" : cfg.color === "green" ? "emerald" : "purple"}-500/40 text-${cfg.color === "amber" ? "amber" : cfg.color === "green" ? "emerald" : "purple"}-400 hover:bg-${cfg.color === "amber" ? "amber" : cfg.color === "green" ? "emerald" : "purple"}-500/10`}
-      onClick={() => onSendQuote(inq)}
+      className={`border-${cfg.color}-500/40 text-${cfg.color}-400 hover:bg-${cfg.color}-500/10`}
+      onClick={() => onAction(inq, status)}
     >
       {cfg.label}
     </Button>
@@ -70,9 +125,10 @@ function getActionBtn(inq, onSendQuote) {
  * @param {Object}   props
  * @param {Array}    props.items       - Filtered + paginated inquiry records
  * @param {function} props.onView      - Open detail drawer
- * @param {function} props.onSendQuote - Send RFQ / Quote / Confirm (handler checks status)
+ * @param {function} props.onAction    - Dynamic action handler
+ * @param {Object}   props.currentUser - Current logged in user
  */
-const InquiryTable = ({ items, onView, onSendQuote }) => {
+const InquiryTable = ({ items, onView, onAction, currentUser }) => {
   /**
    * Renders a single inquiry as a <tr>.
    * DataTable calls this for each item in props.items.
@@ -149,7 +205,7 @@ const InquiryTable = ({ items, onView, onSendQuote }) => {
           </Button>
 
           {/* Dynamic action changes based on inquiry status */}
-          {getActionBtn(inq, onSendQuote)}
+          {getActionBtn(inq, onAction, currentUser)}
         </div>
       </td>
     </tr>

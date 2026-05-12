@@ -1,0 +1,19 @@
+version: "3"
+agent:
+  authtoken: 2AZqlM5smJVjvC9wuUxpHvJlxBO_4QGaYCVHd67sQ4UqNj21u
+endpoints:
+  - name: cli-quickstart
+    traffic_policy:
+      on_http_request:
+        - actions:
+            - type: oauth
+              config:
+                provider: google
+        - expressions:
+            - "actions.ngrok.oauth.identity.email != 'tankuday9059@gmail.com'"
+            - "actions.ngrok.oauth.identity.email != 'tankshyam15@gmail.com'"
+          actions:
+            - type: deny
+    upstream:
+      url: 5173
+      protocol: http1

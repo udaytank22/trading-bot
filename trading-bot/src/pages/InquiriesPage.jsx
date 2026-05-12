@@ -16,6 +16,7 @@
 
 import React, { useState, useEffect, useMemo, useContext, useCallback } from "react";
 import { useLocation } from "react-router-dom";
+import Swal from "sweetalert2";
 import { AppContext } from "../context";
 import DealDrawer from "../components/DealDrawer";
 import EmailPreviewModal from "../components/EmailPreviewModal";
@@ -25,7 +26,10 @@ import { useToast } from "../hooks/useToast";
 import InquiryTable from "../components/InquiryTable";
 import QuoteModal from "../components/QuoteModal";
 import RFQModal from "../components/RFQModal";
+import StockCheckModal from "../components/StockCheckModal";
 import MultiEmailPreviewModal from "../components/MultiEmailPreviewModal";
+import VerificationModal from "../components/VerificationModal";
+import AdminApprovalModal from "../components/AdminApprovalModal";
 import AddInquiryModal from "../components/AddInquiryModal";
 import { Toast, PageToolbar, Pagination } from "../components/ui";
 
@@ -60,7 +64,7 @@ function EmptyState() {
 /* ── Main page ───────────────────────────────────────────────────── */
 export default function InquiriesPage() {
   const location = useLocation();
-  const { inquiriesData, setInquiriesData, setSupplyData } = useContext(AppContext);
+  const { inquiriesData, setInquiriesData, setSupplyData, currentUser } = useContext(AppContext);
   const { toast, showToast } = useToast();
 
   // Filters & pagination
@@ -115,7 +119,7 @@ export default function InquiriesPage() {
         return false;
       if (
         filter === "PENDING_REPLIES" &&
-        !["PENDING", "RFQ_SENT"].includes(inq.status)
+        !["PENDING", "RFQ_SENT", "CLIENT_QUOTING"].includes(inq.status)
       )
         return false;
       if (
@@ -159,8 +163,9 @@ export default function InquiriesPage() {
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
   const [quoteModalDeal, setQuoteModalDeal] = useState(null);
 
-  const [isRFQModalOpen, setIsRFQModalOpen] = useState(false);
-  const [rfqModalDeal, setRfqModalDeal] = useState(null);
+  // Step-by-step workflow state (null = show table, otherwise show full-page step view)
+  const [activeStepView, setActiveStepView] = useState(null); // 'STOCK_CHECK', 'RFQ', 'QUOTE', 'VERIFY', 'ADMIN_APPROVAL'
+  const [activeStepDeal, setActiveStepDeal] = useState(null);
 
   const [pendingRFQs, setPendingRFQs] = useState([]);
   const [isMultiEmailModalOpen, setIsMultiEmailModalOpen] = useState(false);
@@ -171,50 +176,176 @@ export default function InquiriesPage() {
   const [rowActionLoading, setRowActionLoading] = useState(false);
 
   const updateDealStatus = useCallback(
-    (id, newStatus) => {
+    (id, newStatus, extraData = {}) => {
       setInquiriesData((prev) =>
         prev.map((inq) =>
-          inq.inquiry_id === id ? { ...inq, status: newStatus } : inq,
+          inq.inquiry_id === id ? { ...inq, status: newStatus, ...extraData } : inq,
         ),
       );
       setSelectedDeal((prev) =>
-        prev?.inquiry_id === id ? { ...prev, status: newStatus } : prev,
+        prev?.inquiry_id === id ? { ...prev, status: newStatus, ...extraData } : prev,
       );
     },
     [setInquiriesData],
   );
 
-  const handleSendQuoteClick = (deal) => {
-    if (deal.status === "PENDING") {
-      setRfqModalDeal(deal);
-      setIsRFQModalOpen(true);
-    } else if (deal.status === "RFQ_RECEIVED") {
-      setQuoteModalDeal(deal);
-      setIsQuoteModalOpen(true);
-    } else if (deal.status === "QUOTE_SENT") {
-      // Confirm Deal & Move to Supply
-      const newCargo = {
-        inquiry_id: deal.inquiry_id,
-        supplier: "Assigned Supplier", // This would normally come from the RFQ responses
-        buyer_name: deal.buyer_name,
-        buyer_email: deal.buyer_email,
-        cargo: deal.products[0]?.product_name || "Unknown Cargo",
-        quantity: "See Details",
-        destination: "TBD",
-        status: "PENDING",
-        products: deal.products,
-      };
-
-      setSupplyData((prev) => [...prev, newCargo]);
-      updateDealStatus(deal.inquiry_id, "CONFIRMED");
-      showToast("Deal confirmed and moved to Supply", "success");
+  const handleStockConfirm = (selectedSuppliers) => {
+    if (activeStepDeal) {
+      updateDealStatus(activeStepDeal.inquiry_id, "RFQ_READY", { 
+        selected_suppliers: selectedSuppliers 
+      });
+      setActiveStepView(null);
+      showToast(`Selected ${selectedSuppliers.length} suppliers for RFQ.`, "success");
     }
   };
 
-  const handleQuoteSubmit = ({ discount, margin, narrative }) => {
-    if (quoteModalDeal) {
-      updateDealStatus(quoteModalDeal.inquiry_id, "QUOTE_SENT");
-      showToast("Quote sent to buyer", "success");
+  const handleVerifyConfirm = () => {
+    if (activeStepDeal) {
+      updateDealStatus(activeStepDeal.inquiry_id, "CLIENT_FINAL_APPROVAL");
+      setActiveStepView(null);
+      showToast("Quotation verified and sent to client.", "success");
+    }
+  };
+
+  const handleAdminConfirm = (adjustedData) => {
+    if (activeStepDeal) {
+      updateDealStatus(activeStepDeal.inquiry_id, "EMPLOYEE_VERIFY", {
+        admin_approved: true,
+        margin_percent: adjustedData.margin_percent,
+        discount_percent: adjustedData.discount_percent,
+        my_quote: {
+          products: adjustedData.products
+        }
+      });
+      setActiveStepView(null);
+      showToast("Quotation approved by Admin.", "success");
+    }
+  };
+
+  const handleAction = (deal, currentStatus) => {
+    setActiveStepDeal(deal);
+    switch (currentStatus) {
+      case "PENDING":
+        setActiveStepView('STOCK_CHECK');
+        break;
+      case "RFQ_READY":
+        setActiveStepView('RFQ');
+        break;
+      case "CLIENT_QUOTING":
+      case "TL_REVIEW":
+        setActiveStepView('QUOTE');
+        break;
+      case "ADMIN_APPROVAL":
+        setActiveStepView('ADMIN_APPROVAL');
+        break;
+      case "EMPLOYEE_VERIFY":
+        setActiveStepView('VERIFY');
+        break;
+      case "CLIENT_FINAL_APPROVAL":
+        // Simulated client decision using SweetAlert2
+        Swal.fire({
+          title: "Final Quotation Decision",
+          text: `Do you want to accept the quotation for ${deal.inquiry_id}?`,
+          icon: "question",
+          showCancelButton: true,
+          confirmButtonColor: "#8b5cf6",
+          cancelButtonColor: "#ef4444",
+          confirmButtonText: "Accept Quote",
+          cancelButtonText: "Reject Quote",
+          background: "#1a1d23",
+          color: "#fff"
+        }).then((result) => {
+          if (result.isConfirmed) {
+            updateDealStatus(deal.inquiry_id, "QUOTE_SENT");
+            showToast("Client accepted the quote!", "success");
+            Swal.fire({
+              title: "Accepted!",
+              text: "The deal has been moved to Supply.",
+              icon: "success",
+              background: "#1a1d23",
+              color: "#fff"
+            });
+          } else if (result.dismiss === Swal.DismissReason.cancel) {
+            updateDealStatus(deal.inquiry_id, "CLOSED");
+            showToast("Client rejected the quote.", "error");
+            Swal.fire({
+              title: "Rejected",
+              text: "The inquiry has been closed.",
+              icon: "error",
+              background: "#1a1d23",
+              color: "#fff"
+            });
+          }
+        });
+        break;
+      case "QUOTE_SENT":
+        const newCargo = {
+          inquiry_id: deal.inquiry_id,
+          supplier: deal.seller_quote?.seller_name || "Assigned Supplier",
+          buyer_name: deal.buyer_name,
+          buyer_email: deal.buyer_email,
+          cargo: deal.products[0]?.product_name || "Unknown Cargo",
+          quantity: "See Details",
+          destination: "TBD",
+          status: "PENDING",
+          products: deal.products,
+        };
+        setSupplyData((prev) => [...prev, newCargo]);
+        updateDealStatus(deal.inquiry_id, "CONFIRMED");
+        showToast("Deal confirmed and moved to Supply", "success");
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleQuoteSubmit = (quoteData) => {
+    if (!activeStepDeal) return;
+
+    if (activeStepDeal.status === "CLIENT_QUOTING") {
+      updateDealStatus(activeStepDeal.inquiry_id, "TL_REVIEW", {
+        seller_quote: {
+          ...activeStepDeal.seller_quote,
+          date_received: new Date().toISOString(),
+          products: quoteData.products.map(p => ({
+            ...p,
+            seller_unit_price: p.my_unit_price
+          }))
+        }
+      });
+      setActiveStepView(null);
+      showToast("Prices quoted. Sent to Team Lead for review.", "success");
+    } else if (activeStepDeal.status === "TL_REVIEW") {
+      const margin_percent = parseFloat(quoteData.margin) || 0;
+      const discount_percent = parseFloat(quoteData.discount) || 0;
+      
+      const finalProducts = activeStepDeal.seller_quote.products.map(p => {
+        const cost = p.seller_unit_price || 0;
+        let my_unit_price = cost;
+        if (margin_percent > 0 || discount_percent > 0) {
+          my_unit_price = cost * (1 + margin_percent / 100) * (1 - discount_percent / 100);
+        }
+        return {
+          ...p,
+          my_unit_price,
+          margin_percent,
+          discount_percent,
+          total_price: my_unit_price * (p.quantity || 1)
+        };
+      });
+
+      const extraData = {
+        margin_percent,
+        discount_percent,
+        tl_approved: true,
+        my_quote: {
+          products: finalProducts
+        }
+      };
+      
+      updateDealStatus(activeStepDeal.inquiry_id, "ADMIN_APPROVAL", extraData);
+      setActiveStepView(null);
+      showToast("Margin set. Sent for Admin approval.", "success");
     }
   };
 
@@ -225,32 +356,28 @@ export default function InquiriesPage() {
     }
   };
 
+  const handleMultiEmailClose = () => {
+    setIsMultiEmailModalOpen(false);
+    setActiveStepView(null);
+  };
+
   const handleAddInquiry = (newInquiry) => {
-    // Generate a temporary ID
     const tempInquiry = {
       ...newInquiry,
       inquiry_id: `INQ-${Date.now()}`,
       status: "PENDING",
       date_received: new Date().toISOString(),
       buyer_name: newInquiry.customer,
-      buyer_email: "pending@example.com", // Fallback
+      buyer_email: "pending@example.com",
       products: newInquiry.products.map(p => ({
         product_name: p.description,
         quantity: p.quantity,
         unit: p.unit
       }))
     };
-    
     setInquiriesData(prev => [tempInquiry, ...prev]);
     showToast("New inquiry created successfully", "success");
   };
-
-  const startShowing =
-    filteredInquiries.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1;
-  const endShowing = Math.min(
-    currentPage * ITEMS_PER_PAGE,
-    filteredInquiries.length,
-  );
 
   if (loading) {
     return (
@@ -260,6 +387,69 @@ export default function InquiriesPage() {
           <div className="w-32 bg-[#242830] rounded-lg h-full opacity-40" />
         </div>
         <div className="flex-1 w-full bg-[#1a1d23] border border-[#2a2d33] rounded-xl opacity-40" />
+      </div>
+    );
+  }
+
+  // --- Step Views Rendering ---
+  if (activeStepView) {
+    return (
+      <div className="w-full h-full bg-[#0c0e12] animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-y-auto pb-10">
+        <div className="max-w-6xl mx-auto py-8 px-4">
+           {activeStepView === 'STOCK_CHECK' && (
+             <StockCheckModal 
+               isOpen={true} 
+               isPageMode={true} 
+               onClose={() => setActiveStepView(null)} 
+               onConfirm={handleStockConfirm} 
+               deal={activeStepDeal} 
+             />
+           )}
+           {activeStepView === 'RFQ' && (
+             <RFQModal 
+               isOpen={true} 
+               isPageMode={true} 
+               onClose={() => setActiveStepView(null)} 
+               onSubmit={handleRFQSubmit} 
+               deal={activeStepDeal} 
+             />
+           )}
+           {activeStepView === 'QUOTE' && (
+             <QuoteModal 
+               isOpen={true} 
+               isPageMode={true} 
+               onClose={() => setActiveStepView(null)} 
+               onSubmit={handleQuoteSubmit} 
+               deal={activeStepDeal} 
+             />
+           )}
+           {activeStepView === 'VERIFY' && (
+             <VerificationModal 
+               isOpen={true} 
+               isPageMode={true} 
+               onClose={() => setActiveStepView(null)} 
+               onConfirm={handleVerifyConfirm} 
+               deal={activeStepDeal} 
+             />
+           )}
+           {activeStepView === 'ADMIN_APPROVAL' && (
+             <AdminApprovalModal 
+               isOpen={true} 
+               isPageMode={true} 
+               onClose={() => setActiveStepView(null)} 
+               onConfirm={handleAdminConfirm} 
+               deal={activeStepDeal} 
+             />
+           )}
+        </div>
+        
+        <MultiEmailPreviewModal
+          isOpen={isMultiEmailModalOpen}
+          onClose={handleMultiEmailClose}
+          stagedRFQs={pendingRFQs}
+          inquiryDeal={activeStepDeal}
+          onStatusUpdate={updateDealStatus}
+        />
       </div>
     );
   }
@@ -297,7 +487,8 @@ export default function InquiriesPage() {
               setSelectedDeal(inq);
               setIsDrawerOpen(true);
             }}
-            onSendQuote={handleSendQuoteClick}
+            onAction={handleAction}
+            currentUser={currentUser}
           />
         ) : (
           <EmptyState />
@@ -327,25 +518,6 @@ export default function InquiriesPage() {
         initialEmailType={emailModalType}
         isOpen={isEmailModalOpen}
         onClose={() => setIsEmailModalOpen(false)}
-        onStatusUpdate={updateDealStatus}
-      />
-      <QuoteModal
-        isOpen={isQuoteModalOpen}
-        onClose={() => setIsQuoteModalOpen(false)}
-        onSubmit={handleQuoteSubmit}
-        deal={quoteModalDeal}
-      />
-      <RFQModal
-        isOpen={isRFQModalOpen}
-        onClose={() => setIsRFQModalOpen(false)}
-        onSubmit={handleRFQSubmit}
-        deal={rfqModalDeal}
-      />
-      <MultiEmailPreviewModal
-        isOpen={isMultiEmailModalOpen}
-        onClose={() => setIsMultiEmailModalOpen(false)}
-        stagedRFQs={pendingRFQs}
-        inquiryDeal={rfqModalDeal}
         onStatusUpdate={updateDealStatus}
       />
       <AddInquiryModal

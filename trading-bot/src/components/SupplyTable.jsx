@@ -46,7 +46,7 @@ const COLUMNS = [
  * NOTE: The old `getStatusStyle` prop has been removed. StatusBadge now handles
  * all supply statuses internally via its STATUS_STYLES map.
  */
-const SupplyTable = ({ items, onView, onContact }) => {
+const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
   const renderRow = (item, idx) => (
     <tr
       key={item.inquiry_id}
@@ -101,9 +101,53 @@ const SupplyTable = ({ items, onView, onContact }) => {
         <StatusBadge status={item.status} />
       </td>
 
-      {/* ── Actions: View + Contact ────────────────────────────────────── */}
+      {/* ── Actions: Dynamic based on Status ───────────────────────────── */}
       <td className="px-4 md:px-6 py-4 text-right">
         <div className="flex flex-col md:flex-row justify-end gap-2">
+          {item.status === "PENDING" && (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="border-purple-500/40 text-purple-400 hover:bg-purple-500/10"
+              onClick={() => onAllot(item)}
+            >
+              Allot Vehicle
+            </Button>
+          )}
+
+          {item.status === "LOADING" && (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="border-orange-500/40 text-orange-400 hover:bg-orange-500/10"
+              onClick={() => onStatusUpdate(item.inquiry_id, "IN_TRANSIT")}
+            >
+              Mark Loaded
+            </Button>
+          )}
+
+          {item.status === "IN_TRANSIT" && (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
+              onClick={() => onStatusUpdate(item.inquiry_id, "DELIVERED")}
+            >
+              Mark Delivered
+            </Button>
+          )}
+
+          {item.status === "DELIVERED" && (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="border-indigo-500/40 text-indigo-400 hover:bg-indigo-500/10"
+              onClick={() => onStatusUpdate(item.inquiry_id, "SEND_INVOICE")}
+            >
+              Send Invoice
+            </Button>
+          )}
+
           <Button
             variant="secondary"
             size="sm"
@@ -112,14 +156,17 @@ const SupplyTable = ({ items, onView, onContact }) => {
           >
             View
           </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            className="border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
-            onClick={() => onContact(item)}
-          >
-            Contact
-          </Button>
+
+          {item.status !== "PENDING" && (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+              onClick={() => onContact(item)}
+            >
+              Contact
+            </Button>
+          )}
         </div>
       </td>
     </tr>

@@ -22,6 +22,8 @@
 import React, { useMemo, useState } from "react";
 import ContactModal from "../components/ContactModal";
 import SupplyViewModal from "../components/SupplyViewModal";
+import AllotVehicleModal from "../components/AllotVehicleModal";
+import InvoiceEmailModal from "../components/InvoiceEmailModal";
 import SupplyTable from "../components/SupplyTable";
 import { AppContext } from "../context";
 import { PageToolbar, Pagination } from "../components/ui";
@@ -54,6 +56,14 @@ export default function SupplyPage() {
   const [contactModalDeal, setContactModalDeal] = useState(null);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
 
+  // Allot Vehicle modal state
+  const [allotModalDeal, setAllotModalDeal] = useState(null);
+  const [isAllotModalOpen, setIsAllotModalOpen] = useState(false);
+
+  // Invoice Email modal state
+  const [invoiceModalDeal, setInvoiceModalDeal] = useState(null);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+
   // Add supply modal state — TODO: wire to AddSupplyModal when implemented
   // Declared here to prevent the "Add Supply" button from crashing (BUG-01 fix)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -83,6 +93,24 @@ export default function SupplyPage() {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredData.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredData, currentPage]);
+
+  // ── Handlers ─────────────────────────────────────────────────────────────
+  const handleStatusUpdate = (id, newStatus) => {
+    if (newStatus === "SEND_INVOICE") {
+      const deal = supplyData.find((d) => d.inquiry_id === id);
+      if (deal) {
+        setInvoiceModalDeal(deal);
+        setIsInvoiceModalOpen(true);
+      }
+      return;
+    }
+
+    setSupplyData((prev) =>
+      prev.map((item) =>
+        item.inquiry_id === id ? { ...item, status: newStatus } : item
+      )
+    );
+  };
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -120,6 +148,11 @@ export default function SupplyPage() {
             setContactModalDeal(item);
             setIsContactModalOpen(true);
           }}
+          onAllot={(item) => {
+            setAllotModalDeal(item);
+            setIsAllotModalOpen(true);
+          }}
+          onStatusUpdate={handleStatusUpdate}
         />
 
         {/* Centralized pagination footer */}
@@ -149,6 +182,27 @@ export default function SupplyPage() {
         deal={contactModalDeal}
         isOpen={isContactModalOpen}
         onClose={() => setIsContactModalOpen(false)}
+      />
+
+      {/* Allot Vehicle Modal */}
+      <AllotVehicleModal
+        deal={allotModalDeal}
+        isOpen={isAllotModalOpen}
+        onClose={() => setIsAllotModalOpen(false)}
+        onAllot={(id, vehicle) => {
+          // Update status to LOADING when vehicle is allotted
+          setSupplyData(prev => prev.map(item => 
+            item.inquiry_id === id ? { ...item, status: "LOADING", vehicle } : item
+          ));
+        }}
+      />
+
+      {/* Invoice Email Modal */}
+      <InvoiceEmailModal
+        deal={invoiceModalDeal}
+        isOpen={isInvoiceModalOpen}
+        onClose={() => setIsInvoiceModalOpen(false)}
+        onStatusUpdate={handleStatusUpdate}
       />
     </div>
   );

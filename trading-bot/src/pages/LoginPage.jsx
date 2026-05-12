@@ -140,6 +140,36 @@ const LoginPage = () => {
             </button>
           </form>
 
+          <div className="mt-8 pt-8 border-t border-gray-100 dark:border-white/5">
+            <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest text-center mb-4">Quick Access for Testing</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button 
+                onClick={() => login({ name: "Admin", role: "Admin", email: "admin@trademind.com" })}
+                className="px-3 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-500 text-[10px] font-bold rounded-lg transition-all"
+              >
+                ADMIN
+              </button>
+              <button 
+                onClick={() => login({ name: "Sales Exec", role: "Sales Executive", email: "priya@trademind.com" })}
+                className="px-3 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 text-[10px] font-bold rounded-lg transition-all"
+              >
+                EMPLOYEE
+              </button>
+              <button 
+                onClick={() => login({ name: "Team Lead", role: "Sourcing Manager", email: "rahul@trademind.com" })}
+                className="px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 text-[10px] font-bold rounded-lg transition-all"
+              >
+                TEAM LEAD
+              </button>
+              <button 
+                onClick={() => login({ name: "Demo Client", role: "Client", email: "client@demo.com" })}
+                className="px-3 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-500 text-[10px] font-bold rounded-lg transition-all"
+              >
+                CLIENT
+              </button>
+            </div>
+          </div>
+
           <div className="mt-8 text-center">
             <p className="text-sm text-gray-500">
               Don't have an account?{" "}
