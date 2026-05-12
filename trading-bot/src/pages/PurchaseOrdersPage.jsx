@@ -1,18 +1,26 @@
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  useContext,
-  useCallback,
-} from "react";
+/**
+ * @file PurchaseOrdersPage.jsx
+ * @description Purchase Orders management page — list, add, view, send order emails.
+ *
+ * CENTRALIZED COMPONENTS USED:
+ *   - PageToolbar → search + status filter + "Add Purchase Order" button
+ *   - Pagination  → Previous/Next with order count
+ *   - POTable     → table with View/Order actions
+ *
+ * DATA FLOW:
+ *   AppContext.purchaseOrdersData → useMemo(filter) → paginate → POTable
+ *
+ * @author TradeMind Dev Team
+ */
+
+import React, { useState, useMemo, useContext, useCallback } from "react";
 import { AppContext } from "../context";
-import StatusBadge from "../components/ui/StatusBadge";
-import Toast from "../components/ui/Toast";
 import { useToast } from "../hooks/useToast";
 import AddPurchaseOrderModal from "../components/AddPurchaseOrderModal";
 import POTable from "../components/POTable";
 import PODrawer from "../components/PODrawer";
 import POEmailModal from "../components/POEmailModal";
+import { Toast, PageToolbar, Pagination } from "../components/ui";
 
 function EmptyState() {
   return (
@@ -103,62 +111,29 @@ export default function PurchaseOrdersPage() {
   const startShowing = filteredPOs.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1;
   const endShowing = Math.min(currentPage * ITEMS_PER_PAGE, filteredPOs.length);
 
+
+  // ─── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col w-full h-full pb-8 relative">
       <Toast message={toast.message} type={toast.type} />
 
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-4">
-          <div className="relative w-[340px]">
-            <svg
-              className="absolute left-3.5 top-2.5 w-5 h-5 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
-              />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search by customer or PO ID..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg h-10 pl-11 pr-4 text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors shadow-sm"
-            />
-          </div>
-          <div className="relative">
-            <select
-              value={filter}
-              onChange={(e) => {
-                setFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="appearance-none bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg h-10 pl-4 pr-11 text-sm text-gray-700 dark:text-gray-300 font-medium focus:outline-none focus:border-purple-500 transition-colors cursor-pointer shadow-sm hover:border-gray-300 dark:hover:border-gray-600"
-            >
-              <option value="All">All Status</option>
-              <option value="PENDING">Pending</option>
-              <option value="CONFIRMED">Confirmed</option>
-              <option value="SHIPPED">Shipped</option>
-              <option value="CLOSED">Closed</option>
-            </select>
-          </div>
-        </div>
-
-        <button
-          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors shadow-lg active:scale-95 transform whitespace-nowrap flex-shrink-0"
-          onClick={() => setIsAddModalOpen(true)}
-        >
-          Add Purchase Order
-        </button>
-      </div>
+      {/* Centralized toolbar: search + status filter + Add PO button */}
+      <PageToolbar
+        search={search}
+        onSearchChange={(val) => { setSearch(val); setCurrentPage(1); }}
+        searchPlaceholder="Search by customer or PO ID..."
+        filterValue={filter}
+        onFilterChange={(val) => { setFilter(val); setCurrentPage(1); }}
+        filterOptions={[
+          { value: "All",       label: "All Status" },
+          { value: "PENDING",   label: "Pending" },
+          { value: "CONFIRMED", label: "Confirmed" },
+          { value: "SHIPPED",   label: "Shipped" },
+          { value: "CLOSED",    label: "Closed" },
+        ]}
+        onAdd={() => setIsAddModalOpen(true)}
+        addLabel="Add Purchase Order"
+      />
 
       <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg transition-colors duration-300">
         {filteredPOs.length > 0 ? (
@@ -177,27 +152,17 @@ export default function PurchaseOrdersPage() {
           <EmptyState />
         )}
 
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-[#2a2d33] bg-gray-50/50 dark:bg-[#0c0e12]/30 mt-auto">
-          <span className="text-sm text-gray-500 font-medium">
-            Showing <span className="text-gray-700 dark:text-gray-300 mx-0.5">{startShowing}–{endShowing}</span> of <span className="text-gray-700 dark:text-gray-300 mx-0.5">{filteredPOs.length}</span> orders
-          </span>
-          <div className="flex gap-2">
-            <button
-              disabled={currentPage === 1 || filteredPOs.length === 0}
-              onClick={() => setCurrentPage((p) => p - 1)}
-              className="px-4 py-2 border border-gray-200 dark:border-[#2a2d33] rounded-lg text-sm text-gray-600 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-white/[0.04] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-            >
-              ← Previous
-            </button>
-            <button
-              disabled={currentPage === totalPages || filteredPOs.length === 0}
-              onClick={() => setCurrentPage((p) => p + 1)}
-              className="px-4 py-2 border border-gray-200 dark:border-[#2a2d33] rounded-lg text-sm text-gray-600 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-white/[0.04] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-            >
-              Next →
-            </button>
-          </div>
-        </div>
+
+        {/* Centralized pagination footer */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredPOs.length}
+          itemsPerPage={ITEMS_PER_PAGE}
+          onPrev={() => setCurrentPage((p) => p - 1)}
+          onNext={() => setCurrentPage((p) => p + 1)}
+          itemLabel="orders"
+        />
       </div>
 
       <AddPurchaseOrderModal

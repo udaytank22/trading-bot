@@ -128,7 +128,7 @@ export default function DocumentsPage() {
                   : "text-gray-400 hover:text-white hover:bg-white/5"
               }`}
             >
-              {tab}s
+              {tab === "Company" ? "Companies" : `${tab}s`}
             </button>
           ))}
         </div>

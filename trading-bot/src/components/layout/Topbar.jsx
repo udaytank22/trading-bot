@@ -6,6 +6,7 @@ import { useAppContext } from "../../context";
 const PAGE_TITLES = {
   "/": "Dashboard",
   "/inquiries": "Inquiries",
+  "/purchase-orders": "Purchase Orders",
   "/supply": "Supply",
   "/profit": "Profit Report",
   "/settings": "Settings",

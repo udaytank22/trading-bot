@@ -6,10 +6,10 @@ import { useToast } from '../hooks/useToast';
 import { confirmAction } from '../utils/swal';
 
 const DEFAULT_FORM = {
-  business_name:         mockSettings.business_name,
-  business_email:        mockSettings.business_email,
-  seller_email:          mockSettings.seller_email,
-  seller_name:           'Default Supplier Inc.',
+  business_name: mockSettings.business_name,
+  business_email: mockSettings.business_email,
+  seller_email: mockSettings.seller_email,
+  seller_name: 'Default Supplier Inc.',
   default_margin_percent: mockSettings.default_margin_percent,
 };
 
@@ -39,10 +39,10 @@ export default function SettingsPage() {
     try {
       const s = JSON.parse(stored);
       setFormData({
-        business_name:         s.businessName  ?? DEFAULT_FORM.business_name,
-        business_email:        s.businessEmail ?? DEFAULT_FORM.business_email,
-        seller_email:          s.sellerEmail   ?? DEFAULT_FORM.seller_email,
-        seller_name:           s.sellerName    ?? DEFAULT_FORM.seller_name,
+        business_name: s.businessName ?? DEFAULT_FORM.business_name,
+        business_email: s.businessEmail ?? DEFAULT_FORM.business_email,
+        seller_email: s.sellerEmail ?? DEFAULT_FORM.seller_email,
+        seller_name: s.sellerName ?? DEFAULT_FORM.seller_name,
         default_margin_percent: s.defaultMargin ?? DEFAULT_FORM.default_margin_percent,
       });
     } catch {
@@ -61,10 +61,10 @@ export default function SettingsPage() {
       showToast('Please enter a valid email address.', 'error'); return;
     }
     localStorage.setItem('settings', JSON.stringify({
-      businessName:  formData.business_name,
+      businessName: formData.business_name,
       businessEmail: formData.business_email,
-      sellerEmail:   formData.seller_email,
-      sellerName:    formData.seller_name,
+      sellerEmail: formData.seller_email,
+      sellerName: formData.seller_name,
       defaultMargin: formData.default_margin_percent,
     }));
     await refreshConfig();
@@ -78,7 +78,7 @@ export default function SettingsPage() {
       confirmButtonText: 'Yes, reset them!'
     });
     if (!isConfirmed) return;
-    
+
     localStorage.removeItem('settings');
     setFormData(DEFAULT_FORM);
     await refreshConfig();

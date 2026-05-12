@@ -25,6 +25,12 @@ const LoginPage = () => {
 
     // Simulate API call and validation
     setTimeout(() => {
+      if (!password.trim()) {
+        setIsLoading(false);
+        setError("Please enter your password.");
+        return;
+      }
+
       const user = employeesData.find(emp => emp.email.toLowerCase() === email.toLowerCase());
       
       if (user || email === "admin@trademind.com") { // Allow admin by default too
@@ -82,7 +88,7 @@ const LoginPage = () => {
             <div className="space-y-2">
               <div className="flex justify-between items-center ml-1">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-                <a href="#" className="text-xs text-purple-400 hover:text-purple-300 transition-colors">Forgot password?</a>
+                <span className="text-xs text-gray-400 dark:text-gray-600 cursor-default select-none" title="Coming soon">Forgot password?</span>
               </div>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-purple-500 transition-colors">
@@ -137,7 +143,7 @@ const LoginPage = () => {
           <div className="mt-8 text-center">
             <p className="text-sm text-gray-500">
               Don't have an account?{" "}
-              <a href="#" className="font-medium text-purple-400 hover:text-purple-300 transition-colors">Create account</a>
+              <span className="font-medium text-gray-400 dark:text-gray-600 cursor-default select-none" title="Contact admin for access">Contact admin</span>
             </p>
           </div>
         </div>

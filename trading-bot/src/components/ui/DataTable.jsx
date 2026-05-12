@@ -1,0 +1,134 @@
+/**
+ * @file DataTable.jsx
+ * @description Centralized, reusable data table shell for TradeMind.
+ *
+ * PROBLEM SOLVED:
+ *   Every table (Inquiry, PO, Supply, Account, Employee) had its own copy of:
+ *     - The same <table> wrapper classes
+ *     - The same <thead> sticky style
+ *     - The same <tbody> stripe/hover classes
+ *     - The same scrollbar container
+ *   That was ~40 lines of duplicated markup per table.
+ *
+ * ARCHITECTURE:
+ *   DataTable renders the chrome (scroll container, <table>, <thead>, <tbody>).
+ *   Callers supply:
+ *     - `columns`  → array of { key, label, className?, hidden? } header definitions
+ *     - `data`     → array of row objects
+ *     - `renderRow`→ render function  (row, index) => <tr> JSX
+ *     - `emptyMessage` → fallback text when data is empty
+ *
+ * USAGE:
+ *   <DataTable
+ *     columns={[
+ *       { key: "id",   label: "ID" },
+ *       { key: "name", label: "Name" },
+ *       { key: "actions", label: "Actions", className: "text-right" },
+ *     ]}
+ *     data={employees}
+ *     renderRow={(emp, idx) => (
+ *       <tr key={emp.id} className={rowCls(idx)}>
+ *         <td>...</td>
+ *       </tr>
+ *     )}
+ *     emptyMessage="No employees found."
+ *   />
+ *
+ * @author TradeMind Dev Team
+ */
+
+import React from "react";
+
+// ─── Shared row stripe helper (exported so individual tables can use it) ───────
+
+/**
+ * Returns the alternating background class for zebra-stripe rows.
+ * @param {number} idx - Row index (0-based)
+ * @returns {string} Tailwind class string
+ */
+export function rowStripeClass(idx) {
+  return idx % 2 !== 0
+    ? "bg-gray-50/30 dark:bg-[#242830]/20"
+    : "";
+}
+
+/** Standard row hover class used by every table */
+export const ROW_HOVER_CLS =
+  "hover:bg-gray-50/80 dark:hover:bg-white/[0.04] transition-colors";
+
+// ─── Component ─────────────────────────────────────────────────────────────────
+
+/**
+ * @param {Object} props
+ * @param {Array<{key:string, label:string, className?:string, hidden?:string}>} props.columns
+ *        - Column definitions. `hidden` is a Tailwind responsive class e.g. "hidden lg:table-cell"
+ * @param {Array<any>} props.data - Row data array (used only to detect empty state)
+ * @param {function(any, number): React.ReactNode} props.renderRow - Render function for each <tr>
+ * @param {string} [props.emptyMessage="No data found."] - Message shown when data is empty
+ * @param {string} [props.maxHeight="max-h-[600px]"] - Tailwind max-height for the scroll container
+ */
+export default function DataTable({
+  columns = [],
+  data = [],
+  renderRow,
+  emptyMessage = "No data found.",
+  maxHeight = "max-h-[600px]",
+}) {
+  return (
+    /* Outer wrapper — hides overflow for rounded corners */
+    <div className="w-full overflow-hidden flex flex-col h-full">
+
+      {/* Scrollable container — both axes, styled scrollbar */}
+      <div className={`w-full overflow-x-auto overflow-y-auto ${maxHeight} custom-scrollbar`}>
+
+        {/* Main table — auto layout so columns size to content */}
+        <table className="w-full text-left text-sm table-auto border-separate border-spacing-0">
+
+          {/* ── HEADER ─────────────────────────────────────────────────────── */}
+          <thead className={[
+            "bg-gray-50 dark:bg-[#242830]/80",          // background
+            "text-gray-500 dark:text-gray-400",          // text color
+            "text-[11px] font-bold uppercase tracking-wider", // typography
+            "border-b border-gray-200 dark:border-[#2a2d33]", // bottom border
+            "sticky top-0 z-10 backdrop-blur-md",         // sticky + blur
+            "transition-colors duration-300",             // smooth theme switch
+          ].join(" ")}>
+            <tr>
+              {columns.map((col) => (
+                <th
+                  key={col.key}
+                  className={[
+                    "px-3 md:px-6 py-4",
+                    "border-b border-gray-200 dark:border-[#2a2d33]",
+                    col.hidden ?? "",    // e.g. "hidden lg:table-cell"
+                    col.className ?? "", // e.g. "text-right"
+                  ].join(" ")}
+                >
+                  {col.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+
+          {/* ── BODY ───────────────────────────────────────────────────────── */}
+          <tbody className="divide-y divide-gray-100 dark:divide-[#2a2d33]/50">
+            {data.length > 0 ? (
+              // Delegate row rendering to the caller — they know the shape of their data
+              data.map((row, idx) => renderRow(row, idx))
+            ) : (
+              // Empty state row spans all columns
+              <tr>
+                <td
+                  colSpan={columns.length}
+                  className="px-6 py-16 text-center text-gray-400 text-sm font-medium"
+                >
+                  {emptyMessage}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
