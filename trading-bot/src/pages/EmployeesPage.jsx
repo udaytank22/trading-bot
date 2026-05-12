@@ -4,6 +4,7 @@ import { useToast } from "../hooks/useToast";
 import EmployeeTable from "../components/EmployeeTable";
 import AddEmployeeModal from "../components/AddEmployeeModal";
 import Toast from "../components/ui/Toast";
+import { confirmAction } from "../utils/swal";
 
 export default function EmployeesPage() {
   const { employeesData, setEmployeesData } = useContext(AppContext);
@@ -59,8 +60,14 @@ export default function EmployeesPage() {
     setEmployeeToEdit(null);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to remove this employee?")) {
+  const handleDelete = async (id) => {
+    const isConfirmed = await confirmAction({
+      title: 'Remove Employee?',
+      text: "Are you sure you want to remove this employee?",
+      confirmButtonText: 'Yes, remove them!'
+    });
+
+    if (isConfirmed) {
       setEmployeesData(prev => prev.filter(emp => emp.id !== id));
       showToast("Employee record deleted", "success");
     }

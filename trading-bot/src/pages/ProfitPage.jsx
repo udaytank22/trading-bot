@@ -7,7 +7,7 @@ import { formatINR, formatDateString } from '../services/marginEngine';
 function SummaryCard({ value, label, colorClass }) {
   return (
     <div className={`${colorClass} rounded-xl p-6 hover:brightness-110 transition-all cursor-default`}>
-      <div className="text-[36px] font-bold leading-none mb-2">{value}</div>
+      <div className="text-[25px] font-bold leading-none mb-2">{value}</div>
       <div className="text-gray-500 dark:text-gray-400 text-[13px] font-bold tracking-wide uppercase">{label}</div>
     </div>
   );
@@ -15,9 +15,9 @@ function SummaryCard({ value, label, colorClass }) {
 
 /* ── Main page ───────────────────────────────────────────────────── */
 export default function ProfitPage() {
-  const [closedDeals, setClosedDeals]   = useState([]);
-  const [weeklyTrend, setWeeklyTrend]   = useState([]);
-  const [loading, setLoading]           = useState(true);
+  const [closedDeals, setClosedDeals] = useState([]);
+  const [weeklyTrend, setWeeklyTrend] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchProfitData()
@@ -31,7 +31,7 @@ export default function ProfitPage() {
   }, []);
 
   const { totalRevenue, totalCost, totalProfit, marginPercent } = useMemo(() => {
-    const rev  = closedDeals.reduce((s, d) => s + d.my_price, 0);
+    const rev = closedDeals.reduce((s, d) => s + d.my_price, 0);
     const cost = closedDeals.reduce((s, d) => s + d.seller_cost, 0);
     const profit = rev - cost;
     return { totalRevenue: rev, totalCost: cost, totalProfit: profit, marginPercent: rev > 0 ? (profit / rev) * 100 : 0 };
@@ -39,19 +39,19 @@ export default function ProfitPage() {
 
   const sortedDeals = useMemo(() =>
     [...closedDeals].sort((a, b) => new Date(b.date_closed) - new Date(a.date_closed)),
-  [closedDeals]);
+    [closedDeals]);
 
   const handleExportCSV = () => {
-    const headers = ['Inquiry ID','Buyer','Products','Seller Cost','My Price','Margin %','Profit','Date'];
+    const headers = ['Inquiry ID', 'Buyer', 'Products', 'Seller Cost', 'My Price', 'Margin %', 'Profit', 'Date'];
     const rows = sortedDeals.map(d => [
       d.inquiry_id, `"${d.buyer_name}"`, `"${d.products}"`,
       d.seller_cost, d.my_price, d.margin_percent, d.profit,
       new Date(d.date_closed).toISOString().split('T')[0],
     ]);
-    rows.push(['TOTAL','','', totalCost, totalRevenue, marginPercent.toFixed(1), totalProfit, '']);
+    rows.push(['TOTAL', '', '', totalCost, totalRevenue, marginPercent.toFixed(1), totalProfit, '']);
     const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-    const a   = Object.assign(document.createElement('a'), { href: url, download: 'profit_report.csv' });
+    const a = Object.assign(document.createElement('a'), { href: url, download: 'profit_report.csv' });
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
@@ -72,10 +72,10 @@ export default function ProfitPage() {
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-5">
         <SummaryCard value={formatINR(totalRevenue)} label="Total Revenue This Month" colorClass="bg-[#22c55e]/10 border border-[#22c55e]/20 text-[#22c55e]" />
-        <SummaryCard value={formatINR(totalCost)}    label="Total Seller Cost This Month" colorClass="bg-red-500/10 border border-red-500/20 text-red-500" />
+        <SummaryCard value={formatINR(totalCost)} label="Total Seller Cost This Month" colorClass="bg-red-500/10 border border-red-500/20 text-red-500" />
         <div className="bg-[#a855f7]/10 border border-[#a855f7]/20 rounded-xl p-6 hover:brightness-110 transition-all cursor-default">
           <div className="flex items-end gap-3 mb-2">
-            <div className="text-[36px] font-bold text-[#a855f7] leading-none">{formatINR(totalProfit)}</div>
+            <div className="text-[30px] font-bold text-[#a855f7] leading-none">{formatINR(totalProfit)}</div>
             <div className="text-emerald-600 dark:text-emerald-400 text-[13px] font-bold pb-[3px] bg-emerald-500/10 px-2 rounded tracking-wide">
               +{marginPercent.toFixed(1)}% margin
             </div>
@@ -91,14 +91,14 @@ export default function ProfitPage() {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={weeklyTrend} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
               <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 13, fontWeight: 500 }} tickMargin={12} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 13, fontWeight: 500 }} tickFormatter={v => `₹${v/1000}k`} tickMargin={8} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 13, fontWeight: 500 }} tickFormatter={v => `₹${v / 1000}k`} tickMargin={8} />
               <Tooltip
                 cursor={{ fill: '#f3f4f6', opacity: 0.1 }}
-                contentStyle={{ 
-                  backgroundColor: 'white', 
-                  borderColor: '#e5e7eb', 
-                  borderRadius: '8px', 
-                  color: '#111827', 
+                contentStyle={{
+                  backgroundColor: 'white',
+                  borderColor: '#e5e7eb',
+                  borderRadius: '8px',
+                  color: '#111827',
                   fontSize: '13px',
                   boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
                 }}
@@ -144,7 +144,7 @@ export default function ProfitPage() {
             ) : (
               <tbody className="divide-y divide-gray-100 dark:divide-[#2a2d33]/50">
                 {sortedDeals.map((deal, idx) => (
-                   <tr key={deal.inquiry_id} className={`h-[56px] hover:bg-gray-50/80 dark:hover:bg-white/[0.04] transition-colors ${idx % 2 !== 0 ? 'bg-gray-50/30 dark:bg-[#242830]/20' : ''}`}>
+                  <tr key={deal.inquiry_id} className={`h-[56px] hover:bg-gray-50/80 dark:hover:bg-white/[0.04] transition-colors ${idx % 2 !== 0 ? 'bg-gray-50/30 dark:bg-[#242830]/20' : ''}`}>
                     <td className="px-6 font-mono text-gray-500 dark:text-gray-400 text-[13px]">{deal.inquiry_id}</td>
                     <td className="px-6 text-gray-900 dark:text-white font-semibold">{deal.buyer_name}</td>
                     <td className="px-6 text-gray-600 dark:text-gray-300 font-medium truncate max-w-[200px]" title={deal.products}>{deal.products}</td>

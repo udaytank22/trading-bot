@@ -9,6 +9,7 @@ const NAV_LINKS = [
   { name: "Employees", path: "/employees", icon: <UsersIcon /> },
   { name: "Documents", path: "/documents", icon: <DocumentIcon /> },
   { name: "Profit Report", path: "/profit", icon: <ProfitIcon /> },
+  { name: "Accounts", path: "/accounts", icon: <ProfitIcon /> },
   { name: "Settings", path: "/settings", icon: <SettingsIcon /> },
 ];
 

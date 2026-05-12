@@ -3,6 +3,7 @@ import { mockSettings } from '../data/mockSettings';
 import { refreshConfig } from '../config';
 import Toast from '../components/ui/Toast';
 import { useToast } from '../hooks/useToast';
+import { confirmAction } from '../utils/swal';
 
 const DEFAULT_FORM = {
   business_name:         mockSettings.business_name,
@@ -71,7 +72,13 @@ export default function SettingsPage() {
   };
 
   const handleReset = async () => {
-    if (!window.confirm('Are you sure? This cannot be undone.')) return;
+    const isConfirmed = await confirmAction({
+      title: 'Reset Settings?',
+      text: "Are you sure? This cannot be undone.",
+      confirmButtonText: 'Yes, reset them!'
+    });
+    if (!isConfirmed) return;
+    
     localStorage.removeItem('settings');
     setFormData(DEFAULT_FORM);
     await refreshConfig();

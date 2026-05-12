@@ -6,6 +6,7 @@ import { mockSupply } from "./data/mockSupply";
 import { mockPurchaseOrders } from "./data/mockPurchaseOrders";
 import { mockEmployees } from "./data/mockEmployees";
 import { mockDocuments } from "./data/mockDocuments";
+import { mockAccounts } from "./data/mockAccounts";
 import Sidebar from "./components/layout/Sidebar";
 import Topbar from "./components/layout/Topbar";
 import SupplyPage from "./pages/SupplyPage";
@@ -19,6 +20,7 @@ const LoginPage = React.lazy(() => import("./pages/LoginPage"));
 const PurchaseOrdersPage = React.lazy(() => import("./pages/PurchaseOrdersPage"));
 const EmployeesPage = React.lazy(() => import("./pages/EmployeesPage"));
 const DocumentsPage = React.lazy(() => import("./pages/DocumentsPage"));
+const AccountPage = React.lazy(() => import("./pages/AccountPage"));
 
 function PageLoader() {
   return (
@@ -53,6 +55,7 @@ export default function App() {
   const [purchaseOrdersData, setPurchaseOrdersData] = React.useState(mockPurchaseOrders);
   const [employeesData, setEmployeesData] = React.useState(mockEmployees);
   const [documentsData, setDocumentsData] = React.useState(mockDocuments);
+  const [accountsData, setAccountsData] = React.useState(mockAccounts);
   const [currentUser, setCurrentUser] = React.useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
   const [isAuthenticated, setIsAuthenticated] = React.useState(() => {
@@ -94,11 +97,11 @@ export default function App() {
   };
 
   return (
-    <AppContext.Provider 
-      value={{ 
-        inquiriesData, 
-        setInquiriesData, 
-        supplyData, 
+    <AppContext.Provider
+      value={{
+        inquiriesData,
+        setInquiriesData,
+        supplyData,
         setSupplyData,
         purchaseOrdersData,
         setPurchaseOrdersData,
@@ -106,10 +109,12 @@ export default function App() {
         setEmployeesData,
         documentsData,
         setDocumentsData,
+        accountsData,
+        setAccountsData,
         currentUser,
         setCurrentUser,
-        isAuthenticated, 
-        login, 
+        isAuthenticated,
+        login,
         logout,
         theme,
         toggleTheme
@@ -138,6 +143,7 @@ export default function App() {
                             <Route path="/employees" element={<EmployeesPage />} />
                             <Route path="/documents" element={<DocumentsPage />} />
                             <Route path="/settings" element={<SettingsPage />} />
+                            <Route path="/accounts" element={<AccountPage />} />
                           </Routes>
                         </div>
                       </div>

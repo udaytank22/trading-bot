@@ -3,6 +3,7 @@ import { AppContext } from "../context";
 import { useToast } from "../hooks/useToast";
 import Toast from "../components/ui/Toast";
 import AddDocumentModal from "../components/AddDocumentModal";
+import { confirmAction } from "../utils/swal";
 
 // Helper for the Kanban Board
 const KanbanColumn = ({ title, status, documents, onEdit, onDelete, colorClass }) => (
@@ -82,8 +83,14 @@ export default function DocumentsPage() {
   const expiringDocs = filteredDocs.filter(d => d.status === "Expiring Soon");
   const expiredDocs = filteredDocs.filter(d => d.status === "Expired");
 
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this document?")) {
+  const handleDelete = async (id) => {
+    const isConfirmed = await confirmAction({
+      title: 'Delete Document?',
+      text: "Are you sure you want to delete this document?",
+      confirmButtonText: 'Yes, delete it!'
+    });
+
+    if (isConfirmed) {
       setDocumentsData(prev => prev.filter(doc => doc.id !== id));
       showToast("Document deleted successfully", "success");
     }

@@ -9,6 +9,9 @@ const PAGE_TITLES = {
   "/supply": "Supply",
   "/profit": "Profit Report",
   "/settings": "Settings",
+  "/accounts": "Accounts",
+  "/employees": "Employees",
+  "/documents": "Documents",
 };
 
 const DAYS = [
@@ -79,7 +82,7 @@ export default function Topbar({ onToggleSidebar }) {
         </span>
         <div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
       </div>
-      
+
       <div className="flex items-center gap-6">
         <time
           className="text-gray-500 dark:text-gray-400 text-sm font-medium"
@@ -106,7 +109,7 @@ export default function Topbar({ onToggleSidebar }) {
           )}
         </button>
 
-        <button 
+        <button
           onClick={() => setIsChatOpen(true)}
           className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-all text-gray-500 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 relative group"
         >
@@ -116,7 +119,7 @@ export default function Topbar({ onToggleSidebar }) {
           <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-purple-500 border-2 border-white dark:border-[#0f1117] rounded-full" />
         </button>
 
-        <button 
+        <button
           className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-all text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 relative group"
           aria-label="Notifications"
         >
