@@ -27,16 +27,16 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
       } else {
         const settings = { default_margin_percent: CONFIG.defaultMargin || 50 };
         const calculatedQuote = calculateMargin(deal.seller_quote.products, settings);
-        
+
         const dealWithMargins = { ...deal, calculated_my_quote: calculatedQuote };
         await triggerBuyerQuote(dealWithMargins);
-        
+
         try {
           await logQuoteSent(dealWithMargins);
         } catch (sheetErr) {
           console.error("Sheet logging failed, but quote sent:", sheetErr);
         }
-        
+
         if (onStatusUpdate) onStatusUpdate(deal.inquiry_id, 'QUOTE_SENT');
       }
     })();
@@ -45,12 +45,12 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
 
     try {
       await Promise.race([sendPromise, timeoutPromise]);
-      
+
       setSendState('success');
       setTimeout(() => {
         onClose();
       }, 3000);
-      
+
     } catch (err) {
       setSendState('idle'); // Revert state so they can try again
       window.dispatchEvent(new CustomEvent('show-toast', { detail: 'Failed to send. Please try again.' }));
@@ -64,13 +64,13 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/70 animate-fade-in" onClick={() => { if(sendState === 'idle') onClose() }} />
+      <div className="fixed inset-0 bg-black/70 animate-fade-in" onClick={() => { if (sendState === 'idle') onClose() }} />
       <div className="relative w-[700px] max-h-[85vh] bg-[#1e2028] border border-[#2a2d36] rounded-xl shadow-2xl flex flex-col z-10 animate-fade-in overflow-hidden">
-        
+
         {sendState === 'success' ? (
           <div className="flex flex-col items-center justify-center p-16 h-full text-center fade-in-fast">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-24 w-24 text-emerald-500 mb-6 drop-shadow-lg" viewBox="0 0 20 20" fill="currentColor">
-               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
             </svg>
             <h2 className="text-white text-3xl font-bold mb-3 tracking-wide">Email Sent Successfully!</h2>
             <p className="text-gray-300 font-bold text-lg">{deal.buyer_name}</p>
@@ -94,14 +94,14 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
 
             {/* Tab Switcher */}
             <div className="px-6 flex gap-7 border-b border-[#2a2d36] flex-shrink-0 bg-[#1a1d23]">
-              <button 
+              <button
                 className={`py-3.5 text-[14px] font-bold tracking-wide relative hover:text-white transition-colors ${activeTab === 'RFQ' ? 'text-white' : 'text-gray-500'}`}
                 onClick={() => setActiveTab('RFQ')}
               >
                 RFQ to Seller
                 {activeTab === 'RFQ' && <div className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-purple-500 rounded-t" />}
               </button>
-              <button 
+              <button
                 className={`py-3.5 text-[14px] font-bold tracking-wide relative hover:text-white transition-colors ${activeTab === 'QUOTE' ? 'text-white' : 'text-gray-500'}`}
                 onClick={() => setActiveTab('QUOTE')}
               >
@@ -113,7 +113,7 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
             {/* Email Preview Area - Scrollable */}
             <div className="flex-1 overflow-y-auto p-6 bg-[#1a1d23] custom-scrollbar">
               <div className={`bg-white rounded-[10px] p-6 text-[15px] transition-colors border-2 shadow-sm ${isEditing ? 'border-blue-500 shadow-blue-500/20' : 'border-gray-200'}`}>
-                
+
                 {/* Meta Attributes */}
                 <div className="flex items-center pb-3 border-b border-gray-100">
                   <span className="w-20 text-gray-400 font-bold font-sans text-[12px] uppercase tracking-wider">From:</span>
@@ -129,7 +129,7 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
                 </div>
 
                 {/* Main Body */}
-                <div 
+                <div
                   ref={bodyRef}
                   className="mt-6 text-[#333333] leading-[1.7] focus:outline-none min-h-[200px]"
                   contentEditable={isEditing}
@@ -138,10 +138,10 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
                   <p className="mb-5 font-medium">
                     Dear {isRFQ ? (deal.seller_quote?.seller_name || 'Valued Supplier') : deal.buyer_name.split(' ')[0]},
                   </p>
-                  
+
                   {isRFQ ? (
                     <p className="mb-5">
-                      We hope this email finds you well. We are currently sourcing products for an upcoming requirement. 
+                      We hope this email finds you well. We are currently sourcing products for an upcoming requirement.
                       Please review the items requested below and provide your best wholesale quotation including unit prices, minimum order quantities, and estimated lead times.
                     </p>
                   ) : (
@@ -204,14 +204,14 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
                   )}
 
                   <p className="mt-7 mb-8 font-medium">
-                    {isRFQ 
-                      ? 'Looking forward to receiving your prompt response soon.' 
+                    {isRFQ
+                      ? 'Looking forward to receiving your prompt response soon.'
                       : 'We look forward to serving you. Please let us know if you need any clarifications on the enclosed proposal.'
                     }
                   </p>
-                  
+
                   <div className="text-[14px] font-bold tracking-wide text-gray-800 border-t border-gray-200 pt-4 mt-8 inline-block select-none">
-                    TradeMind Sourcing Team<br/>
+                    TradeMind Sourcing Team<br />
                     <span className="text-gray-500 font-medium mt-1 inline-block">contact@trademind.com | +91-9876543210</span>
                   </div>
                 </div>
@@ -220,14 +220,14 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
               {/* Edit Mode Handlers */}
               <div className="mt-5 flex justify-end">
                 {isEditing ? (
-                  <button 
+                  <button
                     onClick={() => setIsEditing(false)}
                     className="px-5 py-2.5 bg-blue-50 text-blue-600 font-bold border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors shadow-sm active:scale-[0.98]"
                   >
                     Done Editing
                   </button>
                 ) : (
-                  <button 
+                  <button
                     onClick={() => setIsEditing(true)}
                     className="px-5 py-2.5 text-blue-500 font-bold border-2 border-blue-500/50 rounded-lg hover:bg-blue-500/10 transition-colors active:scale-[0.98]"
                   >
@@ -239,7 +239,7 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
 
             {/* Action Buttons Row */}
             <div className="p-5 border-t border-[#2a2d36] flex justify-between items-center bg-[#1a1d23] flex-shrink-0 shadow-[0_-15px_30px_-15px_rgba(0,0,0,0.5)]">
-              <button 
+              <button
                 onClick={onClose}
                 disabled={sendState === 'sending'}
                 className="px-6 py-3 text-gray-400 font-bold tracking-wide hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors disabled:opacity-50"
@@ -247,7 +247,7 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
                 Cancel
               </button>
 
-              <button 
+              <button
                 onClick={handleSend}
                 disabled={sendState === 'sending' || isEditing}
                 className="flex items-center gap-2.5 px-8 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold tracking-widest uppercase text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[180px] justify-center shadow-lg shadow-emerald-500/20 active:scale-[0.99]"
@@ -273,7 +273,7 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
           </>
         )}
       </div>
-      
+
       <style>{`
         @keyframes fade-in {
           0% { opacity: 0; transform: translateY(15px) scale(0.96); filter: blur(4px); }

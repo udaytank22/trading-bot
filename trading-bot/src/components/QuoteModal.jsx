@@ -17,7 +17,7 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal }) => {
           </button>
         </div>
 
-        <form 
+        <form
           onSubmit={(e) => {
             e.preventDefault();
             onSubmit({ discount, margin, narrative });

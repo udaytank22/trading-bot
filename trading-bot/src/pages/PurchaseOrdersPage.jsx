@@ -11,6 +11,8 @@ import Toast from "../components/ui/Toast";
 import { useToast } from "../hooks/useToast";
 import AddPurchaseOrderModal from "../components/AddPurchaseOrderModal";
 import POTable from "../components/POTable";
+import PODrawer from "../components/PODrawer";
+import POEmailModal from "../components/POEmailModal";
 
 function EmptyState() {
   return (
@@ -46,6 +48,9 @@ export default function PurchaseOrdersPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isViewDrawerOpen, setIsViewDrawerOpen] = useState(false);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [selectedPO, setSelectedPO] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 8;
 
@@ -81,10 +86,19 @@ export default function PurchaseOrdersPage() {
       date: new Date().toISOString(),
       total_amount: 0, // Simplified
     };
-    
+
     setPurchaseOrdersData(prev => [tempPO, ...prev]);
     showToast("Purchase order created successfully", "success");
   };
+  
+  const updatePOStatus = useCallback((id, status) => {
+    setPurchaseOrdersData(prev => 
+      prev.map(po => po.po_id === id ? { ...po, status } : po)
+    );
+    setSelectedPO(prev => 
+      prev?.po_id === id ? { ...prev, status } : prev
+    );
+  }, [setPurchaseOrdersData]);
 
   const startShowing = filteredPOs.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1;
   const endShowing = Math.min(currentPage * ITEMS_PER_PAGE, filteredPOs.length);
@@ -117,7 +131,7 @@ export default function PurchaseOrdersPage() {
                 setSearch(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full bg-[#1a1d23] border border-[#2a2d33] rounded-lg h-10 pl-11 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors shadow-sm"
+              className="w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg h-10 pl-11 pr-4 text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors shadow-sm"
             />
           </div>
           <div className="relative">
@@ -127,7 +141,7 @@ export default function PurchaseOrdersPage() {
                 setFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="appearance-none bg-[#1a1d23] border border-[#2a2d33] rounded-lg h-10 pl-4 pr-11 text-sm text-gray-300 font-medium focus:outline-none focus:border-purple-500 transition-colors cursor-pointer shadow-sm hover:border-gray-600"
+              className="appearance-none bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg h-10 pl-4 pr-11 text-sm text-gray-700 dark:text-gray-300 font-medium focus:outline-none focus:border-purple-500 transition-colors cursor-pointer shadow-sm hover:border-gray-300 dark:hover:border-gray-600"
             >
               <option value="All">All Status</option>
               <option value="PENDING">Pending</option>
@@ -139,39 +153,46 @@ export default function PurchaseOrdersPage() {
         </div>
 
         <button
-          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors shadow-lg active:scale-95 transform"
+          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors shadow-lg active:scale-95 transform whitespace-nowrap flex-shrink-0"
           onClick={() => setIsAddModalOpen(true)}
         >
           Add Purchase Order
         </button>
       </div>
 
-      <div className="flex-1 w-full bg-[#1a1d23] border border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg">
+      <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg transition-colors duration-300">
         {filteredPOs.length > 0 ? (
-          <POTable 
+          <POTable
             items={currentItems}
-            onView={(po) => console.log("View PO", po)}
+            onView={(po) => {
+              setSelectedPO(po);
+              setIsViewDrawerOpen(true);
+            }}
+            onOrder={(po) => {
+              setSelectedPO(po);
+              setIsEmailModalOpen(true);
+            }}
           />
         ) : (
           <EmptyState />
         )}
 
-        <div className="flex items-center justify-between px-6 py-4 border-t border-[#2a2d33] bg-[#0c0e12]/30 mt-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-[#2a2d33] bg-gray-50/50 dark:bg-[#0c0e12]/30 mt-auto">
           <span className="text-sm text-gray-500 font-medium">
-            Showing <span className="text-gray-300 mx-0.5">{startShowing}–{endShowing}</span> of <span className="text-gray-300 mx-0.5">{filteredPOs.length}</span> orders
+            Showing <span className="text-gray-700 dark:text-gray-300 mx-0.5">{startShowing}–{endShowing}</span> of <span className="text-gray-700 dark:text-gray-300 mx-0.5">{filteredPOs.length}</span> orders
           </span>
           <div className="flex gap-2">
             <button
               disabled={currentPage === 1 || filteredPOs.length === 0}
               onClick={() => setCurrentPage((p) => p - 1)}
-              className="px-4 py-2 border border-[#2a2d33] rounded-lg text-sm text-gray-300 font-bold hover:bg-white/[0.04] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="px-4 py-2 border border-gray-200 dark:border-[#2a2d33] rounded-lg text-sm text-gray-600 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-white/[0.04] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
               ← Previous
             </button>
             <button
               disabled={currentPage === totalPages || filteredPOs.length === 0}
               onClick={() => setCurrentPage((p) => p + 1)}
-              className="px-4 py-2 border border-[#2a2d33] rounded-lg text-sm text-gray-300 font-bold hover:bg-white/[0.04] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="px-4 py-2 border border-gray-200 dark:border-[#2a2d33] rounded-lg text-sm text-gray-600 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-white/[0.04] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
               Next →
             </button>
@@ -183,6 +204,19 @@ export default function PurchaseOrdersPage() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSubmit={handleAddPO}
+      />
+
+      <PODrawer
+        po={selectedPO}
+        isOpen={isViewDrawerOpen}
+        onClose={() => setIsViewDrawerOpen(false)}
+      />
+
+      <POEmailModal
+        po={selectedPO}
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        onStatusUpdate={updatePOStatus}
       />
     </div>
   );

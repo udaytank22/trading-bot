@@ -4,11 +4,12 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { useAppContext } from "../context";
 
 const LoginPage = () => {
-  const { login, isAuthenticated } = useAppContext();
+  const { login, isAuthenticated, employeesData } = useAppContext();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   React.useEffect(() => {
@@ -18,37 +19,51 @@ const LoginPage = () => {
   }, [isAuthenticated, navigate]);
 
   const handleSubmit = (e) => {
-
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
+    setError("");
+
+    // Simulate API call and validation
     setTimeout(() => {
-      setIsLoading(false);
-      login();
-      navigate("/");
+      const user = employeesData.find(emp => emp.email.toLowerCase() === email.toLowerCase());
+      
+      if (user || email === "admin@trademind.com") { // Allow admin by default too
+        setIsLoading(false);
+        login(user);
+        navigate("/");
+      } else {
+        setIsLoading(false);
+        setError("Invalid email or password. Please try again.");
+      }
     }, 1500);
   };
 
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#0c0e12] relative overflow-hidden">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 dark:bg-[#0c0e12] relative overflow-hidden transition-colors duration-300">
       {/* Background Decorative Elements */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-600/20 blur-[120px] rounded-full" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[120px] rounded-full" />
       
       <div className="w-full max-w-md p-8 z-10">
-        <div className="bg-[#161922]/80 backdrop-blur-xl border border-white/10 p-10 rounded-3xl shadow-2xl">
+        <div className="bg-white/80 dark:bg-[#161922]/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-10 rounded-3xl shadow-2xl">
           <div className="text-center mb-10">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-tr from-purple-600 to-blue-600 rounded-2xl mb-6 shadow-lg shadow-purple-500/20">
               <Lock className="text-white w-8 h-8" />
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
-            <p className="text-gray-400">Please enter your details to sign in</p>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Welcome Back</h1>
+            <p className="text-gray-500 dark:text-gray-400">Please enter your details to sign in</p>
           </div>
+
+          {error && (
+            <div className="mb-6 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold text-center animate-in fade-in slide-in-from-top-2">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300 ml-1">Email Address</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">Email Address</label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-purple-500 transition-colors">
                   <Mail size={18} />
@@ -58,7 +73,7 @@ const LoginPage = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-11 pr-4 py-3 bg-[#0c0e12] border border-white/5 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
+                  className="block w-full pl-11 pr-4 py-3 bg-white dark:bg-[#0c0e12] border border-gray-200 dark:border-white/5 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
                   placeholder="name@example.com"
                 />
               </div>
@@ -66,7 +81,7 @@ const LoginPage = () => {
 
             <div className="space-y-2">
               <div className="flex justify-between items-center ml-1">
-                <label className="text-sm font-medium text-gray-300">Password</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
                 <a href="#" className="text-xs text-purple-400 hover:text-purple-300 transition-colors">Forgot password?</a>
               </div>
               <div className="relative group">
@@ -78,7 +93,7 @@ const LoginPage = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-11 pr-12 py-3 bg-[#0c0e12] border border-white/5 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
+                  className="block w-full pl-11 pr-12 py-3 bg-white dark:bg-[#0c0e12] border border-gray-200 dark:border-white/5 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
                   placeholder="••••••••"
                 />
                 <button
@@ -95,9 +110,9 @@ const LoginPage = () => {
               <input
                 type="checkbox"
                 id="remember"
-                className="w-4 h-4 rounded border-gray-700 bg-[#0c0e12] text-purple-600 focus:ring-purple-500/20 focus:ring-offset-0 transition-all"
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-700 bg-white dark:bg-[#0c0e12] text-purple-600 focus:ring-purple-500/20 focus:ring-offset-0 transition-all"
               />
-              <label htmlFor="remember" className="text-sm text-gray-400 cursor-pointer select-none">Remember me for 30 days</label>
+              <label htmlFor="remember" className="text-sm text-gray-500 dark:text-gray-400 cursor-pointer select-none">Remember me for 30 days</label>
             </div>
 
             <button

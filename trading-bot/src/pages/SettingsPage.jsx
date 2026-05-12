@@ -18,13 +18,13 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function Field({ label, children }) {
   return (
     <div>
-      <label className="block text-sm text-gray-300 font-medium mb-1.5">{label}</label>
+      <label className="block text-sm text-gray-600 dark:text-gray-300 font-medium mb-1.5">{label}</label>
       {children}
     </div>
   );
 }
 
-const inputCls = 'w-full bg-[#0f1117] border border-[#2a2d36] rounded-lg h-[48px] px-4 text-[14px] text-white focus:outline-none focus:border-purple-500 transition-all shadow-sm focus:ring-1 focus:ring-purple-500/50';
+const inputCls = 'w-full bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-[48px] px-4 text-[14px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-all shadow-sm focus:ring-1 focus:ring-purple-500/50';
 
 /* ── Main page ───────────────────────────────────────────────────── */
 export default function SettingsPage() {
@@ -83,7 +83,7 @@ export default function SettingsPage() {
       <Toast message={toast.message} type={toast.type} />
 
       <div className="flex-1 w-full max-w-[600px] mx-auto mt-6">
-        <div className="bg-[#1a1d23] border border-[#2a2d33] rounded-xl shadow-lg p-8 flex flex-col gap-8">
+        <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-lg p-8 flex flex-col gap-8 transition-colors duration-300">
 
           {/* Section 1 — Business info */}
           <section>
@@ -113,7 +113,7 @@ export default function SettingsPage() {
             </div>
           </section>
 
-          <div className="h-px bg-[#2a2d36]" />
+          <div className="h-px bg-gray-100 dark:bg-[#2a2d36]" />
 
           {/* Section 2 — Seller info */}
           <section>

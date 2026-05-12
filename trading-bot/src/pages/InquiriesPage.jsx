@@ -286,7 +286,7 @@ export default function InquiriesPage() {
                 setSearch(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full bg-[#1a1d23] border border-[#2a2d33] rounded-lg h-10 pl-11 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors shadow-sm"
+              className="w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg h-10 pl-11 pr-4 text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors shadow-sm"
             />
           </div>
           {/* Filter */}
@@ -301,7 +301,7 @@ export default function InquiriesPage() {
                 setFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="appearance-none bg-[#1a1d23] border border-[#2a2d33] rounded-lg h-10 pl-4 pr-11 text-sm text-gray-300 font-medium focus:outline-none focus:border-purple-500 transition-colors cursor-pointer shadow-sm hover:border-gray-600"
+              className="appearance-none bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg h-10 pl-4 pr-11 text-sm text-gray-700 dark:text-gray-300 font-medium focus:outline-none focus:border-purple-500 transition-colors cursor-pointer shadow-sm hover:border-gray-300 dark:hover:border-gray-600"
             >
               <option value="All">All Status</option>
               <option value="PENDING">Pending</option>
@@ -326,7 +326,7 @@ export default function InquiriesPage() {
         </div>
 
         <button
-          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors shadow-lg active:scale-95 transform"
+          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors shadow-lg active:scale-95 transform whitespace-nowrap flex-shrink-0"
           onClick={() => setIsAddModalOpen(true)}
         >
           Add Inquiry
@@ -334,7 +334,7 @@ export default function InquiriesPage() {
       </div>
 
       {/* Table */}
-      <div className="flex-1 w-full bg-[#1a1d23] border border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg">
+      <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg transition-colors duration-300">
         {filteredInquiries.length > 0 ? (
           <InquiryTable
             items={currentItems}
@@ -349,14 +349,14 @@ export default function InquiriesPage() {
         )}
 
         {/* Pagination */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-[#2a2d33] bg-[#0c0e12]/30">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-[#2a2d33] bg-gray-50/50 dark:bg-[#0c0e12]/30">
           <span className="text-sm text-gray-500 font-medium">
             Showing{" "}
-            <span className="text-gray-300 mx-0.5">
+            <span className="text-gray-700 dark:text-gray-300 mx-0.5">
               {startShowing}–{endShowing}
             </span>{" "}
             of{" "}
-            <span className="text-gray-300 mx-0.5">
+            <span className="text-gray-700 dark:text-gray-300 mx-0.5">
               {filteredInquiries.length}
             </span>{" "}
             inquiries
@@ -365,7 +365,7 @@ export default function InquiriesPage() {
             <button
               disabled={currentPage === 1 || filteredInquiries.length === 0}
               onClick={() => setCurrentPage((p) => p - 1)}
-              className="px-4 py-2 border border-[#2a2d33] rounded-lg text-sm text-gray-300 font-bold hover:bg-white/[0.04] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="px-4 py-2 border border-gray-200 dark:border-[#2a2d33] rounded-lg text-sm text-gray-600 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-white/[0.04] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
               ← Previous
             </button>
@@ -374,7 +374,7 @@ export default function InquiriesPage() {
                 currentPage === totalPages || filteredInquiries.length === 0
               }
               onClick={() => setCurrentPage((p) => p + 1)}
-              className="px-4 py-2 border border-[#2a2d33] rounded-lg text-sm text-gray-300 font-bold hover:bg-white/[0.04] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="px-4 py-2 border border-gray-200 dark:border-[#2a2d33] rounded-lg text-sm text-gray-600 dark:text-gray-300 font-bold hover:bg-gray-50 dark:hover:bg-white/[0.04] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
               Next →
             </button>

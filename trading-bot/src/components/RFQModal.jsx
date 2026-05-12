@@ -95,11 +95,10 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal }) => {
                     <button
                       key={p.product_name}
                       onClick={() => handleProductToggle(p.product_name)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
-                        selectedProductNames.includes(p.product_name)
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${selectedProductNames.includes(p.product_name)
                           ? "bg-purple-600 border-purple-500 text-white"
                           : "bg-gray-800/30 border-gray-700 text-gray-400 hover:border-gray-500"
-                      }`}
+                        }`}
                     >
                       {p.product_name}
                     </button>

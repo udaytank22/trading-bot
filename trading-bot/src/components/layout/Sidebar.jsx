@@ -1,18 +1,29 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAppContext } from "../../context";
 
 const NAV_LINKS = [
   { name: "Dashboard", path: "/", icon: <DashboardIcon /> },
   { name: "Inquiries", path: "/inquiries", icon: <InquiriesIcon /> },
   { name: "Purchase Orders", path: "/purchase-orders", icon: <POIcon /> },
   { name: "Supply", path: "/supply", icon: <InquiriesIcon /> },
+  { name: "Employees", path: "/employees", icon: <UsersIcon /> },
+  { name: "Documents", path: "/documents", icon: <DocumentIcon /> },
   { name: "Profit Report", path: "/profit", icon: <ProfitIcon /> },
   { name: "Settings", path: "/settings", icon: <SettingsIcon /> },
 ];
 
 export default function Sidebar({ isOpen }) {
+  const { logout } = useAppContext();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
   return (
     <aside
-      className={`flex-shrink-0 bg-[#1a1d23] text-gray-400 flex flex-col h-full border-r border-[#2a2d33] shadow-lg z-10 transition-width duration-300 overflow-hidden ${isOpen ? "w-[240px]" : "w-16"}`}
+      className={`flex-shrink-0 bg-white dark:bg-[#1a1d23] text-gray-500 dark:text-gray-400 flex flex-col h-full border-r border-gray-200 dark:border-[#2a2d33] shadow-lg z-10 transition-all duration-300 overflow-hidden ${isOpen ? "w-[240px]" : "w-16"}`}
     >
       {/* Logo */}
       <div className="p-6 pb-8 flex items-center gap-3">
@@ -20,10 +31,10 @@ export default function Sidebar({ isOpen }) {
           <div className="w-3 h-3 bg-white rounded-sm rotate-45" />
         </div>
         <div className="flex flex-col">
-          <span className="text-white font-bold text-[18px] leading-tight">
+          <span className="text-gray-900 dark:text-white font-bold text-[18px] leading-tight">
             TradeMind
           </span>
-          <span className="text-gray-500 text-[12px] font-medium tracking-wide">
+          <span className="text-gray-400 dark:text-gray-500 text-[12px] font-medium tracking-wide">
             Quotation Dashboard
           </span>
         </div>
@@ -37,10 +48,9 @@ export default function Sidebar({ isOpen }) {
             to={link.path}
             end={link.path === "/"}
             className={({ isActive }) =>
-              `flex items-center gap-3 pl-4 pr-4 h-[44px] border-l-[3px] transition-colors duration-150 ${
-                isActive
-                  ? "border-purple-500 bg-white/[0.04] text-white font-semibold"
-                  : "border-transparent text-gray-400 hover:bg-white/[0.02] hover:text-gray-200 font-medium"
+              `flex items-center gap-3 pl-4 pr-4 h-[44px] border-l-[3px] transition-colors duration-150 ${isActive
+                ? "border-purple-500 bg-purple-50 dark:bg-white/[0.04] text-purple-600 dark:text-white font-semibold"
+                : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/[0.02] hover:text-gray-900 dark:hover:text-gray-200 font-medium"
               }`
             }
           >
@@ -67,6 +77,20 @@ export default function Sidebar({ isOpen }) {
           v1.0.0
         </div>
       </div> */}
+
+      {/* Logout Button */}
+      <div className="mt-auto border-t border-gray-200 dark:border-[#2a2d33] p-4">
+        <button
+          onClick={handleLogout}
+          className={`flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-red-500 hover:bg-red-500/10 transition-all font-bold text-sm ${isOpen ? "" : "justify-center px-0"}`}
+          title="Logout"
+        >
+          <span className="w-5 h-5 flex-shrink-0">
+            <LogoutIcon />
+          </span>
+          <span className={`${isOpen ? "" : "hidden"}`}>Logout</span>
+        </button>
+      </div>
     </aside>
   );
 }
@@ -163,6 +187,57 @@ function POIcon() {
         strokeLinecap="round"
         strokeLinejoin="round"
         d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+      />
+    </svg>
+  );
+}
+function UsersIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.8}
+      stroke="currentColor"
+      className="w-full h-full"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-2.123-7.674 4.125 4.125 0 0 0-2.122 7.674 9.337 9.337 0 0 0 4.121-.952 9.38 9.38 0 0 0 2.625.372M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.003c0 1.113.285 2.16.786 3.07M15 19.128A9.321 9.321 0 0 0 12 18a9.321 9.321 0 0 0-3 1.128m6 0c0 1.113-.285 2.16-.786 3.07M15 19.128c0-1.113-.285-2.16-.786-3.07M9.75 9.75c0 1.242 1.008 2.25 2.25 2.25s2.25-1.008 2.25-2.25-1.008-2.25-2.25-2.25-2.25 1.008-2.25 2.25Z"
+      />
+    </svg>
+  );
+}
+
+function DocumentIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.8}
+      stroke="currentColor"
+      className="w-full h-full"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+    </svg>
+  );
+}
+function LogoutIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.8}
+      stroke="currentColor"
+      className="w-full h-full"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"
       />
     </svg>
   );

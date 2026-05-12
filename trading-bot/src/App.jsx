@@ -4,6 +4,8 @@ import { AppContext } from "./context";
 import { mockInquiries } from "./data/mockInquiries";
 import { mockSupply } from "./data/mockSupply";
 import { mockPurchaseOrders } from "./data/mockPurchaseOrders";
+import { mockEmployees } from "./data/mockEmployees";
+import { mockDocuments } from "./data/mockDocuments";
 import Sidebar from "./components/layout/Sidebar";
 import Topbar from "./components/layout/Topbar";
 import SupplyPage from "./pages/SupplyPage";
@@ -15,6 +17,8 @@ const ProfitPage = React.lazy(() => import("./pages/ProfitPage"));
 const SettingsPage = React.lazy(() => import("./pages/SettingsPage"));
 const LoginPage = React.lazy(() => import("./pages/LoginPage"));
 const PurchaseOrdersPage = React.lazy(() => import("./pages/PurchaseOrdersPage"));
+const EmployeesPage = React.lazy(() => import("./pages/EmployeesPage"));
+const DocumentsPage = React.lazy(() => import("./pages/DocumentsPage"));
 
 function PageLoader() {
   return (
@@ -47,21 +51,46 @@ export default function App() {
   const [inquiriesData, setInquiriesData] = React.useState(mockInquiries);
   const [supplyData, setSupplyData] = React.useState(mockSupply);
   const [purchaseOrdersData, setPurchaseOrdersData] = React.useState(mockPurchaseOrders);
+  const [employeesData, setEmployeesData] = React.useState(mockEmployees);
+  const [documentsData, setDocumentsData] = React.useState(mockDocuments);
+  const [currentUser, setCurrentUser] = React.useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
   const [isAuthenticated, setIsAuthenticated] = React.useState(() => {
     return localStorage.getItem("is_auth") === "true";
   });
+  const [theme, setTheme] = React.useState(() => {
+    return localStorage.getItem("theme") || "dark";
+  });
+
+  React.useLayoutEffect(() => {
+    const root = window.document.documentElement;
+    const body = window.document.body;
+    root.classList.remove("light", "dark");
+    root.classList.add(theme);
+    body.classList.remove("light", "dark");
+    body.classList.add(theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
   const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
 
-  const login = () => {
+  const login = (user) => {
     setIsAuthenticated(true);
+    setCurrentUser(user || { name: "Admin", role: "Administrator", email: "admin@trademind.com" });
     localStorage.setItem("is_auth", "true");
+    if (user) {
+      localStorage.setItem("user_profile", JSON.stringify(user));
+    }
   };
 
   const logout = () => {
     setIsAuthenticated(false);
+    setCurrentUser(null);
     localStorage.removeItem("is_auth");
+    localStorage.removeItem("user_profile");
   };
 
   return (
@@ -73,9 +102,17 @@ export default function App() {
         setSupplyData,
         purchaseOrdersData,
         setPurchaseOrdersData,
+        employeesData,
+        setEmployeesData,
+        documentsData,
+        setDocumentsData,
+        currentUser,
+        setCurrentUser,
         isAuthenticated, 
         login, 
-        logout 
+        logout,
+        theme,
+        toggleTheme
       }}
     >
       <HashRouter>
@@ -86,9 +123,9 @@ export default function App() {
               path="*"
               element={
                 isAuthenticated ? (
-                  <div className="flex w-screen h-screen bg-[#0f1117] text-white overflow-hidden font-sans">
+                  <div className="flex w-screen h-screen bg-gray-50 dark:bg-[#0c0e12] text-gray-900 dark:text-white overflow-hidden font-sans transition-colors duration-300">
                     <Sidebar isOpen={isSidebarOpen} />
-                    <main className="flex-1 flex flex-col h-full bg-[#0f1117] relative overflow-hidden">
+                    <main className="flex-1 flex flex-col h-full bg-white dark:bg-[#0f1117] relative overflow-hidden transition-colors duration-300">
                       <Topbar onToggleSidebar={toggleSidebar} />
                       <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
                         <div className="max-w-[1280px] min-w-[1024px] mx-auto h-full">
@@ -98,6 +135,8 @@ export default function App() {
                             <Route path="/supply" element={<SupplyPage />} />
                             <Route path="/profit" element={<ProfitPage />} />
                             <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
+                            <Route path="/employees" element={<EmployeesPage />} />
+                            <Route path="/documents" element={<DocumentsPage />} />
                             <Route path="/settings" element={<SettingsPage />} />
                           </Routes>
                         </div>
