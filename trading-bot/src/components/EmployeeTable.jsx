@@ -64,6 +64,9 @@ function DeleteIcon() {
   );
 }
 
+import { Phone, Video } from "lucide-react";
+import { useAppContext } from "../context";
+
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 /**
@@ -74,6 +77,8 @@ function DeleteIcon() {
  * @param {function} props.onDelete - Trigger delete confirmation
  */
 export default function EmployeeTable({ employees, onEdit, onDelete, onView }) {
+  const { startCall } = useAppContext();
+
   const renderRow = (emp, idx) => (
     <tr
       key={emp.id}
@@ -125,9 +130,28 @@ export default function EmployeeTable({ employees, onEdit, onDelete, onView }) {
         <StatusBadge status={emp.status} />
       </td>
 
-      {/* ── Icon action buttons: View + Edit + Delete ──────────────────── */}
+      {/* ── Icon action buttons: Call + Video + View + Edit + Delete ──── */}
       <td className="px-3 md:px-6 py-4 text-right">
         <div className="flex items-center justify-end gap-2">
+          <Button 
+            variant="icon" 
+            color="emerald" 
+            onClick={() => startCall(emp.name, 'voice')} 
+            title="Voice Call"
+            className="hover:bg-emerald-500/20"
+          >
+            <Phone size={18} />
+          </Button>
+          <Button 
+            variant="icon" 
+            color="blue" 
+            onClick={() => startCall(emp.name, 'video')} 
+            title="Video Call"
+            className="hover:bg-blue-500/20"
+          >
+            <Video size={18} />
+          </Button>
+          <div className="w-[1px] h-4 bg-gray-200 dark:bg-white/10 mx-1" />
           <Button variant="icon" color="purple" onClick={() => onView(emp)} title="View Employee">
             <ViewIcon />
           </Button>

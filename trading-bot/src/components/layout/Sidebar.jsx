@@ -8,19 +8,29 @@ const NAV_LINKS = [
   { name: "Supply", path: "/supply", icon: <InquiriesIcon /> },
   { name: "Employees", path: "/employees", icon: <UsersIcon /> },
   { name: "Documents", path: "/documents", icon: <DocumentIcon /> },
+  { name: "To-Do", path: "/todo", icon: <TodoIcon /> },
   { name: "Profit Report", path: "/profit", icon: <ProfitIcon /> },
   { name: "Accounts", path: "/accounts", icon: <ProfitIcon /> },
+  { name: "Notifications", path: "/notifications", icon: <BellIcon /> },
   { name: "Settings", path: "/settings", icon: <SettingsIcon /> },
 ];
 
 export default function Sidebar({ isOpen }) {
-  const { logout } = useAppContext();
+  const { logout, currentUser } = useAppContext();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
+
+  const filteredLinks = NAV_LINKS.filter(link => {
+    if (currentUser?.role?.toLowerCase() === 'employee') {
+      const employeeTabs = ["Dashboard", "Inquiries", "Purchase Orders", "Supply", "Documents", "Settings", "Notifications", "To-Do"];
+      return employeeTabs.includes(link.name);
+    }
+    return true; // Admin or others see all links
+  });
 
   return (
     <aside
@@ -43,7 +53,7 @@ export default function Sidebar({ isOpen }) {
 
       {/* Navigation */}
       <nav className="flex flex-col flex-1 mt-2" aria-label="Main navigation">
-        {NAV_LINKS.map((link) => (
+        {filteredLinks.map((link) => (
           <NavLink
             key={link.name}
             to={link.path}
@@ -225,6 +235,44 @@ function DocumentIcon() {
     </svg>
   );
 }
+function TodoIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.8}
+      stroke="currentColor"
+      className="w-full h-full"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9 12h3.75M9 15h3.75M9 18h3.75m.75-12h3.75M9 9h3.75M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18Zm-9-9a9 9 0 0 1 9-9"
+      />
+    </svg>
+  );
+}
+
+function BellIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.8}
+      stroke="currentColor"
+      className="w-full h-full"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
+      />
+    </svg>
+  );
+}
+
 function LogoutIcon() {
   return (
     <svg

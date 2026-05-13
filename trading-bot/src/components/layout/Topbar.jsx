@@ -13,6 +13,8 @@ const PAGE_TITLES = {
   "/accounts": "Accounts",
   "/employees": "Employees",
   "/documents": "Documents",
+  "/notifications": "Notifications",
+  "/todo": "To-Do",
 };
 
 const DAYS = [
@@ -121,6 +123,7 @@ export default function Topbar({ onToggleSidebar }) {
         </button>
 
         <button
+          onClick={() => navigate("/notifications")}
           className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-all text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 relative group"
           aria-label="Notifications"
         >

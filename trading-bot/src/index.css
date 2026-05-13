@@ -19,8 +19,8 @@ html.light body {
 
 /* Custom Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -28,10 +28,18 @@ html.light body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #2a2d33;
-  border-radius: 10px;
+  background: rgba(168, 85, 247, 0.2);
+  border-radius: 20px;
+  transition: all 0.3s;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #3a3d43;
+  background: rgba(168, 85, 247, 0.5);
+}
+
+.glass-morphism {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }

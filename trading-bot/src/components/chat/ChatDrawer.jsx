@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { X, Phone, Video } from "lucide-react";
+import { useAppContext } from "../../context";
 
 const mockUsers = [
   { id: 1, name: "Alice Cooper", status: "online", lastMsg: "See you at the meeting", avatar: "AC" },
@@ -8,6 +10,7 @@ const mockUsers = [
 ];
 
 const ChatDrawer = ({ isOpen, onClose }) => {
+  const { startCall } = useAppContext();
   const [selectedUser, setSelectedUser] = useState(null);
   const [messages, setMessages] = useState([
     { sender: "them", type: "text", text: "Hello! How can I help you today?" },
@@ -53,30 +56,57 @@ const ChatDrawer = ({ isOpen, onClose }) => {
       <div className={`relative w-full max-w-sm bg-[#1a1d23] h-full shadow-2xl border-l border-[#2a2d33] transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
         
         {/* Header */}
-        <div className="px-6 py-4 border-b border-[#2a2d33] flex items-center justify-between bg-[#1a1d23]">
+        <div className="px-6 py-4 border-b border-[#2a2d33] flex items-center justify-between bg-[#1a1d23] sticky top-0 z-10 shadow-sm">
           {selectedUser ? (
-            <div className="flex items-center gap-3">
-              <button onClick={() => setSelectedUser(null)} className="text-gray-400 hover:text-white transition-colors">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
+            <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold text-white">
-                  {selectedUser.avatar}
+                <button onClick={() => setSelectedUser(null)} className="text-gray-400 hover:text-white transition-colors">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-purple-600/20 flex items-center justify-center text-xs font-bold text-purple-400 border border-purple-500/20 shadow-inner">
+                    {selectedUser.avatar}
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white leading-none mb-1">{selectedUser.name}</h3>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                      <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Online</span>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-white leading-none">{selectedUser.name}</h3>
-                  <span className="text-[10px] text-emerald-400">Online</span>
-                </div>
+              </div>
+              
+              <div className="flex items-center gap-1">
+                 <button 
+                  onClick={() => startCall(selectedUser.name, 'voice')}
+                  className="p-2.5 text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-xl transition-all active:scale-90"
+                  title="Voice Call"
+                 >
+                   <Phone size={18} />
+                 </button>
+                 <button 
+                  onClick={() => startCall(selectedUser.name, 'video')}
+                  className="p-2.5 text-gray-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-xl transition-all active:scale-90"
+                  title="Video Call"
+                 >
+                   <Video size={18} />
+                 </button>
+                 <button onClick={onClose} className="p-2.5 text-gray-400 hover:text-white transition-colors">
+                   <X size={20} />
+                 </button>
               </div>
             </div>
           ) : (
-            <h2 className="text-lg font-bold text-white">Messages</h2>
+            <>
+              <h2 className="text-lg font-bold text-white">Direct Messages</h2>
+              <button onClick={onClose} className="p-2 text-gray-400 hover:text-white transition-colors">
+                <X size={24} />
+              </button>
+            </>
           )}
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl leading-none">
-            &times;
-          </button>
         </div>
 
         {/* Content */}

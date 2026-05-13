@@ -1,0 +1,42 @@
+export const mockNotifications = [
+  {
+    id: 1,
+    title: "New Inquiry Received",
+    message: "A new inquiry for 'Premium Grade Copper' has been received from Global Traders.",
+    time: "5 minutes ago",
+    type: "inquiry",
+    isRead: false,
+  },
+  {
+    id: 2,
+    title: "Purchase Order Confirmed",
+    message: "Purchase Order #PO-2024-001 has been confirmed by the supplier.",
+    time: "2 hours ago",
+    type: "purchase-order",
+    isRead: false,
+  },
+  {
+    id: 3,
+    title: "Document Verified",
+    message: "The shipping documents for Deal #D-882 have been successfully verified.",
+    time: "5 hours ago",
+    type: "document",
+    isRead: true,
+  },
+  {
+    id: 4,
+    title: "Supply Update",
+    message: "The cargo for 'Steel Sheets' is now marked as 'In Transit'.",
+    time: "Yesterday",
+    type: "supply",
+    isRead: true,
+  },
+  {
+    id: 5,
+    title: "System Maintenance",
+    message: "Scheduled system maintenance will take place on Sunday at 2:00 AM UTC.",
+    time: "2 days ago",
+    type: "system",
+    isRead: true,
+  },
+];

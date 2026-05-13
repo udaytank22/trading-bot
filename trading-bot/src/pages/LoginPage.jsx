@@ -150,7 +150,7 @@ const LoginPage = () => {
                 ADMIN
               </button>
               <button 
-                onClick={() => login({ name: "Sales Exec", role: "Sales Executive", email: "priya@trademind.com" })}
+                onClick={() => login({ name: "Sales Exec", role: "employee", email: "priya@trademind.com" })}
                 className="px-3 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 text-[10px] font-bold rounded-lg transition-all"
               >
                 EMPLOYEE

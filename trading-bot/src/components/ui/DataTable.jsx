@@ -85,23 +85,18 @@ export default function DataTable({
         <table className="w-full text-left text-sm table-auto border-separate border-spacing-0">
 
           {/* ── HEADER ─────────────────────────────────────────────────────── */}
-          <thead className={[
-            "bg-gray-50 dark:bg-[#242830]/80",          // background
-            "text-gray-500 dark:text-gray-400",          // text color
-            "text-[11px] font-bold uppercase tracking-wider", // typography
-            "border-b border-gray-200 dark:border-[#2a2d33]", // bottom border
-            "sticky top-0 z-10 backdrop-blur-md",         // sticky + blur
-            "transition-colors duration-300",             // smooth theme switch
-          ].join(" ")}>
-            <tr>
+          <thead className="sticky top-0 z-20 transition-all duration-300">
+            <tr className="glass-morphism shadow-sm">
               {columns.map((col) => (
                 <th
                   key={col.key}
                   className={[
-                    "px-3 md:px-6 py-4",
-                    "border-b border-gray-200 dark:border-[#2a2d33]",
-                    col.hidden ?? "",    // e.g. "hidden lg:table-cell"
-                    col.className ?? "", // e.g. "text-right"
+                    "px-6 py-5",
+                    "text-gray-400 dark:text-gray-500",
+                    "text-[10px] font-black uppercase tracking-[0.2em]",
+                    "border-b border-gray-100 dark:border-white/5",
+                    col.hidden ?? "",
+                    col.className ?? "",
                   ].join(" ")}
                 >
                   {col.label}

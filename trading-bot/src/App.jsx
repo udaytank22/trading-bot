@@ -9,6 +9,7 @@ import { mockDocuments } from "./data/mockDocuments";
 import { mockAccounts } from "./data/mockAccounts";
 import Sidebar from "./components/layout/Sidebar";
 import Topbar from "./components/layout/Topbar";
+import CallOverlay from "./components/layout/CallOverlay";
 import SupplyPage from "./pages/SupplyPage";
 
 // Lazy-load pages for code splitting
@@ -21,6 +22,8 @@ const PurchaseOrdersPage = React.lazy(() => import("./pages/PurchaseOrdersPage")
 const EmployeesPage = React.lazy(() => import("./pages/EmployeesPage"));
 const DocumentsPage = React.lazy(() => import("./pages/DocumentsPage"));
 const AccountPage = React.lazy(() => import("./pages/AccountPage"));
+const NotificationsPage = React.lazy(() => import("./pages/NotificationsPage"));
+const TodoPage = React.lazy(() => import("./pages/TodoPage"));
 
 function PageLoader() {
   return (
@@ -61,9 +64,22 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = React.useState(() => {
     return localStorage.getItem("is_auth") === "true";
   });
+  const [activeCall, setActiveCall] = React.useState(null);
   const [theme, setTheme] = React.useState(() => {
     return localStorage.getItem("theme") || "dark";
   });
+
+  const startCall = (user, type = 'voice') => {
+    setActiveCall({
+      caller: user,
+      type,
+      status: 'ongoing',
+      startTime: Date.now(),
+      duration: 0
+    });
+  };
+
+  const endCall = () => setActiveCall(null);
 
   React.useLayoutEffect(() => {
     const root = window.document.documentElement;
@@ -117,7 +133,10 @@ export default function App() {
         login,
         logout,
         theme,
-        toggleTheme
+        toggleTheme,
+        activeCall,
+        startCall,
+        endCall
       }}
     >
       <HashRouter>
@@ -132,6 +151,7 @@ export default function App() {
                     <Sidebar isOpen={isSidebarOpen} />
                     <main className="flex-1 flex flex-col h-full bg-white dark:bg-[#0f1117] relative overflow-hidden transition-colors duration-300">
                       <Topbar onToggleSidebar={toggleSidebar} />
+                      <CallOverlay />
                       <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
                         <div className="max-w-[1280px] min-w-[1024px] mx-auto h-full">
                           <Routes>
@@ -144,6 +164,8 @@ export default function App() {
                             <Route path="/documents" element={<DocumentsPage />} />
                             <Route path="/settings" element={<SettingsPage />} />
                             <Route path="/accounts" element={<AccountPage />} />
+                            <Route path="/notifications" element={<NotificationsPage />} />
+                            <Route path="/todo" element={<TodoPage />} />
                           </Routes>
                         </div>
                       </div>
