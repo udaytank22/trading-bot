@@ -101,7 +101,7 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
       />
 
       <div
-        className={`fixed top-0 right-0 h-full w-[500px] bg-[#1e2028] border-l border-[#2a2d36] z-50 transform transition-transform duration-300 ease-in-out flex flex-col overflow-y-auto shadow-2xl ${isOpen ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed top-0 right-0 h-full w-[500px] bg-white dark:bg-[#1e2028] border-l border-gray-200 dark:border-[#2a2d36] z-50 transform transition-transform duration-300 ease-in-out flex flex-col overflow-y-auto shadow-2xl ${isOpen ? "translate-x-0" : "translate-x-full"}`}
       >
         {deal && (
           <div className="flex flex-col flex-1 h-fit">
@@ -133,7 +133,7 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
                 </div>
                 <StatusBadge status={deal.status} />
               </div>
-              <div className="text-white text-[20px] font-bold leading-tight tracking-wide">
+              <div className="text-gray-900 dark:text-white text-[20px] font-bold leading-tight tracking-wide">
                 {deal.buyer_name}
               </div>
               <div className="text-gray-400 text-[14px] mt-1 tracking-wide">
@@ -154,7 +154,7 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
               </div>
             </div>
 
-            <div className="h-[1px] bg-[#2a2d36] w-full" />
+            <div className="h-[1px] bg-gray-200 dark:bg-[#2a2d36] w-full" />
 
             {/* SECTION 2: Products Requested */}
             <div className="p-6">
@@ -185,31 +185,31 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
                   </button>
                 )}
               </div>
-              <div className="overflow-x-auto rounded-lg border border-[#2a2d36] bg-[#242830]/50 shadow-sm">
-                <table className="w-full text-left text-sm text-gray-300">
-                  <thead className="bg-[#1a1d23] text-gray-400 text-[11px] font-semibold uppercase tracking-wider">
+              <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-[#2a2d36] bg-gray-100 dark:bg-[#242830]/50 shadow-sm">
+                <table className="w-full text-left text-sm text-gray-700 dark:text-gray-300">
+                  <thead className="bg-gray-50 dark:bg-[#1a1d23] text-gray-400 text-[11px] font-semibold uppercase tracking-wider">
                     <tr>
-                      <th className="px-4 py-3 border-b border-[#2a2d36]">
+                      <th className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36]">
                         Product
                       </th>
-                      <th className="px-4 py-3 border-b border-[#2a2d36]">
+                      <th className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36]">
                         Qty
                       </th>
-                      <th className="px-4 py-3 border-b border-[#2a2d36]">
+                      <th className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36]">
                         Unit
                       </th>
-                      <th className="px-4 py-3 border-b border-[#2a2d36]">
+                      <th className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36]">
                         Specs
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#2a2d36]/50">
+                  <tbody className="divide-y divide-gray-200 dark:divide-[#2a2d36]/50">
                     {(isExpanded ? deal.products : deal.products.slice(0, 4)).map((p, i) => (
                       <tr
                         key={i}
-                        className="hover:bg-white/[0.03] bg-white/[0.01]"
+                        className="hover:bg-gray-50 dark:hover:bg-white/[0.03] bg-transparent dark:bg-white/[0.01]"
                       >
-                        <td className="px-4 py-3 text-white font-medium">
+                        <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">
                           {p.product_name}
                         </td>
                         <td className="px-4 py-3 font-mono font-medium">
@@ -229,7 +229,7 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
               </div>
             </div>
 
-            <div className="h-[1px] bg-[#2a2d36] w-full" />
+            <div className="h-[1px] bg-gray-200 dark:bg-[#2a2d36] w-full" />
 
             {/* SECTION 3: Seller Quote */}
             <div className="p-6">
@@ -265,36 +265,36 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
               ) : (
                 <div>
                   <div className="flex flex-col mb-4">
-                    <span className="text-gray-200 font-bold text-[14px]">
+                    <span className="text-gray-800 dark:text-gray-200 font-bold text-[14px]">
                       {deal.seller_quote.seller_name}
                     </span>
                     <span className="text-gray-500 text-xs mt-0.5">
                       {deal.seller_quote.seller_email}
                     </span>
                   </div>
-                  <div className="overflow-x-auto rounded-lg border border-[#2a2d36] bg-[#242830]/50 shadow-sm">
-                    <table className="w-full text-left text-sm text-gray-300">
-                      <thead className="bg-[#1a1d23] text-gray-400 text-[11px] uppercase tracking-wider font-semibold">
+                  <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-[#2a2d36] bg-gray-100 dark:bg-[#242830]/50 shadow-sm">
+                    <table className="w-full text-left text-sm text-gray-700 dark:text-gray-300">
+                      <thead className="bg-gray-50 dark:bg-[#1a1d23] text-gray-400 text-[11px] uppercase tracking-wider font-semibold">
                         <tr>
-                          <th className="px-4 py-3 border-b border-[#2a2d36]">
+                          <th className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36]">
                             Product
                           </th>
-                          <th className="px-4 py-3 border-b border-[#2a2d36]">
+                          <th className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36]">
                             Unit Price
                           </th>
-                          <th className="px-4 py-3 border-b border-[#2a2d36]">
+                          <th className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36]">
                             MOQ
                           </th>
-                          <th className="px-4 py-3 border-b border-[#2a2d36]">
+                          <th className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36]">
                             Lead
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[#2a2d36]/50">
+                      <tbody className="divide-y divide-gray-200 dark:divide-[#2a2d36]/50">
                         {deal.seller_quote.products.map((p, i) => (
                           <tr
                             key={i}
-                            className="hover:bg-white/[0.03] bg-white/[0.01]"
+                            className="hover:bg-gray-50 dark:hover:bg-white/[0.03] bg-transparent dark:bg-white/[0.01]"
                           >
                             <td className="px-4 py-3 truncate max-w-[120px] font-medium">
                               {p.product_name}
@@ -317,7 +317,7 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
               )}
             </div>
 
-            <div className="h-[1px] bg-[#2a2d36] w-full flex-shrink-0" />
+            <div className="h-[1px] bg-gray-200 dark:bg-[#2a2d36] w-full flex-shrink-0" />
 
             {/* SECTION 4: My Quotation */}
             <div className="p-6">
@@ -337,7 +337,7 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
               )}
 
               {!displayQuote && !deal.seller_quote && (
-                <div className="bg-[#1a1d23] border border-[#2a2d36] border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center shadow-inner">
+                <div className="bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d36] border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center shadow-inner">
                   <span className="text-gray-400 text-[14px] font-semibold tracking-wide">
                     Quote not prepared yet
                   </span>
@@ -346,29 +346,29 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
 
               {displayQuote && (
                 <div className="animate-fade-in">
-                  <div className="overflow-x-auto rounded-lg border border-[#2a2d36] bg-[#242830]/50 shadow-sm flex flex-col">
-                    <table className="w-full text-left text-sm text-gray-300">
-                      <thead className="bg-[#1a1d23] text-gray-400 text-[11px] uppercase tracking-wider font-semibold">
+                  <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-[#2a2d36] bg-gray-100 dark:bg-[#242830]/50 shadow-sm flex flex-col">
+                    <table className="w-full text-left text-sm text-gray-700 dark:text-gray-300">
+                      <thead className="bg-gray-50 dark:bg-[#1a1d23] text-gray-400 text-[11px] uppercase tracking-wider font-semibold">
                         <tr>
-                          <th className="px-4 py-3 border-b border-[#2a2d36]">
+                          <th className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36]">
                             Product
                           </th>
-                          <th className="px-4 py-3 border-b border-[#2a2d36]">
+                          <th className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36]">
                             My Price
                           </th>
-                          <th className="px-4 py-3 border-b border-[#2a2d36]">
+                          <th className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36]">
                             Margin
                           </th>
-                          <th className="px-4 py-3 border-b border-[#2a2d36] text-right">
+                          <th className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36] text-right">
                             Total
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[#2a2d36]/50">
+                      <tbody className="divide-y divide-gray-200 dark:divide-[#2a2d36]/50">
                         {displayQuote.products.map((p, i) => (
                           <tr
                             key={i}
-                            className="hover:bg-white/[0.03] bg-white/[0.01]"
+                            className="hover:bg-gray-50 dark:hover:bg-white/[0.03] bg-transparent dark:bg-white/[0.01]"
                           >
                             <td className="px-4 py-3.5 truncate max-w-[120px] font-medium">
                               {p.product_name}
@@ -379,7 +379,7 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
                             <td className="px-4 py-3.5 font-mono text-emerald-400 font-bold">
                               {p.margin_percent || p.applied_margin_percent}%
                             </td>
-                            <td className="px-4 py-3.5 font-mono text-white text-right font-bold">
+                            <td className="px-4 py-3.5 font-mono text-gray-900 dark:text-white text-right font-bold">
                               {formatCurrency(
                                 p.total_price || p.total_my_price,
                               )}
@@ -388,8 +388,8 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
                         ))}
                       </tbody>
                     </table>
-                    <div className="bg-[#1a1d23] p-4.5 border-t border-[#2a2d36] flex flex-col gap-1.5 items-end">
-                      <div className="text-[14px] text-white">
+                    <div className="bg-gray-50 dark:bg-[#1a1d23] p-4.5 border-t border-gray-200 dark:border-[#2a2d36] flex flex-col gap-1.5 items-end">
+                      <div className="text-[14px] text-gray-900 dark:text-white">
                         <span className="text-gray-400 mr-3 text-[13px] font-medium">
                           Total Deal Value:
                         </span>
@@ -411,13 +411,13 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
               )}
             </div>
 
-            <div className="h-[1px] bg-[#2a2d36] w-full flex-shrink-0" />
+            <div className="h-[1px] bg-gray-200 dark:bg-[#2a2d36] w-full flex-shrink-0" />
 
             {/* SECTION 5: Email Preview */}
             <div className="p-6 mb-8 flex-shrink-0">
-              <div className="flex items-center gap-6 border-b border-[#2a2d36] mb-5">
+              <div className="flex items-center gap-6 border-b border-gray-200 dark:border-[#2a2d36] mb-5">
                 <button
-                  className={`pb-2.5 text-sm font-bold tracking-wide transition-colors relative ${activeTab === "RFQ" ? "text-white" : "text-gray-500 hover:text-gray-300"}`}
+                  className={`pb-2.5 text-sm font-bold tracking-wide transition-colors relative ${activeTab === "RFQ" ? "text-gray-900 dark:text-white" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}
                   onClick={() => setActiveTab("RFQ")}
                 >
                   RFQ Email
@@ -426,7 +426,7 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
                   )}
                 </button>
                 <button
-                  className={`pb-2.5 text-sm font-bold tracking-wide transition-colors relative ${activeTab === "QUOTE" ? "text-white" : "text-gray-500 hover:text-gray-300"}`}
+                  className={`pb-2.5 text-sm font-bold tracking-wide transition-colors relative ${activeTab === "QUOTE" ? "text-gray-900 dark:text-white" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}
                   onClick={() => setActiveTab("QUOTE")}
                 >
                   Buyer Quote

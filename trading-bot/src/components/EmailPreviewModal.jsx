@@ -65,7 +65,7 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center">
       <div className="fixed inset-0 bg-black/70 animate-fade-in" onClick={() => { if (sendState === 'idle') onClose() }} />
-      <div className="relative w-[700px] max-h-[85vh] bg-[#1e2028] border border-[#2a2d36] rounded-xl shadow-2xl flex flex-col z-10 animate-fade-in overflow-hidden">
+      <div className="relative w-[700px] max-h-[85vh] bg-white dark:bg-[#1e2028] border border-gray-200 dark:border-[#2a2d36] rounded-xl shadow-2xl flex flex-col z-10 animate-fade-in overflow-hidden">
 
         {sendState === 'success' ? (
           <div className="flex flex-col items-center justify-center p-16 h-full text-center fade-in-fast">
@@ -73,14 +73,14 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
             </svg>
             <h2 className="text-white text-3xl font-bold mb-3 tracking-wide">Email Sent Successfully!</h2>
-            <p className="text-gray-300 font-bold text-lg">{deal.buyer_name}</p>
-            <p className="text-gray-500 text-sm mb-6 pb-6 border-b border-[#2a2d36] w-full max-w-[300px] mx-auto">{deal.buyer_email}</p>
+            <p className="text-gray-800 dark:text-gray-300 font-bold text-lg">{deal.buyer_name}</p>
+            <p className="text-gray-500 text-sm mb-6 pb-6 border-b border-gray-200 dark:border-[#2a2d36] w-full max-w-[300px] mx-auto">{deal.buyer_email}</p>
             <p className="text-blue-400 text-sm font-bold tracking-wide uppercase bg-blue-500/10 px-4 py-2 rounded-lg">Deal status updated to {isRFQ ? 'RFQ Sent' : 'Quote Sent'}</p>
           </div>
         ) : (
           <>
             {/* Modal Header */}
-            <div className="p-6 border-b border-[#2a2d36] flex justify-between items-start flex-shrink-0 bg-[#1a1d23]">
+            <div className="p-6 border-b border-gray-200 dark:border-[#2a2d36] flex justify-between items-start flex-shrink-0 bg-gray-50 dark:bg-[#1a1d23]">
               <div>
                 <h2 className="text-white text-[20px] font-bold tracking-wide">Review Email Before Sending</h2>
                 <p className="text-gray-400 text-[13px] mt-1.5 font-medium tracking-wide text-transform uppercase">Check carefully before approving</p>
@@ -93,7 +93,7 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
             </div>
 
             {/* Tab Switcher */}
-            <div className="px-6 flex gap-7 border-b border-[#2a2d36] flex-shrink-0 bg-[#1a1d23]">
+            <div className="px-6 flex gap-7 border-b border-gray-200 dark:border-[#2a2d36] flex-shrink-0 bg-gray-50 dark:bg-[#1a1d23]">
               <button
                 className={`py-3.5 text-[14px] font-bold tracking-wide relative hover:text-white transition-colors ${activeTab === 'RFQ' ? 'text-white' : 'text-gray-500'}`}
                 onClick={() => setActiveTab('RFQ')}
@@ -111,7 +111,7 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
             </div>
 
             {/* Email Preview Area - Scrollable */}
-            <div className="flex-1 overflow-y-auto p-6 bg-[#1a1d23] custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-[#1a1d23] custom-scrollbar">
               <div className={`bg-white rounded-[10px] p-6 text-[15px] transition-colors border-2 shadow-sm ${isEditing ? 'border-blue-500 shadow-blue-500/20' : 'border-gray-200'}`}>
 
                 {/* Meta Attributes */}
@@ -238,7 +238,7 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
             </div>
 
             {/* Action Buttons Row */}
-            <div className="p-5 border-t border-[#2a2d36] flex justify-between items-center bg-[#1a1d23] flex-shrink-0 shadow-[0_-15px_30px_-15px_rgba(0,0,0,0.5)]">
+            <div className="p-5 border-t border-gray-200 dark:border-[#2a2d36] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0 shadow-[0_-15px_30px_-15px_rgba(0,0,0,0.5)]">
               <button
                 onClick={onClose}
                 disabled={sendState === 'sending'}

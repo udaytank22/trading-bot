@@ -54,9 +54,9 @@ export default function Pagination({
 
   // ── Shared button style ─────────────────────────────────────────────────────
   const btnCls = [
-    "px-4 py-2",
+    "px-3 py-1",
     "border border-gray-200 dark:border-[#2a2d33]",
-    "rounded-lg text-sm font-bold",
+    "rounded-lg text-xs font-bold",
     "text-gray-600 dark:text-gray-300",
     "hover:bg-gray-50 dark:hover:bg-white/[0.04]",
     "disabled:opacity-40 disabled:cursor-not-allowed",
@@ -64,10 +64,10 @@ export default function Pagination({
   ].join(" ");
 
   return (
-    <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-[#2a2d33] bg-gray-50/50 dark:bg-[#0c0e12]/30">
+    <div className="flex items-center justify-between px-4 py-2 border-t border-gray-100 dark:border-[#2a2d33] bg-gray-50/50 dark:bg-[#0c0e12]/30">
 
       {/* ── Showing X–Y of N label ─────────────────────────────────────────── */}
-      <span className="text-sm text-gray-500 font-medium">
+      <span className="text-xs text-gray-500 font-medium">
         Showing{" "}
         <span className="text-gray-700 dark:text-gray-300 mx-0.5">
           {startShowing}–{endShowing}

@@ -51,24 +51,24 @@ export default function ContactModal({ isOpen, onClose, deal }) {
       />
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-2xl bg-[#1e2028] border border-[#2a2d36] rounded-2xl shadow-2xl flex flex-col z-10 animate-scale-in overflow-hidden">
+      <div className="relative w-full max-w-2xl bg-white dark:bg-[#1e2028] border border-gray-200 dark:border-[#2a2d36] rounded-2xl shadow-2xl flex flex-col z-10 animate-scale-in overflow-hidden">
         {/* Header */}
-        <div className="p-6 border-b border-[#2a2d36] flex justify-between items-center bg-[#1a1d23]">
+        <div className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
           <div>
-            <h2 className="text-white text-xl font-bold tracking-wide">
+            <h2 className="text-gray-900 dark:text-white text-[16px] font-bold tracking-wide">
               Contact Directory
             </h2>
-            <p className="text-gray-400 text-xs mt-1 uppercase tracking-widest font-semibold">
+            <p className="text-gray-500 dark:text-gray-400 text-[11px] mt-0.5 uppercase tracking-widest font-semibold">
               {deal.inquiry_id} • {deal.cargo}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-full transition-all"
+            className="p-1.5 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-all"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
+              className="h-5 w-5"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -84,11 +84,11 @@ export default function ContactModal({ isOpen, onClose, deal }) {
         </div>
 
         {/* Content */}
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-3">
           {contacts.map((contact, idx) => (
             <div
               key={idx}
-              className="group p-4 bg-[#242830]/50 border border-[#2a2d36] rounded-xl hover:border-emerald-500/30 hover:bg-[#242830] transition-all"
+              className="group p-4 bg-gray-50 dark:bg-[#242830]/50 border border-gray-200 dark:border-[#2a2d36] rounded-xl hover:border-emerald-500/30 hover:bg-emerald-500/5 dark:hover:bg-[#242830] transition-all"
             >
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-500/20 transition-colors">
@@ -106,17 +106,17 @@ export default function ContactModal({ isOpen, onClose, deal }) {
                   <p className="text-emerald-500 text-[10px] font-bold uppercase tracking-widest mb-1">
                     {contact.role}
                   </p>
-                  <h3 className="text-white font-bold truncate">
+                  <h3 className="text-gray-900 dark:text-white font-bold truncate">
                     {contact.name}
                   </h3>
                   <div className="mt-3 space-y-2">
                     <a
                       href={`tel:${contact.phone}`}
-                      className="flex items-center gap-2 text-gray-400 hover:text-white text-sm transition-colors"
+                      className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-white text-sm transition-colors"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
+                        className="h-4 w-4 flex-shrink-0"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -132,11 +132,11 @@ export default function ContactModal({ isOpen, onClose, deal }) {
                     </a>
                     <a
                       href={`mailto:${contact.email}`}
-                      className="flex items-center gap-2 text-gray-400 hover:text-white text-sm transition-colors truncate"
+                      className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-emerald-600 dark:hover:text-white text-sm transition-colors truncate"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
+                        className="h-4 w-4 flex-shrink-0"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -158,10 +158,10 @@ export default function ContactModal({ isOpen, onClose, deal }) {
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-[#1a1d23] border-t border-[#2a2d36] flex justify-end">
+        <div className="px-4 py-2.5 bg-gray-50 dark:bg-[#1a1d23] border-t border-gray-200 dark:border-[#2a2d36] flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-white/5 hover:bg-white/10 text-white font-bold rounded-lg transition-all active:scale-95"
+            className="px-4 py-1.5 text-sm font-bold border border-gray-200 dark:border-[#2a2d36] text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white rounded-lg transition-all active:scale-95"
           >
             Close
           </button>

@@ -25,7 +25,7 @@ function Field({ label, children }) {
   );
 }
 
-const inputCls = 'w-full bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-[48px] px-4 text-[14px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-all shadow-sm focus:ring-1 focus:ring-purple-500/50';
+const inputCls = 'w-full bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-[36px] px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-all shadow-sm focus:ring-1 focus:ring-purple-500/50';
 
 /* ── Main page ───────────────────────────────────────────────────── */
 export default function SettingsPage() {
@@ -86,11 +86,11 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex flex-col w-full h-full pb-8">
+    <div className="flex flex-col w-full h-full pb-4">
       <Toast message={toast.message} type={toast.type} />
 
       <div className="flex-1 w-full max-w-[600px] mx-auto mt-6">
-        <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-lg p-8 flex flex-col gap-8 transition-colors duration-300">
+        <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-sm p-5 flex flex-col gap-5 transition-colors duration-300">
 
           {/* Section 1 — Business info */}
           <section>
@@ -142,7 +142,7 @@ export default function SettingsPage() {
             <h3 className="text-[11px] font-bold text-red-500 uppercase tracking-widest mb-4">Danger Zone</h3>
             <button
               onClick={handleReset}
-              className="w-full h-[48px] border-2 border-red-500/40 text-red-400 text-sm font-bold rounded-lg hover:bg-red-500/10 hover:border-red-500 hover:text-red-300 transition-all focus:outline-none focus:ring-2 focus:ring-red-500/30 tracking-wide"
+              className="w-full h-[36px] border-2 border-red-500/40 text-red-400 text-xs font-bold rounded-lg hover:bg-red-500/10 hover:border-red-500 hover:text-red-300 transition-all focus:outline-none focus:ring-2 focus:ring-red-500/30 tracking-wide"
             >
               Reset All Settings
             </button>
@@ -152,7 +152,7 @@ export default function SettingsPage() {
           <button
             id="save-settings-btn"
             onClick={handleSave}
-            className="w-full h-[48px] bg-purple-600 hover:bg-purple-500 text-white font-bold tracking-wide rounded-lg transition-colors focus:outline-none focus:ring-4 focus:ring-purple-500/40 shadow-lg shadow-purple-500/20 active:scale-[0.99]"
+            className="w-full h-[36px] bg-purple-600 hover:bg-purple-500 text-white font-bold tracking-wide rounded-lg transition-colors focus:outline-none focus:ring-4 focus:ring-purple-500/40 shadow-sm active:scale-[0.99]"
           >
             Save Settings
           </button>

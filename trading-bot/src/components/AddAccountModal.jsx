@@ -126,10 +126,10 @@ export default function AddAccountModal({
       />
 
       <div
-        className={`fixed top-0 right-0 h-full w-full max-w-md bg-[#1e2028] border-l border-[#2a2d36] z-[101] transform transition-transform duration-300 ease-in-out flex flex-col shadow-2xl ${isOpen ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed top-0 right-0 h-full w-full max-w-md bg-white dark:bg-[#1e2028] border-l border-gray-200 dark:border-[#2a2d36] z-[101] transform transition-transform duration-300 ease-in-out flex flex-col shadow-2xl ${isOpen ? "translate-x-0" : "translate-x-full"}`}
       >
         {/* Header */}
-        <div className="px-6 py-5 border-b border-[#2a2d36] flex justify-between items-center bg-[#1a1d23] flex-shrink-0">
+        <div className="px-6 py-5 border-b border-gray-200 dark:border-[#2a2d36] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 bg-purple-600/20 rounded-xl flex items-center justify-center border border-purple-500/20 shadow-lg shadow-purple-600/10">
               <svg
@@ -147,7 +147,7 @@ export default function AddAccountModal({
               </svg>
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white tracking-tight">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
                 {accountToEdit ? "Edit Bank Account" : "Add Bank Account"}
               </h2>
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mt-0.5">
@@ -214,7 +214,7 @@ export default function AddAccountModal({
               onChange={handleChange}
               required
               placeholder="e.g. Chase Bank"
-              className="w-full bg-[#0c0e12] border border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white focus:border-purple-500/50 transition-all outline-none"
+              className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none"
             />
           </div>
 
@@ -229,7 +229,7 @@ export default function AddAccountModal({
               onChange={handleChange}
               required
               placeholder="e.g. Main Operating"
-              className="w-full bg-[#0c0e12] border border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white focus:border-purple-500/50 transition-all outline-none"
+              className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none"
             />
           </div>
 
@@ -245,7 +245,7 @@ export default function AddAccountModal({
                 onChange={handleChange}
                 required
                 placeholder="1234567890"
-                className="w-full bg-[#0c0e12] border border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white focus:border-purple-500/50 transition-all outline-none"
+                className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none"
               />
             </div>
             <div className="flex flex-col gap-2">
@@ -259,7 +259,7 @@ export default function AddAccountModal({
                 onChange={handleChange}
                 required
                 placeholder="021000021"
-                className="w-full bg-[#0c0e12] border border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white focus:border-purple-500/50 transition-all outline-none"
+                className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none"
               />
             </div>
           </div>
@@ -273,7 +273,7 @@ export default function AddAccountModal({
                 name="currency"
                 value={formData.currency}
                 onChange={handleChange}
-                className="w-full bg-[#0c0e12] border border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white focus:border-purple-500/50 transition-all outline-none cursor-pointer"
+                className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none cursor-pointer"
               >
                 {CURRENCIES.map((c) => (
                   <option key={c} value={c}>
@@ -290,7 +290,7 @@ export default function AddAccountModal({
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
-                className="w-full bg-[#0c0e12] border border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white focus:border-purple-500/50 transition-all outline-none cursor-pointer"
+                className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none cursor-pointer"
               >
                 <option value="Active">Active</option>
                 <option value="Inactive">Inactive</option>
@@ -313,18 +313,18 @@ export default function AddAccountModal({
                 value={formData.balance}
                 onChange={handleChange}
                 placeholder="0.00"
-                className="w-full bg-[#0c0e12] border border-[#2a2d33] rounded-lg pl-8 pr-4 py-2.5 text-sm text-white focus:border-purple-500/50 transition-all outline-none"
+                className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg pl-8 pr-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none"
               />
             </div>
           </div>
         </form>
 
         {/* Footer */}
-        <div className="px-6 py-5 border-t border-[#2a2d33] flex gap-3 bg-[#1a1d23] flex-shrink-0">
+        <div className="px-6 py-5 border-t border-gray-200 dark:border-[#2a2d33] flex gap-3 bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 rounded-lg border border-[#2a2d33] text-gray-300 text-sm font-bold hover:bg-white/[0.05] transition-colors flex-1"
+            className="px-5 py-2.5 rounded-lg border border-gray-200 dark:border-gray-200 dark:border-[#2a2d33] text-gray-700 dark:text-gray-300 text-sm font-bold hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors flex-1"
           >
             Cancel
           </button>

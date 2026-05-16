@@ -112,7 +112,7 @@ export default function DocumentsPage() {
   };
 
   return (
-    <div className="flex flex-col w-full h-full pb-8 relative gap-6">
+    <div className="flex flex-col w-full h-full pb-4 relative gap-4">
       <Toast message={toast.message} type={toast.type} />
 
       {/* Header & Tabs */}
@@ -122,7 +122,7 @@ export default function DocumentsPage() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 py-2 text-sm font-bold rounded-lg transition-all ${
+              className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${
                 activeTab === tab 
                   ? "bg-purple-600 text-white shadow-md" 
                   : "text-gray-400 hover:text-white hover:bg-white/5"
@@ -134,8 +134,8 @@ export default function DocumentsPage() {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="relative w-[300px]">
-            <svg className="absolute left-3.5 top-2.5 w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="relative w-[260px]">
+            <svg className="absolute left-3 top-2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
             </svg>
             <input
@@ -143,18 +143,18 @@ export default function DocumentsPage() {
               placeholder={`Search ${activeTab.toLowerCase()} documents...`}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg h-10 pl-11 pr-4 text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors shadow-sm"
+              className="w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg h-8 pl-9 pr-3 text-xs text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors shadow-sm"
             />
           </div>
 
           <button
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors shadow-lg active:scale-95 flex items-center gap-2 font-bold text-sm whitespace-nowrap"
+            className="px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors shadow-sm active:scale-95 flex items-center gap-1.5 font-bold text-xs whitespace-nowrap"
             onClick={() => {
               setDocumentToEdit(null);
               setIsModalOpen(true);
             }}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
             </svg>
             Add Document
@@ -163,7 +163,7 @@ export default function DocumentsPage() {
       </div>
 
       {/* Kanban Board */}
-      <div className="flex-1 flex gap-6 overflow-x-auto pb-4">
+      <div className="flex-1 flex gap-4 overflow-x-auto pb-2">
         <KanbanColumn 
           title="Valid" 
           status="Valid" 

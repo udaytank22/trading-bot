@@ -66,24 +66,24 @@ export default function AllotVehicleModal({ deal, isOpen, onClose, onAllot }) {
       />
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-xl bg-[#1e2028] border border-[#2a2d36] rounded-2xl shadow-2xl flex flex-col z-10 animate-scale-in overflow-hidden">
+      <div className="relative w-full max-w-xl bg-white dark:bg-[#1e2028] border border-gray-200 dark:border-[#2a2d36] rounded-2xl shadow-2xl flex flex-col z-10 animate-scale-in overflow-hidden">
         {/* Header */}
-        <div className="p-6 border-b border-[#2a2d36] flex justify-between items-center bg-[#1a1d23]">
+        <div className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
           <div>
-            <h2 className="text-white text-xl font-bold tracking-wide">
+            <h2 className="text-gray-900 dark:text-white text-[16px] font-bold tracking-wide">
               Allot the Vehicle
             </h2>
-            <p className="text-gray-400 text-xs mt-1 uppercase tracking-widest font-semibold">
+            <p className="text-gray-500 dark:text-gray-400 text-[11px] mt-0.5 uppercase tracking-widest font-semibold">
               {deal.inquiry_id} • {deal.cargo}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-full transition-all"
+            className="p-1.5 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-all"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
+              className="h-5 w-5"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -99,16 +99,16 @@ export default function AllotVehicleModal({ deal, isOpen, onClose, onAllot }) {
         </div>
 
         {/* Body */}
-        <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+        <div className="p-5 space-y-5 max-h-[70vh] overflow-y-auto custom-scrollbar">
           {/* Vehicle Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">
+            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
               Select Vehicle
             </label>
             <select
               value={selectedVehicleId}
               onChange={(e) => setSelectedVehicleId(e.target.value)}
-              className="w-full bg-[#1a1d23] border border-[#2a2d36] rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-purple-500 outline-none transition-all"
+              className="w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d36] rounded-lg px-4 py-2.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none transition-all"
             >
               <option value="">-- Choose a Vehicle --</option>
               {MOCK_VEHICLES.map((v) => (
@@ -127,15 +127,15 @@ export default function AllotVehicleModal({ deal, isOpen, onClose, onAllot }) {
                 <div className="grid grid-cols-2 gap-y-4">
                   <div>
                     <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Vehicle Number</p>
-                    <p className="text-sm font-bold text-white">{selectedVehicle.vehicle_no}</p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedVehicle.vehicle_no}</p>
                   </div>
                   <div>
                     <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Vehicle Type</p>
-                    <p className="text-sm font-bold text-white">{selectedVehicle.type}</p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedVehicle.type}</p>
                   </div>
                   <div>
                     <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Capacity</p>
-                    <p className="text-sm font-bold text-white">{selectedVehicle.capacity}</p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedVehicle.capacity}</p>
                   </div>
                 </div>
 
@@ -159,10 +159,10 @@ export default function AllotVehicleModal({ deal, isOpen, onClose, onAllot }) {
                 <div className="flex justify-between items-center mb-4">
                   <h4 className="text-emerald-400 font-semibold text-xs uppercase tracking-widest">Owner Information</h4>
                 </div>
-                <div className="flex justify-between items-center bg-[#1a1d23]/50 p-3 rounded-lg border border-[#2a2d36]">
+                <div className="flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]/50 p-3 rounded-lg border border-gray-200 dark:border-[#2a2d36]">
                   <div>
                     <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">Owner Name</p>
-                    <p className="text-sm font-bold text-white">{selectedVehicle.owner_name}</p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedVehicle.owner_name}</p>
                   </div>
                   <Button
                     variant="secondary"
@@ -179,27 +179,27 @@ export default function AllotVehicleModal({ deal, isOpen, onClose, onAllot }) {
               </div>
             </div>
           ) : (
-            <div className="h-40 flex items-center justify-center border-2 border-dashed border-[#2a2d36] rounded-xl">
+            <div className="h-40 flex items-center justify-center border-2 border-dashed border-gray-200 dark:border-[#2a2d36] rounded-xl">
               <p className="text-gray-500 text-sm">Please select a vehicle to see details</p>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-[#1a1d23] border-t border-[#2a2d36] flex justify-end gap-3">
+        <div className="px-4 py-2.5 bg-gray-50 dark:bg-[#1a1d23] border-t border-gray-200 dark:border-[#2a2d36] flex justify-end gap-2.5">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-white/5 hover:bg-white/10 text-white font-bold rounded-lg transition-all active:scale-95 text-sm"
+            className="px-4 py-1.5 bg-transparent border border-gray-200 dark:border-[#2a2d36] text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white font-bold rounded-lg transition-all active:scale-95 text-sm"
           >
             Cancel
           </button>
           <button
             onClick={handleAllot}
             disabled={!selectedVehicle}
-            className={`px-6 py-2 font-bold rounded-lg transition-all active:scale-95 text-sm ${
-              selectedVehicle 
-                ? "bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/20" 
-                : "bg-gray-700 text-gray-500 cursor-not-allowed"
+            className={`px-4 py-1.5 font-bold rounded-lg transition-all active:scale-95 text-sm ${
+              selectedVehicle
+                ? "bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/20"
+                : "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
             }`}
           >
             Confirm Allotment

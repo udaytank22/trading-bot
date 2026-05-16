@@ -18,8 +18,8 @@ const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => 
   const totalProfit = totalFinalPrice - totalSellerCost;
 
   const content = (
-    <div className={`${isPageMode ? 'w-full' : 'bg-[#1a1d23] border border-[#2a2d33] rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden'} animate-in zoom-in-95 duration-200`}>
-      <div className="px-6 py-4 border-b border-[#2a2d33] flex justify-between items-center bg-[#1a1d23]">
+    <div className={`${isPageMode ? 'w-full bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm' : 'bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden'} animate-in zoom-in-95 duration-200`}>
+      <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
         <div className="flex items-center gap-4">
           {isPageMode && (
             <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-lg text-gray-400 transition-colors">
@@ -29,7 +29,7 @@ const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => 
             </button>
           )}
           <div>
-            <h2 className="text-lg font-bold text-white">Final Quotation Verification</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Final Quotation Verification</h2>
             <p className="text-xs text-gray-500 mt-0.5">Review pricing breakdown for {deal.inquiry_id}</p>
           </div>
         </div>
@@ -40,15 +40,15 @@ const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => 
 
       <div className="p-6 space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-[#0c0e12] p-5 rounded-2xl border border-[#2a2d33]">
+          <div className="bg-gray-100 dark:bg-[#0c0e12] p-5 rounded-2xl border border-gray-200 dark:border-[#2a2d33]">
             <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Total Seller Cost</p>
-            <p className="text-2xl font-mono font-bold text-white">{formatINR(totalSellerCost)}</p>
+            <p className="text-2xl font-mono font-bold text-gray-900 dark:text-white">{formatINR(totalSellerCost)}</p>
           </div>
-          <div className="bg-[#0c0e12] p-5 rounded-2xl border border-[#2a2d33]">
+          <div className="bg-gray-100 dark:bg-[#0c0e12] p-5 rounded-2xl border border-gray-200 dark:border-[#2a2d33]">
             <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Final Quote Value</p>
             <p className="text-2xl font-mono font-bold text-purple-400">{formatINR(totalFinalPrice)}</p>
           </div>
-          <div className="bg-[#0c0e12] p-5 rounded-2xl border border-[#2a2d33]">
+          <div className="bg-gray-100 dark:bg-[#0c0e12] p-5 rounded-2xl border border-gray-200 dark:border-[#2a2d33]">
             <p className="text-[10px] font-bold text-emerald-500/70 uppercase tracking-widest mb-2">Estimated Profit</p>
             <p className="text-2xl font-mono font-bold text-emerald-400">{formatINR(totalProfit)}</p>
           </div>
@@ -62,25 +62,25 @@ const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => 
               placeholder="Filter items..."
               value={productSearch}
               onChange={(e) => setProductSearch(e.target.value)}
-              className="bg-[#0c0e12] border border-[#2a2d33] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500 w-48"
+              className="bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500 w-48"
             />
           </div>
-          <div className="border border-[#2a2d33] rounded-2xl overflow-hidden bg-[#0c0e12]">
+          <div className="border border-gray-200 dark:border-[#2a2d33] rounded-2xl overflow-hidden bg-gray-100 dark:bg-[#0c0e12]">
             <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
-              <table className="w-full text-left text-[12px] border-collapse">
+              <table className="w-full text-left text-[12px] border-collapse text-gray-700 dark:text-gray-300">
                 <thead className="sticky top-0 z-10">
-                  <tr className="bg-[#1a1d23] border-b border-[#2a2d33]">
+                  <tr className="bg-gray-50 dark:bg-[#1a1d23] border-b border-gray-200 dark:border-[#2a2d33]">
                     <th className="px-6 py-4 text-gray-400 font-bold uppercase tracking-wider">Product</th>
                     <th className="px-6 py-4 text-gray-400 font-bold uppercase tracking-wider">Base Price</th>
                     <th className="px-6 py-4 text-gray-400 font-bold uppercase tracking-wider">Margin/Disc</th>
                     <th className="px-6 py-4 text-gray-400 font-bold uppercase tracking-wider text-right">Final Unit Price</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#2a2d33]">
+                <tbody className="divide-y divide-gray-200 dark:divide-[#2a2d33]">
                   {filteredProducts.map((p, i) => (
-                    <tr key={i} className="hover:bg-white/[0.02] transition-colors">
+                    <tr key={i} className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors">
                       <td className="px-6 py-4">
-                        <p className="font-bold text-white">{p.product_name}</p>
+                        <p className="font-bold text-gray-900 dark:text-white">{p.product_name}</p>
                         <p className="text-[10px] text-gray-500">{p.quantity} {p.unit}</p>
                       </td>
                       <td className="px-6 py-4 font-mono text-gray-400">{formatINR(p.seller_unit_price)}</td>
@@ -94,7 +94,7 @@ const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => 
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-right font-mono font-bold text-white text-base">
+                      <td className="px-6 py-4 text-right font-mono font-bold text-gray-900 dark:text-white text-base">
                         {formatINR(p.my_unit_price)}
                       </td>
                     </tr>
@@ -118,8 +118,8 @@ const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => 
         </div>
       </div>
 
-      <div className="p-6 border-t border-[#2a2d33] flex gap-4 bg-[#1a1d23] mt-8">
-        <button onClick={onClose} className="px-8 py-3 rounded-xl border border-[#2a2d33] text-gray-400 text-sm font-bold hover:bg-white/[0.05] hover:text-white transition-all">
+      <div className="p-6 border-t border-gray-200 dark:border-[#2a2d33] flex gap-4 bg-gray-50 dark:bg-[#1a1d23] mt-8">
+        <button onClick={onClose} className="px-8 py-3 rounded-xl border border-gray-200 dark:border-[#2a2d33] text-gray-400 text-sm font-bold hover:bg-white/[0.05] hover:text-white transition-all">
           Cancel
         </button>
         <button

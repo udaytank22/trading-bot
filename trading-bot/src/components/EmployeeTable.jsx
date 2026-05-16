@@ -82,7 +82,7 @@ export default function EmployeeTable({ employees, onEdit, onDelete, onView }) {
   const renderRow = (emp, idx) => (
     <tr
       key={emp.id}
-      className={`${ROW_HOVER_CLS} ${idx % 2 !== 0 ? "bg-[#242830]/20 dark:bg-[#242830]/20" : ""}`}
+      className={`${ROW_HOVER_CLS} ${idx % 2 !== 0 ? "bg-gray-100 dark:bg-[#242830]/20 dark:bg-[#242830]/20" : ""}`}
     >
       {/* ── Avatar + Name + Email stacked ─────────────────────────────── */}
       <td className="px-3 md:px-6 py-4">

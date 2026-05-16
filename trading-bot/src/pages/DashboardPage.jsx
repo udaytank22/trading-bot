@@ -17,18 +17,18 @@ import StatusBadge from "../components/ui/StatusBadge";
 /* ── Skeleton loader ─────────────────────────────────────────────── */
 function DashboardSkeleton() {
   return (
-    <div className="flex flex-col w-full h-full pb-8 gap-6 animate-pulse">
-      <div className="grid grid-cols-4 gap-4">
+    <div className="flex flex-col w-full h-full pb-4 gap-4 animate-pulse">
+      <div className="grid grid-cols-4 gap-3">
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="bg-gray-100 dark:bg-[#242830] border border-gray-200 dark:border-[#2a2d33] rounded-xl h-[118px] opacity-40"
+            className="bg-gray-100 dark:bg-[#242830] border border-gray-200 dark:border-[#2a2d33] rounded-lg h-[80px] opacity-40"
           />
         ))}
       </div>
-      <div className="flex gap-6 flex-1">
-        <div className="w-[65%] bg-gray-100 dark:bg-[#242830] border border-gray-200 dark:border-[#2a2d33] rounded-xl h-[300px] opacity-40" />
-        <div className="w-[40%] bg-gray-100 dark:bg-[#242830] border border-gray-200 dark:border-[#2a2d33] rounded-xl h-[300px] opacity-40" />
+      <div className="flex gap-4 flex-1">
+        <div className="w-[65%] bg-gray-100 dark:bg-[#242830] border border-gray-200 dark:border-[#2a2d33] rounded-lg h-[240px] opacity-40" />
+        <div className="w-[35%] bg-gray-100 dark:bg-[#242830] border border-gray-200 dark:border-[#2a2d33] rounded-lg h-[240px] opacity-40" />
       </div>
     </div>
   );
@@ -39,10 +39,10 @@ function StatCard({ value, label, colorClass, onClick }) {
   return (
     <div
       onClick={onClick}
-      className={`${colorClass} rounded-xl p-6 transition-all hover:-translate-y-1 cursor-pointer shadow-lg active:scale-95`}
+      className={`${colorClass} rounded-lg p-4 transition-all hover:-translate-y-0.5 cursor-pointer shadow-sm active:scale-95`}
     >
-      <div className="text-[36px] font-bold leading-none mb-2">{value}</div>
-      <div className="text-gray-500 dark:text-gray-400 text-sm font-semibold tracking-wide uppercase">
+      <div className="text-[22px] font-bold leading-none mb-1">{value}</div>
+      <div className="text-gray-500 dark:text-gray-400 text-[11px] font-semibold tracking-wide uppercase">
         {label}
       </div>
     </div>
@@ -127,9 +127,9 @@ export default function DashboardPage() {
   if (loading) return <DashboardSkeleton />;
 
   return (
-    <div className="flex flex-col w-full h-full pb-8">
+    <div className="flex flex-col w-full h-full pb-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <div>
           {error && (
             <p className="bg-red-500/20 text-red-400 px-4 py-2 rounded-lg border border-red-500/30 text-sm font-medium">
@@ -160,7 +160,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-4 gap-4 mb-2">
+      <div className="grid grid-cols-4 gap-3 mb-1">
         <StatCard
           value={todayCount}
           label="Total Inquiries Today"
@@ -193,21 +193,21 @@ export default function DashboardPage() {
         />
       </div>
 
-      <p className="text-right text-xs text-gray-500 mb-6 font-medium">
+      <p className="text-right text-xs text-gray-500 mb-3 font-medium">
         Last updated: {lastUpdated}
       </p>
 
       {/* Content row */}
-      <div className="flex gap-6 mt-2">
+      <div className="flex gap-4 mt-0">
         {/* Recent inquiries table */}
-        <section className="w-[65%] flex flex-col bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-lg overflow-hidden transition-colors duration-300">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-[#2a2d33]">
-            <h2 className="text-gray-900 dark:text-white text-[16px] font-bold tracking-wide">
+        <section className="flex flex-col flex-1 bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg shadow-sm overflow-hidden transition-colors duration-300">
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 dark:border-[#2a2d33]">
+            <h2 className="text-gray-900 dark:text-white text-[13px] font-bold tracking-wide">
               Recent Inquiries
             </h2>
             <button
               onClick={() => navigate("/inquiries")}
-              className="text-purple-400 text-[13px] font-bold hover:text-purple-300 transition-colors"
+              className="text-purple-400 text-[11px] font-bold hover:text-purple-300 transition-colors"
             >
               View All
             </button>
@@ -218,14 +218,14 @@ export default function DashboardPage() {
                 No recent inquiries
               </div>
             ) : (
-              <table className="w-full text-left text-sm text-gray-600 dark:text-gray-300 whitespace-nowrap">
+              <table className="w-full text-left text-xs text-gray-600 dark:text-gray-300 whitespace-nowrap">
                 <thead className="bg-gray-50 dark:bg-[#242830]/50 text-gray-500 dark:text-gray-400 font-medium text-xs tracking-wider">
                   <tr>
-                    <th className="px-6 py-3">Inquiry ID</th>
-                    <th className="px-6 py-3">Buyer</th>
-                    <th className="px-6 py-3 w-1/3">Products</th>
-                    <th className="px-6 py-3">Status</th>
-                    <th className="px-6 py-3">Date</th>
+                    <th className="px-4 py-2">Inquiry ID</th>
+                    <th className="px-4 py-2">Buyer</th>
+                    <th className="px-4 py-2 w-1/3">Products</th>
+                    <th className="px-4 py-2">Status</th>
+                    <th className="px-4 py-2">Date</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-[#2a2d33]/50">
@@ -234,14 +234,14 @@ export default function DashboardPage() {
                       key={inq.inquiry_id}
                       className={`hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors ${idx % 2 !== 0 ? "bg-gray-50/50 dark:bg-[#242830]/30" : ""}`}
                     >
-                      <td className="px-6 py-4 font-mono text-purple-600 dark:text-purple-300 text-xs">
+                      <td className="px-4 py-2.5 font-mono text-purple-600 dark:text-purple-300 text-[11px]">
                         {inq.inquiry_id}
                       </td>
-                      <td className="px-6 py-4 font-medium text-gray-900 dark:text-gray-200">
+                      <td className="px-4 py-2.5 font-medium text-gray-900 dark:text-gray-200">
                         {inq.buyer_name}
                       </td>
                       <td
-                        className="px-6 py-4 truncate max-w-[200px]"
+                        className="px-4 py-2.5 truncate max-w-[160px]"
                         title={inq.products
                           ?.map((p) => p.product_name)
                           .join(", ")}
@@ -250,10 +250,10 @@ export default function DashboardPage() {
                           ? inq.products[0].product_name
                           : `${inq.products?.[0]?.product_name} +${(inq.products?.length ?? 1) - 1} more`}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-2.5">
                         <StatusBadge status={inq.status} />
                       </td>
-                      <td className="px-6 py-4 text-gray-500 font-medium">
+                      <td className="px-4 py-2.5 text-gray-500 font-medium">
                         {formatDateString(inq.date_received)}
                       </td>
                     </tr>
@@ -265,11 +265,11 @@ export default function DashboardPage() {
         </section>
 
         {/* Weekly profit chart */}
-        <section className="w-[40%] flex flex-col bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl flex-shrink-0 p-6 shadow-lg transition-colors duration-300">
-          <h2 className="text-gray-900 dark:text-white text-[16px] font-bold tracking-wide mb-6">
+        <section className="w-[35%] flex flex-col bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg flex-shrink-0 p-4 shadow-sm transition-colors duration-300">
+          <h2 className="text-gray-900 dark:text-white text-[13px] font-bold tracking-wide mb-3">
             Profit This Week
           </h2>
-          <div className="w-full h-[220px]">
+          <div className="w-full h-[180px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={profitData?.weeklyTrend ?? []}

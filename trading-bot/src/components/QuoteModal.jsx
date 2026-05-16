@@ -70,8 +70,8 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
   };
 
   const content = (
-    <div className={`${isPageMode ? 'w-full' : 'bg-[#1a1d23] border border-[#2a2d33] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden'} animate-in zoom-in-95 duration-200`}>
-      <div className="px-6 py-4 border-b border-[#2a2d33] flex justify-between items-center bg-[#1a1d23]">
+    <div className={`${isPageMode ? 'w-full bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm' : 'bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden'} animate-in zoom-in-95 duration-200`}>
+      <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
         <div className="flex items-center gap-4">
           {isPageMode && (
             <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-lg text-gray-400 transition-colors">
@@ -80,7 +80,7 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
               </svg>
             </button>
           )}
-          <h2 className="text-lg font-bold text-white">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">
             {isClientQuoting ? "Coat Item Prices" : isTLReview ? "Set Margin & Discount" : "Send Quote"}
           </h2>
         </div>
@@ -112,9 +112,9 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Base Quoted Prices (Supplier)</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[300px] overflow-y-auto custom-scrollbar p-1">
               {deal?.seller_quote?.products?.map((p, idx) => (
-                <div key={idx} className="flex flex-col bg-[#0c0e12] p-3 rounded-xl border border-[#2a2d33]">
+                <div key={idx} className="flex flex-col bg-gray-100 dark:bg-[#0c0e12] p-3 rounded-xl border border-gray-200 dark:border-[#2a2d33]">
                   <span className="text-xs text-gray-400 mb-1">{p.product_name}</span>
-                  <span className="text-sm font-mono font-bold text-white">₹ {new Intl.NumberFormat('en-IN').format(p.seller_unit_price || 0)}</span>
+                  <span className="text-sm font-mono font-bold text-gray-900 dark:text-white">₹ {new Intl.NumberFormat('en-IN').format(p.seller_unit_price || 0)}</span>
                 </div>
               ))}
             </div>
@@ -130,16 +130,16 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
                 placeholder="Search products..."
                 value={productSearch}
                 onChange={(e) => setProductSearch(e.target.value)}
-                className="bg-[#0c0e12] border border-[#2a2d33] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500 w-48"
+                className="bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-3 py-1.5 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 w-48"
               />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto custom-scrollbar p-1">
               {filteredProductPrices.map((p) => {
                 const originalIndex = productPrices.findIndex(orig => orig.product_name === p.product_name);
                 return (
-                  <div key={p.product_name} className="flex items-center gap-4 bg-[#0c0e12] p-4 rounded-xl border border-[#2a2d33]">
+                  <div key={p.product_name} className="flex items-center gap-4 bg-gray-100 dark:bg-[#0c0e12] p-4 rounded-xl border border-gray-200 dark:border-[#2a2d33]">
                     <div className="flex-1">
-                      <p className="text-sm font-bold text-white">{p.product_name}</p>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white">{p.product_name}</p>
                       <p className="text-[10px] text-gray-500">{p.quantity} {p.unit}</p>
                     </div>
                     <div className="w-32">
@@ -148,7 +148,7 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
                         required
                         value={p.my_unit_price}
                         onChange={(e) => handlePriceChange(originalIndex, e.target.value)}
-                        className="w-full bg-[#1a1d23] border border-[#2a2d33] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                        className="w-full bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-purple-500"
                         placeholder="0.00"
                       />
                     </div>
@@ -169,7 +169,7 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
                 onChange={(e) => setMargin(e.target.value)}
                 placeholder="e.g. 15"
                 required
-                className="w-full bg-[#0c0e12] border border-[#2a2d33] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500 transition-all"
+                className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-all"
               />
             </div>
             <div>
@@ -180,7 +180,7 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
                 onChange={(e) => setDiscount(e.target.value)}
                 placeholder="e.g. 5"
                 required
-                className="w-full bg-[#0c0e12] border border-[#2a2d33] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500 transition-all"
+                className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-all"
               />
             </div>
           </div>
@@ -194,7 +194,7 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
             placeholder="Add any specific details or terms..."
             rows={4}
             required
-            className="w-full bg-[#0c0e12] border border-[#2a2d33] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500 transition-all resize-none"
+            className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-all resize-none"
           />
         </div>
 
@@ -202,7 +202,7 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
           <button
             type="button"
             onClick={onClose}
-            className="px-8 py-3 rounded-xl border border-[#2a2d33] text-gray-400 text-sm font-bold hover:bg-white/[0.05] hover:text-white transition-all"
+            className="px-8 py-3 rounded-xl border border-gray-200 dark:border-[#2a2d33] text-gray-400 text-sm font-bold hover:bg-white/[0.05] hover:text-white transition-all"
           >
             Cancel
           </button>

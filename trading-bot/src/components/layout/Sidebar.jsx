@@ -34,39 +34,39 @@ export default function Sidebar({ isOpen }) {
 
   return (
     <aside
-      className={`flex-shrink-0 bg-white dark:bg-[#1a1d23] text-gray-500 dark:text-gray-400 flex flex-col h-full border-r border-gray-200 dark:border-[#2a2d33] shadow-lg z-10 transition-all duration-300 overflow-hidden ${isOpen ? "w-[240px]" : "w-16"}`}
+      className={`flex-shrink-0 bg-white dark:bg-[#1a1d23] text-gray-500 dark:text-gray-400 flex flex-col h-full border-r border-gray-200 dark:border-[#2a2d33] shadow-lg z-10 transition-all duration-300 overflow-hidden ${isOpen ? "w-[200px]" : "w-13"}`}
     >
       {/* Logo */}
-      <div className="p-6 pb-8 flex items-center gap-3">
-        <div className="w-8 h-8 flex-shrink-0 bg-purple-600 rounded flex items-center justify-center shadow-md">
-          <div className="w-3 h-3 bg-white rounded-sm rotate-45" />
+      <div className="p-4 pb-4 flex items-center gap-2.5">
+        <div className="w-6 h-6 flex-shrink-0 bg-purple-600 rounded flex items-center justify-center shadow-md">
+          <div className="w-2 h-2 bg-white rounded-sm rotate-45" />
         </div>
-        <div className="flex flex-col">
-          <span className="text-gray-900 dark:text-white font-bold text-[18px] leading-tight">
+        <div className={`flex flex-col ${isOpen ? '' : 'hidden'}`}>
+          <span className="text-gray-900 dark:text-white font-bold text-[14px] leading-tight">
             TradeMind
           </span>
-          <span className="text-gray-400 dark:text-gray-500 text-[12px] font-medium tracking-wide">
+          <span className="text-gray-400 dark:text-gray-500 text-[10px] font-medium tracking-wide">
             Quotation Dashboard
           </span>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex flex-col flex-1 mt-2" aria-label="Main navigation">
+      <nav className="flex flex-col flex-1 mt-1" aria-label="Main navigation">
         {filteredLinks.map((link) => (
           <NavLink
             key={link.name}
             to={link.path}
             end={link.path === "/"}
             className={({ isActive }) =>
-              `flex items-center gap-3 pl-4 pr-4 h-[44px] border-l-[3px] transition-colors duration-150 ${isActive
+              `flex items-center gap-2.5 pl-3 pr-3 h-[34px] border-l-[3px] transition-colors duration-150 ${isActive
                 ? "border-purple-500 bg-purple-50 dark:bg-white/[0.04] text-purple-600 dark:text-white font-semibold"
                 : "border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/[0.02] hover:text-gray-900 dark:hover:text-gray-200 font-medium"
               }`
             }
           >
-            <span className="w-5 h-5 flex-shrink-0">{link.icon}</span>
-            <span className={`text-[14px] ${isOpen ? "" : "hidden"}`}>
+            <span className="w-4 h-4 flex-shrink-0">{link.icon}</span>
+            <span className={`text-[12px] ${isOpen ? "" : "hidden"}`}>
               {link.name}
             </span>
           </NavLink>
@@ -90,13 +90,13 @@ export default function Sidebar({ isOpen }) {
       </div> */}
 
       {/* Logout Button */}
-      <div className="mt-auto border-t border-gray-200 dark:border-[#2a2d33] p-4">
+      <div className="mt-auto border-t border-gray-200 dark:border-[#2a2d33] p-3">
         <button
           onClick={handleLogout}
-          className={`flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-red-500 hover:bg-red-500/10 transition-all font-bold text-sm ${isOpen ? "" : "justify-center px-0"}`}
+          className={`flex items-center gap-2.5 w-full px-3 py-1.5 rounded-lg text-red-500 hover:bg-red-500/10 transition-all font-bold text-[12px] ${isOpen ? "" : "justify-center px-0"}`}
           title="Logout"
         >
-          <span className="w-5 h-5 flex-shrink-0">
+          <span className="w-4 h-4 flex-shrink-0">
             <LogoutIcon />
           </span>
           <span className={`${isOpen ? "" : "hidden"}`}>Logout</span>

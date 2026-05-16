@@ -126,7 +126,7 @@ export default function EmployeesPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col w-full h-full pb-8 relative gap-6">
+    <div className="flex flex-col w-full h-full pb-4 relative gap-4">
       {/* Global toast notification */}
       <Toast message={toast.message} type={toast.type} />
 

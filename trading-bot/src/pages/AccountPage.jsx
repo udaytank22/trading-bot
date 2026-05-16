@@ -112,7 +112,7 @@ export default function AccountPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col w-full h-full pb-8">
+    <div className="flex flex-col w-full h-full pb-4">
       <Toast message={toast.message} type={toast.type} />
 
       {/* Centralized toolbar: search + filter + Add Account button */}

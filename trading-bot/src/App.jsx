@@ -152,7 +152,7 @@ export default function App() {
                     <main className="flex-1 flex flex-col h-full bg-white dark:bg-[#0f1117] relative overflow-hidden transition-colors duration-300">
                       <Topbar onToggleSidebar={toggleSidebar} />
                       <CallOverlay />
-                      <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                      <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
                         <div className="max-w-[1280px] min-w-[1024px] mx-auto h-full">
                           <Routes>
                             <Route path="/" element={<DashboardPage />} />

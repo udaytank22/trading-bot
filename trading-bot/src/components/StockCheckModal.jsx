@@ -49,8 +49,8 @@ const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
   };
 
   const content = (
-    <div className={`${isPageMode ? 'w-full' : 'bg-[#1a1d23] border border-[#2a2d33] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden'} animate-in zoom-in-95 duration-200`}>
-      <div className="px-6 py-4 border-b border-[#2a2d33] flex justify-between items-center bg-[#1a1d23]">
+    <div className={`${isPageMode ? 'w-full bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm' : 'bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden'} animate-in zoom-in-95 duration-200`}>
+      <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
         <div className="flex items-center gap-4">
           {isPageMode && (
             <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-lg text-gray-400 transition-colors">
@@ -59,7 +59,7 @@ const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
               </svg>
             </button>
           )}
-          <h2 className="text-lg font-bold text-white">Stock Availability Check</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Stock Availability Check</h2>
         </div>
         {!isPageMode && (
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl leading-none">&times;</button>
@@ -71,9 +71,9 @@ const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
           <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Inquiry Products ({deal?.products?.length})</h3>
           <div className="grid gap-3 max-h-[300px] overflow-y-auto custom-scrollbar p-1">
             {productsAvailability.map((p, idx) => (
-              <div key={idx} className="bg-[#0c0e12] p-4 rounded-xl border border-[#2a2d33] flex items-center justify-between">
+              <div key={idx} className="bg-gray-100 dark:bg-[#0c0e12] p-4 rounded-xl border border-gray-200 dark:border-[#2a2d33] flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-bold text-white">{p.product_name}</p>
+                  <p className="text-sm font-bold text-gray-900 dark:text-white">{p.product_name}</p>
                   <p className="text-[10px] text-gray-500">{p.quantity} {p.unit}</p>
                 </div>
                 <div className="flex -space-x-2">
@@ -103,7 +103,7 @@ const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
               placeholder="Search suppliers..."
               value={supplierSearch}
               onChange={(e) => setSupplierSearch(e.target.value)}
-              className="bg-[#0c0e12] border border-[#2a2d33] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500 w-48"
+              className="bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-3 py-1.5 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 w-48"
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto custom-scrollbar p-1">
@@ -114,7 +114,7 @@ const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
                 className={`flex flex-col p-4 rounded-xl border transition-all relative ${
                   selectedSuppliers.find(s => s.id === supplier.id)
                     ? "bg-purple-600/10 border-purple-500 text-white"
-                    : "bg-[#0c0e12] border-[#2a2d33] text-gray-400 hover:border-gray-500"
+                    : "bg-gray-100 dark:bg-[#0c0e12] border-gray-200 dark:border-[#2a2d33] text-gray-400 hover:border-gray-500"
                 }`}
               >
                 <div className="flex items-center gap-3 text-left w-full">
@@ -143,8 +143,8 @@ const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
         </div>
       </div>
 
-      <div className="p-5 border-t border-[#2a2d33] flex gap-3 bg-[#1a1d23] mt-6">
-        <button onClick={onClose} className="px-6 py-2.5 rounded-lg border border-[#2a2d33] text-gray-300 text-sm font-bold hover:bg-white/[0.05]">
+      <div className="p-5 border-t border-gray-200 dark:border-[#2a2d33] flex gap-3 bg-gray-50 dark:bg-[#1a1d23] mt-6">
+        <button onClick={onClose} className="px-6 py-2.5 rounded-lg border border-gray-200 dark:border-gray-200 dark:border-[#2a2d33] text-gray-700 dark:text-gray-300 text-sm font-bold hover:bg-gray-100 dark:hover:bg-white/[0.05]">
           Cancel
         </button>
         <button

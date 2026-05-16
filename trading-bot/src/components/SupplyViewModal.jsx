@@ -1,5 +1,7 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { formatINR } from "../services/marginEngine";
+
+const DUMMY_PDF_URL = "/memories/file-sample_150kB.pdf";
 
 /**
  * SupplyViewModal - displays deal details in a modal overlay.
@@ -11,6 +13,8 @@ export default function SupplyViewModal({
   onClose,
   onStatusUpdate,
 }) {
+  const [showPdf, setShowPdf] = useState(false);
+  const [pdfLabel, setPdfLabel] = useState("");
   // Close on Escape when modal is open
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -69,9 +73,46 @@ export default function SupplyViewModal({
 
       {/* Drawer Modal */}
       <div
-        className={`fixed top-0 right-0 h-full w-[500px] bg-[#1e2028] border-l border-[#2a2d36] z-50 transform transition-transform duration-300 ease-in-out flex flex-col overflow-y-auto shadow-2xl ${isOpen ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed top-0 right-0 h-full w-[500px] bg-white dark:bg-[#1e2028] border-l border-gray-200 dark:border-[#2a2d36] z-50 transform transition-transform duration-300 ease-in-out flex flex-col shadow-2xl ${isOpen ? "translate-x-0" : "translate-x-full"}`}
       >
-        <div className="flex flex-col flex-1 h-fit">
+        {/* ── Inline PDF Viewer ── */}
+        {showPdf && (
+          <div className="absolute inset-0 z-10 flex flex-col bg-white dark:bg-[#1e2028]">
+            <div className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36] bg-gray-50 dark:bg-[#1a1d23] flex items-center justify-between flex-shrink-0">
+              <button
+                onClick={() => setShowPdf(false)}
+                className="flex items-center gap-2 text-sm font-bold text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Supply
+              </button>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-red-500 bg-red-500/10 px-2.5 py-1 rounded-full border border-red-500/20">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  {pdfLabel}
+                </div>
+                <a
+                  href={DUMMY_PDF_URL}
+                  download={pdfLabel}
+                  className="flex items-center gap-1.5 text-xs font-bold text-purple-500 bg-purple-500/10 px-2.5 py-1 rounded-full border border-purple-500/20 hover:bg-purple-500/20 transition-colors"
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download
+                </a>
+              </div>
+            </div>
+            <div className="flex-1 overflow-hidden bg-gray-100 dark:bg-[#0c0e12]">
+              <iframe src={DUMMY_PDF_URL} title="Document Preview" className="w-full h-full border-0" />
+            </div>
+          </div>
+        )}
+        <div className="flex flex-col flex-1 h-fit overflow-y-auto">
           {/* Reuse the drawer's inner UI */}
           {deal && (
             <div className="flex flex-col flex-1 h-fit">
@@ -103,7 +144,7 @@ export default function SupplyViewModal({
                   </div>
                   {getStatusBadge(deal.status)}
                 </div>
-                <div className="text-white text-[20px] font-bold leading-tight tracking-wide">
+                <div className="text-gray-900 dark:text-white text-[20px] font-bold leading-tight tracking-wide">
                   {deal.buyer_name}
                 </div>
                 <div className="text-gray-400 text-[14px] mt-1 tracking-wide">
@@ -120,38 +161,38 @@ export default function SupplyViewModal({
                 </div>
               </div>
 
-              <div className="h-[1px] bg-[#2a2d36] w-full" />
+              <div className="h-[1px] bg-gray-200 dark:bg-[#2a2d36] w-full" />
 
               {/* SECTION 2: Products Requested */}
               <div className="p-6">
                 <div className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-4">
                   Products Requested
                 </div>
-                <div className="overflow-x-auto rounded-lg border border-[#2a2d36] bg-[#242830]/50 shadow-sm">
-                  <table className="w-full text-left text-sm text-gray-300">
-                    <thead className="bg-[#1a1d23] text-gray-400 text-[11px] font-semibold uppercase tracking-wider">
+                <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-[#2a2d36] bg-gray-100 dark:bg-[#242830]/50 shadow-sm">
+                  <table className="w-full text-left text-sm text-gray-700 dark:text-gray-300">
+                    <thead className="bg-gray-50 dark:bg-[#1a1d23] text-gray-400 text-[11px] font-semibold uppercase tracking-wider">
                       <tr>
-                        <th className="px-4 py-3 border-b border-[#2a2d36]">
+                        <th className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36]">
                           Product
                         </th>
-                        <th className="px-4 py-3 border-b border-[#2a2d36]">
+                        <th className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36]">
                           Qty
                         </th>
-                        <th className="px-4 py-3 border-b border-[#2a2d36]">
+                        <th className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36]">
                           Unit
                         </th>
-                        <th className="px-4 py-3 border-b border-[#2a2d36]">
+                        <th className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36]">
                           Specs
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#2a2d36]/50">
+                    <tbody className="divide-y divide-gray-200 dark:divide-[#2a2d36]/50">
                       {deal.products.map((p, i) => (
                         <tr
                           key={i}
-                          className="hover:bg-white/[0.03] bg-white/[0.01]"
+                          className="hover:bg-gray-50 dark:hover:bg-white/[0.03] bg-transparent dark:bg-white/[0.01]"
                         >
-                          <td className="px-4 py-3 text-white font-medium">
+                          <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">
                             {p.product_name}
                           </td>
                           <td className="px-4 py-3 font-mono font-medium">
@@ -173,14 +214,14 @@ export default function SupplyViewModal({
                 </div>
               </div>
 
-              <div className="h-[1px] bg-[#2a2d36] w-full" />
+              <div className="h-[1px] bg-gray-200 dark:bg-[#2a2d36] w-full" />
 
               {/* SECTION 3A: Quoted & Final Amount */}
               <div className="p-6">
                 <div className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-4">
                   Quotation Summary
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-gray-300 text-sm">
+                <div className="grid grid-cols-2 gap-4 text-gray-700 dark:text-gray-300 text-sm">
                   <div>
                     <span className="text-gray-400 mr-2">Quoted Amount:</span>
                     <span className="font-medium">{formatCurrency(45000)}</span>
@@ -196,7 +237,7 @@ export default function SupplyViewModal({
                 <div className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-4">
                   Logistics Details
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-300 text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-700 dark:text-gray-300 text-sm">
                   <div>
                     <span className="text-gray-400 mr-2">Pickup From:</span>
                     <span className="font-medium">
@@ -236,7 +277,7 @@ export default function SupplyViewModal({
                 </div>
               </div>
 
-              <div className="h-[1px] bg-[#2a2d36] w-full" />
+              <div className="h-[1px] bg-gray-200 dark:bg-[#2a2d36] w-full" />
 
               {/* SECTION 3C: Associated Documents */}
               <div className="p-6">
@@ -260,43 +301,47 @@ export default function SupplyViewModal({
                   ].map((doc, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between p-3 bg-[#242830]/50 border border-[#2a2d36] rounded-xl hover:bg-[#242830] transition-colors group"
+                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-[#242830]/50 border border-gray-200 dark:border-[#2a2d36] rounded-xl hover:border-purple-400/40 hover:bg-purple-500/5 dark:hover:bg-[#242830] transition-all group"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-bold text-[10px]">
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-[10px] ${
+                          doc.type === "PDF"
+                            ? "bg-red-500/10 text-red-500"
+                            : "bg-blue-500/10 text-blue-500"
+                        }`}>
                           {doc.type}
                         </div>
                         <div>
-                          <p className="text-white text-sm font-medium">
+                          <p className="text-gray-900 dark:text-white text-sm font-medium group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors">
                             {doc.name}
                           </p>
-                          <p className="text-gray-500 text-[11px]">
-                            {doc.size} • Verified
-                          </p>
+                          <p className="text-gray-500 text-[11px]">150 KB • Verified</p>
                         </div>
                       </div>
-                      <button className="p-2 text-gray-500 hover:text-emerald-400 transition-colors">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
+                      <div className="flex items-center gap-1">
+                        {/* View */}
+                        <button
+                          onClick={() => { setPdfLabel(doc.name); setShowPdf(true); }}
+                          title="View document"
+                          className="p-1.5 rounded-lg text-purple-500 bg-purple-500/10 hover:bg-purple-500/20 transition-colors"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                          />
-                        </svg>
-                      </button>
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                        {/* Download */}
+                        <a
+                          href={DUMMY_PDF_URL}
+                          download={doc.name}
+                          title="Download"
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors"
+                        >
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                        </a>
+                      </div>
                     </div>
                   ))}
                 </div>

@@ -53,7 +53,7 @@ function PlusIcon() {
 function ChevronIcon() {
   return (
     <svg
-      className="absolute right-3.5 top-3 w-4 h-4 text-gray-500 pointer-events-none"
+      className="absolute right-2.5 top-2 w-3.5 h-3.5 text-gray-500 pointer-events-none"
       fill="none"
       viewBox="0 0 24 24"
       strokeWidth={2.5}
@@ -81,8 +81,8 @@ function FilterDropdown({ value, onChange, options = [] }) {
           "appearance-none",
           "bg-white dark:bg-[#1a1d23]",
           "border border-gray-200 dark:border-[#2a2d33]",
-          "rounded-lg h-10 pl-4 pr-10",
-          "text-sm text-gray-700 dark:text-gray-300 font-medium",
+          "rounded-lg h-8 pl-3 pr-8",
+          "text-xs text-gray-700 dark:text-gray-300 font-medium",
           "focus:outline-none focus:border-purple-500",
           "cursor-pointer shadow-sm",
           "hover:border-gray-300 dark:hover:border-gray-600",
@@ -139,10 +139,10 @@ export default function PageToolbar({
   className = "",
 }) {
   return (
-    <div className={`flex items-center justify-between gap-4 mb-5 flex-wrap ${className}`}>
+    <div className={`flex items-center justify-between gap-3 mb-3 flex-wrap ${className}`}>
 
       {/* ── Left: Search + Filter ─────────────────────────────────────────── */}
-      <div className="flex items-center gap-4 flex-wrap">
+      <div className="flex items-center gap-3 flex-wrap">
 
         {/* Search input */}
         {onSearchChange !== undefined && (

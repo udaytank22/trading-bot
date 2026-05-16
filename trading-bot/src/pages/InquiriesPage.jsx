@@ -394,7 +394,7 @@ export default function InquiriesPage() {
   // --- Step Views Rendering ---
   if (activeStepView) {
     return (
-      <div className="w-full h-full bg-[#0c0e12] animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-y-auto pb-10">
+      <div className="w-full h-full bg-white dark:bg-[#0c0e12] animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-y-auto pb-10">
         <div className="max-w-6xl mx-auto py-8 px-4">
            {activeStepView === 'STOCK_CHECK' && (
              <StockCheckModal 
@@ -455,7 +455,7 @@ export default function InquiriesPage() {
   }
 
   return (
-    <div className="flex flex-col w-full h-full pb-8 relative">
+    <div className="flex flex-col w-full h-full pb-4 relative">
       <Toast message={toast.message} type={toast.type} />
 
       {/* Centralized toolbar: search + status filter + Add Inquiry button */}

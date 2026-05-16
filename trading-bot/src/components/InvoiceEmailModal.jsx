@@ -1,14 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 
+const DUMMY_PDF_URL = '/memories/file-sample_150kB.pdf';
+
 export default function InvoiceEmailModal({ deal, isOpen, onClose, onStatusUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
-  const [sendState, setSendState] = useState('idle'); // 'idle', 'sending', 'success'
+  const [sendState, setSendState] = useState('idle'); // 'idle' | 'sending' | 'success'
+  const [showPdf, setShowPdf]     = useState(false);
   const bodyRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
       setSendState('idle');
       setIsEditing(false);
+      setShowPdf(false);
     }
   }, [isOpen]);
 
@@ -28,36 +32,82 @@ export default function InvoiceEmailModal({ deal, isOpen, onClose, onStatusUpdat
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/70 animate-fade-in" onClick={() => { if (sendState === 'idle') onClose() }} />
-      <div className="relative w-[700px] max-h-[85vh] bg-[#1e2028] border border-[#2a2d36] rounded-xl shadow-2xl flex flex-col z-10 animate-fade-in overflow-hidden">
+      <div className="fixed inset-0 bg-black/70 animate-fade-in" onClick={() => { if (sendState === 'idle' && !showPdf) onClose(); }} />
+      <div className="relative w-[700px] max-h-[85vh] bg-white dark:bg-[#1e2028] border border-gray-200 dark:border-[#2a2d36] rounded-xl shadow-2xl flex flex-col z-10 animate-fade-in overflow-hidden">
 
         {sendState === 'success' ? (
           <div className="flex flex-col items-center justify-center p-16 h-full text-center fade-in-fast">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-24 w-24 text-emerald-500 mb-6 drop-shadow-lg" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
             </svg>
-            <h2 className="text-white text-3xl font-bold mb-3 tracking-wide">Invoice Sent Successfully!</h2>
-            <p className="text-gray-300 font-bold text-lg">{deal.buyer_name}</p>
-            <p className="text-gray-500 text-sm mb-6 pb-6 border-b border-[#2a2d36] w-full max-w-[300px] mx-auto">{deal.buyer_email}</p>
+            <h2 className="text-gray-900 dark:text-white text-3xl font-bold mb-3 tracking-wide">Invoice Sent Successfully!</h2>
+            <p className="text-gray-800 dark:text-gray-300 font-bold text-lg">{deal.buyer_name}</p>
+            <p className="text-gray-500 text-sm mb-6 pb-6 border-b border-gray-200 dark:border-[#2a2d36] w-full max-w-[300px] mx-auto">{deal.buyer_email}</p>
             <p className="text-blue-400 text-sm font-bold tracking-wide uppercase bg-blue-500/10 px-4 py-2 rounded-lg">Status updated to Invoice Sent</p>
           </div>
+
+        /* ── PDF VIEWER PANEL ── */
+        ) : showPdf ? (
+          <div className="flex flex-col flex-1 h-full" style={{ minHeight: 0 }}>
+            {/* PDF viewer header */}
+            <div className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36] bg-gray-50 dark:bg-[#1a1d23] flex items-center justify-between flex-shrink-0">
+              <button
+                onClick={() => setShowPdf(false)}
+                className="flex items-center gap-2 text-sm font-bold text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Invoice
+              </button>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-red-500 bg-red-500/10 px-2.5 py-1 rounded-full border border-red-500/20">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  PDF Preview
+                </div>
+                <a
+                  href={DUMMY_PDF_URL}
+                  download={`Invoice_${deal.inquiry_id}.pdf`}
+                  className="flex items-center gap-1.5 text-xs font-bold text-purple-500 bg-purple-500/10 px-2.5 py-1 rounded-full border border-purple-500/20 hover:bg-purple-500/20 transition-colors"
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download
+                </a>
+              </div>
+            </div>
+            {/* Iframe */}
+            <div className="flex-1 overflow-hidden bg-gray-200 dark:bg-[#0c0e12]">
+              <iframe
+                src={DUMMY_PDF_URL}
+                title="Invoice PDF Preview"
+                className="w-full h-full border-0"
+                style={{ minHeight: '500px' }}
+              />
+            </div>
+          </div>
+
+        /* ── EMAIL COMPOSE VIEW ── */
         ) : (
           <>
             {/* Modal Header */}
-            <div className="p-6 border-b border-[#2a2d36] flex justify-between items-start flex-shrink-0 bg-[#1a1d23]">
+            <div className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36] flex justify-between items-center flex-shrink-0 bg-gray-50 dark:bg-[#1a1d23]">
               <div>
-                <h2 className="text-white text-[20px] font-bold tracking-wide">Review Invoice Before Sending</h2>
-                <p className="text-gray-400 text-[13px] mt-1.5 font-medium tracking-wide text-transform uppercase">Final verification of tax invoice</p>
+                <h2 className="text-gray-900 dark:text-white text-[16px] font-bold tracking-wide">Review Invoice Before Sending</h2>
+                <p className="text-gray-400 text-[11px] mt-0.5 font-medium tracking-wide uppercase">Final verification of tax invoice</p>
               </div>
-              <button onClick={onClose} disabled={sendState === 'sending'} className="text-gray-500 hover:text-white transition-colors disabled:opacity-50 mt-1">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <button onClick={onClose} disabled={sendState === 'sending'} className="text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors disabled:opacity-50">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
             {/* Email Preview Area - Scrollable */}
-            <div className="flex-1 overflow-y-auto p-6 bg-[#1a1d23] custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-[#1a1d23] custom-scrollbar">
               <div className={`bg-white rounded-[10px] p-6 text-[15px] transition-colors border-2 shadow-sm ${isEditing ? 'border-blue-500 shadow-blue-500/20' : 'border-gray-200'}`}>
 
                 {/* Meta Attributes */}
@@ -106,21 +156,44 @@ export default function InvoiceEmailModal({ deal, isOpen, onClose, onStatusUpdat
                     </tbody>
                   </table>
 
-                  {/* Simulated PDF Attachment */}
-                  <div className="my-8 p-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl flex items-center justify-between group cursor-default" contentEditable={false}>
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                        <svg className="w-7 h-7 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                  {/* ── PDF Attachment Card ── */}
+                  <div
+                    onClick={() => setShowPdf(true)}
+                    contentEditable={false}
+                    className="my-8 p-4 bg-gray-50 border border-gray-200 rounded-xl flex items-center gap-4 group cursor-pointer hover:border-purple-400 hover:shadow-md hover:shadow-purple-500/10 transition-all select-none w-fit"
+                  >
+                    {/* PDF icon */}
+                    <div className="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-red-100 transition-colors">
+                      <svg className="w-7 h-7 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    {/* File info */}
+                    <div className="flex-1 min-w-0 pr-2">
+                      <p className="text-sm font-bold text-gray-900 group-hover:text-purple-600 transition-colors">Invoice_{deal.inquiry_id}.pdf</p>
+                      <p className="text-[10px] font-medium text-gray-500 uppercase tracking-widest">PDF Document • 150 KB</p>
+                    </div>
+                    {/* Action icons */}
+                    <div className="flex items-center gap-1">
+                      {/* Eye icon */}
+                      <div title="View PDF" className="w-8 h-8 rounded-lg flex items-center justify-center text-purple-500 bg-purple-500/10 group-hover:bg-purple-500/20 transition-colors">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
                       </div>
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">Invoice_{deal.inquiry_id}.pdf</p>
-                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-widest">Adobe PDF Document • 1.2 MB</p>
-                      </div>
-                    </div>
-                    <div className="text-purple-600 font-bold text-xs uppercase tracking-wider opacity-60 group-hover:opacity-100 transition-opacity">
-                      Attachment Included
+                      {/* Download icon */}
+                      <a
+                        href={DUMMY_PDF_URL}
+                        download={`Invoice_${deal.inquiry_id}.pdf`}
+                        onClick={(e) => e.stopPropagation()}
+                        title="Download PDF"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                      </a>
                     </div>
                   </div>
 
@@ -156,11 +229,11 @@ export default function InvoiceEmailModal({ deal, isOpen, onClose, onStatusUpdat
             </div>
 
             {/* Action Buttons Row */}
-            <div className="p-5 border-t border-[#2a2d36] flex justify-between items-center bg-[#1a1d23] flex-shrink-0 shadow-[0_-15px_30px_-15px_rgba(0,0,0,0.5)]">
+            <div className="px-4 py-2.5 border-t border-gray-200 dark:border-[#2a2d36] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0 shadow-[0_-15px_30px_-15px_rgba(0,0,0,0.5)]">
               <button
                 onClick={onClose}
                 disabled={sendState === 'sending'}
-                className="px-6 py-3 text-gray-400 font-bold tracking-wide hover:text-white hover:bg-white/[0.05] rounded-lg transition-colors disabled:opacity-50"
+                className="px-4 py-2 text-gray-400 font-bold tracking-wide hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/[0.05] rounded-lg transition-colors disabled:opacity-50 text-sm"
               >
                 Cancel
               </button>
@@ -168,11 +241,11 @@ export default function InvoiceEmailModal({ deal, isOpen, onClose, onStatusUpdat
               <button
                 onClick={handleSend}
                 disabled={sendState === 'sending' || isEditing}
-                className="flex items-center gap-2.5 px-8 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold tracking-widest uppercase text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[180px] justify-center shadow-lg shadow-emerald-500/20 active:scale-[0.99]"
+                className="flex items-center gap-2 px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold tracking-widest uppercase text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[150px] justify-center shadow-lg shadow-emerald-500/20 active:scale-[0.99]"
               >
                 {sendState === 'sending' ? (
                   <>
-                    <svg className="animate-spin -ml-1 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin -ml-1 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
@@ -180,7 +253,7 @@ export default function InvoiceEmailModal({ deal, isOpen, onClose, onStatusUpdat
                   </>
                 ) : (
                   <>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4.5 w-4.5 -ml-1" viewBox="0 0 20 20" fill="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 -ml-1" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
                     </svg>
                     Send Invoice

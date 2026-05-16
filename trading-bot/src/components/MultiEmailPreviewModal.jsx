@@ -79,7 +79,7 @@ export default function MultiEmailPreviewModal({ isOpen, onClose, stagedRFQs, in
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-[#1a1d23] border border-[#2a2d33] rounded-2xl w-full max-w-2xl max-h-[90vh] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+      <div className="bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl w-full max-w-2xl max-h-[90vh] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
 
         {sendState === 'success' ? (
           <div className="flex flex-col items-center justify-center p-16 h-full text-center">
@@ -93,7 +93,7 @@ export default function MultiEmailPreviewModal({ isOpen, onClose, stagedRFQs, in
           </div>
         ) : (
           <>
-            <div className="px-6 py-4 border-b border-[#2a2d33] flex justify-between items-center bg-[#1a1d23] flex-shrink-0">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
               <div>
                 <h2 className="text-lg font-bold text-white">Review RFQ Drafts</h2>
                 <p className="text-xs text-gray-500 mt-0.5">Prepare to send {stagedRFQs.length} emails</p>
@@ -103,7 +103,7 @@ export default function MultiEmailPreviewModal({ isOpen, onClose, stagedRFQs, in
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-[#0c0e12]">
+            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-gray-100 dark:bg-[#0c0e12]">
               {stagedRFQs.map((rfq, idx) => (
                 <EmailDraftCard
                   key={idx}
@@ -115,7 +115,7 @@ export default function MultiEmailPreviewModal({ isOpen, onClose, stagedRFQs, in
               ))}
             </div>
 
-            <div className="p-5 border-t border-[#2a2d33] flex justify-between items-center bg-[#1a1d23] flex-shrink-0">
+            <div className="p-5 border-t border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
               <button
                 onClick={onClose}
                 disabled={sendState === 'sending'}

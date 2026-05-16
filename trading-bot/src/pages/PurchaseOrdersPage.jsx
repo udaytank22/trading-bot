@@ -114,7 +114,7 @@ export default function PurchaseOrdersPage() {
 
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col w-full h-full pb-8 relative">
+    <div className="flex flex-col w-full h-full pb-4 relative">
       <Toast message={toast.message} type={toast.type} />
 
       {/* Centralized toolbar: search + status filter + Add PO button */}

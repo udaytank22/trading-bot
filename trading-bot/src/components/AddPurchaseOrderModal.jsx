@@ -211,10 +211,10 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
 
       {/* Side Drawer */}
       <div
-        className={`fixed top-0 right-0 h-full w-full max-w-2xl bg-[#1e2028] border-l border-[#2a2d36] z-[101] transform transition-transform duration-300 ease-in-out flex flex-col shadow-2xl ${isOpen ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed top-0 right-0 h-full w-full max-w-2xl bg-white dark:bg-[#1e2028] border-l border-gray-200 dark:border-[#2a2d36] z-[101] transform transition-transform duration-300 ease-in-out flex flex-col shadow-2xl ${isOpen ? "translate-x-0" : "translate-x-full"}`}
       >
         {/* Header */}
-        <div className="px-8 py-5 border-b border-[#2a2d36] flex justify-between items-center bg-[#1a1d23] flex-shrink-0">
+        <div className="px-8 py-5 border-b border-gray-200 dark:border-[#2a2d36] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 bg-purple-600/20 rounded-xl flex items-center justify-center border border-purple-500/20 shadow-lg shadow-purple-600/10">
               <svg
@@ -232,7 +232,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
               </svg>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white tracking-tight">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
                 Create Purchase Order
               </h2>
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mt-0.5">
@@ -288,7 +288,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                   name="vendor"
                   value={formData.vendor}
                   onChange={handleChange}
-                  className="w-full bg-[#0c0e12] border border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white focus:border-purple-500/50 transition-all outline-none cursor-pointer hover:bg-[#14171c]"
+                  className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none cursor-pointer hover:bg-[#14171c]"
                 >
                   <option value="">Select Vendor</option>
                   {CUSTOMERS.map((c) => (
@@ -309,7 +309,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                     name="gstTreatment"
                     value={formData.gstTreatment}
                     onChange={handleChange}
-                    className="w-full bg-[#0c0e12] border border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all hover:bg-[#14171c]"
+                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all hover:bg-[#14171c]"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -321,7 +321,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                     name="salesType"
                     value={formData.salesType}
                     onChange={handleChange}
-                    className="w-full bg-[#0c0e12] border border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all hover:bg-[#14171c]"
+                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all hover:bg-[#14171c]"
                   />
                 </div>
               </div>
@@ -335,7 +335,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                     name="vessel"
                     value={formData.vessel}
                     onChange={handleChange}
-                    className="w-full bg-[#0c0e12] border border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all cursor-pointer hover:bg-[#14171c]"
+                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all cursor-pointer hover:bg-[#14171c]"
                   >
                     <option value="">Select Vessel</option>
                     {VESSELS.map((v) => (
@@ -354,7 +354,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                     name="vesselRef"
                     value={formData.vesselRef}
                     onChange={handleChange}
-                    className="w-full bg-[#0c0e12] border border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all hover:bg-[#14171c]"
+                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all hover:bg-[#14171c]"
                   />
                 </div>
               </div>
@@ -369,7 +369,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                     name="imoNumber"
                     value={formData.imoNumber}
                     onChange={handleChange}
-                    className="w-full bg-[#0c0e12] border border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all hover:bg-[#14171c]"
+                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all hover:bg-[#14171c]"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -381,7 +381,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                     name="supplierTel"
                     value={formData.supplierTel}
                     onChange={handleChange}
-                    className="w-full bg-[#0c0e12] border border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all hover:bg-[#14171c]"
+                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all hover:bg-[#14171c]"
                   />
                 </div>
               </div>
@@ -395,7 +395,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                     name="paymentTerms"
                     value={formData.paymentTerms}
                     onChange={handleChange}
-                    className="w-full bg-[#0c0e12] border border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all cursor-pointer hover:bg-[#14171c]"
+                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all cursor-pointer hover:bg-[#14171c]"
                   >
                     <option value="Immediate">Immediate</option>
                     <option value="15 Days">15 Days</option>
@@ -412,7 +412,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                     name="deliveryTime"
                     value={formData.deliveryTime}
                     onChange={handleChange}
-                    className="w-full bg-[#0c0e12] border border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all [color-scheme:dark] cursor-pointer hover:bg-[#14171c]"
+                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all [color-scheme:dark] cursor-pointer hover:bg-[#14171c]"
                   />
                 </div>
               </div>
@@ -427,7 +427,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                     name="orderDeadline"
                     value={formData.orderDeadline}
                     onChange={handleChange}
-                    className="w-full bg-[#0c0e12] border border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all [color-scheme:dark] cursor-pointer hover:bg-[#14171c]"
+                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all [color-scheme:dark] cursor-pointer hover:bg-[#14171c]"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -439,7 +439,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                     name="expectedArrival"
                     value={formData.expectedArrival}
                     onChange={handleChange}
-                    className="w-full bg-[#0c0e12] border border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all [color-scheme:dark] cursor-pointer hover:bg-[#14171c]"
+                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all [color-scheme:dark] cursor-pointer hover:bg-[#14171c]"
                   />
                 </div>
               </div>
@@ -447,7 +447,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
 
             {/* Product Lines Section */}
             <div className="space-y-4 pt-6">
-              <div className="flex items-center justify-between border-b border-[#2a2d33] pb-2">
+              <div className="flex items-center justify-between border-b border-gray-200 dark:border-[#2a2d33] pb-2">
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
                   PO Items
                   <span className="bg-purple-600/20 text-purple-400 text-[10px] px-2 py-0.5 rounded-full uppercase">
@@ -456,10 +456,10 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                 </h3>
               </div>
 
-              <div className="overflow-hidden border border-[#2a2d33] rounded-xl bg-[#0c0e12]/30">
+              <div className="overflow-hidden border border-gray-200 dark:border-[#2a2d33] rounded-xl bg-gray-100 dark:bg-[#0c0e12]/30">
                 <table className="w-full text-left text-sm border-collapse">
                   <thead>
-                    <tr className="bg-[#0c0e12]/50 text-gray-400 text-[11px] uppercase tracking-wider border-b border-[#2a2d33]">
+                    <tr className="bg-gray-100 dark:bg-[#0c0e12]/50 text-gray-400 text-[11px] uppercase tracking-wider border-b border-gray-200 dark:border-[#2a2d33]">
                       <th className="px-4 py-3 font-semibold">
                         Item Description
                       </th>
@@ -488,14 +488,14 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                             }
                             className="w-full bg-transparent border-none focus:ring-0 text-white cursor-pointer text-sm p-0 outline-none"
                           >
-                            <option value="" className="bg-[#1a1d23]">
+                            <option value="" className="bg-gray-50 dark:bg-[#1a1d23]">
                               Select Product
                             </option>
                             {PRODUCTS.map((p) => (
                               <option
                                 key={p}
                                 value={p}
-                                className="bg-[#1a1d23]"
+                                className="bg-gray-50 dark:bg-[#1a1d23]"
                               >
                                 {p}
                               </option>
@@ -513,7 +513,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                                 e.target.value,
                               )
                             }
-                            className="w-full bg-[#1a1d23] border border-[#2a2d33] rounded px-2 py-1 text-center text-white text-sm focus:border-purple-500 outline-none"
+                            className="w-full bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded px-2 py-1 text-center text-white text-sm focus:border-purple-500 outline-none"
                           />
                         </td>
                         <td className="px-4 py-3">
@@ -522,7 +522,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                             onChange={(e) =>
                               handleProductChange(index, "unit", e.target.value)
                             }
-                            className="w-full bg-[#1a1d23] border border-[#2a2d33] rounded px-2 py-1 text-white text-sm focus:border-purple-500 outline-none"
+                            className="w-full bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded px-2 py-1 text-white text-sm focus:border-purple-500 outline-none"
                           >
                             <option value="PCS">PCS</option>
                             <option value="KGS">KGS</option>
@@ -560,7 +560,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
               <button
                 type="button"
                 onClick={addProduct}
-                className="w-full py-2.5 border border-dashed border-[#2a2d33] rounded-xl text-xs font-bold text-gray-500 hover:text-purple-400 hover:border-purple-500/50 hover:bg-purple-500/5 transition-all flex items-center justify-center gap-2 group"
+                className="w-full py-2.5 border border-dashed border-gray-200 dark:border-[#2a2d33] rounded-xl text-xs font-bold text-gray-500 hover:text-purple-400 hover:border-purple-500/50 hover:bg-purple-500/5 transition-all flex items-center justify-center gap-2 group"
               >
                 <svg
                   className="w-3.5 h-3.5"
@@ -593,7 +593,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                         askConfirmation: e.target.checked,
                       }))
                     }
-                    className="peer w-5 h-5 rounded-md border-[#2a2d33] bg-[#0c0e12] text-purple-600 focus:ring-purple-500/50 transition-all cursor-pointer appearance-none border"
+                    className="peer w-5 h-5 rounded-md border-gray-200 dark:border-[#2a2d33] bg-gray-100 dark:bg-[#0c0e12] text-purple-600 focus:ring-purple-500/50 transition-all cursor-pointer appearance-none border"
                   />
                   <svg
                     className="absolute w-3.5 h-3.5 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity left-[3px]"
@@ -628,7 +628,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                     className={`w-full border-2 border-dashed rounded-xl px-5 py-4 transition-all flex items-center justify-between ${
                       formData.attachment
                         ? "bg-purple-600/5 border-purple-500/40 text-purple-400"
-                        : "bg-[#0c0e12]/40 border-[#2a2d33] text-gray-600 group-hover:border-purple-500/30"
+                        : "bg-gray-100 dark:bg-[#0c0e12]/40 border-gray-200 dark:border-[#2a2d33] text-gray-600 group-hover:border-purple-500/30"
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -668,11 +668,11 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
         </form>
 
         {/* Footer */}
-        <div className="px-8 py-5 border-t border-[#2a2d33] flex gap-3 bg-[#1a1d23] flex-shrink-0">
+        <div className="px-8 py-5 border-t border-gray-200 dark:border-[#2a2d33] flex gap-3 bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2.5 rounded-lg border border-[#2a2d33] text-gray-300 text-sm font-bold hover:bg-white/[0.05] transition-colors"
+            className="px-6 py-2.5 rounded-lg border border-gray-200 dark:border-gray-200 dark:border-[#2a2d33] text-gray-700 dark:text-gray-300 text-sm font-bold hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors"
           >
             Discard
           </button>

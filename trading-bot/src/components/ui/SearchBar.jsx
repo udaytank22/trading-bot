@@ -41,7 +41,7 @@ export default function SearchBar({
 
       {/* Magnifier icon — pointer-events-none so it doesn't capture clicks */}
       <svg
-        className="absolute left-3.5 top-2.5 w-5 h-5 text-gray-400 pointer-events-none"
+        className="absolute left-3 top-2 w-4 h-4 text-gray-400 pointer-events-none"
         fill="none"
         viewBox="0 0 24 24"
         strokeWidth={1.5}
@@ -62,10 +62,10 @@ export default function SearchBar({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className={[
-          "w-full h-10 pl-11 pr-4",
+          "w-full h-8 pl-9 pr-3",
           "bg-white dark:bg-[#1a1d23]",
           "border border-gray-200 dark:border-[#2a2d33]",
-          "rounded-lg text-sm",
+          "rounded-lg text-xs",
           "text-gray-900 dark:text-white placeholder-gray-500",
           "focus:outline-none focus:border-purple-500",
           "transition-colors shadow-sm",

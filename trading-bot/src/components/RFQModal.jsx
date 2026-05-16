@@ -73,8 +73,8 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
   };
 
   const content = (
-    <div className={`${isPageMode ? 'w-full' : 'bg-[#1a1d23] border border-[#2a2d33] rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden'} animate-in zoom-in-95 duration-200`}>
-      <div className="px-6 py-4 border-b border-[#2a2d33] flex justify-between items-center bg-[#1a1d23]">
+    <div className={`${isPageMode ? 'w-full bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm' : 'bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden'} animate-in zoom-in-95 duration-200`}>
+      <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
         <div className="flex items-center gap-4">
           {isPageMode && (
             <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-lg text-gray-400 transition-colors">
@@ -83,7 +83,7 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
               </svg>
             </button>
           )}
-          <h2 className="text-lg font-bold text-white">Prepare RFQs</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Prepare RFQs</h2>
         </div>
         {!isPageMode && (
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl leading-none">&times;</button>
@@ -91,7 +91,7 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
       </div>
 
       <div className="p-6 space-y-8">
-        <div className="p-6 bg-[#0c0e12] border border-[#2a2d33] rounded-2xl space-y-6">
+        <div className="p-6 bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-2xl space-y-6">
           <h3 className="text-xs font-bold text-purple-400 uppercase tracking-widest">Step 1: Add Party & Products</h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-4">
@@ -106,7 +106,7 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
                     className={`flex flex-col p-3 rounded-xl border transition-all text-left ${
                       selectedSupplierId === s.id
                         ? "bg-purple-600/10 border-purple-500 text-white"
-                        : "bg-[#1a1d23] border-[#2a2d33] text-gray-400 hover:border-gray-500"
+                        : "bg-gray-50 dark:bg-[#1a1d23] border-gray-200 dark:border-[#2a2d33] text-gray-400 hover:border-gray-500"
                     }`}
                   >
                     <span className="text-sm font-bold">{s.name}</span>
@@ -126,10 +126,10 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
                   placeholder="Filter products..."
                   value={productSearch}
                   onChange={(e) => setProductSearch(e.target.value)}
-                  className="bg-[#1a1d23] border border-[#2a2d33] rounded-lg px-3 py-1 text-[10px] text-white focus:outline-none focus:border-purple-500 w-32"
+                  className="bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-3 py-1 text-[10px] text-white focus:outline-none focus:border-purple-500 w-32"
                 />
               </div>
-              <div className="flex flex-wrap gap-2 p-3 bg-[#1a1d23] border border-[#2a2d33] rounded-xl max-h-[300px] overflow-y-auto custom-scrollbar">
+              <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl max-h-[300px] overflow-y-auto custom-scrollbar">
                 {filteredProducts.map((p) => (
                   <button
                     key={p.product_name}
@@ -164,25 +164,25 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
 
         <div className="space-y-4">
           <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Step 2: Review Staged RFQs ({stagedRFQs.length})</h3>
-          <div className="border border-[#2a2d33] rounded-2xl overflow-hidden bg-[#0c0e12]">
-            <table className="w-full text-left text-xs border-collapse">
+          <div className="border border-gray-200 dark:border-[#2a2d33] rounded-2xl overflow-hidden bg-gray-100 dark:bg-[#0c0e12]">
+            <table className="w-full text-left text-xs border-collapse text-gray-700 dark:text-gray-300">
               <thead>
-                <tr className="bg-[#1a1d23] border-b border-[#2a2d33]">
+                <tr className="bg-gray-50 dark:bg-[#1a1d23] border-b border-gray-200 dark:border-[#2a2d33]">
                   <th className="px-6 py-4 text-gray-400 font-bold uppercase tracking-wider">Party / Supplier</th>
                   <th className="px-6 py-4 text-gray-400 font-bold uppercase tracking-wider">Items for RFQ</th>
                   <th className="px-6 py-4 text-right text-gray-400 font-bold uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#2a2d33]">
+              <tbody className="divide-y divide-gray-200 dark:divide-[#2a2d33]">
                 {stagedRFQs.length > 0 ? (
                   stagedRFQs.map((rfq, idx) => {
                     const isExpanded = expandedIndices.includes(idx);
                     const productsToShow = isExpanded ? rfq.products : rfq.products.slice(0, 10);
                     
                     return (
-                      <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
+                      <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors">
                         <td className="px-6 py-4 align-top">
-                          <span className="text-white font-bold">{rfq.supplierName}</span>
+                          <span className="text-gray-900 dark:text-white font-bold">{rfq.supplierName}</span>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-wrap gap-1 max-w-xl">
@@ -227,11 +227,11 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
         </div>
       </div>
 
-      <div className="p-6 border-t border-[#2a2d33] flex gap-4 bg-[#1a1d23] mt-8">
+      <div className="p-6 border-t border-gray-200 dark:border-[#2a2d33] flex gap-4 bg-gray-50 dark:bg-[#1a1d23] mt-8">
         <button
           type="button"
           onClick={onClose}
-          className="px-8 py-3 rounded-xl border border-[#2a2d33] text-gray-400 text-sm font-bold hover:bg-white/[0.05] hover:text-white transition-all"
+          className="px-8 py-3 rounded-xl border border-gray-200 dark:border-[#2a2d33] text-gray-400 text-sm font-bold hover:bg-white/[0.05] hover:text-white transition-all"
         >
           Cancel
         </button>
