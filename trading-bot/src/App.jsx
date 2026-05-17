@@ -17,6 +17,8 @@ const DashboardPage = React.lazy(() => import("./pages/DashboardPage"));
 const InquiriesPage = React.lazy(() => import("./pages/InquiriesPage"));
 const ProfitPage = React.lazy(() => import("./pages/ProfitPage"));
 const SettingsPage = React.lazy(() => import("./pages/SettingsPage"));
+const InventoryPage = React.lazy(() => import("./pages/InventoryPage"));
+const ProfilePage = React.lazy(() => import("./pages/ProfilePage"));
 const LoginPage = React.lazy(() => import("./pages/LoginPage"));
 const PurchaseOrdersPage = React.lazy(() => import("./pages/PurchaseOrdersPage"));
 const EmployeesPage = React.lazy(() => import("./pages/EmployeesPage"));
@@ -163,6 +165,8 @@ export default function App() {
                             <Route path="/employees" element={<EmployeesPage />} />
                             <Route path="/documents" element={<DocumentsPage />} />
                             <Route path="/settings" element={<SettingsPage />} />
+                            <Route path="/profile" element={<ProfilePage />} />
+                            <Route path="/inventory" element={<InventoryPage />} />
                             <Route path="/accounts" element={<AccountPage />} />
                             <Route path="/notifications" element={<NotificationsPage />} />
                             <Route path="/todo" element={<TodoPage />} />

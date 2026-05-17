@@ -63,9 +63,9 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
   const formatCurrency = formatINR;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/70 animate-fade-in" onClick={() => { if (sendState === 'idle') onClose() }} />
-      <div className="relative w-[700px] max-h-[85vh] bg-white dark:bg-[#1e2028] border border-gray-200 dark:border-[#2a2d36] rounded-xl shadow-2xl flex flex-col z-10 animate-fade-in overflow-hidden">
+      <div className="relative w-full max-w-5xl h-full max-h-[90vh] bg-white dark:bg-[#1e2028] border border-gray-200 dark:border-[#2a2d36] rounded-xl shadow-2xl flex flex-col z-10 animate-fade-in overflow-hidden">
 
         {sendState === 'success' ? (
           <div className="flex flex-col items-center justify-center p-16 h-full text-center fade-in-fast">

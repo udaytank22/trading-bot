@@ -86,12 +86,12 @@ export default function DataTable({
 
           {/* ── HEADER ─────────────────────────────────────────────────────── */}
           <thead className="sticky top-0 z-20 transition-all duration-300">
-            <tr className="glass-morphism shadow-sm">
+            <tr className="bg-gray-50 dark:bg-[#1f2229] shadow-sm">
               {columns.map((col) => (
                 <th
                   key={col.key}
                   className={[
-                    "px-6 py-5",
+                    "px-6 py-2.5",
                     "text-gray-400 dark:text-gray-500",
                     "text-[10px] font-black uppercase tracking-[0.2em]",
                     "border-b border-gray-100 dark:border-white/5",

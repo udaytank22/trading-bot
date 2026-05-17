@@ -25,38 +25,142 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
     }
   }, [deal]);
 
+  // Auto-scroll the active workflow step into view when the drawer opens or deal status changes
+  useEffect(() => {
+    if (isOpen && deal) {
+      const timer = setTimeout(() => {
+        const activeEl = document.getElementById(
+          `step-${deal.inquiry_id}-${deal.status}`,
+        );
+        if (activeEl) {
+          activeEl.scrollIntoView({
+            behavior: "smooth",
+            inline: "center",
+            block: "nearest",
+          });
+        }
+      }, 350); // Matches the drawer's transition-transform duration
+      return () => clearTimeout(timer);
+    }
+  }, [deal, isOpen]);
+
   if (!deal || !isOpen) return null;
 
   const formatCurrency = formatINR;
 
   const getWorkflowSteps = (status) => {
     const steps = [
-      { id: 'PENDING', label: 'Created' },
-      { id: 'RFQ_READY', label: 'Stock Checked' },
-      { id: 'CLIENT_QUOTING', label: 'Client Quoting' },
-      { id: 'TL_REVIEW', label: 'TL Review' },
-      { id: 'ADMIN_APPROVAL', label: 'Admin Approval' },
-      { id: 'EMPLOYEE_VERIFY', label: 'Employee Verify' },
-      { id: 'CLIENT_FINAL_APPROVAL', label: 'Final Approval' },
-      { id: 'QUOTE_SENT', label: 'Quoted' },
-      { id: 'CONFIRMED', label: 'Confirmed' },
+      { id: "PENDING", label: "Created" },
+      { id: "RFQ_READY", label: "Stock Checked" },
+      { id: "CLIENT_QUOTING", label: "Client Quoting" },
+      { id: "TL_REVIEW", label: "TL Review" },
+      { id: "ADMIN_APPROVAL", label: "Admin Approval" },
+      { id: "EMPLOYEE_VERIFY", label: "Employee Verify" },
+      { id: "CLIENT_FINAL_APPROVAL", label: "Final Approval" },
+      { id: "QUOTE_SENT", label: "Quoted" },
+      { id: "CONFIRMED", label: "Confirmed" },
     ];
 
-    const currentIdx = steps.findIndex(s => s.id === status);
-    
+    const currentIdx = steps.findIndex((s) => s.id === status);
+
     return (
-      <div className="flex items-center gap-1 mt-4 mb-2 overflow-x-auto pb-2 scrollbar-hide">
-        {steps.map((step, idx) => (
-          <React.Fragment key={step.id}>
-            <div className="flex flex-col items-center min-w-[70px]">
-              <div className={`w-3 h-3 rounded-full border-2 ${idx <= currentIdx ? 'bg-purple-500 border-purple-500' : 'bg-transparent border-gray-600'}`} />
-              <span className={`text-[8px] mt-1 font-bold uppercase ${idx <= currentIdx ? 'text-purple-400' : 'text-gray-600'}`}>{step.label}</span>
-            </div>
-            {idx < steps.length - 1 && (
-              <div className={`h-[1px] w-4 mt-[-14px] ${idx < currentIdx ? 'bg-purple-500' : 'bg-gray-600'}`} />
-            )}
-          </React.Fragment>
-        ))}
+      <div 
+        className="overflow-x-auto w-full scrollbar-hide mt-4 mb-3 cursor-grab active:cursor-grabbing select-none"
+        onWheel={(e) => {
+          if (e.deltaY !== 0) {
+            e.currentTarget.scrollLeft += e.deltaY;
+          }
+        }}
+        onMouseDown={(e) => {
+          const ele = e.currentTarget;
+          const startX = e.pageX - ele.offsetLeft;
+          const scrollLeft = ele.scrollLeft;
+
+          const handleMouseMove = (moveEvent) => {
+            const x = moveEvent.pageX - ele.offsetLeft;
+            const walk = (x - startX) * 1.5; // Drag scroll sensitivity
+            ele.scrollLeft = scrollLeft - walk;
+          };
+
+          const handleMouseUp = () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+          };
+
+          document.addEventListener('mousemove', handleMouseMove);
+          document.addEventListener('mouseup', handleMouseUp);
+        }}
+      >
+        <div
+          className="relative flex items-start pt-1 pb-2"
+          style={{ width: `${steps.length * 80}px` }}
+        >
+          {/* Solid Continuous Background Track Line (masked behind solid circle backgrounds) */}
+          <div
+            className="absolute left-[40px] h-[2px] bg-gray-300 dark:bg-[#2a2d36] transition-colors duration-300 -z-10"
+            style={{
+              top: "12px",
+              width: `${(steps.length - 1) * 80}px`,
+            }}
+          />
+
+          {/* Solid Continuous Active Progress Line */}
+          <div
+            className="absolute left-[40px] h-[2px] bg-purple-500 transition-all duration-300 -z-10"
+            style={{
+              top: "12px",
+              width: `${currentIdx * 80}px`,
+            }}
+          />
+
+          {steps.map((step, idx) => {
+            const isActive = idx <= currentIdx;
+            const isCurrent = idx === currentIdx;
+            return (
+              <div
+                key={step.id}
+                id={`step-${deal.inquiry_id}-${step.id}`}
+                className="flex flex-col items-center w-[80px] flex-shrink-0"
+              >
+                {/* Circle Container (exactly 16px high for 8px circle center) */}
+                <div className="h-4 flex items-center justify-center">
+                  <div
+                    className={`w-3.5 h-3.5 rounded-full border-2 transition-all duration-300 flex items-center justify-center bg-white dark:bg-[#1e2028] z-10
+                      ${
+                        isActive
+                          ? "border-purple-500 shadow-md shadow-purple-500/10"
+                          : "border-gray-300 dark:border-gray-600"
+                      }
+                    `}
+                  >
+                    {isActive && (
+                      <div 
+                        className={`w-1.5 h-1.5 rounded-full bg-purple-500
+                          ${isCurrent ? "animate-pulse" : ""}
+                        `} 
+                      />
+                    )}
+                  </div>
+                </div>
+
+                {/* Stepper Label */}
+                <span
+                  className={`text-[8px] mt-2 font-bold uppercase tracking-wider text-center max-w-[76px] leading-tight select-none transition-colors duration-300
+                    ${
+                      isCurrent
+                        ? "text-purple-400 font-extrabold"
+                        : isActive
+                          ? "text-purple-500/80"
+                          : "text-gray-600 dark:text-gray-500"
+                    }
+                  `}
+                >
+                  {step.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </div>
     );
   };
@@ -91,7 +195,6 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
   const currentDealWithLocalQuote = deal
     ? { ...deal, my_quote: displayQuote }
     : null;
-
 
   return (
     <>
@@ -139,7 +242,7 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
               <div className="text-gray-400 text-[14px] mt-1 tracking-wide">
                 {deal.buyer_email}
               </div>
-              
+
               {/* Workflow Visualization */}
               {getWorkflowSteps(deal.status)}
 
@@ -163,21 +266,41 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
                   Products Requested ({deal.products.length})
                 </div>
                 {deal.products.length > 4 && (
-                  <button 
+                  <button
                     onClick={() => setIsExpanded(!isExpanded)}
                     className="text-[10px] font-bold text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1"
                   >
                     {isExpanded ? (
                       <>
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" />
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={3}
+                            d="M5 15l7-7 7 7"
+                          />
                         </svg>
                         Show Less
                       </>
                     ) : (
                       <>
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={3}
+                            d="M19 9l-7 7-7-7"
+                          />
                         </svg>
                         Show All
                       </>
@@ -204,7 +327,10 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-[#2a2d36]/50">
-                    {(isExpanded ? deal.products : deal.products.slice(0, 4)).map((p, i) => (
+                    {(isExpanded
+                      ? deal.products
+                      : deal.products.slice(0, 4)
+                    ).map((p, i) => (
                       <tr
                         key={i}
                         className="hover:bg-gray-50 dark:hover:bg-white/[0.03] bg-transparent dark:bg-white/[0.01]"
@@ -414,6 +540,7 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
             <div className="h-[1px] bg-gray-200 dark:bg-[#2a2d36] w-full flex-shrink-0" />
 
             {/* SECTION 5: Email Preview */}
+            {/*
             <div className="p-6 mb-8 flex-shrink-0">
               <div className="flex items-center gap-6 border-b border-gray-200 dark:border-[#2a2d36] mb-5">
                 <button
@@ -488,6 +615,7 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
                 </button>
               </div>
             </div>
+            */}
           </div>
         )}
       </div>

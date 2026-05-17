@@ -43,11 +43,13 @@ export default function Pagination({
   onPrev,
   onNext,
   itemLabel = "items",
+  onItemsPerPageChange,
 }) {
   // ── Derived display values ──────────────────────────────────────────────────
   // When there are no items, show "0" instead of negative numbers
-  const startShowing = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
-  const endShowing   = Math.min(currentPage * itemsPerPage, totalItems);
+  const startShowing =
+    totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+  const endShowing = Math.min(currentPage * itemsPerPage, totalItems);
 
   const isPrevDisabled = currentPage === 1 || totalItems === 0;
   const isNextDisabled = currentPage === totalPages || totalItems === 0;
@@ -64,23 +66,40 @@ export default function Pagination({
   ].join(" ");
 
   return (
-    <div className="flex items-center justify-between px-4 py-2 border-t border-gray-100 dark:border-[#2a2d33] bg-gray-50/50 dark:bg-[#0c0e12]/30">
+    <div className="flex items-center justify-between px-4 py-2 border-t border-gray-100 dark:border-[#2a2d33] bg-gray-50/50 dark:bg-[#0c0e12]/30 select-none">
+      {/* ── Left Side: Showing [Dropdown] ────────────────────────────────────────── */}
+      <div className="flex-1 flex items-center justify-start gap-1.5">
+        <>
+          <span className="text-xs text-gray-500 font-medium">Showing</span>
+          <select
+            value={itemsPerPage}
+            onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
+            className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-2 py-0.5 text-xs text-gray-700 dark:text-gray-300 outline-none focus:border-purple-500 cursor-pointer shadow-sm font-semibold transition-colors"
+          >
+            <option value={30}>30</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </>
+      </div>
 
-      {/* ── Showing X–Y of N label ─────────────────────────────────────────── */}
-      <span className="text-xs text-gray-500 font-medium">
-        Showing{" "}
-        <span className="text-gray-700 dark:text-gray-300 mx-0.5">
-          {startShowing}–{endShowing}
-        </span>{" "}
-        of{" "}
-        <span className="text-gray-700 dark:text-gray-300 mx-0.5">
-          {totalItems}
-        </span>{" "}
-        {itemLabel}
-      </span>
+      {/* ── Center: Showing X to Y out of Z records ──────────────────────────────── */}
+      <div className="flex-1 flex justify-center">
+        <span className="text-xs text-gray-500 font-medium text-center">
+          Showing{" "}
+          <span className="text-gray-700 dark:text-gray-300 font-semibold mx-0.5">
+            {startShowing} to {endShowing}
+          </span>{" "}
+          out of{" "}
+          <span className="text-gray-700 dark:text-gray-300 font-semibold mx-0.5">
+            {totalItems}
+          </span>{" "}
+          {itemLabel}
+        </span>
+      </div>
 
-      {/* ── Navigation buttons ─────────────────────────────────────────────── */}
-      <div className="flex gap-2">
+      {/* ── Right Side: Navigation Buttons ───────────────────────────────────────── */}
+      <div className="flex-1 flex justify-end gap-2">
         <button
           disabled={isPrevDisabled}
           onClick={onPrev}

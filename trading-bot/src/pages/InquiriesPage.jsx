@@ -71,7 +71,7 @@ export default function InquiriesPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState(location.state?.filter ?? "All");
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 8;
+  const [itemsPerPage, setItemsPerPage] = useState(30);
 
   // Data loading
   const [loading, setLoading] = useState(true);
@@ -133,6 +133,8 @@ export default function InquiriesPage() {
         const hit =
           inq.buyer_name.toLowerCase().includes(q) ||
           inq.buyer_email.toLowerCase().includes(q) ||
+          (inq.vessel_name && inq.vessel_name.toLowerCase().includes(q)) ||
+          (inq.vessel_ref && inq.vessel_ref.toLowerCase().includes(q)) ||
           inq.products.some((p) => p.product_name.toLowerCase().includes(q));
         if (!hit) return false;
       }
@@ -143,11 +145,11 @@ export default function InquiriesPage() {
     return result.sort((a, b) => new Date(b.date_received) - new Date(a.date_received));
   }, [inquiriesData, search, filter]);
 
-  const totalPages = Math.ceil(filteredInquiries.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredInquiries.length / itemsPerPage);
   const currentItems = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredInquiries.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredInquiries, currentPage]);
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredInquiries.slice(start, start + itemsPerPage);
+  }, [filteredInquiries, currentPage, itemsPerPage]);
 
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) setCurrentPage(1);
@@ -462,7 +464,7 @@ export default function InquiriesPage() {
       <PageToolbar
         search={search}
         onSearchChange={(val) => { setSearch(val); setCurrentPage(1); }}
-        searchPlaceholder="Search by buyer or product..."
+        searchPlaceholder="Search by buyer, vessel, ref or product..."
         filterValue={[
           "QUOTE_SENT_ONLY", "PENDING_REPLIES",
         ].includes(filter) ? "All" : filter}
@@ -500,10 +502,14 @@ export default function InquiriesPage() {
           currentPage={currentPage}
           totalPages={totalPages}
           totalItems={filteredInquiries.length}
-          itemsPerPage={ITEMS_PER_PAGE}
+          itemsPerPage={itemsPerPage}
           onPrev={() => setCurrentPage((p) => p - 1)}
           onNext={() => setCurrentPage((p) => p + 1)}
-          itemLabel="inquiries"
+          itemLabel="records"
+          onItemsPerPageChange={(val) => {
+            setItemsPerPage(val);
+            setCurrentPage(1);
+          }}
         />
       </div>
 

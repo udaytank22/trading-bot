@@ -39,9 +39,9 @@ import React from "react";
 const STATUS_STYLES = {
   // ── Inquiry statuses ──────────────────────────────────────────────────────
   PENDING:
-    "bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/25",
+    "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20",
   RFQ_SENT:
-    "bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/25",
+    "bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-500/20",
   RFQ_RECEIVED:
     "bg-purple-50 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-500/25",
   CLIENT_QUOTING:
@@ -55,7 +55,7 @@ const STATUS_STYLES = {
   CLIENT_FINAL_APPROVAL:
     "bg-violet-50 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400 border-violet-200 dark:border-violet-500/25",
   QUOTE_SENT:
-    "bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/25",
+    "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20",
   CONFIRMED:
     "bg-teal-50 dark:bg-teal-500/20 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-500/25",
   CLOSED:
@@ -89,14 +89,15 @@ const STATUS_STYLES = {
  * If a status isn't listed here, the raw value is displayed with "_" replaced by " ".
  */
 const STATUS_LABELS = {
-  RFQ_SENT:     "RFQ Sent",
+  PENDING:      "Datasheet",
+  RFQ_SENT:     "RFQ sent",
+  QUOTE_SENT:   "Quoted",
   RFQ_RECEIVED: "RFQ Received",
   CLIENT_QUOTING: "Client Quoting",
   TL_REVIEW:    "TL Review",
   ADMIN_APPROVAL: "Admin Approval",
   EMPLOYEE_VERIFY: "Employee Verify",
   CLIENT_FINAL_APPROVAL: "Client Final Approval",
-  QUOTE_SENT:   "Quote Sent",
   IN_TRANSIT:   "In Transit",
 };
 

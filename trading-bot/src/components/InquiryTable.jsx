@@ -30,13 +30,27 @@ import {
 
 // ─── Column definitions ─────────────────────────────────────────────────────────
 const COLUMNS = [
-  { key: "inquiry_id",   label: "Inquiry ID" },
-  { key: "buyer",        label: "Buyer" },
-  { key: "products",     label: "Products" },
-  { key: "received",     label: "Received", hidden: "hidden lg:table-cell" },
-  { key: "status",       label: "Status" },
+  { key: "inquiry_id",   label: "Order Reference" },
+  { key: "status_placeholder", label: "Status", hidden: "hidden md:table-cell" },
+  { key: "buyer",        label: "Customer" },
+  { key: "vessel",       label: "Vessel" },
+  { key: "received",     label: "Inquiry Date" },
+  { key: "vessel_ref",   label: "Vessel Ref" },
+  { key: "status",       label: "Enquiry Status" },
   { key: "actions",      label: "Actions",  className: "text-right" },
 ];
+
+// ─── Color Classes Map (Static classes to guarantee Tailwind compilation) ───────
+const COLOR_CLASSES = {
+  amber: "border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10",
+  blue: "border-blue-500/40 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10",
+  cyan: "border-cyan-500/40 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10",
+  rose: "border-rose-500/40 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10",
+  orange: "border-orange-500/40 text-orange-600 dark:text-orange-400 hover:bg-orange-500/10",
+  sky: "border-sky-500/40 text-sky-600 dark:text-sky-400 hover:bg-sky-500/10",
+  violet: "border-violet-500/40 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10",
+  emerald: "border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10",
+};
 
 // ─── Helper: pick the right action button label/color based on status ───────────
 /**
@@ -107,11 +121,13 @@ function getActionBtn(inq, onAction, currentUser) {
   const isAllowed = isAdmin || cfg.allowedRoles.includes(role);
   if (!isAllowed) return null;
 
+  const btnClass = COLOR_CLASSES[cfg.color] || "";
+
   return (
     <Button
       variant="secondary"
       size="sm"
-      className={`border-${cfg.color}-500/40 text-${cfg.color}-400 hover:bg-${cfg.color}-500/10`}
+      className={btnClass}
       onClick={() => onAction(inq, status)}
     >
       {cfg.label}
@@ -138,63 +154,79 @@ const InquiryTable = ({ items, onView, onAction, currentUser }) => {
       key={inq.inquiry_id}
       className={`${ROW_HOVER_CLS} ${rowStripeClass(idx)}`}
     >
-      {/* ── Inquiry ID (monospace, muted) ──────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4 font-mono text-gray-500 dark:text-gray-400 text-[12px] break-words">
-        <Tooltip content={inq.inquiry_id}>
-          <span className="cursor-default">{inq.inquiry_id}</span>
+      {/* ── Order Reference ──────────────────────────────── */}
+      <td className="px-3 md:px-6 py-4 font-mono text-gray-900 dark:text-white text-[13px] font-bold break-words">
+        <Tooltip content={inq.products?.map((p) => `${p.product_name} (${p.quantity} ${p.unit})`).join(", ")}>
+          <div className="flex flex-col">
+            <span className="cursor-pointer hover:text-purple-400 transition-colors" onClick={() => onView(inq)}>{inq.inquiry_id}</span>
+            {inq.products && inq.products.length > 0 && (
+              <span className="text-gray-500 text-[11px] font-normal font-sans">
+                {inq.products[0].product_name}
+                {inq.products.length > 1 && ` (+${inq.products.length - 1} more)`}
+              </span>
+            )}
+          </div>
         </Tooltip>
       </td>
 
-      {/* ── Buyer name + email stacked ─────────────────────────────────── */}
+      {/* ── Status placeholder (empty column matching Odoo screenshot) ───── */}
+      <td className="px-3 md:px-6 py-4 hidden md:table-cell">
+        <span className="text-gray-400 dark:text-gray-600">—</span>
+      </td>
+
+      {/* ── Customer ─────────────────────────────────── */}
       <td className="px-3 md:px-6 py-4">
         <div className="flex flex-col">
-          <Tooltip content={inq.buyer_name}>
+          <Tooltip content={inq.buyer_email}>
             <span className="text-gray-900 dark:text-white font-bold text-sm cursor-default">
               {inq.buyer_name}
             </span>
           </Tooltip>
-          <Tooltip content={inq.buyer_email}>
-            <span className="text-gray-500 text-[11px] break-all cursor-default">
-              {inq.buyer_email}
-            </span>
-          </Tooltip>
+          <span className="text-gray-500 text-[11px] cursor-default">
+            {inq.buyer_email}
+          </span>
         </div>
       </td>
 
-      {/* ── First product + "+N more" badge ───────────────────────────── */}
+      {/* ── Vessel ────────────────────────────────────── */}
       <td className="px-3 md:px-6 py-4">
-        <div className="flex flex-col gap-1">
-          <Tooltip content={inq.products.map((p) => p.product_name).join(", ")}>
-            <span className="text-gray-600 dark:text-gray-300 text-sm cursor-default">
-              {inq.products[0]?.product_name}
-            </span>
-          </Tooltip>
-          {inq.products.length > 1 && (
-            <Tooltip content={inq.products.map((p) => p.product_name).join(", ")}>
-              <span className="inline-block w-fit px-2 py-[2px] bg-gray-100 dark:bg-gray-700/60 text-gray-600 dark:text-gray-300 text-[10px] font-bold rounded-lg cursor-default border border-gray-200 dark:border-none">
-                +{inq.products.length - 1} more
-              </span>
-            </Tooltip>
-          )}
-        </div>
+        <span className="text-gray-900 dark:text-white font-semibold text-sm cursor-default">
+          {inq.vessel_name || "—"}
+        </span>
       </td>
 
-      {/* ── Date received (hidden on small screens) ─────────────────────── */}
-      <td className="px-3 md:px-6 py-4 hidden lg:table-cell">
+      {/* ── Inquiry Date ──────────────────────────────── */}
+      <td className="px-3 md:px-6 py-4">
         <Tooltip content={new Date(inq.date_received).toLocaleString("en-GB")}>
-          <DateCell isoString={inq.date_received} />
+          <span className="text-gray-600 dark:text-gray-300 text-sm cursor-default">
+            {new Date(inq.date_received).toLocaleString("en-GB", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+              hour12: false
+            }).replace(/,/g, "")}
+          </span>
         </Tooltip>
       </td>
 
-      {/* ── Status badge (single source from StatusBadge) ──────────────── */}
+      {/* ── Vessel Ref ────────────────────────────────── */}
+      <td className="px-3 md:px-6 py-4">
+        <span className="text-gray-700 dark:text-gray-400 text-sm cursor-default font-mono">
+          {inq.vessel_ref || "—"}
+        </span>
+      </td>
+
+      {/* ── Enquiry Status ────────────────────────────── */}
       <td className="px-3 md:px-6 py-4">
         <StatusBadge status={inq.status} />
       </td>
 
-      {/* ── Actions: View always + dynamic action based on status ──────── */}
-      <td className="px-3 md:px-6 py-4">
-        <div className="flex flex-col md:flex-row items-end justify-end gap-2">
-          {/* View button is always present */}
+      {/* ── Actions ───────────────────────────────────── */}
+      <td className="px-3 md:px-6 py-4 text-right">
+        <div className="flex items-center justify-end gap-2">
           <Button
             variant="secondary"
             size="sm"
@@ -203,8 +235,6 @@ const InquiryTable = ({ items, onView, onAction, currentUser }) => {
           >
             View
           </Button>
-
-          {/* Dynamic action changes based on inquiry status */}
           {getActionBtn(inq, onAction, currentUser)}
         </div>
       </td>
