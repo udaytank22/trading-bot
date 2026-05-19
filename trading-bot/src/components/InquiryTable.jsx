@@ -30,12 +30,13 @@ import {
 
 // ─── Column definitions ─────────────────────────────────────────────────────────
 const COLUMNS = [
+  { key: "sr_no", label: "#", className: "w-10 text-center" },
   { key: "inquiry_id",   label: "Order Reference" },
-  { key: "status_placeholder", label: "Status", hidden: "hidden md:table-cell" },
+  { key: "status_placeholder", label: "Status", hidden: "hidden xl:table-cell" },
   { key: "buyer",        label: "Customer" },
-  { key: "vessel",       label: "Vessel" },
-  { key: "received",     label: "Inquiry Date" },
-  { key: "vessel_ref",   label: "Vessel Ref" },
+  { key: "vessel",       label: "Vessel", hidden: "hidden md:table-cell" },
+  { key: "received",     label: "Inquiry Date", hidden: "hidden lg:table-cell" },
+  { key: "vessel_ref",   label: "Vessel Ref", hidden: "hidden xl:table-cell" },
   { key: "status",       label: "Enquiry Status" },
   { key: "actions",      label: "Actions",  className: "text-right" },
 ];
@@ -154,8 +155,11 @@ const InquiryTable = ({ items, onView, onAction, currentUser }) => {
       key={inq.inquiry_id}
       className={`${ROW_HOVER_CLS} ${rowStripeClass(idx)}`}
     >
+      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4 text-center text-gray-500 text-sm font-medium">
+        {idx + 1}
+      </td>
       {/* ── Order Reference ──────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4 font-mono text-gray-900 dark:text-white text-[13px] font-bold break-words">
+      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4 font-mono text-gray-900 dark:text-white text-[12px] md:text-[13px] font-bold break-words">
         <Tooltip content={inq.products?.map((p) => `${p.product_name} (${p.quantity} ${p.unit})`).join(", ")}>
           <div className="flex flex-col">
             <span className="cursor-pointer hover:text-purple-400 transition-colors" onClick={() => onView(inq)}>{inq.inquiry_id}</span>
@@ -170,33 +174,33 @@ const InquiryTable = ({ items, onView, onAction, currentUser }) => {
       </td>
 
       {/* ── Status placeholder (empty column matching Odoo screenshot) ───── */}
-      <td className="px-3 md:px-6 py-4 hidden md:table-cell">
+      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4 hidden xl:table-cell">
         <span className="text-gray-400 dark:text-gray-600">—</span>
       </td>
 
       {/* ── Customer ─────────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4">
+      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4">
         <div className="flex flex-col">
           <Tooltip content={inq.buyer_email}>
             <span className="text-gray-900 dark:text-white font-bold text-sm cursor-default">
               {inq.buyer_name}
             </span>
           </Tooltip>
-          <span className="text-gray-500 text-[11px] cursor-default">
+          <span className="text-gray-500 text-[11px] cursor-default break-all">
             {inq.buyer_email}
           </span>
         </div>
       </td>
 
       {/* ── Vessel ────────────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4">
+      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4 hidden md:table-cell">
         <span className="text-gray-900 dark:text-white font-semibold text-sm cursor-default">
           {inq.vessel_name || "—"}
         </span>
       </td>
 
       {/* ── Inquiry Date ──────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4">
+      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4 hidden lg:table-cell">
         <Tooltip content={new Date(inq.date_received).toLocaleString("en-GB")}>
           <span className="text-gray-600 dark:text-gray-300 text-sm cursor-default">
             {new Date(inq.date_received).toLocaleString("en-GB", {
@@ -213,20 +217,20 @@ const InquiryTable = ({ items, onView, onAction, currentUser }) => {
       </td>
 
       {/* ── Vessel Ref ────────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4">
+      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4 hidden xl:table-cell">
         <span className="text-gray-700 dark:text-gray-400 text-sm cursor-default font-mono">
           {inq.vessel_ref || "—"}
         </span>
       </td>
 
       {/* ── Enquiry Status ────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4">
+      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4">
         <StatusBadge status={inq.status} />
       </td>
 
       {/* ── Actions ───────────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4 text-right">
-        <div className="flex items-center justify-end gap-2">
+      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4 text-right">
+        <div className="flex items-center justify-end gap-1 md:gap-2">
           <Button
             variant="secondary"
             size="sm"

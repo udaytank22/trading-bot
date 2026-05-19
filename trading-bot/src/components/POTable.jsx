@@ -24,11 +24,12 @@ import {
 
 // ─── Column definitions ─────────────────────────────────────────────────────────
 const COLUMNS = [
+  { key: "sr_no", label: "#", className: "w-10 text-center" },
   { key: "po_id",    label: "PO ID" },
   { key: "customer", label: "Customer" },
-  { key: "vessel",   label: "Vessel" },
+  { key: "vessel",   label: "Vessel",  hidden: "hidden lg:table-cell" },
   { key: "products", label: "Products" },
-  { key: "date",     label: "Date",    hidden: "hidden lg:table-cell" },
+  { key: "date",     label: "Date",    hidden: "hidden xl:table-cell" },
   { key: "status",   label: "Status" },
   { key: "actions",  label: "Actions", className: "text-right" },
 ];
@@ -47,6 +48,7 @@ const POTable = ({ items, onView, onOrder }) => {
       key={po.po_id}
       className={`${ROW_HOVER_CLS} ${rowStripeClass(idx)}`}
     >
+      <td className="px-3 md:px-6 py-4 text-center text-gray-500 text-sm font-medium">{idx + 1}</td>
       {/* ── PO ID (monospace) ─────────────────────────────────────────── */}
       <td className="px-3 md:px-6 py-4 font-mono text-gray-400 text-[12px] break-words">
         <Tooltip content={po.po_id}>
@@ -64,7 +66,7 @@ const POTable = ({ items, onView, onOrder }) => {
       </td>
 
       {/* ── Vessel name ───────────────────────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4">
+      <td className="px-3 md:px-6 py-4 hidden lg:table-cell">
         <Tooltip content={po.vessel}>
           <span className="text-gray-600 dark:text-gray-300 text-sm font-medium cursor-default">
             {po.vessel}
@@ -91,7 +93,7 @@ const POTable = ({ items, onView, onOrder }) => {
       </td>
 
       {/* ── Date (hidden on small screens) ────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4 hidden lg:table-cell">
+      <td className="px-3 md:px-6 py-4 hidden xl:table-cell">
         <Tooltip content={new Date(po.date).toLocaleString("en-GB")}>
           <DateCell isoString={po.date} />
         </Tooltip>

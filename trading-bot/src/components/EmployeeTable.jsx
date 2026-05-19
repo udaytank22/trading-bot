@@ -25,6 +25,7 @@ import {
 
 // ─── Column definitions ─────────────────────────────────────────────────────────
 const COLUMNS = [
+  { key: "sr_no", label: "#", className: "w-10 text-center" },
   { key: "employee",    label: "Employee" },
   { key: "department",  label: "Department" },
   { key: "role",        label: "Role" },
@@ -84,6 +85,7 @@ export default function EmployeeTable({ employees, onEdit, onDelete, onView }) {
       key={emp.id}
       className={`${ROW_HOVER_CLS} ${idx % 2 !== 0 ? "bg-gray-100 dark:bg-[#242830]/20 dark:bg-[#242830]/20" : ""}`}
     >
+      <td className="px-3 md:px-6 py-4 text-center text-gray-500 text-sm font-medium">{idx + 1}</td>
       {/* ── Avatar + Name + Email stacked ─────────────────────────────── */}
       <td className="px-3 md:px-6 py-4">
         <div className="flex items-center gap-3">

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Select } from "./ui";
 import { parseExcelFile } from "../utils/excelUtils";
 import Swal from "sweetalert2";
 
@@ -238,39 +239,25 @@ export default function AddEmployeeModal({
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
                   Department
                 </label>
-                <select
-                  name="department"
+                <Select
+  variant="form"
                   value={formData.department}
-                  onChange={handleChange}
-                  required
-                  className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none cursor-pointer"
-                >
-                  <option value="">Select Dept</option>
-                  {DEPARTMENTS.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => handleChange({ target: { name: "department", value: val } })}
+                  options={DEPARTMENTS.map((d) => ({ value: d, label: d }))}
+                  className="w-full"
+                />
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
                   Role
                 </label>
-                <select
-                  name="role"
+                <Select
+  variant="form"
                   value={formData.role}
-                  onChange={handleChange}
-                  required
-                  className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none cursor-pointer"
-                >
-                  <option value="">Select Role</option>
-                  {ROLES.map((r) => (
-                    <option key={r} value={r}>
-                      {r}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => handleChange({ target: { name: "role", value: val } })}
+                  options={ROLES.map((r) => ({ value: r, label: r }))}
+                  className="w-full"
+                />
               </div>
             </div>
 
@@ -297,7 +284,7 @@ export default function AddEmployeeModal({
                   name="joiningDate"
                   value={formData.joiningDate}
                   onChange={handleChange}
-                  className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none [color-scheme:dark]"
+                  className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none dark:[color-scheme:dark]"
                 />
               </div>
             </div>
@@ -324,7 +311,7 @@ export default function AddEmployeeModal({
                       <div className="absolute w-2 h-2 bg-purple-500 rounded-full left-1.5 opacity-0 peer-checked:opacity-100 transition-opacity" />
                     </div>
                     <span
-                      className={`text-sm font-medium ${formData.status === s ? "text-white" : "text-gray-500"} transition-colors`}
+                      className={`text-sm font-medium ${formData.status === s ? "text-purple-700 dark:text-white" : "text-gray-500"} transition-colors`}
                     >
                       {s}
                     </span>

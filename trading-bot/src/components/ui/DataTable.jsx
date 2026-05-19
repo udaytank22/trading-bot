@@ -82,7 +82,7 @@ export default function DataTable({
       <div className={`w-full overflow-x-auto overflow-y-auto ${maxHeight} custom-scrollbar`}>
 
         {/* Main table — auto layout so columns size to content */}
-        <table className="w-full text-left text-sm table-auto border-separate border-spacing-0">
+        <table className="w-full text-left text-sm table-auto border-collapse">
 
           {/* ── HEADER ─────────────────────────────────────────────────────── */}
           <thead className="sticky top-0 z-20 transition-all duration-300">
@@ -91,9 +91,9 @@ export default function DataTable({
                 <th
                   key={col.key}
                   className={[
-                    "px-6 py-2.5",
+                    "px-2 sm:px-3 md:px-4 py-2 sm:py-2.5",
                     "text-gray-400 dark:text-gray-500",
-                    "text-[10px] font-black uppercase tracking-[0.2em]",
+                    "text-[10px] font-black uppercase tracking-wider",
                     "border-b border-gray-100 dark:border-white/5",
                     col.hidden ?? "",
                     col.className ?? "",

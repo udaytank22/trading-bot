@@ -38,6 +38,7 @@
 import React from "react";
 import SearchBar from "./SearchBar";
 import Button from "./Button";
+import Select from "./Select";
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 // Inline SVG for the "+" add icon used in the primary button
@@ -73,31 +74,12 @@ function ChevronIcon() {
  */
 function FilterDropdown({ value, onChange, options = [] }) {
   return (
-    <div className="relative">
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={[
-          "appearance-none",
-          "bg-white dark:bg-[#1a1d23]",
-          "border border-gray-200 dark:border-[#2a2d33]",
-          "rounded-lg h-8 pl-3 pr-8",
-          "text-xs text-gray-700 dark:text-gray-300 font-medium",
-          "focus:outline-none focus:border-purple-500",
-          "cursor-pointer shadow-sm",
-          "hover:border-gray-300 dark:hover:border-gray-600",
-          "transition-colors",
-        ].join(" ")}
-      >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-      {/* Custom arrow icon replaces browser default */}
-      <ChevronIcon />
-    </div>
+    <Select 
+      value={value} 
+      onChange={onChange} 
+      options={options} 
+      className="min-w-[140px]" 
+    />
   );
 }
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Select } from "./ui";
 import { parseExcelFile } from "../utils/excelUtils";
 import Swal from "sweetalert2";
 
@@ -264,20 +265,16 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
                   Customer
                 </label>
-                <select
-                  name="customer"
+                <Select
+  variant="form"
                   value={formData.customer}
-                  onChange={handleChange}
-                  required
-                  className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors cursor-pointer"
-                >
-                  <option value="">Select Customer</option>
-                  {CUSTOMERS.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => handleChange({ target: { name: "customer", value: val } })}
+                  options={[
+                    { value: "", label: "Select Customer" },
+                    ...CUSTOMERS.map((c) => ({ value: c, label: c }))
+                  ]}
+                  className="w-full"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -285,19 +282,16 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
                     Vessel
                   </label>
-                  <select
-                    name="vessel"
+                  <Select
+  variant="form"
                     value={formData.vessel}
-                    onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors cursor-pointer"
-                  >
-                    <option value="">Select Vessel</option>
-                    {VESSELS.map((v) => (
-                      <option key={v} value={v}>
-                        {v}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => handleChange({ target: { name: "vessel", value: val } })}
+                    options={[
+                      { value: "", label: "Select Vessel" },
+                      ...VESSELS.map((v) => ({ value: v, label: v }))
+                    ]}
+                    className="w-full"
+                  />
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
@@ -308,7 +302,7 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
                     name="imoNumber"
                     value={formData.imoNumber}
                     onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors"
+                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors"
                   />
                 </div>
               </div>
@@ -318,16 +312,17 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
                     Currency
                   </label>
-                  <select
-                    name="currency"
+                  <Select
+  variant="form"
                     value={formData.currency}
-                    onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors"
-                  >
-                    <option value="USD">USD - US Dollar</option>
-                    <option value="EUR">EUR - Euro</option>
-                    <option value="AED">AED - Dirham</option>
-                  </select>
+                    onChange={(val) => handleChange({ target: { name: "currency", value: val } })}
+                    options={[
+                      { value: "USD", label: "USD - US Dollar" },
+                      { value: "EUR", label: "EUR - Euro" },
+                      { value: "AED", label: "AED - Dirham" }
+                    ]}
+                    className="w-full"
+                  />
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
@@ -338,7 +333,7 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
                     name="validityDate"
                     value={formData.validityDate}
                     onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors [color-scheme:dark]"
+                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors dark:[color-scheme:dark]"
                   />
                 </div>
               </div>
@@ -348,16 +343,17 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
                     Request Type
                   </label>
-                  <select
-                    name="requestType"
+                  <Select
+  variant="form"
                     value={formData.requestType}
-                    onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors"
-                  >
-                    <option value="Normal">Normal</option>
-                    <option value="Urgent">Urgent</option>
-                    <option value="Quote Only">Quote Only</option>
-                  </select>
+                    onChange={(val) => handleChange({ target: { name: "requestType", value: val } })}
+                    options={[
+                      { value: "Normal", label: "Normal" },
+                      { value: "Urgent", label: "Urgent" },
+                      { value: "Quote Only", label: "Quote Only" }
+                    ]}
+                    className="w-full"
+                  />
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
@@ -368,7 +364,7 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
                     name="salesperson"
                     value={formData.salesperson}
                     onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors"
+                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors"
                   />
                 </div>
               </div>
@@ -377,7 +373,7 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
             {/* Product Lines */}
             <div className="space-y-4 pt-6">
               <div className="flex items-center justify-between border-b border-gray-200 dark:border-[#2a2d33] pb-2">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
                   Order Lines
                   <span className="bg-purple-600/20 text-purple-400 text-[10px] px-2 py-0.5 rounded-full uppercase">
                     {formData.products.length} Items
@@ -385,7 +381,7 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
                 </h3>
               </div>
 
-              <div className="overflow-hidden border border-gray-200 dark:border-[#2a2d33] rounded-xl bg-gray-100 dark:bg-[#0c0e12]/30">
+              <div className="overflow-visible border border-gray-200 dark:border-[#2a2d33] rounded-xl bg-gray-100 dark:bg-[#0c0e12]/30">
                 <table className="w-full text-left text-sm border-collapse">
                   <thead>
                     <tr className="bg-gray-100 dark:bg-[#0c0e12]/50 text-gray-400 text-[11px] uppercase tracking-wider border-b border-gray-200 dark:border-[#2a2d33]">
@@ -406,30 +402,16 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
                         className="group hover:bg-white/[0.02] transition-colors"
                       >
                         <td className="px-4 py-3">
-                          <select
+                          <Select
+  variant="form"
                             value={product.description}
-                            onChange={(e) =>
-                              handleProductChange(
-                                index,
-                                "description",
-                                e.target.value,
-                              )
-                            }
-                            className="w-full bg-transparent border-none focus:ring-0 text-white cursor-pointer text-sm p-0 outline-none"
-                          >
-                            <option value="" className="bg-gray-50 dark:bg-[#1a1d23]">
-                              Select Product
-                            </option>
-                            {PRODUCTS.map((p) => (
-                              <option
-                                key={p}
-                                value={p}
-                                className="bg-gray-50 dark:bg-[#1a1d23]"
-                              >
-                                {p}
-                              </option>
-                            ))}
-                          </select>
+                            onChange={(val) => handleProductChange(index, "description", val)}
+                            options={[
+                              { value: "", label: "Select Product" },
+                              ...PRODUCTS.map((p) => ({ value: p, label: p }))
+                            ]}
+                            className="w-full"
+                          />
                         </td>
                         <td className="px-4 py-3">
                           <input
@@ -442,22 +424,22 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
                                 e.target.value,
                               )
                             }
-                            className="w-full bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded px-2 py-1 text-center text-white text-sm focus:border-purple-500 outline-none"
+                            className="w-full bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded px-2 py-1 text-center text-gray-900 dark:text-white text-sm focus:border-purple-500 outline-none"
                           />
                         </td>
                         <td className="px-4 py-3">
-                          <select
+                          <Select
+  variant="form"
                             value={product.unit}
-                            onChange={(e) =>
-                              handleProductChange(index, "unit", e.target.value)
-                            }
-                            className="w-full bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded px-2 py-1 text-white text-sm focus:border-purple-500 outline-none"
-                          >
-                            <option value="PCS">PCS</option>
-                            <option value="KGS">KGS</option>
-                            <option value="MTR">MTR</option>
-                            <option value="SET">SET</option>
-                          </select>
+                            onChange={(val) => handleProductChange(index, "unit", val)}
+                            options={[
+                              { value: "PCS", label: "PCS" },
+                              { value: "KGS", label: "KGS" },
+                              { value: "MTR", label: "MTR" },
+                              { value: "SET", label: "SET" }
+                            ]}
+                            className="w-full"
+                          />
                         </td>
                         <td className="px-4 py-3 text-right">
                           <button

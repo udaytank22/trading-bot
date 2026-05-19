@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Select } from "../components/ui";
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -149,17 +150,19 @@ const AddMeetingModal = ({
               <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">
                 Priority
               </label>
-              <select
+              <Select
+  variant="form"
                 value={formData.priority}
-                onChange={(e) =>
-                  setFormData({ ...formData, priority: e.target.value })
+                onChange={(val) =>
+                  setFormData({ ...formData, priority: val })
                 }
-                className="w-full px-4 py-4 bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 rounded-2xl text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500/50 transition-all outline-none appearance-none cursor-pointer"
-              >
-                <option value="High">High Priority</option>
-                <option value="Medium">Medium Priority</option>
-                <option value="Low">Low Priority</option>
-              </select>
+                options={[
+                  { value: "High", label: "High Priority" },
+                  { value: "Medium", label: "Medium Priority" },
+                  { value: "Low", label: "Low Priority" },
+                ]}
+                className="w-full"
+              />
             </div>
           </div>
 

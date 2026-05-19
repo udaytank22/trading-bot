@@ -1,0 +1,117 @@
+import React, { useState, useRef, useEffect } from "react";
+import { ChevronDown } from "lucide-react";
+
+const VARIANT_STYLES = {
+  form: [
+    "bg-gray-100 dark:bg-[#0c0e12]",
+    "border-gray-200 dark:border-[#2a2d33]",
+    "rounded-lg px-4 py-2.5 text-sm",
+    "text-gray-900 dark:text-white",
+    "hover:bg-gray-200 dark:hover:bg-[#14171c]",
+  ].join(" "),
+  settings: [
+    "bg-white dark:bg-[#0f1117]",
+    "border-gray-200 dark:border-[#2a2d36]",
+    "rounded-lg h-[36px] px-3 text-[13px]",
+    "text-gray-900 dark:text-white",
+    "shadow-sm focus:ring-1 focus:ring-purple-500/50",
+    "hover:bg-gray-50 dark:hover:bg-[#14171c]",
+  ].join(" "),
+  toolbar: [
+    "bg-white dark:bg-[#1a1d23]",
+    "border-gray-200 dark:border-[#2a2d33]",
+    "rounded-lg px-3 py-1.5 h-8 text-xs",
+    "text-gray-900 dark:text-gray-100",
+    "font-medium",
+    "hover:bg-gray-50 dark:hover:bg-[#242830]",
+    "hover:border-gray-300 dark:hover:border-gray-600",
+    "shadow-sm",
+  ].join(" "),
+};
+
+export default function Select({
+  value,
+  onChange,
+  options = [],
+  className = "",
+  variant = "toolbar",
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedOption =
+    options.find((opt) => opt.value === value) ?? options[0];
+  const hasValue = value !== "" && value !== null && value !== undefined;
+  const isPlaceholder = !hasValue && selectedOption?.value === "";
+
+  const variantCls = VARIANT_STYLES[variant] ?? VARIANT_STYLES.toolbar;
+  const itemTextSize = variant === "form" || variant === "settings" ? "text-sm" : "text-xs";
+
+  const baseBtnCls =
+    "flex items-center justify-between w-full border focus:outline-none focus:border-purple-500 cursor-pointer transition-colors text-left";
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`${baseBtnCls} ${variantCls} ${className}`}
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+      >
+        <span
+          className={[
+            "truncate mr-2",
+            isPlaceholder
+              ? "text-gray-500 dark:text-gray-400"
+              : "text-gray-900 dark:text-white",
+          ].join(" ")}
+        >
+          {selectedOption?.label ?? value}
+        </span>
+        <ChevronDown
+          className={`w-3.5 h-3.5 shrink-0 text-gray-500 dark:text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {isOpen && (
+        <div
+          role="listbox"
+          className="absolute z-50 w-full min-w-[120px] mt-1 bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150 py-1"
+        >
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              role="option"
+              aria-selected={value === opt.value}
+              onClick={() => {
+                onChange(opt.value);
+                setIsOpen(false);
+              }}
+              className={[
+                "w-full text-left px-3 py-2 font-medium transition-colors",
+                itemTextSize,
+                value === opt.value
+                  ? "bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400"
+                  : "text-gray-900 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#242830]",
+              ].join(" ")}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

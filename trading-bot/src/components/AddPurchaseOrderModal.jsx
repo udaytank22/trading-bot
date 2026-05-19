@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Select } from "./ui";
 import { parseExcelFile } from "../utils/excelUtils";
 import Swal from "sweetalert2";
 
@@ -284,19 +285,16 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
                   Vendor
                 </label>
-                <select
-                  name="vendor"
+                <Select
+  variant="form"
                   value={formData.vendor}
-                  onChange={handleChange}
-                  className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none cursor-pointer hover:bg-[#14171c]"
-                >
-                  <option value="">Select Vendor</option>
-                  {CUSTOMERS.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => handleChange({ target: { name: "vendor", value: val } })}
+                  options={[
+                    { value: "", label: "Select Vendor" },
+                    ...CUSTOMERS.map((c) => ({ value: c, label: c }))
+                  ]}
+                  className="w-full"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -309,7 +307,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                     name="gstTreatment"
                     value={formData.gstTreatment}
                     onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all hover:bg-[#14171c]"
+                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:border-purple-500/50 transition-all hover:bg-gray-200 dark:hover:bg-[#14171c]"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -321,7 +319,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                     name="salesType"
                     value={formData.salesType}
                     onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all hover:bg-[#14171c]"
+                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:border-purple-500/50 transition-all hover:bg-gray-200 dark:hover:bg-[#14171c]"
                   />
                 </div>
               </div>
@@ -331,19 +329,16 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
                     Vessel
                   </label>
-                  <select
-                    name="vessel"
+                  <Select
+  variant="form"
                     value={formData.vessel}
-                    onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all cursor-pointer hover:bg-[#14171c]"
-                  >
-                    <option value="">Select Vessel</option>
-                    {VESSELS.map((v) => (
-                      <option key={v} value={v}>
-                        {v}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => handleChange({ target: { name: "vessel", value: val } })}
+                    options={[
+                      { value: "", label: "Select Vessel" },
+                      ...VESSELS.map((v) => ({ value: v, label: v }))
+                    ]}
+                    className="w-full"
+                  />
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
@@ -354,7 +349,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                     name="vesselRef"
                     value={formData.vesselRef}
                     onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all hover:bg-[#14171c]"
+                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:border-purple-500/50 transition-all hover:bg-gray-200 dark:hover:bg-[#14171c]"
                   />
                 </div>
               </div>
@@ -369,7 +364,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                     name="imoNumber"
                     value={formData.imoNumber}
                     onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all hover:bg-[#14171c]"
+                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:border-purple-500/50 transition-all hover:bg-gray-200 dark:hover:bg-[#14171c]"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -381,7 +376,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                     name="supplierTel"
                     value={formData.supplierTel}
                     onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all hover:bg-[#14171c]"
+                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:border-purple-500/50 transition-all hover:bg-gray-200 dark:hover:bg-[#14171c]"
                   />
                 </div>
               </div>
@@ -391,17 +386,18 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
                     Payment Terms
                   </label>
-                  <select
-                    name="paymentTerms"
+                  <Select
+  variant="form"
                     value={formData.paymentTerms}
-                    onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all cursor-pointer hover:bg-[#14171c]"
-                  >
-                    <option value="Immediate">Immediate</option>
-                    <option value="15 Days">15 Days</option>
-                    <option value="30 Days">30 Days</option>
-                    <option value="45 Days">45 Days</option>
-                  </select>
+                    onChange={(val) => handleChange({ target: { name: "paymentTerms", value: val } })}
+                    options={[
+                      { value: "Immediate", label: "Immediate" },
+                      { value: "15 Days", label: "15 Days" },
+                      { value: "30 Days", label: "30 Days" },
+                      { value: "45 Days", label: "45 Days" }
+                    ]}
+                    className="w-full"
+                  />
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
@@ -412,7 +408,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                     name="deliveryTime"
                     value={formData.deliveryTime}
                     onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all [color-scheme:dark] cursor-pointer hover:bg-[#14171c]"
+                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:border-purple-500/50 transition-all dark:[color-scheme:dark] cursor-pointer hover:bg-gray-200 dark:hover:bg-[#14171c]"
                   />
                 </div>
               </div>
@@ -427,7 +423,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                     name="orderDeadline"
                     value={formData.orderDeadline}
                     onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all [color-scheme:dark] cursor-pointer hover:bg-[#14171c]"
+                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:border-purple-500/50 transition-all dark:[color-scheme:dark] cursor-pointer hover:bg-gray-200 dark:hover:bg-[#14171c]"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -439,7 +435,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                     name="expectedArrival"
                     value={formData.expectedArrival}
                     onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-purple-500/50 transition-all [color-scheme:dark] cursor-pointer hover:bg-[#14171c]"
+                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:border-purple-500/50 transition-all dark:[color-scheme:dark] cursor-pointer hover:bg-gray-200 dark:hover:bg-[#14171c]"
                   />
                 </div>
               </div>
@@ -448,7 +444,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
             {/* Product Lines Section */}
             <div className="space-y-4 pt-6">
               <div className="flex items-center justify-between border-b border-gray-200 dark:border-[#2a2d33] pb-2">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
                   PO Items
                   <span className="bg-purple-600/20 text-purple-400 text-[10px] px-2 py-0.5 rounded-full uppercase">
                     {formData.products.length} Items
@@ -456,7 +452,7 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                 </h3>
               </div>
 
-              <div className="overflow-hidden border border-gray-200 dark:border-[#2a2d33] rounded-xl bg-gray-100 dark:bg-[#0c0e12]/30">
+              <div className="overflow-visible border border-gray-200 dark:border-[#2a2d33] rounded-xl bg-gray-100 dark:bg-[#0c0e12]/30">
                 <table className="w-full text-left text-sm border-collapse">
                   <thead>
                     <tr className="bg-gray-100 dark:bg-[#0c0e12]/50 text-gray-400 text-[11px] uppercase tracking-wider border-b border-gray-200 dark:border-[#2a2d33]">
@@ -477,30 +473,16 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                         className="group hover:bg-white/[0.02] transition-colors"
                       >
                         <td className="px-4 py-3">
-                          <select
+                          <Select
+  variant="form"
                             value={product.description}
-                            onChange={(e) =>
-                              handleProductChange(
-                                index,
-                                "description",
-                                e.target.value,
-                              )
-                            }
-                            className="w-full bg-transparent border-none focus:ring-0 text-white cursor-pointer text-sm p-0 outline-none"
-                          >
-                            <option value="" className="bg-gray-50 dark:bg-[#1a1d23]">
-                              Select Product
-                            </option>
-                            {PRODUCTS.map((p) => (
-                              <option
-                                key={p}
-                                value={p}
-                                className="bg-gray-50 dark:bg-[#1a1d23]"
-                              >
-                                {p}
-                              </option>
-                            ))}
-                          </select>
+                            onChange={(val) => handleProductChange(index, "description", val)}
+                            options={[
+                              { value: "", label: "Select Product" },
+                              ...PRODUCTS.map((p) => ({ value: p, label: p }))
+                            ]}
+                            className="w-full"
+                          />
                         </td>
                         <td className="px-4 py-3">
                           <input
@@ -513,22 +495,22 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                                 e.target.value,
                               )
                             }
-                            className="w-full bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded px-2 py-1 text-center text-white text-sm focus:border-purple-500 outline-none"
+                            className="w-full bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded px-2 py-1 text-center text-gray-900 dark:text-white text-sm focus:border-purple-500 outline-none"
                           />
                         </td>
                         <td className="px-4 py-3">
-                          <select
+                          <Select
+  variant="form"
                             value={product.unit}
-                            onChange={(e) =>
-                              handleProductChange(index, "unit", e.target.value)
-                            }
-                            className="w-full bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded px-2 py-1 text-white text-sm focus:border-purple-500 outline-none"
-                          >
-                            <option value="PCS">PCS</option>
-                            <option value="KGS">KGS</option>
-                            <option value="MTR">MTR</option>
-                            <option value="SET">SET</option>
-                          </select>
+                            onChange={(val) => handleProductChange(index, "unit", val)}
+                            options={[
+                              { value: "PCS", label: "PCS" },
+                              { value: "KGS", label: "KGS" },
+                              { value: "MTR", label: "MTR" },
+                              { value: "SET", label: "SET" }
+                            ]}
+                            className="w-full"
+                          />
                         </td>
                         <td className="px-4 py-3 text-right">
                           <button

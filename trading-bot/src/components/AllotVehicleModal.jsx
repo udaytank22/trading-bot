@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Select } from "./ui";
 import { Button } from "./ui";
 
 const MOCK_VEHICLES = [
@@ -105,18 +106,19 @@ export default function AllotVehicleModal({ deal, isOpen, onClose, onAllot }) {
             <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
               Select Vehicle
             </label>
-            <select
+            <Select
+  variant="form"
               value={selectedVehicleId}
-              onChange={(e) => setSelectedVehicleId(e.target.value)}
-              className="w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d36] rounded-lg px-4 py-2.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none transition-all"
-            >
-              <option value="">-- Choose a Vehicle --</option>
-              {MOCK_VEHICLES.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.vehicle_no} ({v.type})
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setSelectedVehicleId(val)}
+              options={[
+                { value: "", label: "-- Choose a Vehicle --" },
+                ...MOCK_VEHICLES.map((v) => ({
+                  value: v.id,
+                  label: `${v.vehicle_no} (${v.type})`
+                }))
+              ]}
+              className="w-full"
+            />
           </div>
 
           {/* Selected Vehicle Details */}

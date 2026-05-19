@@ -105,8 +105,8 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
                     onClick={() => setSelectedSupplierId(s.id)}
                     className={`flex flex-col p-3 rounded-xl border transition-all text-left ${
                       selectedSupplierId === s.id
-                        ? "bg-purple-600/10 border-purple-500 text-white"
-                        : "bg-gray-50 dark:bg-[#1a1d23] border-gray-200 dark:border-[#2a2d33] text-gray-400 hover:border-gray-500"
+                        ? "bg-purple-600/10 border-purple-500 text-purple-700 dark:text-white"
+                        : "bg-gray-50 dark:bg-[#1a1d23] border-gray-200 dark:border-[#2a2d33] text-gray-700 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500"
                     }`}
                   >
                     <span className="text-sm font-bold">{s.name}</span>
@@ -126,7 +126,7 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
                   placeholder="Filter products..."
                   value={productSearch}
                   onChange={(e) => setProductSearch(e.target.value)}
-                  className="bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-3 py-1 text-[10px] text-white focus:outline-none focus:border-purple-500 w-32"
+                  className="bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-3 py-1 text-[10px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 w-32"
                 />
               </div>
               <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl max-h-[300px] overflow-y-auto custom-scrollbar">
@@ -136,7 +136,7 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
                     onClick={() => handleProductToggle(p.product_name)}
                     className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${selectedProductNames.includes(p.product_name)
                         ? "bg-purple-600 border-purple-500 text-white"
-                        : "bg-gray-800/30 border-gray-700 text-gray-400 hover:border-gray-500"
+                        : "bg-gray-100 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500"
                       }`}
                   >
                     {p.product_name}

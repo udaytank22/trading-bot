@@ -22,6 +22,7 @@ import {
 
 // ─── Column definitions ─────────────────────────────────────────────────────────
 const COLUMNS = [
+  { key: "sr_no", label: "#", className: "w-10 text-center" },
   { key: "id",          label: "ID" },
   { key: "bankName",    label: "Bank Name" },
   { key: "accountInfo", label: "Account Info" },
@@ -66,6 +67,7 @@ const AccountTable = ({ items, onEdit, onDelete }) => {
       key={acc.id}
       className={`${ROW_HOVER_CLS} ${rowStripeClass(idx)}`}
     >
+      <td className="px-3 md:px-6 py-4 text-center text-gray-500 text-sm font-medium">{idx + 1}</td>
       {/* ── ID (monospace, muted) ─────────────────────────────────────── */}
       <td className="px-3 md:px-6 py-4 font-mono text-gray-500 dark:text-gray-400 text-[12px] break-words">
         <span className="cursor-default">{acc.id}</span>

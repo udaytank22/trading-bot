@@ -3,6 +3,7 @@ import { mockSettings } from '../data/mockSettings';
 import { refreshConfig } from '../config';
 import Toast from '../components/ui/Toast';
 import { useToast } from '../hooks/useToast';
+import { Select } from '../components/ui';
 import { confirmAction } from '../utils/swal';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -461,10 +462,15 @@ function ClientForm({ initialData, onSave, onClose }) {
         <Field label="Contact Person"><input type="text" className={inputCls} value={formData.contact} onChange={set('contact')} placeholder="e.g. John Doe" /></Field>
         <Field label="Email Address"><input type="email" className={inputCls} value={formData.email} onChange={set('email')} placeholder="e.g. john@acme.com" /></Field>
         <Field label="Status">
-          <select className={inputCls} value={formData.status} onChange={set('status')}>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-          </select>
+          <Select variant="settings" 
+            className={inputCls} 
+            value={formData.status} 
+            onChange={(val) => setFormData(prev => ({ ...prev, status: val }))}
+            options={[
+              { value: "Active", label: "Active" },
+              { value: "Inactive", label: "Inactive" }
+            ]}
+          />
         </Field>
       </div>
       <div className="mt-8 flex justify-end gap-3">
@@ -586,19 +592,29 @@ function ReportingTab() {
 
       <div className="p-5 border-b border-gray-100 dark:border-[#2a2d33] bg-gray-50/50 dark:bg-[#0f1117]/50 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Field label="Filter by Client">
-          <select className={inputCls} value={clientFilter} onChange={(e) => setClientFilter(e.target.value)}>
-            <option value="All">All Clients</option>
-            <option value="Acme Corp">Acme Corp</option>
-            <option value="Global Logistics Ltd">Global Logistics Ltd</option>
-            <option value="Umbrella Corporation">Umbrella Corporation</option>
-          </select>
+          <Select variant="settings" 
+            className={inputCls} 
+            value={clientFilter} 
+            onChange={(val) => setClientFilter(val)}
+            options={[
+              { value: "All", label: "All Clients" },
+              { value: "Acme Corp", label: "Acme Corp" },
+              { value: "Global Logistics Ltd", label: "Global Logistics Ltd" },
+              { value: "Umbrella Corporation", label: "Umbrella Corporation" }
+            ]}
+          />
         </Field>
         <Field label="Filter by Employee">
-          <select className={inputCls} value={employeeFilter} onChange={(e) => setEmployeeFilter(e.target.value)}>
-            <option value="All">All Employees</option>
-            <option value="John Doe">John Doe</option>
-            <option value="Sarah Connor">Sarah Connor</option>
-          </select>
+          <Select variant="settings" 
+            className={inputCls} 
+            value={employeeFilter} 
+            onChange={(val) => setEmployeeFilter(val)}
+            options={[
+              { value: "All", label: "All Employees" },
+              { value: "John Doe", label: "John Doe" },
+              { value: "Sarah Connor", label: "Sarah Connor" }
+            ]}
+          />
         </Field>
         <Field label="Start Date (Inquiry Received)">
           <input type="date" className={inputCls} value={dateRange.start} onChange={(e) => setDateRange(prev => ({...prev, start: e.target.value}))} />

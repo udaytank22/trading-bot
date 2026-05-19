@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Select } from "./ui";
 import { parseExcelFile } from "../utils/excelUtils";
 import Swal from "sweetalert2";
 
@@ -269,32 +270,37 @@ export default function AddAccountModal({
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
                 Currency
               </label>
-              <select
-                name="currency"
+              <Select
+                variant="form"
                 value={formData.currency}
-                onChange={handleChange}
-                className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none cursor-pointer"
-              >
-                {CURRENCIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) =>
+                  handleChange({ target: { name: "currency", value: val } })
+                }
+                options={[
+                  { value: "USD", label: "USD - US Dollar" },
+                  { value: "EUR", label: "EUR - Euro" },
+                  { value: "AED", label: "AED - Dirham" },
+                  { value: "GBP", label: "GBP - British Pound" },
+                ]}
+                className="w-full"
+              />
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
                 Status
               </label>
-              <select
-                name="status"
+              <Select
+                variant="form"
                 value={formData.status}
-                onChange={handleChange}
-                className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none cursor-pointer"
-              >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
+                onChange={(val) =>
+                  handleChange({ target: { name: "status", value: val } })
+                }
+                options={[
+                  { value: "Active", label: "Active" },
+                  { value: "Inactive", label: "Inactive" },
+                ]}
+                className="w-full"
+              />
             </div>
           </div>
 

@@ -26,11 +26,12 @@ import {
 
 // ─── Column definitions ─────────────────────────────────────────────────────────
 const COLUMNS = [
+  { key: "sr_no", label: "#", className: "w-10 text-center" },
   { key: "inquiry_id",   label: "Cargo ID" },
   { key: "supplier",     label: "Supplier" },
   { key: "cargo",        label: "Cargo" },
-  { key: "quantity",     label: "Quantity",    hidden: "hidden md:table-cell" },
-  { key: "destination",  label: "Destination", hidden: "hidden lg:table-cell" },
+  { key: "quantity",     label: "Quantity",    hidden: "hidden lg:table-cell" },
+  { key: "destination",  label: "Destination", hidden: "hidden xl:table-cell" },
   { key: "status",       label: "Status" },
   { key: "actions",      label: "Actions",     className: "text-right" },
 ];
@@ -52,6 +53,7 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
       key={item.inquiry_id}
       className={`${ROW_HOVER_CLS} ${rowStripeClass(idx)}`}
     >
+      <td className="px-4 md:px-6 py-4 text-center text-gray-500 text-sm font-medium">{idx + 1}</td>
       {/* ── Cargo ID (monospace, muted) ───────────────────────────────── */}
       <td className="px-4 md:px-6 py-4 text-sm text-gray-400">
         <Tooltip content={item.inquiry_id}>
@@ -83,14 +85,14 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
       </td>
 
       {/* ── Quantity (hidden on mobile) ────────────────────────────────── */}
-      <td className="px-4 md:px-6 py-4 text-sm text-gray-600 dark:text-gray-300 hidden md:table-cell">
+      <td className="px-4 md:px-6 py-4 text-sm text-gray-600 dark:text-gray-300 hidden lg:table-cell">
         <Tooltip content={item.quantity}>
           <span className="cursor-default">{item.quantity}</span>
         </Tooltip>
       </td>
 
       {/* ── Destination (hidden on tablet) ────────────────────────────── */}
-      <td className="px-4 md:px-6 py-4 text-sm text-gray-600 dark:text-gray-300 hidden lg:table-cell">
+      <td className="px-4 md:px-6 py-4 text-sm text-gray-600 dark:text-gray-300 hidden xl:table-cell">
         <Tooltip content={item.destination}>
           <span className="cursor-default">{item.destination}</span>
         </Tooltip>

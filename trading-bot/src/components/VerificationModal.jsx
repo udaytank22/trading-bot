@@ -62,7 +62,7 @@ const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => 
               placeholder="Filter items..."
               value={productSearch}
               onChange={(e) => setProductSearch(e.target.value)}
-              className="bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-500 w-48"
+              className="bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-3 py-1.5 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 w-48"
             />
           </div>
           <div className="border border-gray-200 dark:border-[#2a2d33] rounded-2xl overflow-hidden bg-gray-100 dark:bg-[#0c0e12]">

@@ -113,8 +113,8 @@ const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
                 onClick={() => toggleSupplier(supplier)}
                 className={`flex flex-col p-4 rounded-xl border transition-all relative ${
                   selectedSuppliers.find(s => s.id === supplier.id)
-                    ? "bg-purple-600/10 border-purple-500 text-white"
-                    : "bg-gray-100 dark:bg-[#0c0e12] border-gray-200 dark:border-[#2a2d33] text-gray-400 hover:border-gray-500"
+                    ? "bg-purple-600/10 border-purple-500 text-purple-700 dark:text-white"
+                    : "bg-gray-100 dark:bg-[#0c0e12] border-gray-200 dark:border-[#2a2d33] text-gray-700 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500"
                 }`}
               >
                 <div className="flex items-center gap-3 text-left w-full">

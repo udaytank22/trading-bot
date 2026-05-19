@@ -24,6 +24,7 @@
  */
 
 import React from "react";
+import Select from "./Select";
 
 /**
  * @param {Object}   props
@@ -71,15 +72,16 @@ export default function Pagination({
       <div className="flex-1 flex items-center justify-start gap-1.5">
         <>
           <span className="text-xs text-gray-500 font-medium">Showing</span>
-          <select
+          <Select
             value={itemsPerPage}
-            onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
-            className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-2 py-0.5 text-xs text-gray-700 dark:text-gray-300 outline-none focus:border-purple-500 cursor-pointer shadow-sm font-semibold transition-colors"
-          >
-            <option value={30}>30</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
+            onChange={(val) => onItemsPerPageChange(Number(val))}
+            options={[
+              { value: 30, label: "30" },
+              { value: 50, label: "50" },
+              { value: 100, label: "100" }
+            ]}
+            className="w-16"
+          />
         </>
       </div>
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { confirmAction } from '../utils/swal';
+import { Select } from '../components/ui';
 
 const inputCls = 'w-full bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-[36px] px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-all shadow-sm focus:ring-1 focus:ring-purple-500/50';
 
@@ -65,11 +66,17 @@ function InventoryForm({ initialData, onSave, onClose }) {
         <Field label="Unit Price"><input type="text" className={inputCls} value={formData.price} onChange={set('price')} placeholder="e.g. $45.00" /></Field>
         <Field label="Location/Warehouse"><input type="text" className={inputCls} value={formData.location} onChange={set('location')} placeholder="e.g. Warehouse A" /></Field>
         <Field label="Status">
-          <select className={inputCls} value={formData.status} onChange={set('status')}>
-            <option value="In Stock">In Stock</option>
-            <option value="Low Stock">Low Stock</option>
-            <option value="Out of Stock">Out of Stock</option>
-          </select>
+          <Select
+            variant="settings"
+            className={inputCls}
+            value={formData.status} 
+            onChange={(val) => setFormData(prev => ({ ...prev, status: val }))}
+            options={[
+              { value: "In Stock", label: "In Stock" },
+              { value: "Low Stock", label: "Low Stock" },
+              { value: "Out of Stock", label: "Out of Stock" }
+            ]}
+          />
         </Field>
       </div>
       <div className="mt-8 flex justify-end gap-3">

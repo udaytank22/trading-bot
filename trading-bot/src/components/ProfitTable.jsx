@@ -4,6 +4,7 @@ import { DataTable, rowStripeClass, ROW_HOVER_CLS } from "./ui/DataTable";
 import { formatINR, formatDateString } from "../services/marginEngine";
 
 const PROFIT_COLUMNS = [
+  { key: "sr_no", label: "#", className: "w-10 text-center" },
   { key: "inquiry_id", label: "Inquiry ID" },
   { key: "buyer",      label: "Buyer" },
   { key: "products",   label: "Products" },
@@ -20,6 +21,7 @@ export default function ProfitTable({ deals, totalCost, totalRevenue, totalProfi
     
     return (
       <tr key={deal.inquiry_id} className={`h-[64px] ${ROW_HOVER_CLS} ${rowStripeClass(idx)}`}>
+        <td className="px-6 text-center text-gray-500 text-sm font-medium">{idx + 1}</td>
         <td className="px-6">
           <div className="flex flex-col">
             <span className="text-gray-900 dark:text-white font-mono text-[13px]">{deal.inquiry_id}</span>

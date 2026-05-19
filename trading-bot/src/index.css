@@ -25,7 +25,11 @@ html.light body {
 
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;
-  height: 5px;
+  height: 5px; /* Restore height in case it affects some browsers */
+}
+
+.custom-scrollbar::-webkit-scrollbar:horizontal {
+  display: none; /* Properly hide the horizontal scrollbar */
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {

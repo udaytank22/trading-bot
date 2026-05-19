@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Select } from "./ui";
 import { parseExcelFile } from "../utils/excelUtils";
 import Swal from "sweetalert2";
 
@@ -221,35 +222,25 @@ export default function AddDocumentModal({
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
                 Entity Type
               </label>
-              <select
-                name="entityType"
+              <Select
+  variant="form"
                 value={formData.entityType}
-                onChange={handleChange}
-                className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none cursor-pointer"
-              >
-                {ENTITY_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => handleChange({ target: { name: "entityType", value: val } })}
+                options={ENTITY_TYPES.map((t) => ({ value: t, label: t }))}
+                className="w-full"
+              />
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
                 Category
               </label>
-              <select
-                name="category"
+              <Select
+  variant="form"
                 value={formData.category}
-                onChange={handleChange}
-                className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none cursor-pointer"
-              >
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => handleChange({ target: { name: "category", value: val } })}
+                options={CATEGORIES.map((c) => ({ value: c, label: c }))}
+                className="w-full"
+              />
             </div>
           </div>
 
@@ -277,16 +268,17 @@ export default function AddDocumentModal({
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
                 Status
               </label>
-              <select
-                name="status"
+              <Select
+  variant="form"
                 value={formData.status}
-                onChange={handleChange}
-                className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none cursor-pointer"
-              >
-                <option value="Valid">Valid</option>
-                <option value="Expiring Soon">Expiring Soon</option>
-                <option value="Expired">Expired</option>
-              </select>
+                onChange={(val) => handleChange({ target: { name: "status", value: val } })}
+                options={[
+                  { value: "Valid", label: "Valid" },
+                  { value: "Expiring Soon", label: "Expiring Soon" },
+                  { value: "Expired", label: "Expired" }
+                ]}
+                className="w-full"
+              />
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
@@ -298,7 +290,7 @@ export default function AddDocumentModal({
                 value={formData.expiryDate}
                 onChange={handleChange}
                 required
-                className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none [color-scheme:dark]"
+                className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none dark:[color-scheme:dark]"
               />
             </div>
           </div>
@@ -317,7 +309,7 @@ export default function AddDocumentModal({
                 d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
               />
             </svg>
-            <p className="text-sm text-white font-medium mb-1">
+            <p className="text-sm text-gray-900 dark:text-white font-medium mb-1">
               Click to upload file
             </p>
             <p className="text-xs text-gray-500">PDF, JPG, PNG (Max 5MB)</p>
