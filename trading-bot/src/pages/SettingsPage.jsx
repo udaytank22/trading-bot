@@ -56,6 +56,28 @@ function RightDrawer({ isOpen, title, onClose, children }) {
   );
 }
 
+function CenterModal({ isOpen, title, onClose, children }) {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-6">
+      <div className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-[95vw] xl:max-w-[1400px] bg-white dark:bg-[#1a1d23] shadow-2xl rounded-3xl overflow-hidden border border-gray-200 dark:border-[#2a2d33]">
+        <div className="px-6 py-4 border-b border-gray-100 dark:border-[#2a2d33] flex items-center justify-between bg-gray-50 dark:bg-[#1a1d23]">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="max-h-[85vh] overflow-y-auto p-6 custom-scrollbar">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ViewDetails({ item, onClose }) {
   return (
     <div className="flex flex-col h-full">
@@ -486,19 +508,8 @@ function ReportingTab() {
   const [clientFilter, setClientFilter] = useState('All');
   const [employeeFilter, setEmployeeFilter] = useState('All');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
-  const [selectedRows, setSelectedRows] = useState(new Set());
-
-  const toggleRow = (id) => {
-    const newSelected = new Set(selectedRows);
-    if (newSelected.has(id)) newSelected.delete(id);
-    else newSelected.add(id);
-    setSelectedRows(newSelected);
-  };
-
-  const toggleAll = (e) => {
-    if (e.target.checked) setSelectedRows(new Set(filteredData.map(d => d.id)));
-    else setSelectedRows(new Set());
-  };
+  const [activeSubTab, setActiveSubTab] = useState('clients');
+  const [detailTarget, setDetailTarget] = useState(null);
 
   const pipelineData = [
     {
@@ -536,41 +547,126 @@ function ReportingTab() {
       clientResponse: '29/01/2026 01:00 PM',
       poReceived: '-',
       status: 'Rejected'
+    },
+    {
+      id: 'INQ-1004',
+      client: 'Acme Corp',
+      employee: 'Sarah Connor',
+      received: '29/01/2026 10:15 AM',
+      rfqSent: '29/01/2026 12:00 PM',
+      supplierResponse: '30/01/2026 09:30 AM',
+      quotationSent: '30/01/2026 11:00 AM',
+      clientResponse: '30/01/2026 04:30 PM',
+      poReceived: '31/01/2026 09:00 AM',
+      status: 'Approved'
+    },
+    {
+      id: 'INQ-1005',
+      client: 'Acme Corp',
+      employee: 'John Doe',
+      received: '30/01/2026 02:45 PM',
+      rfqSent: '30/01/2026 03:30 PM',
+      supplierResponse: '31/01/2026 09:00 AM',
+      quotationSent: '31/01/2026 10:15 AM',
+      clientResponse: '31/01/2026 02:00 PM',
+      poReceived: '-',
+      status: 'Rejected'
+    },
+    {
+      id: 'INQ-1006',
+      client: 'Global Logistics Ltd',
+      employee: 'John Doe',
+      received: '31/01/2026 09:20 AM',
+      rfqSent: '31/01/2026 10:10 AM',
+      supplierResponse: '01/02/2026 08:45 AM',
+      quotationSent: '01/02/2026 09:50 AM',
+      clientResponse: '01/02/2026 05:20 PM',
+      poReceived: '02/02/2026 10:10 AM',
+      status: 'Approved'
     }
   ];
 
+  const parseReceivedDate = (value) => {
+    if (!value) return null;
+    const [datePart, timePart, ampm] = value.split(' ');
+    if (!datePart || !timePart) return null;
+    const [day, month, year] = datePart.split('/');
+    const [hours, minutes] = timePart.split(':');
+    let hour = Number(hours);
+    const minute = Number(minutes);
+    if (ampm === 'PM' && hour < 12) hour += 12;
+    if (ampm === 'AM' && hour === 12) hour = 0;
+    return new Date(Number(year), Number(month) - 1, Number(day), hour, minute);
+  };
+
+  const inDateRange = (item) => {
+    const itemDate = parseReceivedDate(item.received);
+    if (!itemDate) return true;
+    if (dateRange.start) {
+      const start = new Date(`${dateRange.start}T00:00:00`);
+      if (itemDate < start) return false;
+    }
+    if (dateRange.end) {
+      const end = new Date(`${dateRange.end}T23:59:59`);
+      if (itemDate > end) return false;
+    }
+    return true;
+  };
+
   const filteredData = pipelineData.filter(d => 
     (clientFilter === 'All' || d.client === clientFilter) &&
-    (employeeFilter === 'All' || d.employee === employeeFilter)
+    (employeeFilter === 'All' || d.employee === employeeFilter) &&
+    inDateRange(d)
   );
 
-  const handleDownloadPDF = () => {
-    const dataToExport = selectedRows.size > 0 
-      ? filteredData.filter(d => selectedRows.has(d.id))
-      : filteredData;
+  const summaryData = Object.values(
+    filteredData.reduce((acc, item) => {
+      const key = activeSubTab === 'clients' ? item.client : item.employee;
+      if (!acc[key]) acc[key] = { key, completed: 0, failed: 0, total: 0 };
+      acc[key].total += 1;
+      if (item.status === 'Approved') acc[key].completed += 1;
+      if (item.status === 'Rejected') acc[key].failed += 1;
+      return acc;
+    }, {})
+  ).sort((a, b) => b.total - a.total);
 
-    if (dataToExport.length === 0) {
-      alert("No data available to export.");
+  const detailHistory = detailTarget
+    ? filteredData.filter(item =>
+        detailTarget.type === 'clients'
+          ? item.client === detailTarget.key
+          : item.employee === detailTarget.key
+      )
+    : [];
+
+  const entityLabel = activeSubTab === 'clients' ? 'Client' : 'Employee';
+
+  const handleDownloadPDF = () => {
+    if (filteredData.length === 0) {
+      alert('No data available to export.');
       return;
     }
 
     const doc = new jsPDF('landscape');
-    
     doc.setFontSize(18);
     doc.text('Detailed Pipeline Timeline Report', 14, 22);
-    
+
     doc.setFontSize(11);
     doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
     doc.text(`Filters: Client = ${clientFilter} | Employee = ${employeeFilter}`, 14, 36);
-    if (selectedRows.size > 0) {
-      doc.text(`Exporting ${selectedRows.size} selected row(s).`, 14, 42);
-    }
-    
+
     autoTable(doc, {
-      startY: selectedRows.size > 0 ? 48 : 42,
+      startY: 42,
       head: [['ID', 'Client Name', 'Employee', 'Inquiry Received', 'RFQ Sent', 'Supplier Resp.', 'Quotation Sent', 'Client Resp.', 'Status']],
-      body: dataToExport.map(d => [
-        d.id, d.client, d.employee, d.received, d.rfqSent, d.supplierResponse, d.quotationSent, d.clientResponse, d.status
+      body: filteredData.map(d => [
+        d.id,
+        d.client,
+        d.employee,
+        d.received,
+        d.rfqSent,
+        d.supplierResponse,
+        d.quotationSent,
+        d.clientResponse,
+        d.status
       ]),
       theme: 'grid',
       headStyles: { fillColor: [139, 92, 246], fontSize: 9 },
@@ -583,98 +679,179 @@ function ReportingTab() {
   return (
     <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-sm animate-fade-in flex-1 overflow-hidden flex flex-col">
       <div className="p-5 border-b border-gray-200 dark:border-[#2a2d33] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Detailed Stage Timeline Report</h2>
+        <div>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Reporting Overview</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Switch between client and employee summaries, then view full history for any row.</p>
+        </div>
         <button onClick={handleDownloadPDF} className="h-9 px-4 bg-purple-600 hover:bg-purple-500 text-white text-[13px] font-bold rounded-lg shadow-sm transition-colors flex items-center gap-2">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
           Download PDF
         </button>
       </div>
 
-      <div className="p-5 border-b border-gray-100 dark:border-[#2a2d33] bg-gray-50/50 dark:bg-[#0f1117]/50 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Field label="Filter by Client">
-          <Select variant="settings" 
-            className={inputCls} 
-            value={clientFilter} 
-            onChange={(val) => setClientFilter(val)}
-            options={[
-              { value: "All", label: "All Clients" },
-              { value: "Acme Corp", label: "Acme Corp" },
-              { value: "Global Logistics Ltd", label: "Global Logistics Ltd" },
-              { value: "Umbrella Corporation", label: "Umbrella Corporation" }
-            ]}
-          />
-        </Field>
-        <Field label="Filter by Employee">
-          <Select variant="settings" 
-            className={inputCls} 
-            value={employeeFilter} 
-            onChange={(val) => setEmployeeFilter(val)}
-            options={[
-              { value: "All", label: "All Employees" },
-              { value: "John Doe", label: "John Doe" },
-              { value: "Sarah Connor", label: "Sarah Connor" }
-            ]}
-          />
-        </Field>
-        <Field label="Start Date (Inquiry Received)">
-          <input type="date" className={inputCls} value={dateRange.start} onChange={(e) => setDateRange(prev => ({...prev, start: e.target.value}))} />
-        </Field>
-        <Field label="End Date">
-          <input type="date" className={inputCls} value={dateRange.end} onChange={(e) => setDateRange(prev => ({...prev, end: e.target.value}))} />
-        </Field>
+      <div className="p-5 border-b border-gray-100 dark:border-[#2a2d33] bg-gray-50/50 dark:bg-[#0f1117]/50">
+        <div className="flex flex-wrap gap-2 mb-5">
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('clients')}
+            className={`px-4 py-2 rounded-lg font-bold text-[13px] ${activeSubTab === 'clients' ? 'bg-purple-600 text-white' : 'bg-white dark:bg-[#16191f] text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-[#2a2d33]'}`}
+          >
+            Clients
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('employees')}
+            className={`px-4 py-2 rounded-lg font-bold text-[13px] ${activeSubTab === 'employees' ? 'bg-purple-600 text-white' : 'bg-white dark:bg-[#16191f] text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-[#2a2d33]'}`}
+          >
+            Employees
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Field label="Filter by Client">
+            <Select
+              variant="settings"
+              className={inputCls}
+              value={clientFilter}
+              onChange={(val) => setClientFilter(val)}
+              options={[
+                { value: 'All', label: 'All Clients' },
+                { value: 'Acme Corp', label: 'Acme Corp' },
+                { value: 'Global Logistics Ltd', label: 'Global Logistics Ltd' },
+                { value: 'Umbrella Corporation', label: 'Umbrella Corporation' }
+              ]}
+            />
+          </Field>
+          <Field label="Filter by Employee">
+            <Select
+              variant="settings"
+              className={inputCls}
+              value={employeeFilter}
+              onChange={(val) => setEmployeeFilter(val)}
+              options={[
+                { value: 'All', label: 'All Employees' },
+                { value: 'John Doe', label: 'John Doe' },
+                { value: 'Sarah Connor', label: 'Sarah Connor' }
+              ]}
+            />
+          </Field>
+          <Field label="Start Date (Inquiry Received)">
+            <input
+              type="date"
+              className={inputCls}
+              value={dateRange.start}
+              onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+            />
+          </Field>
+          <Field label="End Date">
+            <input
+              type="date"
+              className={inputCls}
+              value={dateRange.end}
+              onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+            />
+          </Field>
+        </div>
       </div>
 
       <div className="overflow-x-auto flex-1 custom-scrollbar">
         <table className="w-full text-left text-[13px] whitespace-nowrap">
           <thead className="bg-gray-50 dark:bg-[#0f1117]/50 text-gray-500 dark:text-gray-400 font-bold border-b border-gray-200 dark:border-[#2a2d33] uppercase tracking-wider text-[11px]">
             <tr>
-              <th className="px-4 py-3 w-10 text-center">
-                <input type="checkbox" className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer" onChange={toggleAll} checked={filteredData.length > 0 && selectedRows.size === filteredData.length} />
-              </th>
-              <th className="px-4 py-3">Inquiry ID</th>
-              <th className="px-4 py-3">Client</th>
-              <th className="px-4 py-3">Employee</th>
-              <th className="px-4 py-3">Inquiry Received</th>
-              <th className="px-4 py-3">RFQ Sent</th>
-              <th className="px-4 py-3">Supplier Resp.</th>
-              <th className="px-4 py-3">Quotation Sent</th>
-              <th className="px-4 py-3">Client Resp.</th>
-              <th className="px-4 py-3">PO Received</th>
-              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">{entityLabel}</th>
+              <th className="px-4 py-3">Completed Deals</th>
+              <th className="px-4 py-3">Failed Deals</th>
+              <th className="px-4 py-3">Total Inquiries</th>
+              <th className="px-4 py-3">Details</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-[#2a2d33] text-gray-700 dark:text-gray-300">
-            {filteredData.map(d => (
-              <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
-                <td className="px-4 py-3 text-center">
-                  <input type="checkbox" className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer" checked={selectedRows.has(d.id)} onChange={() => toggleRow(d.id)} />
-                </td>
-                <td className="px-4 py-3 font-medium text-purple-600 dark:text-purple-400">{d.id}</td>
-                <td className="px-4 py-3 font-semibold text-gray-900 dark:text-white">{d.client}</td>
-                <td className="px-4 py-3">{d.employee}</td>
-                <td className="px-4 py-3">{d.received}</td>
-                <td className="px-4 py-3">{d.rfqSent}</td>
-                <td className="px-4 py-3">{d.supplierResponse}</td>
-                <td className="px-4 py-3">{d.quotationSent}</td>
-                <td className="px-4 py-3">{d.clientResponse}</td>
-                <td className="px-4 py-3">{d.poReceived}</td>
+            {summaryData.map(item => (
+              <tr key={item.key} className="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
+                <td className="px-4 py-3 font-semibold text-gray-900 dark:text-white">{item.key}</td>
+                <td className="px-4 py-3">{item.completed}</td>
+                <td className="px-4 py-3">{item.failed}</td>
+                <td className="px-4 py-3">{item.total}</td>
                 <td className="px-4 py-3">
-                  <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
-                    d.status === 'Approved' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                    d.status === 'Pending' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' :
-                    'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                  }`}>
-                    {d.status}
-                  </span>
+                  <button
+                    onClick={() => setDetailTarget({ type: activeSubTab, key: item.key })}
+                    className="text-purple-600 dark:text-purple-300 font-semibold hover:underline"
+                  >
+                    View history
+                  </button>
                 </td>
               </tr>
             ))}
-            {filteredData.length === 0 && (
-              <tr><td colSpan="11" className="text-center py-8 text-gray-500">No data found for the selected filters.</td></tr>
+            {summaryData.length === 0 && (
+              <tr><td colSpan="5" className="text-center py-8 text-gray-500">No data found for the selected filters.</td></tr>
             )}
           </tbody>
         </table>
       </div>
+
+      <CenterModal
+        isOpen={!!detailTarget}
+        title={detailTarget ? `${detailTarget.key} History` : 'History'}
+        onClose={() => setDetailTarget(null)}
+      >
+        {detailTarget && (
+          <div className="flex flex-col h-full gap-5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <h3 className="text-base font-bold text-gray-900 dark:text-white">{detailTarget.key} inquiry history</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Showing all inquiries for this {detailTarget.type === 'clients' ? 'client' : 'employee'}.</p>
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-300">
+                {detailHistory.length} record{detailHistory.length === 1 ? '' : 's'}
+              </div>
+            </div>
+
+            <div className="overflow-x-auto flex-1 custom-scrollbar">
+              <table className="w-full text-left text-[13px] whitespace-nowrap">
+                <thead className="bg-gray-50 dark:bg-[#0f1117]/50 text-gray-500 dark:text-gray-400 font-bold border-b border-gray-200 dark:border-[#2a2d33] uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th className="px-4 py-3">Inquiry ID</th>
+                    <th className="px-4 py-3">Client</th>
+                    <th className="px-4 py-3">Employee</th>
+                    <th className="px-4 py-3">Inquiry Received</th>
+                    <th className="px-4 py-3">RFQ Sent</th>
+                    <th className="px-4 py-3">Supplier Resp.</th>
+                    <th className="px-4 py-3">Quotation Sent</th>
+                    <th className="px-4 py-3">Client Resp.</th>
+                    <th className="px-4 py-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-[#2a2d33] text-gray-700 dark:text-gray-300">
+                  {detailHistory.map(item => (
+                    <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
+                      <td className="px-4 py-3 font-medium text-purple-600 dark:text-purple-400">{item.id}</td>
+                      <td className="px-4 py-3">{item.client}</td>
+                      <td className="px-4 py-3">{item.employee}</td>
+                      <td className="px-4 py-3">{item.received}</td>
+                      <td className="px-4 py-3">{item.rfqSent}</td>
+                      <td className="px-4 py-3">{item.supplierResponse}</td>
+                      <td className="px-4 py-3">{item.quotationSent}</td>
+                      <td className="px-4 py-3">{item.clientResponse}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
+                          item.status === 'Approved' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                          item.status === 'Pending' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' :
+                          'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                        }`}>
+                          {item.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                  {detailHistory.length === 0 && (
+                    <tr><td colSpan="9" className="text-center py-8 text-gray-500">No history records.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </CenterModal>
     </div>
   );
 }
