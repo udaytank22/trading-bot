@@ -12,7 +12,7 @@ import {
 import { fetchInquiries } from "../services/n8nService";
 import { fetchProfitData } from "../services/sheetsService";
 import { formatINR, formatDateString } from "../services/marginEngine";
-import StatusBadge from "../components/ui/StatusBadge";
+import StatusBadge from "../components/ui/statusBadge";
 
 /* ── Skeleton loader ─────────────────────────────────────────────── */
 function DashboardSkeleton() {

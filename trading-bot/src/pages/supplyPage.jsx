@@ -20,11 +20,11 @@
  */
 
 import React, { useMemo, useState } from "react";
-import ContactModal from "../components/ContactModal";
-import SupplyViewModal from "../components/SupplyViewModal";
-import AllotVehicleModal from "../components/AllotVehicleModal";
-import InvoiceEmailModal from "../components/InvoiceEmailModal";
-import SupplyTable from "../components/SupplyTable";
+import ContactModal from "../components/contactModal";
+import SupplyViewModal from "../components/supplyViewModal";
+import AllotVehicleModal from "../components/allotVehicleModal";
+import InvoiceEmailModal from "../components/invoiceEmailModal";
+import SupplyTable from "../components/supplyTable";
 import { AppContext } from "../context";
 import { PageToolbar, Pagination } from "../components/ui";
 
@@ -114,7 +114,7 @@ export default function SupplyPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col w-full h-full pb-4">
       {/*
        * CENTRALIZED TOOLBAR
        * "Add Supply" triggers isAddModalOpen — modal not yet implemented.
@@ -132,7 +132,7 @@ export default function SupplyPage() {
       />
 
       {/* ── Table card ─────────────────────────────────────────────────────── */}
-      <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden shadow-sm transition-colors duration-300">
+      <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg transition-colors duration-300">
 
         {/*
          * SupplyTable — getStatusStyle prop removed.

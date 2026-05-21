@@ -18,19 +18,19 @@ import React, { useState, useEffect, useMemo, useContext, useCallback } from "re
 import { useLocation } from "react-router-dom";
 import Swal from "sweetalert2";
 import { AppContext } from "../context";
-import DealDrawer from "../components/DealDrawer";
-import EmailPreviewModal from "../components/EmailPreviewModal";
+import DealDrawer from "../components/dealDrawer";
+import EmailPreviewModal from "../components/emailPreviewModal";
 import { fetchInquiries, triggerRFQ } from "../services/n8nService";
 import { formatDateString } from "../services/marginEngine";
 import { useToast } from "../hooks/useToast";
-import InquiryTable from "../components/InquiryTable";
-import QuoteModal from "../components/QuoteModal";
-import RFQModal from "../components/RFQModal";
-import StockCheckModal from "../components/StockCheckModal";
-import MultiEmailPreviewModal from "../components/MultiEmailPreviewModal";
-import VerificationModal from "../components/VerificationModal";
-import AdminApprovalModal from "../components/AdminApprovalModal";
-import AddInquiryModal from "../components/AddInquiryModal";
+import InquiryTable from "../components/inquiryTable";
+import QuoteModal from "../components/quoteModal";
+import RFQModal from "../components/rFQModal";
+import StockCheckModal from "../components/stockCheckModal";
+import MultiEmailPreviewModal from "../components/multiEmailPreviewModal";
+import VerificationModal from "../components/verificationModal";
+import AdminApprovalModal from "../components/adminApprovalModal";
+import AddInquiryModal from "../components/addInquiryModal";
 import { Toast, PageToolbar, Pagination } from "../components/ui";
 
 

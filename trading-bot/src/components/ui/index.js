@@ -4,9 +4,9 @@
  *
  * WHY A BARREL?
  *   Instead of writing individual import paths per file:
- *     import Button from "../components/ui/Button";
- *     import SearchBar from "../components/ui/SearchBar";
- *     import Pagination from "../components/ui/Pagination";
+ *     import Button from "../components/ui/button";
+ *     import SearchBar from "../components/ui/searchBar";
+ *     import Pagination from "../components/ui/pagination";
  *
  *   You can write a single, clean destructured import:
  *     import { Button, SearchBar, Pagination, StatusBadge } from "../components/ui";
@@ -20,17 +20,17 @@
  */
 
 // ── Primitive interaction components ───────────────────────────────────────────
-export { default as Button }      from "./Button";
-export { default as SearchBar }   from "./SearchBar";
-export { default as Tooltip }     from "./Tooltip";
-export { default as Select }      from "./Select";
+export { default as Button }      from "./button";
+export { default as SearchBar }   from "./searchBar";
+export { default as Tooltip }     from "./tooltip";
+export { default as Select }      from "./select";
 
 // ── Data display components ────────────────────────────────────────────────────
-export { default as StatusBadge } from "./StatusBadge";
-export { default as DateCell }    from "./DateCell";
-export { default as DataTable, rowStripeClass, ROW_HOVER_CLS } from "./DataTable";
+export { default as StatusBadge } from "./statusBadge";
+export { default as DateCell }    from "./dateCell";
+export { default as DataTable, rowStripeClass, ROW_HOVER_CLS } from "./dataTable";
 
 // ── Layout / chrome components ─────────────────────────────────────────────────
-export { default as PageToolbar } from "./PageToolbar";
-export { default as Pagination }  from "./Pagination";
-export { default as Toast }       from "./Toast";
+export { default as PageToolbar } from "./pageToolbar";
+export { default as Pagination }  from "./pagination";
+export { default as Toast }       from "./toast";

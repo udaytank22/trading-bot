@@ -19,9 +19,9 @@
 import React, { useState, useContext, useMemo } from "react";
 import { AppContext } from "../context";
 import { useToast } from "../hooks/useToast";
-import EmployeeTable from "../components/EmployeeTable";
-import AddEmployeeModal from "../components/AddEmployeeModal";
-import EmployeeViewModal from "../components/EmployeeViewModal";
+import EmployeeTable from "../components/employeeTable";
+import AddEmployeeModal from "../components/addEmployeeModal";
+import EmployeeViewModal from "../components/employeeViewModal";
 import { confirmAction } from "../utils/swal";
 import { Toast, PageToolbar, Pagination } from "../components/ui";
 
@@ -126,7 +126,7 @@ export default function EmployeesPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col w-full h-full pb-4 relative gap-4">
+    <div className="flex flex-col w-full h-full pb-4 relative">
       {/* Global toast notification */}
       <Toast message={toast.message} type={toast.type} />
 

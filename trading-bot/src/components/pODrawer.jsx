@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { formatINR } from "../services/marginEngine";
-import StatusBadge from "./ui/StatusBadge";
+import StatusBadge from "./ui/statusBadge";
 
 export default function PODrawer({ po, isOpen, onClose }) {
   // Handle Escape key

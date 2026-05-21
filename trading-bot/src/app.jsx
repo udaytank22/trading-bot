@@ -7,25 +7,25 @@ import { mockPurchaseOrders } from "./data/mockPurchaseOrders";
 import { mockEmployees } from "./data/mockEmployees";
 import { mockDocuments } from "./data/mockDocuments";
 import { mockAccounts } from "./data/mockAccounts";
-import Sidebar from "./components/layout/Sidebar";
-import Topbar from "./components/layout/Topbar";
-import CallOverlay from "./components/layout/CallOverlay";
-import SupplyPage from "./pages/SupplyPage";
+import Sidebar from "./components/layout/sidebar";
+import Topbar from "./components/layout/topbar";
+import CallOverlay from "./components/layout/callOverlay";
+import SupplyPage from "./pages/supplyPage";
 
 // Lazy-load pages for code splitting
-const DashboardPage = React.lazy(() => import("./pages/DashboardPage"));
-const InquiriesPage = React.lazy(() => import("./pages/InquiriesPage"));
-const ProfitPage = React.lazy(() => import("./pages/ProfitPage"));
-const SettingsPage = React.lazy(() => import("./pages/SettingsPage"));
-const InventoryPage = React.lazy(() => import("./pages/InventoryPage"));
-const ProfilePage = React.lazy(() => import("./pages/ProfilePage"));
-const LoginPage = React.lazy(() => import("./pages/LoginPage"));
-const PurchaseOrdersPage = React.lazy(() => import("./pages/PurchaseOrdersPage"));
-const EmployeesPage = React.lazy(() => import("./pages/EmployeesPage"));
-const DocumentsPage = React.lazy(() => import("./pages/DocumentsPage"));
-const AccountPage = React.lazy(() => import("./pages/AccountPage"));
-const NotificationsPage = React.lazy(() => import("./pages/NotificationsPage"));
-const TodoPage = React.lazy(() => import("./pages/TodoPage"));
+const DashboardPage = React.lazy(() => import("./pages/dashboardPage"));
+const InquiriesPage = React.lazy(() => import("./pages/inquiriesPage"));
+const ProfitPage = React.lazy(() => import("./pages/profitPage"));
+const SettingsPage = React.lazy(() => import("./pages/settingsPage"));
+const InventoryPage = React.lazy(() => import("./pages/inventoryPage"));
+const ProfilePage = React.lazy(() => import("./pages/profilePage"));
+const LoginPage = React.lazy(() => import("./pages/loginPage"));
+const PurchaseOrdersPage = React.lazy(() => import("./pages/purchaseOrdersPage"));
+const EmployeesPage = React.lazy(() => import("./pages/employeesPage"));
+const DocumentsPage = React.lazy(() => import("./pages/documentsPage"));
+const AccountPage = React.lazy(() => import("./pages/accountPage"));
+const NotificationsPage = React.lazy(() => import("./pages/notificationsPage"));
+const TodoPage = React.lazy(() => import("./pages/todoPage"));
 
 function PageLoader() {
   return (

@@ -1,8 +1,8 @@
 import React, { useState, useContext, useMemo } from "react";
 import { AppContext } from "../context";
 import { useToast } from "../hooks/useToast";
-import Toast from "../components/ui/Toast";
-import AddDocumentModal from "../components/AddDocumentModal";
+import Toast from "../components/ui/toast";
+import AddDocumentModal from "../components/addDocumentModal";
 import { confirmAction } from "../utils/swal";
 
 // Helper for the Kanban Board

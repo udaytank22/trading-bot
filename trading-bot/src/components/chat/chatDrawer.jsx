@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { X, Phone, Video, FileText, Eye, ChevronLeft } from "lucide-react";
+import { X, FileText, Eye, ChevronLeft } from "lucide-react";
 import { useAppContext } from "../../context";
 
 // Local sample PDF served from /public folder
@@ -13,7 +13,7 @@ const mockUsers = [
 ];
 
 const ChatDrawer = ({ isOpen, onClose }) => {
-  const { startCall } = useAppContext();
+  const { /* startCall */ } = useAppContext();
   const [selectedUser, setSelectedUser] = useState(null);
   const [pdfViewerUrl, setPdfViewerUrl] = useState(null); // in-app PDF viewer state
   const [messages, setMessages] = useState([
@@ -134,20 +134,6 @@ const ChatDrawer = ({ isOpen, onClose }) => {
               </div>
 
               <div className="flex items-center gap-1">
-                <button
-                  onClick={() => startCall(selectedUser.name, "voice")}
-                  className="p-2.5 text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-xl transition-all active:scale-90"
-                  title="Voice Call"
-                >
-                  <Phone size={18} />
-                </button>
-                <button
-                  onClick={() => startCall(selectedUser.name, "video")}
-                  className="p-2.5 text-gray-400 hover:text-blue-500 hover:bg-blue-500/10 rounded-xl transition-all active:scale-90"
-                  title="Video Call"
-                >
-                  <Video size={18} />
-                </button>
                 <button
                   onClick={onClose}
                   className="p-2.5 text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors"

@@ -18,6 +18,7 @@
 import React from "react";
 import {
   DataTable,
+  rowStripeClass,
   ROW_HOVER_CLS,
   StatusBadge,
   Button,
@@ -65,9 +66,6 @@ function DeleteIcon() {
   );
 }
 
-import { Phone, Video } from "lucide-react";
-import { useAppContext } from "../context";
-
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 /**
@@ -78,16 +76,15 @@ import { useAppContext } from "../context";
  * @param {function} props.onDelete - Trigger delete confirmation
  */
 export default function EmployeeTable({ employees, onEdit, onDelete, onView }) {
-  const { startCall } = useAppContext();
 
   const renderRow = (emp, idx) => (
     <tr
       key={emp.id}
-      className={`${ROW_HOVER_CLS} ${idx % 2 !== 0 ? "bg-gray-100 dark:bg-[#242830]/20 dark:bg-[#242830]/20" : ""}`}
+      className={`${ROW_HOVER_CLS} ${rowStripeClass(idx)}`}
     >
-      <td className="px-3 md:px-6 py-4 text-center text-gray-500 text-sm font-medium">{idx + 1}</td>
+      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4 text-center text-gray-500 text-sm font-medium">{idx + 1}</td>
       {/* ── Avatar + Name + Email stacked ─────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4">
+      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4">
         <div className="flex items-center gap-3">
           {/* Avatar circle with initials */}
           <div className="w-9 h-9 rounded-xl bg-purple-600/20 flex items-center justify-center text-purple-400 font-bold text-xs border border-purple-500/20 shadow-inner flex-shrink-0">
@@ -103,21 +100,21 @@ export default function EmployeeTable({ employees, onEdit, onDelete, onView }) {
       </td>
 
       {/* ── Department ────────────────────────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4">
+      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4">
         <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">
           {emp.department}
         </span>
       </td>
 
       {/* ── Role pill ─────────────────────────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4">
+      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4">
         <span className="px-2 py-0.5 rounded-lg bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 text-[11px] font-bold border border-gray-200 dark:border-white/5">
           {emp.role}
         </span>
       </td>
 
       {/* ── Joining Date (hidden on small screens) ─────────────────────── */}
-      <td className="px-3 md:px-6 py-4 hidden lg:table-cell">
+      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4 hidden lg:table-cell">
         <span className="text-gray-400 text-sm font-mono">
           {new Date(emp.joiningDate).toLocaleDateString("en-GB", {
             day: "2-digit",
@@ -128,32 +125,13 @@ export default function EmployeeTable({ employees, onEdit, onDelete, onView }) {
       </td>
 
       {/* ── Status badge (uses centralized StatusBadge) ─────────────────── */}
-      <td className="px-3 md:px-6 py-4">
+      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4">
         <StatusBadge status={emp.status} />
       </td>
 
-      {/* ── Icon action buttons: Call + Video + View + Edit + Delete ──── */}
-      <td className="px-3 md:px-6 py-4 text-right">
+      {/* ── Icon action buttons: View + Edit + Delete ────────────────────── */}
+      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4 text-right">
         <div className="flex items-center justify-end gap-2">
-          <Button 
-            variant="icon" 
-            color="emerald" 
-            onClick={() => startCall(emp.name, 'voice')} 
-            title="Voice Call"
-            className="hover:bg-emerald-500/20"
-          >
-            <Phone size={18} />
-          </Button>
-          <Button 
-            variant="icon" 
-            color="blue" 
-            onClick={() => startCall(emp.name, 'video')} 
-            title="Video Call"
-            className="hover:bg-blue-500/20"
-          >
-            <Video size={18} />
-          </Button>
-          <div className="w-[1px] h-4 bg-gray-200 dark:bg-white/10 mx-1" />
           <Button variant="icon" color="purple" onClick={() => onView(emp)} title="View Employee">
             <ViewIcon />
           </Button>
