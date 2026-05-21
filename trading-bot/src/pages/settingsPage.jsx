@@ -47,7 +47,7 @@ function RightDrawer({ isOpen, title, onClose, children }) {
             </svg>
           </button>
         </div>
-        
+
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
           {children}
         </div>
@@ -109,10 +109,10 @@ const TrashIcon = () => <svg className="w-4 h-4 inline" fill="none" viewBox="0 0
 
 /* ── Main page ───────────────────────────────────────────────────── */
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState('general');
+  const [activeTab, setActiveTab] = useState('products');
 
   const tabs = [
-    { id: 'general', label: 'General' },
+    // { id: 'general', label: 'General' },
     { id: 'products', label: 'Products' },
     { id: 'clients', label: 'Clients' },
     { id: 'reporting', label: 'Reporting' },
@@ -121,18 +121,17 @@ export default function SettingsPage() {
   return (
     <div className="flex flex-col w-full h-full pb-4">
       <div className="w-full flex-1 flex flex-col mt-4">
-        
+
         {/* Tab Bar */}
         <div className="bg-white dark:bg-[#1a1d23] rounded-xl shadow-sm p-1.5 flex sm:flex-wrap overflow-x-auto custom-scrollbar items-center gap-1 border border-gray-100 dark:border-[#2a2d33] mb-6">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-6 py-2.5 text-[13px] font-bold rounded-lg whitespace-nowrap transition-all duration-200 ${
-                activeTab === tab.id
-                  ? 'bg-[#edf5ff] text-[#0070f3] dark:bg-blue-500/10 dark:text-blue-400' 
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5'
-              }`}
+              className={`px-6 py-2.5 text-[13px] font-bold rounded-lg whitespace-nowrap transition-all duration-200 ${activeTab === tab.id
+                ? 'bg-[#edf5ff] text-[#0070f3] dark:bg-blue-500/10 dark:text-blue-400'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5'
+                }`}
             >
               {tab.label}
             </button>
@@ -140,7 +139,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Tab Content */}
-        {activeTab === 'general' && <GeneralSettingsTab />}
+        {/* {activeTab === 'general' && <GeneralSettingsTab />} */}
         {activeTab === 'products' && <ProductsTab />}
         {activeTab === 'clients' && <ClientsTab />}
         {activeTab === 'reporting' && <ReportingTab />}
@@ -207,7 +206,7 @@ function GeneralSettingsTab() {
   return (
     <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-sm p-6 flex flex-col gap-6 transition-colors duration-300 animate-fade-in flex-1">
       <Toast message={toast.message} type={toast.type} />
-      
+
       <section>
         <h3 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-4">Business Information</h3>
         <div className="flex flex-col gap-5">
@@ -320,7 +319,7 @@ function ProductsTab() {
           </button>
         </div>
       </div>
-      
+
       <div className="overflow-x-auto flex-1 custom-scrollbar">
         <table className="w-full text-left text-[13px]">
           <thead className="bg-gray-50 dark:bg-[#0f1117]/50 text-gray-500 dark:text-gray-400 font-bold border-b border-gray-200 dark:border-[#2a2d33] uppercase tracking-wider text-[11px]">
@@ -431,7 +430,7 @@ function ClientsTab() {
           </button>
         </div>
       </div>
-      
+
       <div className="overflow-x-auto flex-1 custom-scrollbar">
         <table className="w-full text-left text-[13px]">
           <thead className="bg-gray-50 dark:bg-[#0f1117]/50 text-gray-500 dark:text-gray-400 font-bold border-b border-gray-200 dark:border-[#2a2d33] uppercase tracking-wider text-[11px]">
@@ -452,9 +451,8 @@ function ClientsTab() {
                 <td className="px-5 py-3">{client.contact}</td>
                 <td className="px-5 py-3">{client.email}</td>
                 <td className="px-5 py-3">
-                  <span className={`px-2 py-1 rounded text-[11px] font-bold ${
-                    client.status === 'Active' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                  }`}>{client.status}</span>
+                  <span className={`px-2 py-1 rounded text-[11px] font-bold ${client.status === 'Active' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                    }`}>{client.status}</span>
                 </td>
                 <td className="px-5 py-3 text-right space-x-3">
                   <button onClick={() => setViewItem(client)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" title="View"><EyeIcon /></button>
@@ -484,9 +482,9 @@ function ClientForm({ initialData, onSave, onClose }) {
         <Field label="Contact Person"><input type="text" className={inputCls} value={formData.contact} onChange={set('contact')} placeholder="e.g. John Doe" /></Field>
         <Field label="Email Address"><input type="email" className={inputCls} value={formData.email} onChange={set('email')} placeholder="e.g. john@acme.com" /></Field>
         <Field label="Status">
-          <Select variant="settings" 
-            className={inputCls} 
-            value={formData.status} 
+          <Select variant="settings"
+            className={inputCls}
+            value={formData.status}
             onChange={(val) => setFormData(prev => ({ ...prev, status: val }))}
             options={[
               { value: "Active", label: "Active" },
@@ -613,7 +611,7 @@ function ReportingTab() {
     return true;
   };
 
-  const filteredData = pipelineData.filter(d => 
+  const filteredData = pipelineData.filter(d =>
     (clientFilter === 'All' || d.client === clientFilter) &&
     (employeeFilter === 'All' || d.employee === employeeFilter) &&
     inDateRange(d)
@@ -632,10 +630,10 @@ function ReportingTab() {
 
   const detailHistory = detailTarget
     ? filteredData.filter(item =>
-        detailTarget.type === 'clients'
-          ? item.client === detailTarget.key
-          : item.employee === detailTarget.key
-      )
+      detailTarget.type === 'clients'
+        ? item.client === detailTarget.key
+        : item.employee === detailTarget.key
+    )
     : [];
 
   const entityLabel = activeSubTab === 'clients' ? 'Client' : 'Employee';
@@ -678,19 +676,9 @@ function ReportingTab() {
 
   return (
     <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-sm animate-fade-in flex-1 overflow-hidden flex flex-col">
-      <div className="p-5 border-b border-gray-200 dark:border-[#2a2d33] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
+      <div className="p-5 border-b border-gray-200 dark:border-[#2a2d33] flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap w-full sm:w-auto">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">Reporting Overview</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Switch between client and employee summaries, then view full history for any row.</p>
-        </div>
-        <button onClick={handleDownloadPDF} className="h-9 px-4 bg-purple-600 hover:bg-purple-500 text-white text-[13px] font-bold rounded-lg shadow-sm transition-colors flex items-center gap-2">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-          Download PDF
-        </button>
-      </div>
-
-      <div className="p-5 border-b border-gray-100 dark:border-[#2a2d33] bg-gray-50/50 dark:bg-[#0f1117]/50">
-        <div className="flex flex-wrap gap-2 mb-5">
           <button
             type="button"
             onClick={() => setActiveSubTab('clients')}
@@ -706,6 +694,14 @@ function ReportingTab() {
             Employees
           </button>
         </div>
+        <button onClick={handleDownloadPDF} className="h-9 px-4 bg-purple-600 hover:bg-purple-500 text-white text-[13px] font-bold rounded-lg shadow-sm transition-colors flex items-center gap-2">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+          Download PDF
+        </button>
+      </div>
+
+      <div className="p-5 border-b border-gray-100 dark:border-[#2a2d33] bg-gray-50/50 dark:bg-[#0f1117]/50">
+
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Field label="Filter by Client">
@@ -833,11 +829,10 @@ function ReportingTab() {
                       <td className="px-4 py-3">{item.quotationSent}</td>
                       <td className="px-4 py-3">{item.clientResponse}</td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
-                          item.status === 'Approved' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                        <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${item.status === 'Approved' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' :
                           item.status === 'Pending' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' :
-                          'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                        }`}>
+                            'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                          }`}>
                           {item.status}
                         </span>
                       </td>

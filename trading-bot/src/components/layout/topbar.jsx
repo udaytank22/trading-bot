@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ChatDrawer from "../chat/chatDrawer";
+import SearchBar from "../ui/searchBar";
 import { useAppContext } from "../../context";
 
 const PAGE_TITLES = {
@@ -49,6 +50,7 @@ export default function Topbar({ onToggleSidebar }) {
   const navigate = useNavigate();
   const title = PAGE_TITLES[pathname] ?? "Dashboard";
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const firstName = currentUser?.name?.split(" ")[0] || "Admin";
 
 
@@ -78,6 +80,13 @@ export default function Topbar({ onToggleSidebar }) {
         <h1 className="text-gray-900 dark:text-white text-[14px] font-bold tracking-tight">
           {title}
         </h1>
+        <SearchBar
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Global search..."
+          width="w-[220px]"
+          className="hidden md:block"
+        />
       </div>
 
       {/* Centered Welcome Greeting */}
