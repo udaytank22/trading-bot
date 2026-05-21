@@ -1,6 +1,6 @@
 import React from "react";
 import { Download } from "lucide-react";
-import { DataTable, rowStripeClass, ROW_HOVER_CLS } from "./ui/DataTable";
+import { DataTable, rowStripeClass, ROW_HOVER_CLS } from "./ui/dataTable";
 import { formatINR, formatDateString } from "../services/marginEngine";
 
 const PROFIT_COLUMNS = [

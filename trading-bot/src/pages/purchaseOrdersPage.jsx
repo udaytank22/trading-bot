@@ -16,10 +16,10 @@
 import React, { useState, useMemo, useContext, useCallback } from "react";
 import { AppContext } from "../context";
 import { useToast } from "../hooks/useToast";
-import AddPurchaseOrderModal from "../components/AddPurchaseOrderModal";
-import POTable from "../components/POTable";
-import PODrawer from "../components/PODrawer";
-import POEmailModal from "../components/POEmailModal";
+import AddPurchaseOrderModal from "../components/addPurchaseOrderModal";
+import POTable from "../components/pOTable";
+import PODrawer from "../components/pODrawer";
+import POEmailModal from "../components/pOEmailModal";
 import { Toast, PageToolbar, Pagination } from "../components/ui";
 
 function EmptyState() {

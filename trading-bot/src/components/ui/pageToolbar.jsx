@@ -36,9 +36,9 @@
  */
 
 import React from "react";
-import SearchBar from "./SearchBar";
-import Button from "./Button";
-import Select from "./Select";
+import SearchBar from "./searchBar";
+import Button from "./button";
+import Select from "./select";
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 // Inline SVG for the "+" add icon used in the primary button
@@ -150,7 +150,7 @@ export default function PageToolbar({
       {rightSlot ? (
         rightSlot
       ) : onAdd ? (
-        <Button variant="primary" size="md" onClick={onAdd}>
+        <Button variant="primary" size="sm" onClick={onAdd}>
           <PlusIcon />
           {addLabel}
         </Button>

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { confirmAction } from '../utils/swal';
-import { Select } from '../components/ui';
+import { PageToolbar, Select } from '../components/ui';
 
 const inputCls = 'w-full bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-[36px] px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-all shadow-sm focus:ring-1 focus:ring-purple-500/50';
 
@@ -92,6 +92,7 @@ const EditIcon = () => <svg className="w-4 h-4 inline" fill="none" viewBox="0 0 
 const TrashIcon = () => <svg className="w-4 h-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>;
 
 export default function InventoryPage() {
+  const [search, setSearch] = useState("");
   const [inventory, setInventory] = useState([
     { id: 'INV-1001', name: 'Industrial Motor', category: 'Machinery', quantity: 45, price: '$1,200.00', location: 'Warehouse A', status: 'In Stock' },
     { id: 'INV-1002', name: 'Steel Bearings', category: 'Parts', quantity: 12, price: '$45.00', location: 'Warehouse B', status: 'Low Stock' },
@@ -113,6 +114,19 @@ export default function InventoryPage() {
       setInventory(inventory.filter(item => item.id !== id));
     }
   };
+
+  const filteredInventory = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return inventory;
+    return inventory.filter((item) =>
+      item.id.toLowerCase().includes(query) ||
+      item.name.toLowerCase().includes(query) ||
+      item.category.toLowerCase().includes(query) ||
+      item.location.toLowerCase().includes(query) ||
+      item.price.toLowerCase().includes(query) ||
+      item.status.toLowerCase().includes(query)
+    );
+  }, [inventory, search]);
 
   const handleSave = (formData) => {
     if (editItem) {
@@ -136,19 +150,17 @@ export default function InventoryPage() {
           <InventoryForm initialData={editItem} onSave={handleSave} onClose={() => { setIsFormOpen(false); setEditItem(null); }} />
         </RightDrawer>
 
-        <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-sm animate-fade-in flex-1 overflow-hidden flex flex-col">
-          <div className="p-5 border-b border-gray-200 dark:border-[#2a2d33] flex flex-col sm:flex-row items-center justify-between gap-4">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Inventory Management</h2>
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <input type="text" placeholder="Search inventory..." className="w-full sm:w-64 bg-gray-50 dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-9 px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors" />
-              <button onClick={() => setIsFormOpen(true)} className="h-9 px-4 bg-purple-600 hover:bg-purple-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors">
-                + Add Item
-              </button>
-            </div>
-          </div>
-          
+        <PageToolbar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search inventory..."
+          onAdd={() => setIsFormOpen(true)}
+          addLabel="Add Item"
+        />
+
+        <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg transition-colors duration-300">
           <div className="overflow-x-auto flex-1 custom-scrollbar">
-            <table className="w-full text-left text-[13px]">
+            <table className="min-w-full w-full text-left text-[13px] table-auto border-collapse">
               <thead className="bg-gray-50 dark:bg-[#0f1117]/50 text-gray-500 dark:text-gray-400 font-bold border-b border-gray-200 dark:border-[#2a2d33] uppercase tracking-wider text-[11px]">
                 <tr>
                   <th className="px-5 py-3">Item ID</th>
@@ -162,7 +174,7 @@ export default function InventoryPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-[#2a2d33] text-gray-700 dark:text-gray-300">
-                {inventory.map(item => (
+                {filteredInventory.map(item => (
                   <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors">
                     <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400">{item.id}</td>
                     <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">{item.name}</td>
@@ -184,7 +196,7 @@ export default function InventoryPage() {
                     </td>
                   </tr>
                 ))}
-                {inventory.length === 0 && (
+                {filteredInventory.length === 0 && (
                   <tr><td colSpan="8" className="text-center py-8 text-gray-500">No inventory items found.</td></tr>
                 )}
               </tbody>

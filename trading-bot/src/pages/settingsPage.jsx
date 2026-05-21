@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { mockSettings } from '../data/mockSettings';
 import { refreshConfig } from '../config';
-import Toast from '../components/ui/Toast';
+import Toast from '../components/ui/toast';
 import { useToast } from '../hooks/useToast';
 import { Select } from '../components/ui';
 import { confirmAction } from '../utils/swal';

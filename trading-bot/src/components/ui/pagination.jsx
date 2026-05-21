@@ -24,7 +24,7 @@
  */
 
 import React from "react";
-import Select from "./Select";
+import Select from "./select";
 
 /**
  * @param {Object}   props

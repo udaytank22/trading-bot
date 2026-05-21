@@ -15,8 +15,8 @@
  */
 
 import React, { useMemo, useState } from "react";
-import AccountTable from "../components/AccountTable";
-import AddAccountModal from "../components/AddAccountModal";
+import AccountTable from "../components/accountTable";
+import AddAccountModal from "../components/addAccountModal";
 import { AppContext } from "../context";
 import { useToast } from "../hooks/useToast";
 import { confirmAction } from "../utils/swal";

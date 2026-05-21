@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import ChatDrawer from "../chat/ChatDrawer";
+import ChatDrawer from "../chat/chatDrawer";
 import { useAppContext } from "../../context";
 
 const PAGE_TITLES = {
@@ -15,6 +15,8 @@ const PAGE_TITLES = {
   "/documents": "Documents",
   "/notifications": "Notifications",
   "/todo": "To-Do",
+  "/settings": "Settings",
+  "/inventory": "Inventory",
 };
 
 const DAYS = [

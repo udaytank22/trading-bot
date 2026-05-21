@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import EmailPreviewModal from "./EmailPreviewModal";
+import EmailPreviewModal from "./emailPreviewModal";
 import { calculateMargin, formatINR } from "../services/marginEngine";
 import { CONFIG } from "../config";
 import { StatusBadge } from "./ui";
