@@ -31,6 +31,7 @@ import React from "react";
 export default function SearchBar({
   value,
   onChange,
+  onKeyDown,
   placeholder = "Search...",
   width = "w-[340px]",
   className = "",
@@ -38,7 +39,6 @@ export default function SearchBar({
   return (
     /* Wrapper is relative so the icon can be positioned inside the input */
     <div className={`relative ${width} ${className}`}>
-
       {/* Magnifier icon — pointer-events-none so it doesn't capture clicks */}
       <svg
         className="absolute left-3 top-2 w-4 h-4 text-gray-400 pointer-events-none"
@@ -60,6 +60,7 @@ export default function SearchBar({
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={onKeyDown}
         placeholder={placeholder}
         className={[
           "w-full h-8 pl-9 pr-3",

@@ -1,105 +1,65 @@
 import React, { useState, useEffect } from "react";
 import { Select } from "./ui";
-import { parseExcelFile } from "../utils/excelUtils";
-import Swal from "sweetalert2";
 
-const CUSTOMERS = [
-  "Shree Ganesha Enterprises",
-  "Om Sai Manufacturing",
-  "Balaji Impex",
-  "Krishna Engineering Works",
-  "Saraswati Textiles",
-  "Prakash Industrial Supplies",
-  "Venkateswara Metals",
-  "Shiv Shakti Hardware",
-];
+const PRODUCTS = ["Safety Helmet", "Marine Paint", "Engine Oil", "Cables"];
 
-const VESSELS = [
-  "MV Morning Star",
-  "Oceanic Voyager",
-  "Global Mariner",
-  "Pacific Explorer",
-  "Northern Light",
-  "Caspian Sea",
-  "Ever Given",
-  "Arctic Express",
-];
-
-const PRODUCTS = [
-  "Mild Steel Sheets 2mm",
-  "Galvanized Iron Pipes",
-  "Copper Wires 1.5 sqmm",
-  "Industrial Safety Helmets",
-  "Safety Shoes",
-  "CNC Router Tool Bits",
-  "Cotton Yarn 40s",
-  "PTFE Thread Seal Tape",
-  "Ball Valves 1 inch",
-  "Aluminium Extrusion Profiles",
-  "Aluminium Checkered Plates",
-  "SS 304 Fasteners Hex Bolt",
-  "Packaging Tape 2 inch",
-  "Corrugated Boxes",
-  "Stretch Film",
-  "Nitrile Inspection Gloves",
-];
-
-const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
+export default function AddPurchaseOrderModal({ isOpen, onClose, onSubmit }) {
   const [formData, setFormData] = useState({
-    vendor: "",
-    gstTreatment: "Consumer",
-    salesType: "Sales Invoice",
     vessel: "",
     vesselRef: "",
-    totalQty: 0,
-    receivedQty: 0,
-    grnStatus: "GRN Done",
     imoNumber: "",
     supplierTel: "",
-    supplierRefNo: "",
-    referenceDate: "",
-    declarationNo: "",
-    awbBl: "",
     supplierEmail: "",
     category: "",
-    subCategory: "",
-    paymentTerms: "30 Days",
-    taxes: "",
-    deliveryTime: "Urgent",
-    orderDeadline: new Date().toISOString().slice(0, 16),
+    subcategory: "",
+    orderDeadline: "",
     expectedArrival: "",
-    askConfirmation: false,
-    products: [{ id: Date.now(), description: "", quantity: 1, unit: "PCS" }],
-    attachment: null,
+    vendorReference: "",
+    currency: "INR",
+    verifyAll: false,
+
+    products: [
+      {
+        id: Date.now(),
+        product: "",
+        description: "",
+        qty: 1,
+        unitPrice: "",
+        discount: "",
+      },
+    ],
   });
 
-  // Handle Escape key
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === "Escape" && isOpen) onClose();
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
     };
+
     window.addEventListener("keydown", handleKeyDown);
+
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen && !formData.vendor) return null; // Keep rendered for animation if needed, but simple return for now
-
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, checked, type } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData((prev) => ({ ...prev, attachment: file }));
-    }
-  };
+  const updateProduct = (index, field, value) => {
+    const updated = [...formData.products];
 
-  const handleProductChange = (index, field, value) => {
-    const newProducts = [...formData.products];
-    newProducts[index][field] = value;
-    setFormData((prev) => ({ ...prev, products: newProducts }));
+    updated[index][field] = value;
+
+    setFormData((prev) => ({
+      ...prev,
+      products: updated,
+    }));
   };
 
   const addProduct = () => {
@@ -107,445 +67,87 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
       ...prev,
       products: [
         ...prev.products,
-        { id: Date.now(), description: "", quantity: 1, unit: "PCS" },
+        {
+          id: Date.now(),
+          product: "",
+          description: "",
+          qty: 1,
+          unitPrice: "",
+          discount: "",
+        },
       ],
     }));
   };
 
-  const removeProduct = (index) => {
-    if (formData.products.length > 1) {
-      const newProducts = formData.products.filter((_, i) => i !== index);
-      setFormData((prev) => ({ ...prev, products: newProducts }));
-    }
+  const handleExcelUpload = (e) => {
+    console.log(e.target.files[0]);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
     onSubmit(formData);
+
     onClose();
   };
 
   const handleBackdropClick = (e) => {
-    if (e.target === e.currentTarget) onClose();
-  };
-
-  const handleExcelUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    try {
-      const data = await parseExcelFile(file);
-      if (data && data.length > 0) {
-        const firstRow = data[0];
-
-        // Map header fields
-        const newFormData = {
-          ...formData,
-          vendor: firstRow.Vendor || firstRow.vendor || formData.vendor,
-          vessel: firstRow.Vessel || firstRow.vessel || formData.vessel,
-          vesselRef:
-            firstRow.VesselRef || firstRow.vesselRef || formData.vesselRef,
-          imoNumber: firstRow.IMO || firstRow.imoNumber || formData.imoNumber,
-          supplierTel:
-            firstRow.Tel || firstRow.supplierTel || formData.supplierTel,
-          paymentTerms:
-            firstRow.PaymentTerms ||
-            firstRow.paymentTerms ||
-            formData.paymentTerms,
-          deliveryTime:
-            firstRow.DeliveryTime ||
-            firstRow.deliveryTime ||
-            formData.deliveryTime,
-          expectedArrival:
-            firstRow.ExpectedArrival ||
-            firstRow.expectedArrival ||
-            formData.expectedArrival,
-        };
-
-        // Map products
-        const products = data
-          .map((row) => ({
-            id: Date.now() + Math.random(),
-            description:
-              row.Description ||
-              row.description ||
-              row.Product ||
-              row.product ||
-              "",
-            quantity: row.Quantity || row.quantity || row.Qty || row.qty || 1,
-            unit: row.Unit || row.unit || "PCS",
-          }))
-          .filter((p) => p.description);
-
-        if (products.length > 0) {
-          newFormData.products = products;
-        }
-
-        setFormData(newFormData);
-        Swal.fire({
-          icon: "success",
-          title: "Data Imported",
-          text: `Successfully imported ${products.length} items from Excel.`,
-          timer: 2000,
-          showConfirmButton: false,
-          toast: true,
-          position: "top-end",
-        });
-      }
-    } catch (error) {
-      console.error("Excel parse error:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Import Failed",
-        text: "Failed to parse Excel file. Please check the format.",
-      });
+    if (e.target === e.currentTarget) {
+      onClose();
     }
   };
 
   return (
     <>
-      {/* Backdrop */}
+      {/* backdrop */}
+
       <div
-        className={`fixed inset-0 bg-black/60 z-[100] transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         onClick={handleBackdropClick}
+        className={`fixed inset-0 bg-black/60 z-[100]
+        transition-all duration-300
+        ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
       />
 
-      {/* Side Drawer */}
+      {/* modal */}
+
       <div
-        className={`fixed top-0 right-0 h-full w-full max-w-2xl bg-white dark:bg-[#1e2028] border-l border-gray-200 dark:border-[#2a2d36] z-[101] transform transition-transform duration-300 ease-in-out flex flex-col shadow-2xl ${isOpen ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed inset-0 z-[101]
+        flex items-center justify-center p-4
+        ${isOpen ? "" : "pointer-events-none"}`}
       >
-        {/* Header */}
-        <div className="px-8 py-5 border-b border-gray-200 dark:border-[#2a2d36] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-purple-600/20 rounded-xl flex items-center justify-center border border-purple-500/20 shadow-lg shadow-purple-600/10">
-              <svg
-                className="w-6 h-6 text-purple-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
-                Create Purchase Order
-              </h2>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mt-0.5">
-                New Transaction Request
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 px-3 py-1.5 bg-green-600/10 border border-green-500/20 rounded-lg text-green-500 text-[10px] font-bold uppercase tracking-wider cursor-pointer hover:bg-green-600/20 transition-all">
-              <svg
-                className="w-3.5 h-3.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                />
-              </svg>
-              Import Excel
-              <input
-                type="file"
-                className="hidden"
-                accept=".xlsx, .xls, .csv"
-                onChange={handleExcelUpload}
-              />
-            </label>
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-white transition-all p-2 hover:bg-white/5 rounded-full text-2xl leading-none"
-            >
-              &times;
-            </button>
-          </div>
-        </div>
-
-        <form
-          onSubmit={handleSubmit}
-          className="flex-1 overflow-y-auto p-8 space-y-10 custom-scrollbar"
+        <div
+          className={`w-full max-w-7xl h-full
+          max-h-[92vh]
+          bg-white
+          dark:bg-[#1e2028]
+          rounded-2xl
+          border
+          border-gray-200
+          dark:border-[#2a2d36]
+          shadow-2xl
+          flex flex-col
+          overflow-hidden
+          transition-all duration-300
+          ${isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"}`}
         >
-          {/* Form Content */}
-          <div className="grid grid-cols-1 gap-y-8">
-            {/* Vendor & General */}
-            <div className="space-y-6">
-              <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
-                  Vendor
-                </label>
-                <Select
-  variant="form"
-                  value={formData.vendor}
-                  onChange={(val) => handleChange({ target: { name: "vendor", value: val } })}
-                  options={[
-                    { value: "", label: "Select Vendor" },
-                    ...CUSTOMERS.map((c) => ({ value: c, label: c }))
-                  ]}
-                  className="w-full"
-                />
-              </div>
+          {/* Header */}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
-                    GST Treatment
-                  </label>
-                  <input
-                    type="text"
-                    name="gstTreatment"
-                    value={formData.gstTreatment}
-                    onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:border-purple-500/50 transition-all hover:bg-gray-200 dark:hover:bg-[#14171c]"
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
-                    Sales Type
-                  </label>
-                  <input
-                    type="text"
-                    name="salesType"
-                    value={formData.salesType}
-                    onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:border-purple-500/50 transition-all hover:bg-gray-200 dark:hover:bg-[#14171c]"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
-                    Vessel
-                  </label>
-                  <Select
-  variant="form"
-                    value={formData.vessel}
-                    onChange={(val) => handleChange({ target: { name: "vessel", value: val } })}
-                    options={[
-                      { value: "", label: "Select Vessel" },
-                      ...VESSELS.map((v) => ({ value: v, label: v }))
-                    ]}
-                    className="w-full"
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
-                    Vessel Ref
-                  </label>
-                  <input
-                    type="text"
-                    name="vesselRef"
-                    value={formData.vesselRef}
-                    onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:border-purple-500/50 transition-all hover:bg-gray-200 dark:hover:bg-[#14171c]"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
-                    IMO Number
-                  </label>
-                  <input
-                    type="text"
-                    name="imoNumber"
-                    value={formData.imoNumber}
-                    onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:border-purple-500/50 transition-all hover:bg-gray-200 dark:hover:bg-[#14171c]"
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
-                    Supplier Tel
-                  </label>
-                  <input
-                    type="text"
-                    name="supplierTel"
-                    value={formData.supplierTel}
-                    onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:border-purple-500/50 transition-all hover:bg-gray-200 dark:hover:bg-[#14171c]"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
-                    Payment Terms
-                  </label>
-                  <Select
-  variant="form"
-                    value={formData.paymentTerms}
-                    onChange={(val) => handleChange({ target: { name: "paymentTerms", value: val } })}
-                    options={[
-                      { value: "Immediate", label: "Immediate" },
-                      { value: "15 Days", label: "15 Days" },
-                      { value: "30 Days", label: "30 Days" },
-                      { value: "45 Days", label: "45 Days" }
-                    ]}
-                    className="w-full"
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
-                    Delivery Time
-                  </label>
-                  <input
-                    type="time"
-                    name="deliveryTime"
-                    value={formData.deliveryTime}
-                    onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:border-purple-500/50 transition-all dark:[color-scheme:dark] cursor-pointer hover:bg-gray-200 dark:hover:bg-[#14171c]"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
-                    Order Deadline
-                  </label>
-                  <input
-                    type="datetime-local"
-                    name="orderDeadline"
-                    value={formData.orderDeadline}
-                    onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:border-purple-500/50 transition-all dark:[color-scheme:dark] cursor-pointer hover:bg-gray-200 dark:hover:bg-[#14171c]"
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
-                    Expected Arrival
-                  </label>
-                  <input
-                    type="date"
-                    name="expectedArrival"
-                    value={formData.expectedArrival}
-                    onChange={handleChange}
-                    className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white outline-none focus:border-purple-500/50 transition-all dark:[color-scheme:dark] cursor-pointer hover:bg-gray-200 dark:hover:bg-[#14171c]"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Product Lines Section */}
-            <div className="space-y-4 pt-6">
-              <div className="flex items-center justify-between border-b border-gray-200 dark:border-[#2a2d33] pb-2">
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                  PO Items
-                  <span className="bg-purple-600/20 text-purple-400 text-[10px] px-2 py-0.5 rounded-full uppercase">
-                    {formData.products.length} Items
-                  </span>
-                </h3>
-              </div>
-
-              <div className="overflow-visible border border-gray-200 dark:border-[#2a2d33] rounded-xl bg-gray-100 dark:bg-[#0c0e12]/30">
-                <table className="w-full text-left text-sm border-collapse">
-                  <thead>
-                    <tr className="bg-gray-100 dark:bg-[#0c0e12]/50 text-gray-400 text-[11px] uppercase tracking-wider border-b border-gray-200 dark:border-[#2a2d33]">
-                      <th className="px-4 py-3 font-semibold">
-                        Item Description
-                      </th>
-                      <th className="px-4 py-3 font-semibold w-24 text-center">
-                        Qty
-                      </th>
-                      <th className="px-4 py-3 font-semibold w-24">Unit</th>
-                      <th className="px-4 py-3 font-semibold w-12"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#2a2d33]">
-                    {formData.products.map((product, index) => (
-                      <tr
-                        key={product.id}
-                        className="group hover:bg-white/[0.02] transition-colors"
-                      >
-                        <td className="px-4 py-3">
-                          <Select
-  variant="form"
-                            value={product.description}
-                            onChange={(val) => handleProductChange(index, "description", val)}
-                            options={[
-                              { value: "", label: "Select Product" },
-                              ...PRODUCTS.map((p) => ({ value: p, label: p }))
-                            ]}
-                            className="w-full"
-                          />
-                        </td>
-                        <td className="px-4 py-3">
-                          <input
-                            type="number"
-                            value={product.quantity}
-                            onChange={(e) =>
-                              handleProductChange(
-                                index,
-                                "quantity",
-                                e.target.value,
-                              )
-                            }
-                            className="w-full bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded px-2 py-1 text-center text-gray-900 dark:text-white text-sm focus:border-purple-500 outline-none"
-                          />
-                        </td>
-                        <td className="px-4 py-3">
-                          <Select
-  variant="form"
-                            value={product.unit}
-                            onChange={(val) => handleProductChange(index, "unit", val)}
-                            options={[
-                              { value: "PCS", label: "PCS" },
-                              { value: "KGS", label: "KGS" },
-                              { value: "MTR", label: "MTR" },
-                              { value: "SET", label: "SET" }
-                            ]}
-                            className="w-full"
-                          />
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <button
-                            type="button"
-                            onClick={() => removeProduct(index)}
-                            className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
+          <div className="px-8 py-5 border-b border-gray-200 dark:border-[#2a2d36] flex justify-between items-center gap-4">
+            <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={addProduct}
-                className="w-full py-2.5 border border-dashed border-gray-200 dark:border-[#2a2d33] rounded-xl text-xs font-bold text-gray-500 hover:text-purple-400 hover:border-purple-500/50 hover:bg-purple-500/5 transition-all flex items-center justify-center gap-2 group"
+                onClick={onClose}
+                className="inline-flex items-center justify-center
+                w-10 h-10 rounded-full
+                border border-gray-200
+                dark:border-[#2a2d36]
+                text-gray-600 dark:text-gray-300
+                hover:bg-gray-100
+                dark:hover:bg-white/5
+                transition"
               >
                 <svg
-                  className="w-3.5 h-3.5"
+                  className="w-5 h-5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -554,120 +156,173 @@ const AddPurchaseOrderModal = ({ isOpen, onClose, onSubmit }) => {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M12 4v16m8-8H4"
+                    d="M15 19l-7-7 7-7"
                   />
                 </svg>
-                Add Item
               </button>
-            </div>
-
-            {/* Attachment & Confirmation */}
-            <div className="space-y-6 pt-4">
-              <div className="flex items-center gap-3">
-                <div className="relative flex items-center">
-                  <input
-                    type="checkbox"
-                    name="askConfirmation"
-                    checked={formData.askConfirmation}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        askConfirmation: e.target.checked,
-                      }))
-                    }
-                    className="peer w-5 h-5 rounded-md border-gray-200 dark:border-[#2a2d33] bg-gray-100 dark:bg-[#0c0e12] text-purple-600 focus:ring-purple-500/50 transition-all cursor-pointer appearance-none border"
-                  />
-                  <svg
-                    className="absolute w-3.5 h-3.5 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity left-[3px]"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={4}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer hover:text-gray-300 transition-colors">
-                  Ask confirmation
-                </label>
-              </div>
 
               <div>
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2 block">
-                  Attachment
-                </label>
-                <div className="relative group">
-                  <input
-                    type="file"
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    onChange={handleFileChange}
-                  />
-                  <div
-                    className={`w-full border-2 border-dashed rounded-xl px-5 py-4 transition-all flex items-center justify-between ${
-                      formData.attachment
-                        ? "bg-purple-600/5 border-purple-500/40 text-purple-400"
-                        : "bg-gray-100 dark:bg-[#0c0e12]/40 border-gray-200 dark:border-[#2a2d33] text-gray-600 group-hover:border-purple-500/30"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`p-2 rounded-lg ${formData.attachment ? "bg-purple-600/20" : "bg-white/5"}`}
-                      >
-                        <svg
-                          className={`w-5 h-5 ${formData.attachment ? "text-purple-400" : "text-gray-500"}`}
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                          />
-                        </svg>
-                      </div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider truncate max-w-[200px]">
-                        {formData.attachment
-                          ? formData.attachment.name
-                          : "Upload PO"}
-                      </span>
-                    </div>
-                    {!formData.attachment && (
-                      <span className="text-[9px] text-gray-500 uppercase tracking-widest">
-                        Max 10MB
-                      </span>
-                    )}
-                  </div>
-                </div>
+                <h2 className="text-xl font-bold">Create Purchase Order</h2>
+
+                <p className="text-sm text-gray-500">
+                  Create and manage purchase order details.
+                </p>
               </div>
             </div>
-          </div>
-        </form>
 
-        {/* Footer */}
-        <div className="px-8 py-5 border-t border-gray-200 dark:border-[#2a2d33] flex gap-3 bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-6 py-2.5 rounded-lg border border-gray-200 dark:border-gray-200 dark:border-[#2a2d33] text-gray-700 dark:text-gray-300 text-sm font-bold hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors"
+            <label className="flex items-center gap-2 px-4 py-2 bg-green-600/10 border border-green-500/20 rounded-lg text-green-600 text-xs font-bold uppercase cursor-pointer hover:bg-green-600/20 transition">
+              Import Excel
+              <input
+                type="file"
+                className="hidden"
+                onChange={handleExcelUpload}
+              />
+            </label>
+          </div>
+
+          <form
+            onSubmit={handleSubmit}
+            className="flex-1 overflow-y-auto p-8 custom-scrollbar"
           >
-            Discard
-          </button>
-          <button
-            onClick={handleSubmit}
-            className="flex-1 px-6 py-2.5 rounded-lg bg-purple-600 text-white text-sm font-bold hover:bg-purple-500 transition-all shadow-lg shadow-purple-600/20 active:scale-[0.98]"
-          >
-            Confirm Purchase Order
-          </button>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Field
+                label="Vessel"
+                name="vessel"
+                value={formData.vessel}
+                onChange={handleChange}
+              />
+
+              <Field
+                label="Vessel Ref"
+                name="vesselRef"
+                value={formData.vesselRef}
+                onChange={handleChange}
+              />
+
+              <Field
+                label="IMO Number"
+                name="imoNumber"
+                value={formData.imoNumber}
+                onChange={handleChange}
+              />
+
+              <Field
+                label="Supplier Tel"
+                name="supplierTel"
+                value={formData.supplierTel}
+                onChange={handleChange}
+              />
+
+              <Field
+                label="Supplier Email"
+                name="supplierEmail"
+                value={formData.supplierEmail}
+                onChange={handleChange}
+              />
+
+              <Field
+                label="Category"
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+              />
+            </div>
+
+            {/* Products */}
+
+            <div className="mt-10">
+              <div className="flex justify-between mb-4">
+                <h4 className="font-bold">Products</h4>
+
+                <button
+                  type="button"
+                  onClick={addProduct}
+                  className="text-purple-600"
+                >
+                  + Add Product
+                </button>
+              </div>
+
+              <div className="border rounded-2xl overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="p-4">Product</th>
+
+                      <th>Description</th>
+
+                      <th>Qty</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {formData.products.map((item, index) => (
+                      <tr key={item.id} className="border-t">
+                        <td className="p-3">
+                          <Select
+                            variant="form"
+                            options={PRODUCTS.map((p) => ({
+                              value: p,
+                              label: p,
+                            }))}
+                            onChange={(v) => updateProduct(index, "product", v)}
+                          />
+                        </td>
+
+                        <td>
+                          <input className="border rounded p-2 w-full" />
+                        </td>
+
+                        <td>
+                          <input
+                            type="number"
+                            className="border rounded p-2 w-20"
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </form>
+
+          {/* Footer */}
+
+          <div className="px-8 py-5 border-t bg-gray-50 flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-3 rounded-xl border"
+            >
+              Discard
+            </button>
+
+            <button
+              type="submit"
+              onClick={handleSubmit}
+              className="flex-1 rounded-xl bg-purple-600 text-white font-bold"
+            >
+              Confirm Purchase Order
+            </button>
+          </div>
         </div>
       </div>
     </>
   );
-};
+}
 
-export default AddPurchaseOrderModal;
+function Field({ label, name, value, onChange }) {
+  return (
+    <div>
+      <label className="block text-sm font-semibold mb-2">{label}</label>
+
+      <input
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="w-full border rounded-xl p-3"
+      />
+    </div>
+  );
+}

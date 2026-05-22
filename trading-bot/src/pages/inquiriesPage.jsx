@@ -14,8 +14,14 @@
  * @author TradeMind Dev Team
  */
 
-import React, { useState, useEffect, useMemo, useContext, useCallback } from "react";
-import { useLocation } from "react-router-dom";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useContext,
+  useCallback,
+} from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { AppContext } from "../context";
 import DealDrawer from "../components/dealDrawer";
@@ -32,7 +38,6 @@ import VerificationModal from "../components/verificationModal";
 import AdminApprovalModal from "../components/adminApprovalModal";
 import AddInquiryModal from "../components/addInquiryModal";
 import { Toast, PageToolbar, Pagination } from "../components/ui";
-
 
 function EmptyState() {
   return (
@@ -64,7 +69,8 @@ function EmptyState() {
 /* ── Main page ───────────────────────────────────────────────────── */
 export default function InquiriesPage() {
   const location = useLocation();
-  const { inquiriesData, setInquiriesData, setSupplyData, currentUser } = useContext(AppContext);
+  const { inquiriesData, setInquiriesData, setSupplyData, currentUser } =
+    useContext(AppContext);
   const { toast, showToast } = useToast();
 
   // Filters & pagination
@@ -104,6 +110,24 @@ export default function InquiriesPage() {
     };
   }, [loadData]);
 
+  // If navigated here with an `openInquiryId` in location.state, open that inquiry
+  const navigate = useNavigate();
+  useEffect(() => {
+    const idToOpen = location.state?.openInquiryId;
+    if (idToOpen && inquiriesData && inquiriesData.length > 0) {
+      const found = inquiriesData.find((i) => i.inquiry_id === idToOpen);
+      if (found) {
+        setSelectedDeal(found);
+        setIsDrawerOpen(true);
+        // remove the openInquiryId from history state
+        navigate(location.pathname, {
+          replace: true,
+          state: { filter: location.state?.filter },
+        });
+      }
+    }
+  }, [location.state, inquiriesData]);
+
   const syncLabel = useMemo(() => {
     const mins = Math.floor((now - lastSynced) / 60_000);
     return mins < 1 ? "Just now" : `${mins} min ago`;
@@ -142,7 +166,9 @@ export default function InquiriesPage() {
     });
 
     // Sort by latest date first
-    return result.sort((a, b) => new Date(b.date_received) - new Date(a.date_received));
+    return result.sort(
+      (a, b) => new Date(b.date_received) - new Date(a.date_received),
+    );
   }, [inquiriesData, search, filter]);
 
   const totalPages = Math.ceil(filteredInquiries.length / itemsPerPage);
@@ -181,11 +207,15 @@ export default function InquiriesPage() {
     (id, newStatus, extraData = {}) => {
       setInquiriesData((prev) =>
         prev.map((inq) =>
-          inq.inquiry_id === id ? { ...inq, status: newStatus, ...extraData } : inq,
+          inq.inquiry_id === id
+            ? { ...inq, status: newStatus, ...extraData }
+            : inq,
         ),
       );
       setSelectedDeal((prev) =>
-        prev?.inquiry_id === id ? { ...prev, status: newStatus, ...extraData } : prev,
+        prev?.inquiry_id === id
+          ? { ...prev, status: newStatus, ...extraData }
+          : prev,
       );
     },
     [setInquiriesData],
@@ -193,11 +223,14 @@ export default function InquiriesPage() {
 
   const handleStockConfirm = (selectedSuppliers) => {
     if (activeStepDeal) {
-      updateDealStatus(activeStepDeal.inquiry_id, "RFQ_READY", { 
-        selected_suppliers: selectedSuppliers 
+      updateDealStatus(activeStepDeal.inquiry_id, "RFQ_READY", {
+        selected_suppliers: selectedSuppliers,
       });
       setActiveStepView(null);
-      showToast(`Selected ${selectedSuppliers.length} suppliers for RFQ.`, "success");
+      showToast(
+        `Selected ${selectedSuppliers.length} suppliers for RFQ.`,
+        "success",
+      );
     }
   };
 
@@ -216,8 +249,8 @@ export default function InquiriesPage() {
         margin_percent: adjustedData.margin_percent,
         discount_percent: adjustedData.discount_percent,
         my_quote: {
-          products: adjustedData.products
-        }
+          products: adjustedData.products,
+        },
       });
       setActiveStepView(null);
       showToast("Quotation approved by Admin.", "success");
@@ -228,20 +261,20 @@ export default function InquiriesPage() {
     setActiveStepDeal(deal);
     switch (currentStatus) {
       case "PENDING":
-        setActiveStepView('STOCK_CHECK');
+        setActiveStepView("STOCK_CHECK");
         break;
       case "RFQ_READY":
-        setActiveStepView('RFQ');
+        setActiveStepView("RFQ");
         break;
       case "CLIENT_QUOTING":
       case "TL_REVIEW":
-        setActiveStepView('QUOTE');
+        setActiveStepView("QUOTE");
         break;
       case "ADMIN_APPROVAL":
-        setActiveStepView('ADMIN_APPROVAL');
+        setActiveStepView("ADMIN_APPROVAL");
         break;
       case "EMPLOYEE_VERIFY":
-        setActiveStepView('VERIFY');
+        setActiveStepView("VERIFY");
         break;
       case "CLIENT_FINAL_APPROVAL":
         // Simulated client decision using SweetAlert2
@@ -255,7 +288,7 @@ export default function InquiriesPage() {
           confirmButtonText: "Accept Quote",
           cancelButtonText: "Reject Quote",
           background: "#1a1d23",
-          color: "#fff"
+          color: "#fff",
         }).then((result) => {
           if (result.isConfirmed) {
             updateDealStatus(deal.inquiry_id, "QUOTE_SENT");
@@ -265,7 +298,7 @@ export default function InquiriesPage() {
               text: "The deal has been moved to Supply.",
               icon: "success",
               background: "#1a1d23",
-              color: "#fff"
+              color: "#fff",
             });
           } else if (result.dismiss === Swal.DismissReason.cancel) {
             updateDealStatus(deal.inquiry_id, "CLOSED");
@@ -275,7 +308,7 @@ export default function InquiriesPage() {
               text: "The inquiry has been closed.",
               icon: "error",
               background: "#1a1d23",
-              color: "#fff"
+              color: "#fff",
             });
           }
         });
@@ -309,30 +342,31 @@ export default function InquiriesPage() {
         seller_quote: {
           ...activeStepDeal.seller_quote,
           date_received: new Date().toISOString(),
-          products: quoteData.products.map(p => ({
+          products: quoteData.products.map((p) => ({
             ...p,
-            seller_unit_price: p.my_unit_price
-          }))
-        }
+            seller_unit_price: p.my_unit_price,
+          })),
+        },
       });
       setActiveStepView(null);
       showToast("Prices quoted. Sent to Team Lead for review.", "success");
     } else if (activeStepDeal.status === "TL_REVIEW") {
       const margin_percent = parseFloat(quoteData.margin) || 0;
       const discount_percent = parseFloat(quoteData.discount) || 0;
-      
-      const finalProducts = activeStepDeal.seller_quote.products.map(p => {
+
+      const finalProducts = activeStepDeal.seller_quote.products.map((p) => {
         const cost = p.seller_unit_price || 0;
         let my_unit_price = cost;
         if (margin_percent > 0 || discount_percent > 0) {
-          my_unit_price = cost * (1 + margin_percent / 100) * (1 - discount_percent / 100);
+          my_unit_price =
+            cost * (1 + margin_percent / 100) * (1 - discount_percent / 100);
         }
         return {
           ...p,
           my_unit_price,
           margin_percent,
           discount_percent,
-          total_price: my_unit_price * (p.quantity || 1)
+          total_price: my_unit_price * (p.quantity || 1),
         };
       });
 
@@ -341,10 +375,10 @@ export default function InquiriesPage() {
         discount_percent,
         tl_approved: true,
         my_quote: {
-          products: finalProducts
-        }
+          products: finalProducts,
+        },
       };
-      
+
       updateDealStatus(activeStepDeal.inquiry_id, "ADMIN_APPROVAL", extraData);
       setActiveStepView(null);
       showToast("Margin set. Sent for Admin approval.", "success");
@@ -371,13 +405,13 @@ export default function InquiriesPage() {
       date_received: new Date().toISOString(),
       buyer_name: newInquiry.customer,
       buyer_email: "pending@example.com",
-      products: newInquiry.products.map(p => ({
+      products: newInquiry.products.map((p) => ({
         product_name: p.description,
         quantity: p.quantity,
-        unit: p.unit
-      }))
+        unit: p.unit,
+      })),
     };
-    setInquiriesData(prev => [tempInquiry, ...prev]);
+    setInquiriesData((prev) => [tempInquiry, ...prev]);
     showToast("New inquiry created successfully", "success");
   };
 
@@ -398,53 +432,53 @@ export default function InquiriesPage() {
     return (
       <div className="w-full h-full bg-white dark:bg-[#0c0e12] animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-y-auto pb-10">
         <div className="max-w-6xl mx-auto py-8 px-4">
-           {activeStepView === 'STOCK_CHECK' && (
-             <StockCheckModal 
-               isOpen={true} 
-               isPageMode={true} 
-               onClose={() => setActiveStepView(null)} 
-               onConfirm={handleStockConfirm} 
-               deal={activeStepDeal} 
-             />
-           )}
-           {activeStepView === 'RFQ' && (
-             <RFQModal 
-               isOpen={true} 
-               isPageMode={true} 
-               onClose={() => setActiveStepView(null)} 
-               onSubmit={handleRFQSubmit} 
-               deal={activeStepDeal} 
-             />
-           )}
-           {activeStepView === 'QUOTE' && (
-             <QuoteModal 
-               isOpen={true} 
-               isPageMode={true} 
-               onClose={() => setActiveStepView(null)} 
-               onSubmit={handleQuoteSubmit} 
-               deal={activeStepDeal} 
-             />
-           )}
-           {activeStepView === 'VERIFY' && (
-             <VerificationModal 
-               isOpen={true} 
-               isPageMode={true} 
-               onClose={() => setActiveStepView(null)} 
-               onConfirm={handleVerifyConfirm} 
-               deal={activeStepDeal} 
-             />
-           )}
-           {activeStepView === 'ADMIN_APPROVAL' && (
-             <AdminApprovalModal 
-               isOpen={true} 
-               isPageMode={true} 
-               onClose={() => setActiveStepView(null)} 
-               onConfirm={handleAdminConfirm} 
-               deal={activeStepDeal} 
-             />
-           )}
+          {activeStepView === "STOCK_CHECK" && (
+            <StockCheckModal
+              isOpen={true}
+              isPageMode={true}
+              onClose={() => setActiveStepView(null)}
+              onConfirm={handleStockConfirm}
+              deal={activeStepDeal}
+            />
+          )}
+          {activeStepView === "RFQ" && (
+            <RFQModal
+              isOpen={true}
+              isPageMode={true}
+              onClose={() => setActiveStepView(null)}
+              onSubmit={handleRFQSubmit}
+              deal={activeStepDeal}
+            />
+          )}
+          {activeStepView === "QUOTE" && (
+            <QuoteModal
+              isOpen={true}
+              isPageMode={true}
+              onClose={() => setActiveStepView(null)}
+              onSubmit={handleQuoteSubmit}
+              deal={activeStepDeal}
+            />
+          )}
+          {activeStepView === "VERIFY" && (
+            <VerificationModal
+              isOpen={true}
+              isPageMode={true}
+              onClose={() => setActiveStepView(null)}
+              onConfirm={handleVerifyConfirm}
+              deal={activeStepDeal}
+            />
+          )}
+          {activeStepView === "ADMIN_APPROVAL" && (
+            <AdminApprovalModal
+              isOpen={true}
+              isPageMode={true}
+              onClose={() => setActiveStepView(null)}
+              onConfirm={handleAdminConfirm}
+              deal={activeStepDeal}
+            />
+          )}
         </div>
-        
+
         <MultiEmailPreviewModal
           isOpen={isMultiEmailModalOpen}
           onClose={handleMultiEmailClose}
@@ -463,18 +497,26 @@ export default function InquiriesPage() {
       {/* Centralized toolbar: search + status filter + Add Inquiry button */}
       <PageToolbar
         search={search}
-        onSearchChange={(val) => { setSearch(val); setCurrentPage(1); }}
+        onSearchChange={(val) => {
+          setSearch(val);
+          setCurrentPage(1);
+        }}
         searchPlaceholder="Search by buyer, vessel, ref or product..."
-        filterValue={[
-          "QUOTE_SENT_ONLY", "PENDING_REPLIES",
-        ].includes(filter) ? "All" : filter}
-        onFilterChange={(val) => { setFilter(val); setCurrentPage(1); }}
+        filterValue={
+          ["QUOTE_SENT_ONLY", "PENDING_REPLIES"].includes(filter)
+            ? "All"
+            : filter
+        }
+        onFilterChange={(val) => {
+          setFilter(val);
+          setCurrentPage(1);
+        }}
         filterOptions={[
-          { value: "All",        label: "All Status" },
-          { value: "PENDING",    label: "Pending" },
-          { value: "RFQ_SENT",   label: "RFQ Sent" },
+          { value: "All", label: "All Status" },
+          { value: "PENDING", label: "Pending" },
+          { value: "RFQ_SENT", label: "RFQ Sent" },
           { value: "QUOTE_SENT", label: "Quote Sent" },
-          { value: "CLOSED",     label: "Closed" },
+          { value: "CLOSED", label: "Closed" },
         ]}
         onAdd={() => setIsAddModalOpen(true)}
         addLabel="Add Inquiry"

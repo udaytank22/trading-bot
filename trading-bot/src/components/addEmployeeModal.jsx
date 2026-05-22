@@ -135,66 +135,70 @@ export default function AddEmployeeModal({
         onClick={handleBackdropClick}
       />
 
-      {/* Side Drawer */}
+      {/* Modal Container (centered) */}
       <div
-        className={`fixed top-0 right-0 h-full w-full max-w-xl bg-white dark:bg-[#1e2028] border-l border-gray-200 dark:border-[#2a2d36] z-[101] transform transition-transform duration-300 ease-in-out flex flex-col shadow-2xl ${isOpen ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed inset-0 z-[101] flex items-center justify-center p-4 ${isOpen ? "pointer-events-auto" : "pointer-events-none"}`}
       >
-        {/* Header */}
-        <div className="px-8 py-5 border-b border-gray-200 dark:border-[#2a2d36] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-purple-600/20 rounded-xl flex items-center justify-center border border-purple-500/20 shadow-lg shadow-purple-600/10">
-              <svg
-                className="w-6 h-6 text-purple-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
+        <div
+          className={`relative w-full max-w-5xl h-full max-h-[90vh] bg-white dark:bg-[#1e2028] border border-gray-200 dark:border-[#2a2d36] rounded-xl shadow-2xl flex flex-col z-10 ${isOpen ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}
+        >
+          {/* Header */}
+          <div className="px-8 py-5 border-b border-gray-200 dark:border-[#2a2d36] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-purple-600/20 rounded-xl flex items-center justify-center border border-purple-500/20 shadow-lg shadow-purple-600/10">
+                <svg
+                  className="w-6 h-6 text-purple-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
+                  {employeeToEdit ? "Edit Employee" : "Add New Employee"}
+                </h2>
+                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mt-0.5">
+                  Staff Management
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
-                {employeeToEdit ? "Edit Employee" : "Add New Employee"}
-              </h2>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mt-0.5">
-                Staff Management
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 px-3 py-1.5 bg-green-600/10 border border-green-500/20 rounded-lg text-green-500 text-[10px] font-bold uppercase tracking-wider cursor-pointer hover:bg-green-600/20 transition-all">
-              <svg
-                className="w-3.5 h-3.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 px-3 py-1.5 bg-green-600/10 border border-green-500/20 rounded-lg text-green-500 text-[10px] font-bold uppercase tracking-wider cursor-pointer hover:bg-green-600/20 transition-all">
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                  />
+                </svg>
+                Import Excel
+                <input
+                  type="file"
+                  className="hidden"
+                  accept=".xlsx, .xls, .csv"
+                  onChange={handleExcelUpload}
                 />
-              </svg>
-              Import Excel
-              <input
-                type="file"
-                className="hidden"
-                accept=".xlsx, .xls, .csv"
-                onChange={handleExcelUpload}
-              />
-            </label>
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-white transition-all p-2 hover:bg-white/5 rounded-full text-2xl leading-none"
-            >
-              &times;
-            </button>
+              </label>
+              <button
+                onClick={onClose}
+                className="text-gray-500 hover:text-white transition-all p-2 hover:bg-white/5 rounded-full text-2xl leading-none"
+              >
+                &times;
+              </button>
+            </div>
           </div>
         </div>
 
@@ -240,9 +244,11 @@ export default function AddEmployeeModal({
                   Department
                 </label>
                 <Select
-  variant="form"
+                  variant="form"
                   value={formData.department}
-                  onChange={(val) => handleChange({ target: { name: "department", value: val } })}
+                  onChange={(val) =>
+                    handleChange({ target: { name: "department", value: val } })
+                  }
                   options={DEPARTMENTS.map((d) => ({ value: d, label: d }))}
                   className="w-full"
                 />
@@ -252,9 +258,11 @@ export default function AddEmployeeModal({
                   Role
                 </label>
                 <Select
-  variant="form"
+                  variant="form"
                   value={formData.role}
-                  onChange={(val) => handleChange({ target: { name: "role", value: val } })}
+                  onChange={(val) =>
+                    handleChange({ target: { name: "role", value: val } })
+                  }
                   options={ROLES.map((r) => ({ value: r, label: r }))}
                   className="w-full"
                 />
@@ -358,7 +366,7 @@ export default function AddEmployeeModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2.5 rounded-lg border border-gray-200 dark:border-gray-200 dark:border-[#2a2d33] text-gray-700 dark:text-gray-300 text-sm font-bold hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors"
+            className="px-6 py-2.5 rounded-lg border border-gray-200 dark:border-[#2a2d33] text-gray-700 dark:text-gray-300 text-sm font-bold hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors"
           >
             Cancel
           </button>

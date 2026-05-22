@@ -147,9 +147,14 @@ export default function AddDocumentModal({
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
+              {/* Modal Container (centered) */}
+              <div className={`fixed inset-0 z-[101] flex items-center justify-center p-4 ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+                <div className={`relative w-full max-w-5xl h-full max-h-[90vh] bg-white dark:bg-[#1e2028] border border-gray-200 dark:border-[#2a2d36] rounded-xl shadow-2xl flex flex-col z-10 ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
                 {documentToEdit ? "Edit Document" : "Upload Document"}
               </h2>
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mt-0.5">
+                </div>
+              </div>
                 Records
               </p>
             </div>
@@ -321,7 +326,7 @@ export default function AddDocumentModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-5 py-2.5 rounded-lg border border-gray-200 dark:border-gray-200 dark:border-[#2a2d33] text-gray-700 dark:text-gray-300 text-sm font-bold hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors flex-1"
+            className="px-5 py-2.5 rounded-lg border border-gray-200 dark:border-[#2a2d33] text-gray-700 dark:text-gray-300 text-sm font-bold hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors flex-1"
           >
             Cancel
           </button>
