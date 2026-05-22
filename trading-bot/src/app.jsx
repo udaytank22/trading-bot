@@ -7,6 +7,7 @@ import { mockPurchaseOrders } from "./data/mockPurchaseOrders";
 import { mockEmployees } from "./data/mockEmployees";
 import { mockDocuments } from "./data/mockDocuments";
 import { mockAccounts } from "./data/mockAccounts";
+import { mockInvoices } from "./data/mockInvoices";
 import Sidebar from "./components/layout/sidebar";
 import Topbar from "./components/layout/topbar";
 import CallOverlay from "./components/layout/callOverlay";
@@ -26,6 +27,7 @@ const DocumentsPage = React.lazy(() => import("./pages/documentsPage"));
 const AccountPage = React.lazy(() => import("./pages/accountPage"));
 const NotificationsPage = React.lazy(() => import("./pages/notificationsPage"));
 const TodoPage = React.lazy(() => import("./pages/todoPage"));
+const InvoicesPage = React.lazy(() => import("./pages/invoicesPage"));
 
 function PageLoader() {
   return (
@@ -61,6 +63,7 @@ export default function App() {
   const [employeesData, setEmployeesData] = React.useState(mockEmployees);
   const [documentsData, setDocumentsData] = React.useState(mockDocuments);
   const [accountsData, setAccountsData] = React.useState(mockAccounts);
+  const [invoicesData, setInvoicesData] = React.useState(mockInvoices);
   const [currentUser, setCurrentUser] = React.useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
   const [isAuthenticated, setIsAuthenticated] = React.useState(() => {
@@ -121,6 +124,8 @@ export default function App() {
         setInquiriesData,
         supplyData,
         setSupplyData,
+        invoicesData,
+        setInvoicesData,
         purchaseOrdersData,
         setPurchaseOrdersData,
         employeesData,
@@ -162,6 +167,7 @@ export default function App() {
                             <Route path="/supply" element={<SupplyPage />} />
                             <Route path="/profit" element={<ProfitPage />} />
                             <Route path="/purchase-orders" element={<PurchaseOrdersPage />} />
+                            <Route path="/invoices" element={<InvoicesPage />} />
                             <Route path="/employees" element={<EmployeesPage />} />
                             <Route path="/documents" element={<DocumentsPage />} />
                             <Route path="/settings" element={<SettingsPage />} />

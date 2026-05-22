@@ -1,11 +1,14 @@
+import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context";
+import logo from "../../../public/memories/logo.png";
 
 const NAV_LINKS = [
   { name: "Dashboard", path: "/", icon: <DashboardIcon /> },
   { name: "Inquiries", path: "/inquiries", icon: <InquiriesIcon /> },
   { name: "Purchase Orders", path: "/purchase-orders", icon: <POIcon /> },
   { name: "Supply", path: "/supply", icon: <InquiriesIcon /> },
+  { name: "Invoices", path: "/invoices", icon: <InvoicesIcon /> },
   { name: "Inventory", path: "/inventory", icon: <InventoryIcon /> },
   { name: "Employees", path: "/employees", icon: <UsersIcon /> },
   { name: "Documents", path: "/documents", icon: <DocumentIcon /> },
@@ -18,6 +21,8 @@ const NAV_LINKS = [
 
 export default function Sidebar({ isOpen }) {
   const { logout, currentUser } = useAppContext();
+  const [isHovered, setIsHovered] = useState(false);
+  const effectiveOpen = isOpen || isHovered;
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -35,14 +40,16 @@ export default function Sidebar({ isOpen }) {
 
   return (
     <aside
-      className={`flex-shrink-0 bg-white dark:bg-[#1a1d23] text-gray-500 dark:text-gray-400 flex flex-col h-full border-r border-gray-200 dark:border-[#2a2d33] shadow-lg z-10 transition-all duration-300 overflow-hidden ${isOpen ? "w-[200px]" : "w-13"}`}
+      // onMouseEnter={() => setIsHovered(true)}
+      // onMouseLeave={() => setIsHovered(false)}
+      className={`flex-shrink-0 bg-white dark:bg-[#1a1d23] text-gray-500 dark:text-gray-400 flex flex-col h-full border-r border-gray-200 dark:border-[#2a2d33] shadow-lg z-10 transition-all duration-300 overflow-hidden ${effectiveOpen ? "w-[200px]" : "w-13"}`}
     >
       {/* Logo */}
       <div className="p-4 pb-4 flex items-center gap-2.5">
         <div className="w-6 h-6 flex-shrink-0 bg-purple-600 rounded flex items-center justify-center shadow-md">
-          <div className="w-2 h-2 bg-white rounded-sm rotate-45" />
+          <img src="/logo" alt="Logo" className="w-4 h-4" />
         </div>
-        <div className={`flex flex-col ${isOpen ? '' : 'hidden'}`}>
+        <div className={`flex flex-col ${effectiveOpen ? '' : 'hidden'}`}>
           <span className="text-gray-900 dark:text-white font-bold text-[14px] leading-tight">
             TradeMind
           </span>
@@ -67,7 +74,7 @@ export default function Sidebar({ isOpen }) {
             }
           >
             <span className="w-4 h-4 flex-shrink-0">{link.icon}</span>
-            <span className={`text-[12px] ${isOpen ? "" : "hidden"}`}>
+            <span className={`text-[12px] ${effectiveOpen ? "" : "hidden"}`}>
               {link.name}
             </span>
           </NavLink>
@@ -94,13 +101,13 @@ export default function Sidebar({ isOpen }) {
       <div className="mt-auto border-t border-gray-200 dark:border-[#2a2d33] p-3">
         <button
           onClick={handleLogout}
-          className={`flex items-center gap-2.5 w-full px-3 py-1.5 rounded-lg text-red-500 hover:bg-red-500/10 transition-all font-bold text-[12px] ${isOpen ? "" : "justify-center px-0"}`}
+          className={`flex items-center gap-2.5 w-full px-3 py-1.5 rounded-lg text-red-500 hover:bg-red-500/10 transition-all font-bold text-[12px] ${effectiveOpen ? "" : "justify-center px-0"}`}
           title="Logout"
         >
           <span className="w-4 h-4 flex-shrink-0">
             <LogoutIcon />
           </span>
-          <span className={`${isOpen ? "" : "hidden"}`}>Logout</span>
+          <span className={`${effectiveOpen ? "" : "hidden"}`}>Logout</span>
         </button>
       </div>
     </aside>
@@ -288,6 +295,13 @@ function InventoryIcon() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-full h-full">
       <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+    </svg>
+  );
+}
+function InvoicesIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-full h-full">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 14h6M9 10h6M21 12v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6M7 8h10l-1.5-3h-7L7 8z" />
     </svg>
   );
 }

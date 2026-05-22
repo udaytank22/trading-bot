@@ -30,27 +30,27 @@ import { PageToolbar, Pagination } from "../components/ui";
 
 // ─── Filter dropdown options ───────────────────────────────────────────────────
 const FILTER_OPTIONS = [
-  { value: "All",        label: "All Status" },
-  { value: "PENDING",    label: "Pending" },
-  { value: "LOADING",    label: "Loading" },
+  { value: "All", label: "All Status" },
+  { value: "PENDING", label: "Pending" },
+  { value: "LOADING", label: "Loading" },
   { value: "IN_TRANSIT", label: "In Transit" },
-  { value: "DELIVERED",  label: "Delivered" },
+  { value: "DELIVERED", label: "Delivered" },
 ];
 
 const ITEMS_PER_PAGE = 5;
 
 // ─── Main Page Component ───────────────────────────────────────────────────────
 export default function SupplyPage() {
-  const { supplyData, setSupplyData } = React.useContext(AppContext);
+  const { supplyData, setSupplyData, setInvoicesData } = React.useContext(AppContext);
 
   // ── Local UI state ────────────────────────────────────────────────────────
-  const [search, setSearch]         = useState("");
-  const [filter, setFilter]         = useState("All");
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
 
   // View modal state (SupplyViewModal)
   const [selectedDeal, setSelectedDeal] = useState(null);
-  const [isModalOpen, setIsModalOpen]   = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Contact modal state (ContactModal)
   const [contactModalDeal, setContactModalDeal] = useState(null);
@@ -88,7 +88,7 @@ export default function SupplyPage() {
   }, [search, filter, supplyData]);
 
   // ── Derived: paginate ─────────────────────────────────────────────────────
-  const totalPages   = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
   const currentItems = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredData.slice(start, start + ITEMS_PER_PAGE);
@@ -102,6 +102,27 @@ export default function SupplyPage() {
         setInvoiceModalDeal(deal);
         setIsInvoiceModalOpen(true);
       }
+      return;
+    }
+
+    // When invoice is sent, move the record from supply to invoices module
+    if (newStatus === "INVOICE_SENT") {
+      const deal = supplyData.find((d) => d.inquiry_id === id);
+      if (deal) {
+        // Remove from supply list
+        setSupplyData((prev) => prev.filter((item) => item.inquiry_id !== id));
+
+        // Add to invoices list with invoice metadata
+        setInvoicesData((prev) => [
+          {
+            ...deal,
+            invoice_date: new Date().toISOString(),
+            invoice_status: "SENT",
+          },
+          ...prev,
+        ]);
+      }
+
       return;
     }
 
@@ -191,7 +212,7 @@ export default function SupplyPage() {
         onClose={() => setIsAllotModalOpen(false)}
         onAllot={(id, vehicle) => {
           // Update status to LOADING when vehicle is allotted
-          setSupplyData(prev => prev.map(item => 
+          setSupplyData(prev => prev.map(item =>
             item.inquiry_id === id ? { ...item, status: "LOADING", vehicle } : item
           ));
         }}
