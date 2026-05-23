@@ -11,9 +11,9 @@ const NAV_LINKS = [
   { name: "Invoices", path: "/invoices", icon: <InvoicesIcon /> },
   { name: "Inventory", path: "/inventory", icon: <InventoryIcon /> },
   { name: "Employees", path: "/employees", icon: <UsersIcon /> },
-  { name: "Documents", path: "/documents", icon: <DocumentIcon /> },
+  // { name: "Documents", path: "/documents", icon: <DocumentIcon /> },
   { name: "To-Do", path: "/todo", icon: <TodoIcon /> },
-  { name: "Profit Report", path: "/profit", icon: <ProfitIcon /> },
+  // { name: "Profit Report", path: "/profit", icon: <ProfitIcon /> },
   { name: "Accounts", path: "/accounts", icon: <ProfitIcon /> },
   { name: "Notifications", path: "/notifications", icon: <BellIcon /> },
   { name: "Profile", path: "/profile", icon: <ProfileIcon /> },
@@ -47,7 +47,7 @@ export default function Sidebar({ isOpen }) {
       {/* Logo */}
       <div className="p-4 pb-4 flex items-center gap-2.5">
         <div className="w-6 h-6 flex-shrink-0 bg-purple-600 rounded flex items-center justify-center shadow-md">
-          <img src="/logo" alt="Logo" className="w-4 h-4" />
+          <img src={logo} alt="Logo" className="w-4 h-4 object-contain" />
         </div>
         <div className={`flex flex-col ${effectiveOpen ? '' : 'hidden'}`}>
           <span className="text-gray-900 dark:text-white font-bold text-[14px] leading-tight">

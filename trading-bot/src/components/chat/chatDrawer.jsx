@@ -18,7 +18,7 @@ const ChatDrawer = ({ isOpen, onClose }) => {
   const [pdfViewerUrl, setPdfViewerUrl] = useState(null); // in-app PDF viewer state
   const [messages, setMessages] = useState([
     { sender: "them", type: "text", text: "Hello! How can I help you today?" },
-    { sender: "me",   type: "text", text: "I'm looking for the status of CGO-1001" },
+    { sender: "me", type: "text", text: "I'm looking for the status of CGO-1001" },
     {
       sender: "them",
       type: "doc",
@@ -70,9 +70,8 @@ const ChatDrawer = ({ isOpen, onClose }) => {
 
       {/* Drawer */}
       <div
-        className={`relative w-full max-w-sm bg-white dark:bg-[#1a1d23] h-full shadow-2xl border-l border-gray-200 dark:border-[#2a2d33] transform transition-transform duration-300 ease-in-out ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        } flex flex-col`}
+        className={`relative w-full max-w-sm bg-white dark:bg-[#1a1d23] h-full shadow-2xl border-l border-gray-200 dark:border-[#2a2d33] transform transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "translate-x-full"
+          } flex flex-col`}
       >
 
         {/* ── PDF Viewer Panel (slides over chat) ── */}
@@ -105,7 +104,7 @@ const ChatDrawer = ({ isOpen, onClose }) => {
         )}
 
         {/* ── Header ── */}
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex items-center justify-between bg-gray-50 dark:bg-[#1a1d23] sticky top-0 z-10 shadow-sm">
+        <div className="px-6 py-2 border-b border-gray-200 dark:border-[#2a2d33] flex items-center justify-between bg-gray-50 dark:bg-[#1a1d23] sticky top-0 z-10 shadow-sm">
           {selectedUser ? (
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-3">
@@ -175,15 +174,13 @@ const ChatDrawer = ({ isOpen, onClose }) => {
                   )}
 
                   <div
-                    className={`max-w-[80%] rounded-2xl text-sm ${
-                      msg.sender === "me"
-                        ? "bg-purple-600 text-white rounded-tr-none"
-                        : "bg-gray-100 dark:bg-[#2a2d33] text-gray-800 dark:text-gray-200 rounded-tl-none"
-                    } ${
-                      msg.type === "text"
+                    className={`max-w-[80%] rounded-2xl text-sm ${msg.sender === "me"
+                      ? "bg-purple-600 text-white rounded-tr-none"
+                      : "bg-gray-100 dark:bg-[#2a2d33] text-gray-800 dark:text-gray-200 rounded-tl-none"
+                      } ${msg.type === "text"
                         ? "px-4 py-2.5"
                         : "overflow-hidden border border-gray-200 dark:border-[#3a3d43]"
-                    }`}
+                      }`}
                   >
                     {/* Text message */}
                     {msg.type === "text" && msg.text}
@@ -238,7 +235,7 @@ const ChatDrawer = ({ isOpen, onClose }) => {
                 <button
                   key={user.id}
                   onClick={() => setSelectedUser(user)}
-                  className="w-full px-6 py-4 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left"
+                  className="w-full px-6 py-3 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left"
                 >
                   <div className="relative">
                     <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-[#2a2d33] flex items-center justify-center text-sm font-bold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-[#3a3d43]">

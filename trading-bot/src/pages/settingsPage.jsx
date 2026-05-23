@@ -34,14 +34,22 @@ function RightDrawer({ isOpen, title, onClose, children }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex justify-end">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
-      {/* Drawer */}
-      <div className="relative w-full max-w-md bg-white dark:bg-[#1a1d23] shadow-2xl flex flex-col animate-slide-left h-full border-l border-gray-200 dark:border-[#2a2d33]">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm animate-fade-in"
+        onClick={onClose}
+      />
+
+      <div className="relative w-full max-w-3xl max-h-[85vh] bg-white dark:bg-[#1a1d23] shadow-2xl flex flex-col rounded-2xl overflow-hidden border border-gray-200 dark:border-[#2a2d33] animate-fade-in">
         <div className="px-6 py-4 border-b border-gray-100 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
-          <h3 className="font-bold text-gray-900 dark:text-white text-lg">{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+          <h3 className="font-bold text-gray-900 dark:text-white text-lg">
+            {title}
+          </h3>
+
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -93,11 +101,11 @@ function ViewDetails({ item, onClose }) {
           </div>
         ))}
       </div>
-      <div className="mt-8 flex justify-end">
+      {/* <div className="mt-8 flex justify-end">
         <button onClick={onClose} className="px-5 py-2 text-[13px] font-bold text-gray-700 bg-gray-100 dark:bg-[#2a2d36] dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">
           Close
         </button>
-      </div>
+      </div> */}
     </div>
   );
 }
@@ -115,6 +123,8 @@ export default function SettingsPage() {
     // { id: 'general', label: 'General' },
     { id: 'products', label: 'Products' },
     { id: 'clients', label: 'Clients' },
+    { id: 'vendors', label: 'Vendors' },
+    { id: 'documents', label: 'Documents' },
     { id: 'reporting', label: 'Reporting' },
   ];
 
@@ -142,6 +152,8 @@ export default function SettingsPage() {
         {/* {activeTab === 'general' && <GeneralSettingsTab />} */}
         {activeTab === 'products' && <ProductsTab />}
         {activeTab === 'clients' && <ClientsTab />}
+        {activeTab === 'vendors' && <VendorsTab />}
+        {activeTab === 'documents' && <DocumentsTab />}
         {activeTab === 'reporting' && <ReportingTab />}
       </div>
     </div>
@@ -310,7 +322,7 @@ function ProductsTab() {
         <ProductForm initialData={editItem} onSave={handleSave} onClose={() => { setIsFormOpen(false); setEditItem(null); }} />
       </RightDrawer>
 
-      <div className="p-5 border-b border-gray-200 dark:border-[#2a2d33] flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="p-2 border-b border-gray-200 dark:border-[#2a2d33] flex flex-col sm:flex-row items-center justify-between gap-4">
         <h2 className="text-lg font-bold text-gray-900 dark:text-white">Products List</h2>
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <input type="text" placeholder="Search products..." className="w-full sm:w-64 bg-gray-50 dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-9 px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors" />
@@ -421,7 +433,7 @@ function ClientsTab() {
         <ClientForm initialData={editItem} onSave={handleSave} onClose={() => { setIsFormOpen(false); setEditItem(null); }} />
       </RightDrawer>
 
-      <div className="p-5 border-b border-gray-200 dark:border-[#2a2d33] flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="p-2 border-b border-gray-200 dark:border-[#2a2d33] flex flex-col sm:flex-row items-center justify-between gap-4">
         <h2 className="text-lg font-bold text-gray-900 dark:text-white">Clients List</h2>
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <input type="text" placeholder="Search clients..." className="w-full sm:w-64 bg-gray-50 dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-9 px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors" />
@@ -466,6 +478,184 @@ function ClientsTab() {
             )}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+function VendorsTab() {
+  const [vendors, setVendors] = useState([
+    { id: 'VEN-001', name: 'Ocean Supplies LLC', contact: 'Ahmed Khan', email: 'ahmed@oceansupplies.com', status: 'Active' },
+    { id: 'VEN-002', name: 'Marine Parts Co.', contact: 'Robert Smith', email: 'robert@marineparts.com', status: 'Active' },
+    { id: 'VEN-003', name: 'Global Ship Chandlers', contact: 'Ali Hassan', email: 'ali@globalship.com', status: 'Inactive' },
+    { id: 'VEN-004', name: 'Portside Traders', contact: 'James Miller', email: 'james@portside.com', status: 'Active' },
+  ]);
+
+  const [viewItem, setViewItem] = useState(null);
+  const [editItem, setEditItem] = useState(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+
+  const handleDelete = async (id) => {
+    const isConfirmed = await confirmAction({
+      title: 'Delete Vendor?',
+      text: "Are you sure you want to delete this vendor? This action cannot be undone.",
+      confirmButtonText: 'Yes, delete it!'
+    });
+
+    if (isConfirmed) {
+      setVendors(vendors.filter(v => v.id !== id));
+    }
+  };
+
+  const handleSave = (formData) => {
+    if (editItem) {
+      setVendors(vendors.map(v => v.id === editItem.id ? { ...v, ...formData } : v));
+    } else {
+      setVendors([
+        ...vendors,
+        { id: `VEN-${String(vendors.length + 1).padStart(3, '0')}`, ...formData }
+      ]);
+    }
+
+    setIsFormOpen(false);
+    setEditItem(null);
+  };
+
+  return (
+    <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-sm animate-fade-in flex-1 overflow-hidden flex flex-col">
+      <RightDrawer isOpen={!!viewItem} title="Vendor Details" onClose={() => setViewItem(null)}>
+        <ViewDetails item={viewItem} onClose={() => setViewItem(null)} />
+      </RightDrawer>
+
+      <RightDrawer
+        isOpen={isFormOpen}
+        title={editItem ? 'Edit Vendor' : 'Add New Vendor'}
+        onClose={() => {
+          setIsFormOpen(false);
+          setEditItem(null);
+        }}
+      >
+        <VendorForm
+          initialData={editItem}
+          onSave={handleSave}
+          onClose={() => {
+            setIsFormOpen(false);
+            setEditItem(null);
+          }}
+        />
+      </RightDrawer>
+
+      <div className="p-2 border-b border-gray-200 dark:border-[#2a2d33] flex flex-col sm:flex-row items-center justify-between gap-4">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Vendors List</h2>
+
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <input
+            type="text"
+            placeholder="Search vendors..."
+            className="w-full sm:w-64 bg-gray-50 dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-9 px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors"
+          />
+
+          <button
+            onClick={() => setIsFormOpen(true)}
+            className="h-9 px-4 bg-purple-600 hover:bg-purple-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors"
+          >
+            + Add Vendor
+          </button>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto flex-1 custom-scrollbar">
+        <table className="w-full text-left text-[13px]">
+          <thead className="bg-gray-50 dark:bg-[#0f1117]/50 text-gray-500 dark:text-gray-400 font-bold border-b border-gray-200 dark:border-[#2a2d33] uppercase tracking-wider text-[11px]">
+            <tr>
+              <th className="px-5 py-3">Vendor ID</th>
+              <th className="px-5 py-3">Company Name</th>
+              <th className="px-5 py-3">Contact Person</th>
+              <th className="px-5 py-3">Email</th>
+              <th className="px-5 py-3">Status</th>
+              <th className="px-5 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+
+          <tbody className="divide-y divide-gray-100 dark:divide-[#2a2d33] text-gray-700 dark:text-gray-300">
+            {vendors.map(vendor => (
+              <tr key={vendor.id} className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors">
+                <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400">{vendor.id}</td>
+                <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">{vendor.name}</td>
+                <td className="px-5 py-3">{vendor.contact}</td>
+                <td className="px-5 py-3">{vendor.email}</td>
+                <td className="px-5 py-3">
+                  <span className={`px-2 py-1 rounded text-[11px] font-bold ${vendor.status === 'Active'
+                    ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                    : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                    }`}>
+                    {vendor.status}
+                  </span>
+                </td>
+                <td className="px-5 py-3 text-right space-x-3">
+                  <button onClick={() => setViewItem(vendor)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" title="View"><EyeIcon /></button>
+                  <button onClick={() => { setEditItem(vendor); setIsFormOpen(true); }} className="text-blue-500 hover:text-blue-600 transition-colors" title="Edit"><EditIcon /></button>
+                  <button onClick={() => handleDelete(vendor.id)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete"><TrashIcon /></button>
+                </td>
+              </tr>
+            ))}
+
+            {vendors.length === 0 && (
+              <tr>
+                <td colSpan="6" className="text-center py-8 text-gray-500">No vendors found.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function VendorForm({ initialData, onSave, onClose }) {
+  const [formData, setFormData] = useState(
+    initialData || { name: '', contact: '', email: '', status: 'Active' }
+  );
+
+  const set = (key) => (e) => setFormData(prev => ({ ...prev, [key]: e.target.value }));
+
+  return (
+    <div className="flex flex-col gap-5 h-full">
+      <div className="flex-1 flex flex-col gap-5">
+        <Field label="Vendor Company Name">
+          <input type="text" className={inputCls} value={formData.name} onChange={set('name')} placeholder="e.g. Ocean Supplies LLC" />
+        </Field>
+
+        <Field label="Contact Person">
+          <input type="text" className={inputCls} value={formData.contact} onChange={set('contact')} placeholder="e.g. Ahmed Khan" />
+        </Field>
+
+        <Field label="Email Address">
+          <input type="email" className={inputCls} value={formData.email} onChange={set('email')} placeholder="e.g. vendor@example.com" />
+        </Field>
+
+        <Field label="Status">
+          <Select
+            variant="settings"
+            className={inputCls}
+            value={formData.status}
+            onChange={(val) => setFormData(prev => ({ ...prev, status: val }))}
+            options={[
+              { value: "Active", label: "Active" },
+              { value: "Inactive", label: "Inactive" }
+            ]}
+          />
+        </Field>
+      </div>
+
+      <div className="mt-8 flex justify-end gap-3">
+        <button onClick={onClose} className="px-4 py-2 text-[13px] font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors">
+          Cancel
+        </button>
+
+        <button onClick={() => onSave(formData)} className="px-5 py-2 text-[13px] font-bold text-white bg-purple-600 hover:bg-purple-500 rounded-lg shadow-sm transition-colors">
+          Save Details
+        </button>
       </div>
     </div>
   );
@@ -676,7 +866,7 @@ function ReportingTab() {
 
   return (
     <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-sm animate-fade-in flex-1 overflow-hidden flex flex-col">
-      <div className="p-5 border-b border-gray-200 dark:border-[#2a2d33] flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="p-2 border-b border-gray-200 dark:border-[#2a2d33] flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap w-full sm:w-auto">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">Reporting Overview</h2>
           <button
@@ -701,8 +891,6 @@ function ReportingTab() {
       </div>
 
       <div className="p-5 border-b border-gray-100 dark:border-[#2a2d33] bg-gray-50/50 dark:bg-[#0f1117]/50">
-
-
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Field label="Filter by Client">
             <Select
@@ -791,7 +979,7 @@ function ReportingTab() {
         onClose={() => setDetailTarget(null)}
       >
         {detailTarget && (
-          <div className="flex flex-col h-full gap-5">
+          <div className="flex flex-col gap-5">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <h3 className="text-base font-bold text-gray-900 dark:text-white">{detailTarget.key} inquiry history</h3>
@@ -847,6 +1035,170 @@ function ReportingTab() {
           </div>
         )}
       </CenterModal>
+    </div>
+  );
+}
+
+function DocumentsTab() {
+  const [documents, setDocuments] = useState([
+    {
+      id: 'DOC-001',
+      name: 'Invoice.pdf',
+      category: 'Invoice',
+      type: 'PDF',
+      uploadedBy: 'Admin',
+      uploadedDate: '23/05/2026',
+      status: 'Active'
+    },
+    {
+      id: 'DOC-002',
+      name: 'Quotation.xlsx',
+      category: 'Quotation',
+      type: 'Excel',
+      uploadedBy: 'John Doe',
+      uploadedDate: '22/05/2026',
+      status: 'Active'
+    },
+    {
+      id: 'DOC-003',
+      name: 'Purchase Order.docx',
+      category: 'PO',
+      type: 'Word',
+      uploadedBy: 'Sarah Connor',
+      uploadedDate: '21/05/2026',
+      status: 'Inactive'
+    }
+  ]);
+
+  const [viewItem, setViewItem] = useState(null);
+
+  const handleDelete = async (id) => {
+    const isConfirmed = await confirmAction({
+      title: 'Delete Document?',
+      text: 'Are you sure you want to delete this document?',
+      confirmButtonText: 'Yes, delete it!'
+    });
+
+    if (isConfirmed) {
+      setDocuments(documents.filter(doc => doc.id !== id));
+    }
+  };
+
+  return (
+    <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-sm animate-fade-in flex-1 overflow-hidden flex flex-col">
+      <RightDrawer
+        isOpen={!!viewItem}
+        title="Document Details"
+        onClose={() => setViewItem(null)}
+      >
+        <ViewDetails item={viewItem} onClose={() => setViewItem(null)} />
+      </RightDrawer>
+
+      <div className="p-2 border-b border-gray-200 dark:border-[#2a2d33] flex flex-col sm:flex-row items-center justify-between gap-4">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+          Documents List
+        </h2>
+
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <input
+            type="text"
+            placeholder="Search documents..."
+            className="w-full sm:w-64 bg-gray-50 dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-9 px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors"
+          />
+
+          <button className="h-9 px-4 bg-purple-600 hover:bg-purple-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors">
+            + Add Document
+          </button>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto flex-1 custom-scrollbar">
+        <table className="w-full text-left text-[13px]">
+          <thead className="bg-gray-50 dark:bg-[#0f1117]/50 text-gray-500 dark:text-gray-400 font-bold border-b border-gray-200 dark:border-[#2a2d33] uppercase tracking-wider text-[11px]">
+            <tr>
+              <th className="px-5 py-3">Document ID</th>
+              <th className="px-5 py-3">Document Name</th>
+              <th className="px-5 py-3">Category</th>
+              <th className="px-5 py-3">Type</th>
+              <th className="px-5 py-3">Uploaded By</th>
+              <th className="px-5 py-3">Uploaded Date</th>
+              <th className="px-5 py-3">Status</th>
+              <th className="px-5 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+
+          <tbody className="divide-y divide-gray-100 dark:divide-[#2a2d33] text-gray-700 dark:text-gray-300">
+            {documents.map(doc => (
+              <tr
+                key={doc.id}
+                className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors"
+              >
+                <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400">
+                  {doc.id}
+                </td>
+
+                <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">
+                  {doc.name}
+                </td>
+
+                <td className="px-5 py-3">
+                  <span className="px-2 py-1 bg-gray-100 dark:bg-[#2a2d36] rounded text-[11px] font-bold text-gray-600 dark:text-gray-400">
+                    {doc.category}
+                  </span>
+                </td>
+
+                <td className="px-5 py-3">{doc.type}</td>
+                <td className="px-5 py-3">{doc.uploadedBy}</td>
+                <td className="px-5 py-3">{doc.uploadedDate}</td>
+
+                <td className="px-5 py-3">
+                  <span
+                    className={`px-2 py-1 rounded text-[11px] font-bold ${doc.status === 'Active'
+                      ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                      : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                      }`}
+                  >
+                    {doc.status}
+                  </span>
+                </td>
+
+                <td className="px-5 py-3 text-right space-x-3">
+                  <button
+                    onClick={() => setViewItem(doc)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                    title="View"
+                  >
+                    <EyeIcon />
+                  </button>
+
+                  <button
+                    className="text-blue-500 hover:text-blue-600 transition-colors"
+                    title="Edit"
+                  >
+                    <EditIcon />
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(doc.id)}
+                    className="text-red-500 hover:text-red-600 transition-colors"
+                    title="Delete"
+                  >
+                    <TrashIcon />
+                  </button>
+                </td>
+              </tr>
+            ))}
+
+            {documents.length === 0 && (
+              <tr>
+                <td colSpan="8" className="text-center py-8 text-gray-500">
+                  No documents found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

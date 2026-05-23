@@ -177,20 +177,20 @@ export default function EmployeeViewModal({ isOpen, onClose, employee }) {
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
           <div className="flex gap-6 flex-col lg:flex-row">
-            
+
             {/* Left: Employee Details */}
             <div className="w-full lg:w-[280px] flex-shrink-0 space-y-4">
               <div className="bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl p-4 space-y-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Employee Details</h3>
-                
+
                 <DetailRow label="Full Name" value={employee.name} />
                 <DetailRow label="Email" value={employee.email} />
                 <DetailRow label="Phone" value={employee.phone || "—"} />
                 <DetailRow label="Role" value={employee.role} />
                 <DetailRow label="Department" value={employee.department} />
-                <DetailRow 
-                  label="Joining Date" 
-                  value={new Date(employee.joiningDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} 
+                <DetailRow
+                  label="Joining Date"
+                  value={new Date(employee.joiningDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                 />
 
                 <div className="pt-2 border-t border-gray-100 dark:border-[#2a2d33]">
@@ -272,9 +272,8 @@ export default function EmployeeViewModal({ isOpen, onClose, employee }) {
                     return (
                       <div
                         key={cell.day}
-                        className={`aspect-square rounded-lg border flex flex-col items-center justify-center text-xs font-bold transition-all cursor-default group relative ${getCellClasses(cell.status)} ${
-                          isToday ? "ring-2 ring-purple-500 ring-offset-1 ring-offset-[#1a1d23]" : ""
-                        }`}
+                        className={`aspect-square rounded-lg border flex flex-col items-center justify-center text-xs font-bold transition-all cursor-default group relative ${getCellClasses(cell.status)} ${isToday ? "ring-2 ring-purple-500 ring-offset-1 ring-offset-[#1a1d23]" : ""
+                          }`}
                         title={`${cell.day} ${MONTH_NAMES[viewMonth]} — ${getStatusLabel(cell.status)}`}
                       >
                         <span className="text-[13px] leading-none">{cell.day}</span>

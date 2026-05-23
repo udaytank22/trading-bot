@@ -151,7 +151,7 @@ const AddMeetingModal = ({
                 Priority
               </label>
               <Select
-  variant="form"
+                variant="form"
                 value={formData.priority}
                 onChange={(val) =>
                   setFormData({ ...formData, priority: val })
@@ -476,7 +476,7 @@ export default function TodoPage() {
                   onClick={() => setIsAddingMeeting(true)}
                   className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-purple-500/20 transition-all"
                 >
-                  <Plus size={18} /> New Meeting
+                  <Plus size={18} /> Assign Task
                 </button>
               </div>
             </div>
@@ -524,13 +524,12 @@ export default function TodoPage() {
                       >
                         {event && (
                           <div
-                            className={`absolute inset-1 p-2 rounded-xl text-[10px] leading-tight border-l-4 shadow-sm transition-all hover:scale-[1.02] hover:z-10 cursor-pointer ${
-                              event.priority === "High"
+                            className={`absolute inset-1 p-2 rounded-xl text-[10px] leading-tight border-l-4 shadow-sm transition-all hover:scale-[1.02] hover:z-10 cursor-pointer ${event.priority === "High"
                                 ? "bg-rose-500/10 border-rose-500 text-rose-700 dark:text-rose-300"
                                 : event.priority === "Medium"
                                   ? "bg-amber-500/10 border-amber-500 text-amber-700 dark:text-amber-300"
                                   : "bg-blue-500/10 border-blue-500 text-blue-700 dark:text-blue-300"
-                            }`}
+                              }`}
                           >
                             <div className="font-bold truncate">
                               {event.title}

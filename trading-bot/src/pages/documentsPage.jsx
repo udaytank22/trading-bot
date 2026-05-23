@@ -7,7 +7,7 @@ import { confirmAction } from "../utils/swal";
 
 // Helper for the Kanban Board
 const KanbanColumn = ({ title, status, documents, onEdit, onDelete, colorClass }) => (
-  <div className="flex-1 bg-[#242830]/40 rounded-2xl border border-[#2a2d33] flex flex-col overflow-hidden min-w-[300px]">
+  <div className="flex-1 rounded-2xl border flex flex-col overflow-hidden min-w-[300px]">
     <div className={`px-5 py-4 border-b border-[#2a2d33] flex items-center justify-between ${colorClass}`}>
       <h3 className="font-bold text-sm tracking-wide uppercase">{title}</h3>
       <span className="bg-black/20 px-2.5 py-0.5 rounded-full text-xs font-bold">{documents.length}</span>
@@ -22,34 +22,76 @@ const KanbanColumn = ({ title, status, documents, onEdit, onDelete, colorClass }
         </div>
       ) : (
         documents.map(doc => (
-          <div key={doc.id} className="bg-[#1a1d23] p-4 rounded-xl border border-[#2a2d33] hover:border-purple-500/50 transition-colors group relative shadow-md">
-            <div className="flex justify-between items-start mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400 bg-purple-400/10 px-2 py-0.5 rounded">
+          <div
+            key={doc.id}
+            className="group relative rounded-2xl border border-gray-200 dark:border-[#2a2d33] bg-white dark:bg-[#151821] p-4 shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:border-purple-400/60 transition-all duration-200"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-600 dark:text-purple-300 bg-purple-50 dark:bg-purple-500/10 px-2.5 py-1 rounded-full">
                 {doc.category}
               </span>
-              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={() => onEdit(doc)} className="text-gray-400 hover:text-blue-400 p-1">
+
+              <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={() => onEdit(doc)}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition"
+                  title="Edit"
+                >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                   </svg>
                 </button>
-                <button onClick={() => onDelete(doc.id)} className="text-gray-400 hover:text-red-400 p-1">
+
+                <button
+                  onClick={() => onDelete(doc.id)}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition"
+                  title="Delete"
+                >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>
               </div>
             </div>
-            <h4 className="text-white font-bold text-sm mb-1 line-clamp-1" title={doc.title}>{doc.title}</h4>
-            <p className="text-gray-400 text-xs mb-3 truncate">{doc.entityName}</p>
-            <div className="flex items-center justify-between text-[11px] text-gray-500 font-medium border-t border-[#2a2d33] pt-3">
-              <span>Exp: {new Date(doc.expiryDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-              <span className="flex items-center gap-1 hover:text-purple-400 cursor-pointer transition-colors">
+
+            <div className="mt-4">
+              <h4
+                className="text-gray-900 dark:text-white font-bold text-[15px] leading-5 line-clamp-1"
+                title={doc.title}
+              >
+                {doc.title}
+              </h4>
+
+              <p className="mt-1 text-gray-500 dark:text-gray-400 text-xs truncate">
+                {doc.entityName}
+              </p>
+            </div>
+
+            <div className="mt-4 h-px bg-gray-100 dark:bg-[#2a2d33]" />
+
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <div className="flex flex-col">
+                <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400">
+                  Expiry Date
+                </span>
+                <span className="text-[12px] font-semibold text-gray-700 dark:text-gray-300">
+                  {new Date(doc.expiryDate).toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                  })}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                className="h-8 px-3 rounded-lg bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-300 text-[12px] font-bold flex items-center gap-1.5 hover:bg-purple-100 dark:hover:bg-purple-500/20 transition"
+              >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                 </svg>
                 View
-              </span>
+              </button>
             </div>
           </div>
         ))
@@ -63,12 +105,12 @@ export default function DocumentsPage() {
   const [activeTab, setActiveTab] = useState("Employee");
   const [search, setSearch] = useState("");
   const { toast, showToast } = useToast();
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [documentToEdit, setDocumentToEdit] = useState(null);
 
   const TABS = ["Employee", "Vehicle", "Company"];
-  
+
   const filteredDocs = useMemo(() => {
     return documentsData.filter(doc => {
       const q = search.toLowerCase();
@@ -117,16 +159,15 @@ export default function DocumentsPage() {
 
       {/* Header & Tabs */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center bg-[#1a1d23] border border-[#2a2d33] p-1 rounded-xl w-fit">
+        <div className="flex items-center border p-1 rounded-xl w-fit">
           {TABS.map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                activeTab === tab 
-                  ? "bg-purple-600 text-white shadow-md" 
-                  : "text-gray-400 hover:text-white hover:bg-white/5"
-              }`}
+              className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${activeTab === tab
+                ? "bg-purple-600 text-white shadow-md"
+                : "text-gray-400 hover:text-white hover:bg-white/5"
+                }`}
             >
               {tab === "Company" ? "Companies" : `${tab}s`}
             </button>
@@ -164,27 +205,27 @@ export default function DocumentsPage() {
 
       {/* Kanban Board */}
       <div className="flex-1 flex gap-4 overflow-x-auto pb-2">
-        <KanbanColumn 
-          title="Valid" 
-          status="Valid" 
-          documents={validDocs} 
-          onEdit={handleEdit} 
+        <KanbanColumn
+          title="Valid"
+          status="Valid"
+          documents={validDocs}
+          onEdit={handleEdit}
           onDelete={handleDelete}
           colorClass="text-emerald-500 bg-emerald-500/5 border-emerald-500/20"
         />
-        <KanbanColumn 
-          title="Expiring Soon" 
-          status="Expiring Soon" 
-          documents={expiringDocs} 
-          onEdit={handleEdit} 
+        <KanbanColumn
+          title="Expiring Soon"
+          status="Expiring Soon"
+          documents={expiringDocs}
+          onEdit={handleEdit}
           onDelete={handleDelete}
           colorClass="text-amber-500 bg-amber-500/5 border-amber-500/20"
         />
-        <KanbanColumn 
-          title="Expired" 
-          status="Expired" 
-          documents={expiredDocs} 
-          onEdit={handleEdit} 
+        <KanbanColumn
+          title="Expired"
+          status="Expired"
+          documents={expiredDocs}
+          onEdit={handleEdit}
           onDelete={handleDelete}
           colorClass="text-red-500 bg-red-500/5 border-red-500/20"
         />

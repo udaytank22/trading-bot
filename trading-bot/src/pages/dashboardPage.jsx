@@ -265,7 +265,7 @@ export default function DashboardPage() {
         </section>
 
         {/* Weekly profit chart */}
-        <section className="w-[35%] flex flex-col bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg flex-shrink-0 p-4 shadow-sm transition-colors duration-300">
+        {/* <section className="w-[35%] flex flex-col bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg flex-shrink-0 p-4 shadow-sm transition-colors duration-300">
           <h2 className="text-gray-900 dark:text-white text-[13px] font-bold tracking-wide mb-3">
             Profit This Week
           </h2>
@@ -312,7 +312,7 @@ export default function DashboardPage() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </section>
+        </section> */}
       </div>
     </div>
   );

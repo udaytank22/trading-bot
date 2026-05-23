@@ -15,16 +15,30 @@ function Field({ label, children }) {
 
 function RightDrawer({ isOpen, title, onClose, children }) {
   if (!isOpen) return null;
+
   return (
-    <div className="fixed inset-0 z-[100] flex justify-end">
-      <div className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
-      <div className="relative w-full max-w-md bg-white dark:bg-[#1a1d23] shadow-2xl flex flex-col animate-slide-left h-full border-l border-gray-200 dark:border-[#2a2d33]">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm animate-fade-in"
+        onClick={onClose}
+      />
+
+      <div className="relative w-full max-w-3xl max-h-[85vh] bg-white dark:bg-[#1a1d23] shadow-2xl flex flex-col rounded-2xl overflow-hidden border border-gray-200 dark:border-[#2a2d33] animate-fade-in">
         <div className="px-6 py-4 border-b border-gray-100 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
-          <h3 className="font-bold text-gray-900 dark:text-white text-lg">{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          <h3 className="font-bold text-gray-900 dark:text-white text-lg">
+            {title}
+          </h3>
+
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
+
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
           {children}
         </div>
@@ -43,11 +57,6 @@ function ViewDetails({ item, onClose }) {
             <span className="text-[14px] text-gray-900 dark:text-white font-medium flex-1">{value}</span>
           </div>
         ))}
-      </div>
-      <div className="mt-8 flex justify-end">
-        <button onClick={onClose} className="px-5 py-2 text-[13px] font-bold text-gray-700 bg-gray-100 dark:bg-[#2a2d36] dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">
-          Close
-        </button>
       </div>
     </div>
   );
@@ -69,7 +78,7 @@ function InventoryForm({ initialData, onSave, onClose }) {
           <Select
             variant="settings"
             className={inputCls}
-            value={formData.status} 
+            value={formData.status}
             onChange={(val) => setFormData(prev => ({ ...prev, status: val }))}
             options={[
               { value: "In Stock", label: "In Stock" },
@@ -141,7 +150,7 @@ export default function InventoryPage() {
   return (
     <div className="flex flex-col w-full h-full pb-4">
       <div className="w-full flex-1 flex flex-col mt-4">
-        
+
         <RightDrawer isOpen={!!viewItem} title="Inventory Item Details" onClose={() => setViewItem(null)}>
           <ViewDetails item={viewItem} onClose={() => setViewItem(null)} />
         </RightDrawer>
@@ -183,11 +192,10 @@ export default function InventoryPage() {
                     <td className="px-5 py-3">{item.quantity}</td>
                     <td className="px-5 py-3">{item.price}</td>
                     <td className="px-5 py-3">
-                      <span className={`px-2 py-1 rounded text-[11px] font-bold ${
-                        item.status === 'In Stock' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' 
+                      <span className={`px-2 py-1 rounded text-[11px] font-bold ${item.status === 'In Stock' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
                         : item.status === 'Low Stock' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
-                        : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                      }`}>{item.status}</span>
+                          : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                        }`}>{item.status}</span>
                     </td>
                     <td className="px-5 py-3 text-right space-x-3">
                       <button onClick={() => setViewItem(item)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" title="View"><EyeIcon /></button>

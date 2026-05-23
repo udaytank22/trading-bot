@@ -162,7 +162,7 @@ export default function AddDocumentModal({
       />
 
       {/* Sidebar Modal */}
-      <div className="fixed top-0 right-0 h-full w-full max-w-md bg-white dark:bg-[#1e2028] border-l border-gray-200 dark:border-[#2a2d36] z-[101] flex flex-col shadow-2xl">
+      <div className="fixed left-1/2 top-1/2 z-[101] w-[95vw] max-w-2xl max-h-[90vh] -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-[#1e2028] border border-gray-200 dark:border-[#2a2d36] rounded-2xl flex flex-col shadow-2xl overflow-hidden">
 
         {/* Header */}
         <div className="px-6 py-5 border-b border-gray-200 dark:border-[#2a2d36] flex items-center justify-between bg-gray-50 dark:bg-[#1a1d23]">
@@ -186,18 +186,6 @@ export default function AddDocumentModal({
           </div>
 
           <div className="flex items-center gap-3">
-
-            <label className="cursor-pointer px-3 py-2 rounded-lg text-xs font-bold border border-green-500/20 bg-green-500/10 text-green-600 hover:bg-green-500/20">
-
-              Import Excel
-
-              <input
-                type="file"
-                className="hidden"
-                accept=".xlsx,.xls,.csv"
-                onChange={handleExcelUpload}
-              />
-            </label>
 
             <button
               onClick={onClose}
@@ -295,88 +283,80 @@ export default function AddDocumentModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
+              Status
+            </label>
 
-            <div>
-              <label className="text-xs font-bold text-gray-500 uppercase">
-                Status
-              </label>
-
-              <Select
-                variant="form"
-                value={formData.status}
-                onChange={(val) =>
-                  handleChange({
-                    target: {
-                      name: "status",
-                      value: val,
-                    },
-                  })
-                }
-                options={[
-                  { value: "Valid", label: "Valid" },
-                  {
-                    value: "Expiring Soon",
-                    label: "Expiring Soon",
+            <Select
+              variant="form"
+              value={formData.status}
+              onChange={(val) =>
+                handleChange({
+                  target: {
+                    name: "status",
+                    value: val,
                   },
-                  { value: "Expired", label: "Expired" },
-                ]}
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-gray-500 uppercase">
-                Expiry Date
-              </label>
-
-              <input
-                type="date"
-                name="expiryDate"
-                value={formData.expiryDate}
-                onChange={handleChange}
-                className="w-full mt-2 rounded-lg border px-4 py-3 bg-gray-100 dark:bg-[#0c0e12]"
-              />
-            </div>
-
+                })
+              }
+              className="h-[50px]"
+              options={[
+                { value: "Valid", label: "Valid" },
+                { value: "Expiring Soon", label: "Expiring Soon" },
+                { value: "Expired", label: "Expired" },
+              ]}
+            />
           </div>
 
-          <div className="border-2 border-dashed rounded-xl p-8 text-center hover:border-purple-500">
+          <div>
+            <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
+              Expiry Date
+            </label>
 
-            <p className="font-medium">
-              Click to upload file
-            </p>
-
-            <p className="text-xs text-gray-500">
-              PDF, JPG, PNG (Max 5MB)
-            </p>
-
+            <input
+              type="date"
+              name="expiryDate"
+              value={formData.expiryDate}
+              onChange={handleChange}
+              className="w-full h-[50px] rounded-xl border border-gray-200 dark:border-[#2a2d36] px-4 bg-gray-50 dark:bg-[#0c0e12] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+            />
           </div>
-
         </form>
+      </div>
 
-        {/* Footer */}
-        <div className="px-6 py-5 border-t border-gray-200 dark:border-[#2a2d33] flex gap-3">
+      <div className="border-2 border-dashed rounded-xl p-8 text-center hover:border-purple-500">
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 py-3 border rounded-lg"
-          >
-            Cancel
-          </button>
+        <p className="font-medium">
+          Click to upload file
+        </p>
 
-          <button
-            onClick={handleSubmit}
-            className="flex-[2] py-3 bg-purple-600 hover:bg-purple-500 rounded-lg text-white font-semibold"
-          >
-            {documentToEdit
-              ? "Update Document"
-              : "Save Document"}
-          </button>
-
-        </div>
+        <p className="text-xs text-gray-500">
+          PDF, JPG, PNG (Max 5MB)
+        </p>
 
       </div>
+
+      {/* Footer */}
+      <div className="px-6 py-5 border-t border-gray-200 dark:border-[#2a2d33] flex gap-3" >
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex-1 py-3 border rounded-lg"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={handleSubmit}
+          className="flex-[2] py-3 bg-purple-600 hover:bg-purple-500 rounded-lg text-white font-semibold"
+        >
+          {documentToEdit
+            ? "Update Document"
+            : "Save Document"}
+        </button>
+
+      </div >
     </>
   );
 }

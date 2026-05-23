@@ -45,7 +45,7 @@ export default function ProfitPage() {
   }, []);
 
   const { totalRevenue, totalCost, totalProfit, marginPercent } = useMemo(() => {
-    const rev  = closedDeals.reduce((s, d) => s + d.my_price, 0);
+    const rev = closedDeals.reduce((s, d) => s + d.my_price, 0);
     const cost = closedDeals.reduce((s, d) => s + d.seller_cost, 0);
     const profit = rev - cost;
     return {
@@ -162,7 +162,7 @@ export default function ProfitPage() {
       </section>
 
       {/* ── Closed Deals Table ── */}
-      {closedDeals.length > 0 && (
+      {/* {closedDeals.length > 0 && (
         <section className="bg-white dark:bg-[#161922] border border-gray-200 dark:border-white/10 rounded-xl shadow-sm overflow-hidden flex-1 flex flex-col min-h-0">
           <div className="px-5 py-3 border-b border-gray-100 dark:border-white/10 flex items-center justify-between flex-shrink-0">
             <h2 className="text-gray-900 dark:text-white text-[13px] font-black tracking-tight">Closed Deals</h2>
@@ -204,7 +204,7 @@ export default function ProfitPage() {
             </table>
           </div>
         </section>
-      )}
+      )} */}
     </div>
   );
 }
