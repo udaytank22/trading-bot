@@ -5,6 +5,12 @@ import Swal from "sweetalert2";
 
 const CURRENCIES = ["USD", "EUR", "GBP", "INR", "JPY", "SGD"];
 
+const inputClass =
+  "w-full h-[48px] rounded-xl px-4 text-sm bg-white dark:bg-[#0f1117] border border-gray-300 dark:border-[#2f3441] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none transition-all focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30";
+
+const labelClass =
+  "block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-[0.18em] mb-2";
+
 export default function AddAccountModal({
   isOpen,
   onClose,
@@ -37,11 +43,11 @@ export default function AddAccountModal({
     }
   }, [accountToEdit, isOpen]);
 
-  // Handle Escape key
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape" && isOpen) onClose();
     };
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
@@ -50,6 +56,14 @@ export default function AddAccountModal({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "balance" ? parseFloat(value) || 0 : value,
+    }));
+  };
+
+  const updateField = (name, value) => {
     setFormData((prev) => ({
       ...prev,
       [name]: name === "balance" ? parseFloat(value) || 0 : value,
@@ -67,37 +81,35 @@ export default function AddAccountModal({
   };
 
   const handleExcelUpload = async (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
 
     try {
       const data = await parseExcelFile(file);
+
       if (data && data.length > 0) {
         const row = data[0];
-        setFormData({
-          ...formData,
-          bankName:
-            row.BankName || row.bankName || row.Bank || formData.bankName,
+
+        setFormData((prev) => ({
+          ...prev,
+          bankName: row.BankName || row.bankName || row.Bank || prev.bankName,
           accountName:
-            row.AccountName ||
-            row.accountName ||
-            row.Purpose ||
-            formData.accountName,
+            row.AccountName || row.accountName || row.Purpose || prev.accountName,
           accountNumber:
             row.AccountNumber ||
             row.accountNumber ||
             row.Number ||
-            formData.accountNumber,
+            prev.accountNumber,
           routingNumber:
             row.RoutingNumber ||
             row.routingNumber ||
             row.Routing ||
             row.Swift ||
-            formData.routingNumber,
-          currency: row.Currency || row.currency || formData.currency,
-          balance: parseFloat(row.Balance || row.balance || 0),
-          status: row.Status || row.status || "Active",
-        });
+            prev.routingNumber,
+          currency: row.Currency || row.currency || prev.currency,
+          balance: parseFloat(row.Balance || row.balance || prev.balance || 0),
+          status: row.Status || row.status || prev.status,
+        }));
 
         Swal.fire({
           icon: "success",
@@ -111,6 +123,7 @@ export default function AddAccountModal({
       }
     } catch (error) {
       console.error("Excel parse error:", error);
+
       Swal.fire({
         icon: "error",
         title: "Import Failed",
@@ -122,22 +135,25 @@ export default function AddAccountModal({
   return (
     <>
       <div
-        className={`fixed inset-0 bg-black/60 z-[100] transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-[100]"
         onClick={handleBackdropClick}
       />
 
-      <div
-        className={`fixed inset-0 z-[101] flex items-center justify-center p-4 ${isOpen ? "pointer-events-auto" : "pointer-events-none"}`}
-      >
+      <div className="fixed inset-0 z-[101] flex items-center justify-center p-4">
         <div
-          className={`relative w-full max-w-5xl h-full max-h-[90vh] bg-white dark:bg-[#1e2028] border border-gray-200 dark:border-[#2a2d36] rounded-xl z-[102] transform transition-all duration-300 shadow-2xl ${isOpen ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}
+          className="
+            relative w-full max-w-5xl max-h-[90vh]
+            bg-white dark:bg-[#1b1d24]
+            border border-gray-200 dark:border-[#2f3441]
+            rounded-2xl shadow-2xl
+            flex flex-col overflow-hidden
+          "
         >
-          {/* Header */}
-          <div className="px-6 py-5 border-b border-gray-200 dark:border-[#2a2d36] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
+          <div className="px-6 py-5 border-b border-gray-200 dark:border-[#2f3441] flex justify-between items-center bg-gray-50 dark:bg-[#1f222b]">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-purple-600/20 rounded-xl flex items-center justify-center border border-purple-500/20 shadow-lg shadow-purple-600/10">
+              <div className="w-11 h-11 bg-purple-100 dark:bg-purple-600/20 rounded-xl flex items-center justify-center border border-purple-200 dark:border-purple-500/20 shadow-lg shadow-purple-600/10">
                 <svg
-                  className="w-5 h-5 text-purple-500"
+                  className="w-5 h-5 text-purple-600 dark:text-purple-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -150,202 +166,173 @@ export default function AddAccountModal({
                   />
                 </svg>
               </div>
+
               <div>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">
                   {accountToEdit ? "Edit Bank Account" : "Add Bank Account"}
                 </h2>
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mt-0.5">
+                <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-[0.2em] mt-1">
                   Financial Details
                 </p>
               </div>
             </div>
+
             <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2 px-3 py-1.5 bg-green-600/10 border border-green-500/20 rounded-lg text-green-500 text-[10px] font-bold uppercase tracking-wider cursor-pointer hover:bg-green-600/20 transition-all">
-                <svg
-                  className="w-3.5 h-3.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                  />
-                </svg>
+              <label className="flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-600/10 border border-green-200 dark:border-green-500/25 rounded-lg text-green-700 dark:text-green-400 text-[10px] font-bold uppercase tracking-wider cursor-pointer hover:bg-green-600 hover:text-white transition-all">
                 Import Excel
                 <input
                   type="file"
                   className="hidden"
-                  accept=".xlsx, .xls, .csv"
+                  accept=".xlsx,.xls,.csv"
                   onChange={handleExcelUpload}
                 />
               </label>
+
               <button
+                type="button"
                 onClick={onClose}
-                className="text-gray-500 hover:text-white transition-all p-2 hover:bg-white/5 rounded-full"
+                className="text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-all p-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-full"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                ✕
               </button>
             </div>
           </div>
-        </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar"
-        >
-          <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
-              Bank Name
-            </label>
-            <input
-              type="text"
-              name="bankName"
-              value={formData.bankName}
-              onChange={handleChange}
-              required
-              placeholder="e.g. Chase Bank"
-              className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none"
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Field
+                label="Bank Name"
+                name="bankName"
+                value={formData.bankName}
+                onChange={handleChange}
+                placeholder="e.g. Chase Bank"
+                required
+              />
 
-          <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
-              Account Purpose / Name
-            </label>
-            <input
-              type="text"
-              name="accountName"
-              value={formData.accountName}
-              onChange={handleChange}
-              required
-              placeholder="e.g. Main Operating"
-              className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none"
-            />
-          </div>
+              <Field
+                label="Account Purpose / Name"
+                name="accountName"
+                value={formData.accountName}
+                onChange={handleChange}
+                placeholder="e.g. Main Operating"
+                required
+              />
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
-                Account Number
-              </label>
-              <input
-                type="text"
+              <Field
+                label="Account Number"
                 name="accountNumber"
                 value={formData.accountNumber}
                 onChange={handleChange}
-                required
                 placeholder="1234567890"
-                className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none"
+                required
               />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
-                Routing / SWIFT
-              </label>
-              <input
-                type="text"
+
+              <Field
+                label="Routing / SWIFT"
                 name="routingNumber"
                 value={formData.routingNumber}
                 onChange={handleChange}
-                required
                 placeholder="021000021"
-                className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none"
+                required
               />
-            </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
-                Currency
-              </label>
-              <Select
-                variant="form"
-                value={formData.currency}
-                onChange={(val) =>
-                  handleChange({ target: { name: "currency", value: val } })
-                }
-                options={[
-                  { value: "USD", label: "USD - US Dollar" },
-                  { value: "EUR", label: "EUR - Euro" },
-                  { value: "AED", label: "AED - Dirham" },
-                  { value: "GBP", label: "GBP - British Pound" },
-                ]}
-                className="w-full"
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
-                Status
-              </label>
-              <Select
-                variant="form"
-                value={formData.status}
-                onChange={(val) =>
-                  handleChange({ target: { name: "status", value: val } })
-                }
-                options={[
-                  { value: "Active", label: "Active" },
-                  { value: "Inactive", label: "Inactive" },
-                ]}
-                className="w-full"
-              />
-            </div>
-          </div>
+              <div>
+                <label className={labelClass}>Currency</label>
+                <Select
+                  variant="form"
+                  value={formData.currency}
+                  onChange={(val) => updateField("currency", val)}
+                  options={CURRENCIES.map((currency) => ({
+                    value: currency,
+                    label: currency,
+                  }))}
+                  className="w-full"
+                  placeholder="Select currency"
+                />
+              </div>
 
-          <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] ml-1">
-              Current Balance
-            </label>
-            <div className="relative">
-              <span className="absolute left-4 top-2.5 text-gray-500 font-bold">
-                $
-              </span>
-              <input
-                type="number"
-                step="0.01"
-                name="balance"
-                value={formData.balance}
-                onChange={handleChange}
-                placeholder="0.00"
-                className="w-full bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg pl-8 pr-4 py-2.5 text-sm text-gray-900 dark:text-white focus:border-purple-500/50 transition-all outline-none"
-              />
-            </div>
-          </div>
-        </form>
+              <div>
+                <label className={labelClass}>Status</label>
+                <Select
+                  variant="form"
+                  value={formData.status}
+                  onChange={(val) => updateField("status", val)}
+                  options={[
+                    { value: "Active", label: "Active" },
+                    { value: "Inactive", label: "Inactive" },
+                  ]}
+                  className="w-full"
+                  placeholder="Select status"
+                />
+              </div>
 
-        {/* Footer */}
-        <div className="px-6 py-5 border-t border-gray-200 dark:border-[#2a2d33] flex gap-3 bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-5 py-2.5 rounded-lg border border-gray-200 dark:border-[#2a2d33] text-gray-700 dark:text-gray-300 text-sm font-bold hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors flex-1"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            className="flex-[2] px-5 py-2.5 rounded-lg bg-purple-600 text-white text-sm font-bold hover:bg-purple-500 transition-all shadow-lg shadow-purple-600/20 active:scale-[0.98]"
-          >
-            {accountToEdit ? "Update Account" : "Save Account"}
-          </button>
+              <div className="md:col-span-2">
+                <label className={labelClass}>Current Balance</label>
+
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 font-bold">
+                    $
+                  </span>
+
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="balance"
+                    value={formData.balance}
+                    onChange={handleChange}
+                    placeholder="0.00"
+                    className={`${inputClass} pl-8`}
+                  />
+                </div>
+              </div>
+            </div>
+          </form>
+
+          <div className="px-6 py-5 border-t border-gray-200 dark:border-[#2f3441] flex gap-3 bg-gray-50 dark:bg-[#1f222b]">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-3 rounded-xl border border-gray-300 dark:border-[#2f3441] text-gray-700 dark:text-gray-300 bg-white dark:bg-[#0f1117] text-sm font-bold hover:bg-gray-100 dark:hover:bg-[#171922] transition-colors"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              onClick={handleSubmit}
+              className="flex-1 px-6 py-3 rounded-xl bg-purple-600 text-white text-sm font-bold hover:bg-purple-500 transition-all shadow-lg shadow-purple-600/20 active:scale-[0.98]"
+            >
+              {accountToEdit ? "Update Account" : "Save Account"}
+            </button>
+          </div>
         </div>
       </div>
     </>
+  );
+}
+
+function Field({
+  label,
+  name,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  required = false,
+}) {
+  return (
+    <div>
+      <label className={labelClass}>{label}</label>
+
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        required={required}
+        placeholder={placeholder}
+        className={inputClass}
+      />
+    </div>
   );
 }

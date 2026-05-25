@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { AppContext } from "../context";
-import { PageToolbar, Pagination, Button } from "../components/ui";
+import { PageToolbar, Pagination, Button, StatusBadge } from "../components/ui";
 
 export default function InvoicesPage() {
     const { invoicesData, setInvoicesData } = React.useContext(AppContext);
@@ -87,7 +87,9 @@ export default function InvoicesPage() {
                                         <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{inv.buyer_name}</td>
                                         <td className="px-4 py-3">{inv.cargo}</td>
                                         <td className="px-4 py-3">{inv.invoice_date ? new Date(inv.invoice_date).toLocaleString() : '-'}</td>
-                                        <td className="px-4 py-3 uppercase text-sm text-gray-600">{inv.invoice_status || 'N/A'}</td>
+                                        <td className="px-4 py-3">
+                                            <StatusBadge status={inv.invoice_status || 'N/A'} />
+                                        </td>
                                         <td className="px-4 py-3 text-right">
                                             <div className="flex items-center justify-end gap-2">
                                                 <a
@@ -152,33 +154,83 @@ export default function InvoicesPage() {
             </div>
 
             {/* Payment Modal */}
+            {/* Payment Modal */}
             {paymentModalInvoice && (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-                    <div className="fixed inset-0 bg-black/60" onClick={() => setPaymentModalInvoice(null)} />
-                    <div className="relative w-full max-w-md bg-white dark:bg-[#1e2028] border border-gray-200 dark:border-[#2a2d36] rounded-xl shadow-2xl p-6 z-10">
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Mark Invoice Paid</h3>
-                        <p className="text-sm text-gray-500 mb-4">Invoice: {paymentModalInvoice.inquiry_id} • {paymentModalInvoice.buyer_name}</p>
+                    <div
+                        className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
+                        onClick={() => setPaymentModalInvoice(null)}
+                    />
 
-                        <div className="space-y-3">
+                    <div className="relative z-10 w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-[#2a2d36] dark:bg-[#1a1d23]">
+                        <div className="mb-6">
+                            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                                Mark Invoice Paid
+                            </h3>
+                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                Invoice: {paymentModalInvoice.inquiry_id} • {paymentModalInvoice.buyer_name}
+                            </p>
+                        </div>
+
+                        <div className="space-y-4">
                             <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase">Amount Paid</label>
-                                <input type="number" value={paymentForm.amount} onChange={(e) => setPaymentForm((p) => ({ ...p, amount: e.target.value }))} className="w-full mt-2 rounded-lg border px-3 py-2" />
+                                <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                                    Amount Paid
+                                </label>
+                                <input
+                                    type="number"
+                                    value={paymentForm.amount}
+                                    onChange={(e) =>
+                                        setPaymentForm((p) => ({ ...p, amount: e.target.value }))
+                                    }
+                                    className="h-11 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-[#343844] dark:bg-[#0f1117] dark:text-white dark:placeholder:text-gray-500"
+                                />
                             </div>
 
                             <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase">Payment Date</label>
-                                <input type="date" value={paymentForm.date} onChange={(e) => setPaymentForm((p) => ({ ...p, date: e.target.value }))} className="w-full mt-2 rounded-lg border px-3 py-2" />
+                                <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                                    Payment Date
+                                </label>
+                                <input
+                                    type="date"
+                                    value={paymentForm.date}
+                                    onChange={(e) =>
+                                        setPaymentForm((p) => ({ ...p, date: e.target.value }))
+                                    }
+                                    className="h-11 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-[#343844] dark:bg-[#0f1117] dark:text-white"
+                                />
                             </div>
 
                             <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase">Reference</label>
-                                <input type="text" value={paymentForm.reference} onChange={(e) => setPaymentForm((p) => ({ ...p, reference: e.target.value }))} className="w-full mt-2 rounded-lg border px-3 py-2" />
+                                <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                                    Reference
+                                </label>
+                                <input
+                                    type="text"
+                                    value={paymentForm.reference}
+                                    onChange={(e) =>
+                                        setPaymentForm((p) => ({ ...p, reference: e.target.value }))
+                                    }
+                                    placeholder="Enter payment reference"
+                                    className="h-11 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-[#343844] dark:bg-[#0f1117] dark:text-white dark:placeholder:text-gray-500"
+                                />
                             </div>
                         </div>
 
-                        <div className="mt-5 flex gap-3 justify-end">
-                            <button onClick={() => setPaymentModalInvoice(null)} className="px-4 py-2 border rounded-lg">Cancel</button>
-                            <button onClick={handleMarkPaid} className="px-4 py-2 bg-emerald-600 text-white rounded-lg">Mark Paid</button>
+                        <div className="mt-7 flex justify-end gap-3">
+                            <button
+                                onClick={() => setPaymentModalInvoice(null)}
+                                className="h-10 rounded-xl border border-gray-300 bg-white px-5 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 dark:border-[#3a3f4b] dark:bg-transparent dark:text-gray-300 dark:hover:bg-white/5"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                onClick={handleMarkPaid}
+                                className="h-10 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-500 focus:ring-2 focus:ring-emerald-500/30"
+                            >
+                                Mark Paid
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -16,16 +16,15 @@ const CUSTOMERS = [
 
 const SALESPEOPLE = ["Bharat", "Anjali", "Vikram", "Priya", "Rahul", "Neha"];
 
-const VESSELS = [
-  "MV Morning Star",
-  "Oceanic Voyager",
-  "Global Mariner",
-  "Pacific Explorer",
-  "Northern Light",
-  "Caspian Sea",
-  "Ever Given",
-  "Arctic Express",
-];
+const modalBg = "bg-white dark:bg-[#1b1d24]";
+const panelBg = "bg-gray-50 dark:bg-[#1f222b]";
+const borderColor = "border-gray-200 dark:border-[#2f3441]";
+
+const labelClass =
+  "block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2";
+
+const inputClass =
+  "w-full h-[52px] rounded-xl px-4 text-sm transition-all duration-200 bg-white dark:bg-[#0f1117] border border-gray-300 dark:border-[#2f3441] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 hover:border-gray-400 dark:hover:border-[#464c5c]";
 
 const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
@@ -43,69 +42,73 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
     attachment: null,
   });
 
-  // Handle Escape key
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape" && isOpen) onClose();
     };
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen && !formData.customer) return null;
+  if (!isOpen) return null;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const updateField = (name, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
+
     if (file) {
-      setFormData((prev) => ({ ...prev, attachment: file }));
+      updateField("attachment", file);
     }
   };
 
   const handleExcelUpload = async (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
 
     try {
       const data = await parseExcelFile(file);
+
       if (data && data.length > 0) {
         const firstRow = data[0];
 
-        const newFormData = {
-          ...formData,
-          customer: firstRow.Customer || firstRow.customer || formData.customer,
-          vessel: firstRow.Vessel || firstRow.vessel || formData.vessel,
-          imoNumber: firstRow.IMO || firstRow.imoNumber || formData.imoNumber,
+        setFormData((prev) => ({
+          ...prev,
+          customer: firstRow.Customer || firstRow.customer || prev.customer,
+          vessel: firstRow.Vessel || firstRow.vessel || prev.vessel,
+          imoNumber: firstRow.IMO || firstRow.imoNumber || prev.imoNumber,
           salesperson:
-            firstRow.Salesperson ||
-            firstRow.salesperson ||
-            formData.salesperson,
-          currency: firstRow.Currency || firstRow.currency || formData.currency,
+            firstRow.Salesperson || firstRow.salesperson || prev.salesperson,
+          currency: firstRow.Currency || firstRow.currency || prev.currency,
           vesselReference:
             firstRow.Reference ||
             firstRow.vesselReference ||
-            formData.vesselReference,
+            prev.vesselReference,
           validityDate:
-            firstRow.ValidityDate ||
-            firstRow.validityDate ||
-            formData.validityDate,
+            firstRow.ValidityDate || firstRow.validityDate || prev.validityDate,
           requestType:
-            firstRow.RequestType ||
-            firstRow.requestType ||
-            formData.requestType,
+            firstRow.RequestType || firstRow.requestType || prev.requestType,
           clientCategory:
-            firstRow.Category || firstRow.category || formData.clientCategory,
+            firstRow.Category || firstRow.category || prev.clientCategory,
           subCategory:
-            firstRow.SubCategory ||
-            firstRow.subCategory ||
-            formData.subCategory,
-        };
+            firstRow.SubCategory || firstRow.subCategory || prev.subCategory,
+        }));
 
-        setFormData(newFormData);
         Swal.fire({
           icon: "success",
           title: "Data Imported",
@@ -118,6 +121,7 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
       }
     } catch (error) {
       console.error("Excel parse error:", error);
+
       Swal.fire({
         icon: "error",
         title: "Import Failed",
@@ -135,36 +139,45 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) onClose();
   };
+
   return (
     <>
-      {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/60 z-[100] transition-opacity duration-300 ${
-          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
+        className="fixed inset-0 bg-black/60 dark:bg-black/70 backdrop-blur-sm z-[100]"
         onClick={handleBackdropClick}
       />
 
-      {/* Modal */}
-      <div
-        className={`fixed inset-0 z-[101] flex items-center justify-center p-4 ${
-          isOpen ? "pointer-events-auto" : "pointer-events-none"
-        }`}
-      >
+      <div className="fixed inset-0 z-[101] flex items-center justify-center p-4">
         <div
-          className={`relative w-full max-w-[86rem] h-full max-h-[90vh]
-        bg-white dark:bg-[#1e2028]
-        border border-gray-200 dark:border-[#2a2d36]
-        rounded-xl shadow-2xl flex flex-col
-        ${isOpen ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}
+          className={`
+            relative w-full max-w-[86rem] h-full max-h-[90vh]
+            ${modalBg}
+            border ${borderColor}
+            rounded-2xl shadow-2xl
+            flex flex-col overflow-hidden
+          `}
         >
           {/* Header */}
-          <div className="px-8 py-5 border-b flex justify-between items-center gap-4">
-            <div className="flex items-center gap-3">
+          <div
+            className={`
+              px-8 py-3 border-b ${borderColor}
+              flex justify-between items-center gap-4
+              ${panelBg}
+            `}
+          >
+            <div className="flex items-center gap-4">
               <button
                 type="button"
                 onClick={onClose}
-                className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-gray-200 dark:border-[#2a2d36] text-gray-600 hover:bg-gray-100 dark:hover:bg-white/5 transition"
+                className="
+                  inline-flex items-center justify-center w-11 h-11 rounded-full
+                  bg-white dark:bg-[#0f1117]
+                  border border-gray-300 dark:border-[#2f3441]
+                  text-gray-700 dark:text-gray-300
+                  hover:bg-gray-100 dark:hover:bg-[#171922]
+                  hover:border-gray-400 dark:hover:border-[#464c5c]
+                  transition-all duration-200
+                "
               >
                 <svg
                   className="w-5 h-5"
@@ -180,28 +193,27 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
                   />
                 </svg>
               </button>
+
               <div>
-                <h2 className="text-xl font-bold">Add Inquiry</h2>
-                <p className="text-sm text-gray-500">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Add Inquiry
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   Please fill in the inquiry details below.
                 </p>
               </div>
             </div>
 
-            <label className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg cursor-pointer hover:bg-green-500 transition">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                />
-              </svg>
+            <label
+              className="
+                flex items-center gap-2 px-5 py-2.5 rounded-lg cursor-pointer
+                bg-green-50 dark:bg-green-600/10
+                text-green-700 dark:text-green-400
+                border border-green-200 dark:border-green-600/30
+                hover:bg-green-600 hover:text-white
+                transition-all duration-200 font-semibold text-sm
+              "
+            >
               Import Excel
               <input
                 type="file"
@@ -212,128 +224,92 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
             </label>
           </div>
 
-          {/* FORM */}
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-gray-700">
-                  Customer
-                </label>
+          {/* Body */}
+          <form
+            onSubmit={handleSubmit}
+            className={`flex-1 overflow-y-auto p-8 ${modalBg}`}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-7">
+              <div>
+                <label className={labelClass}>Customer</label>
                 <Select
                   variant="form"
                   value={formData.customer}
-                  onChange={(val) =>
-                    setFormData((prev) => ({ ...prev, customer: val }))
-                  }
+                  onChange={(val) => updateField("customer", val)}
                   options={CUSTOMERS.map((customer) => ({
                     value: customer,
                     label: customer,
                   }))}
                   className="w-full"
+                  placeholder="Select customer"
                 />
               </div>
 
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-semibold text-gray-700">
-                    Customer Currency
-                  </label>
-                </div>
+              <div>
+                <label className={labelClass}>Customer Currency</label>
                 <Select
                   variant="form"
                   value={formData.currency}
-                  onChange={(val) =>
-                    setFormData((prev) => ({ ...prev, currency: val }))
-                  }
+                  onChange={(val) => updateField("currency", val)}
                   options={[
                     { value: "USD", label: "USD" },
                     { value: "EUR", label: "EUR" },
                     { value: "INR", label: "INR" },
                   ]}
                   className="w-full"
+                  placeholder="Select currency"
                 />
               </div>
 
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-gray-700">
-                  Vessel
-                </label>
-                <input
-                  type="text"
-                  name="vessel"
-                  value={formData.vessel}
-                  onChange={handleChange}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-200"
-                  placeholder="Enter vessel name"
-                />
-              </div>
+              <Field
+                label="Vessel"
+                name="vessel"
+                value={formData.vessel}
+                onChange={handleChange}
+                placeholder="Enter vessel name"
+              />
 
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-gray-700">
-                  Vessel Reference
-                </label>
-                <input
-                  type="text"
-                  name="vesselReference"
-                  value={formData.vesselReference}
-                  onChange={handleChange}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-200"
-                  placeholder="Enter reference"
-                />
-              </div>
+              <Field
+                label="Vessel Reference"
+                name="vesselReference"
+                value={formData.vesselReference}
+                onChange={handleChange}
+                placeholder="Enter vessel reference"
+              />
 
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-gray-700">
-                  IMO Number
-                </label>
-                <input
-                  type="text"
-                  name="imoNumber"
-                  value={formData.imoNumber}
-                  onChange={handleChange}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-200"
-                  placeholder="Enter IMO number"
-                />
-              </div>
+              <Field
+                label="IMO Number"
+                name="imoNumber"
+                value={formData.imoNumber}
+                onChange={handleChange}
+                placeholder="Enter IMO number"
+              />
 
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-gray-700">
-                  Validity Date
-                </label>
-                <input
-                  type="date"
-                  name="validityDate"
-                  value={formData.validityDate}
-                  onChange={handleChange}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-200"
-                />
-              </div>
+              <Field
+                label="Validity Date"
+                name="validityDate"
+                type="date"
+                value={formData.validityDate}
+                onChange={handleChange}
+              />
 
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-gray-700">
-                  Attachment
-                </label>
+              <div>
+                <label className={labelClass}>Attachment</label>
+
                 <div className="relative">
                   <input
                     type="file"
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     onChange={handleFileChange}
                   />
-                  <div className="w-full border border-gray-200 rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-600 flex items-center gap-2 cursor-pointer hover:border-purple-300 transition">
-                    <svg
-                      className="w-4 h-4 text-gray-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+
+                  <div className={`${inputClass} flex items-center`}>
+                    <span
+                      className={`truncate ${formData.attachment
+                        ? "text-gray-900 dark:text-gray-100"
+                        : "text-gray-400 dark:text-gray-500"
+                        }`}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                      />
-                    </svg>
-                    <span>
                       {formData.attachment
                         ? formData.attachment.name
                         : "Upload Attachment"}
@@ -342,81 +318,74 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-gray-700">
-                  Salesperson
-                </label>
+              <div>
+                <label className={labelClass}>Salesperson</label>
                 <Select
                   variant="form"
                   value={formData.salesperson}
-                  onChange={(val) =>
-                    setFormData((prev) => ({ ...prev, salesperson: val }))
-                  }
+                  onChange={(val) => updateField("salesperson", val)}
                   options={SALESPEOPLE.map((person) => ({
                     value: person,
                     label: person,
                   }))}
                   className="w-full"
+                  placeholder="Select salesperson"
                 />
               </div>
 
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-gray-700">
-                  Request Type
-                </label>
+              <div>
+                <label className={labelClass}>Request Type</label>
                 <Select
                   variant="form"
                   value={formData.requestType}
-                  onChange={(val) =>
-                    setFormData((prev) => ({ ...prev, requestType: val }))
-                  }
+                  onChange={(val) => updateField("requestType", val)}
                   options={[
                     { value: "Normal", label: "Normal" },
                     { value: "Urgent", label: "Urgent" },
                   ]}
                   className="w-full"
+                  placeholder="Select request type"
                 />
               </div>
 
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-gray-700">
-                  Client Category
-                </label>
-                <input
-                  type="text"
-                  name="clientCategory"
-                  value={formData.clientCategory}
-                  onChange={handleChange}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-200"
-                  placeholder="Enter category"
-                />
-              </div>
+              <Field
+                label="Client Category"
+                name="clientCategory"
+                value={formData.clientCategory}
+                onChange={handleChange}
+                placeholder="Enter client category"
+              />
 
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-semibold text-gray-700">
-                    Sub Category
-                  </label>
-                  <span className="text-xs text-gray-400">?</span>
-                </div>
-                <input
-                  type="text"
-                  name="subCategory"
-                  value={formData.subCategory}
-                  onChange={handleChange}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-200"
-                  placeholder="Enter sub category"
-                />
-              </div>
+              <Field
+                label="Sub Category"
+                name="subCategory"
+                value={formData.subCategory}
+                onChange={handleChange}
+                placeholder="Enter sub category"
+              />
             </div>
           </form>
 
           {/* Footer */}
-          <div className="px-8 py-5 border-t flex gap-3">
+          <div
+            className={`
+              px-8 py-3 border-t ${borderColor}
+              flex gap-3 ${panelBg}
+            `}
+          >
             <button
               type="button"
               onClick={onClose}
-              className="border px-5 py-2 rounded"
+              className="
+                px-6 py-3 rounded-xl
+                bg-white dark:bg-[#0f1117]
+                border border-gray-300 dark:border-[#2f3441]
+                text-gray-700 dark:text-gray-300
+                font-semibold
+                hover:bg-gray-100 dark:hover:bg-[#171922]
+                hover:border-gray-400 dark:hover:border-[#464c5c]
+                transition-all duration-200
+              "
             >
               Cancel
             </button>
@@ -424,7 +393,13 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
             <button
               type="submit"
               onClick={handleSubmit}
-              className="flex-1 bg-purple-600 text-white px-5 py-2 rounded"
+              className="
+                flex-1 px-6 py-3 rounded-xl
+                bg-purple-600 hover:bg-purple-500
+                text-white font-bold
+                shadow-lg shadow-purple-900/30
+                transition-all duration-200
+              "
             >
               Create Inquiry
             </button>
@@ -434,5 +409,29 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
     </>
   );
 };
+
+function Field({
+  label,
+  name,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+}) {
+  return (
+    <div>
+      <label className={labelClass}>{label}</label>
+
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder || `Enter ${label}`}
+        className={inputClass}
+      />
+    </div>
+  );
+}
 
 export default AddInquiryModal;

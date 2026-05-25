@@ -50,47 +50,142 @@ function RightDrawer({ isOpen, title, onClose, children }) {
 function ViewDetails({ item, onClose }) {
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 flex flex-col gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
         {Object.entries(item).map(([key, value]) => (
-          <div key={key} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 border-b border-gray-50 dark:border-[#2a2d33]/50 pb-3 last:border-0 last:pb-0">
-            <span className="text-[12px] font-semibold text-gray-500 uppercase tracking-wider w-1/3">{key}</span>
-            <span className="text-[14px] text-gray-900 dark:text-white font-medium flex-1">{value}</span>
+          <div
+            key={key}
+            className="rounded-xl border border-gray-200 dark:border-[#2a2d33] bg-gray-50 dark:bg-[#0f1117]/40 p-4 transition-all"
+          >
+            <div className="text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+              {key}
+            </div>
+
+            <div className="text-[14px] font-medium text-gray-900 dark:text-white break-words">
+              {value || "-"}
+            </div>
           </div>
         ))}
       </div>
+
+      {/* Footer */}
+      {/* 
+      <div className="mt-6 pt-5 border-t border-gray-200 dark:border-[#2a2d33] flex justify-end">
+        <button
+          onClick={onClose}
+          className="px-5 py-2.5 rounded-xl text-[13px] font-semibold bg-gray-100 dark:bg-white/[0.03] text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/[0.06] transition-all"
+        >
+          Close
+        </button>
+      </div> 
+      */}
     </div>
   );
 }
 
 function InventoryForm({ initialData, onSave, onClose }) {
-  const [formData, setFormData] = useState(initialData || { name: '', category: '', quantity: '', price: '', location: '', status: 'In Stock' });
-  const set = (key) => (e) => setFormData(prev => ({ ...prev, [key]: e.target.value }));
+  const [formData, setFormData] = useState(
+    initialData || {
+      name: '',
+      category: '',
+      quantity: '',
+      price: '',
+      location: '',
+      status: 'In Stock'
+    }
+  );
+
+  const set = (key) => (e) =>
+    setFormData((prev) => ({ ...prev, [key]: e.target.value }));
 
   return (
-    <div className="flex flex-col gap-5 h-full">
-      <div className="flex-1 flex flex-col gap-5">
-        <Field label="Item Name"><input type="text" className={inputCls} value={formData.name} onChange={set('name')} placeholder="e.g. Copper Wire" /></Field>
-        <Field label="Category"><input type="text" className={inputCls} value={formData.category} onChange={set('category')} placeholder="e.g. Raw Materials" /></Field>
-        <Field label="Quantity"><input type="number" className={inputCls} value={formData.quantity} onChange={set('quantity')} placeholder="e.g. 150" /></Field>
-        <Field label="Unit Price"><input type="text" className={inputCls} value={formData.price} onChange={set('price')} placeholder="e.g. $45.00" /></Field>
-        <Field label="Location/Warehouse"><input type="text" className={inputCls} value={formData.location} onChange={set('location')} placeholder="e.g. Warehouse A" /></Field>
+    <div className="flex flex-col h-full">
+      {/* Form Fields */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 flex-1">
+
+        <Field label="Item Name">
+          <input
+            type="text"
+            className={inputCls}
+            value={formData.name}
+            onChange={set('name')}
+            placeholder="e.g. Copper Wire"
+          />
+        </Field>
+
+        <Field label="Category">
+          <input
+            type="text"
+            className={inputCls}
+            value={formData.category}
+            onChange={set('category')}
+            placeholder="e.g. Raw Materials"
+          />
+        </Field>
+
+        <Field label="Quantity">
+          <input
+            type="number"
+            className={inputCls}
+            value={formData.quantity}
+            onChange={set('quantity')}
+            placeholder="e.g. 150"
+          />
+        </Field>
+
+        <Field label="Unit Price">
+          <input
+            type="text"
+            className={inputCls}
+            value={formData.price}
+            onChange={set('price')}
+            placeholder="e.g. $45.00"
+          />
+        </Field>
+
+        <Field label="Location/Warehouse">
+          <input
+            type="text"
+            className={inputCls}
+            value={formData.location}
+            onChange={set('location')}
+            placeholder="e.g. Warehouse A"
+          />
+        </Field>
+
         <Field label="Status">
           <Select
             variant="settings"
             className={inputCls}
             value={formData.status}
-            onChange={(val) => setFormData(prev => ({ ...prev, status: val }))}
+            onChange={(val) =>
+              setFormData((prev) => ({
+                ...prev,
+                status: val,
+              }))
+            }
             options={[
               { value: "In Stock", label: "In Stock" },
               { value: "Low Stock", label: "Low Stock" },
-              { value: "Out of Stock", label: "Out of Stock" }
+              { value: "Out of Stock", label: "Out of Stock" },
             ]}
           />
         </Field>
       </div>
-      <div className="mt-8 flex justify-end gap-3">
-        <button onClick={onClose} className="px-4 py-2 text-[13px] font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors">Cancel</button>
-        <button onClick={() => onSave(formData)} className="px-5 py-2 text-[13px] font-bold text-white bg-purple-600 hover:bg-purple-500 rounded-lg shadow-sm transition-colors">Save Details</button>
+
+      {/* Footer Buttons */}
+      <div className="mt-4 flex justify-end gap-3 border-t border-gray-200 dark:border-[#2a2d33] pt-2">
+        <button
+          onClick={onClose}
+          className="px-5 py-2 text-[13px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/[0.03] hover:bg-gray-200 dark:hover:bg-white/[0.06] rounded-xl transition-all"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={() => onSave(formData)}
+          className="px-5 py-2 text-[13px] font-bold text-white bg-purple-600 hover:bg-purple-500 rounded-xl shadow-sm transition-all"
+        >
+          Save Details
+        </button>
       </div>
     </div>
   );

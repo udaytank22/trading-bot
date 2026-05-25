@@ -81,6 +81,14 @@ const STATUS_STYLES = {
     "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-500 border-emerald-200 dark:border-emerald-500/20",
   Inactive:
     "bg-gray-100 dark:bg-gray-500/10 text-gray-600 dark:text-gray-500 border-gray-200 dark:border-gray-500/20",
+
+  // ── Invoice statuses ──────────────────────────────────────────────────────
+  SENT:
+    "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/20",
+  PAID:
+    "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20",
+  "N/A":
+    "bg-gray-100 dark:bg-gray-500/10 text-gray-500 dark:text-gray-500 border-gray-200 dark:border-gray-500/20",
 };
 
 // ─── Label map ─────────────────────────────────────────────────────────────────

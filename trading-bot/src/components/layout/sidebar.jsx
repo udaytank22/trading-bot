@@ -14,7 +14,6 @@ const NAV_LINKS = [
   // { name: "Documents", path: "/documents", icon: <DocumentIcon /> },
   { name: "To-Do", path: "/todo", icon: <TodoIcon /> },
   // { name: "Profit Report", path: "/profit", icon: <ProfitIcon /> },
-  { name: "Accounts", path: "/accounts", icon: <ProfitIcon /> },
   { name: "Notifications", path: "/notifications", icon: <BellIcon /> },
   { name: "Profile", path: "/profile", icon: <ProfileIcon /> },
 ];

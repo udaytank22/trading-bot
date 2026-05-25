@@ -126,10 +126,9 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
                 <div className="h-4 flex items-center justify-center">
                   <div
                     className={`w-3.5 h-3.5 rounded-full border-2 transition-all duration-300 flex items-center justify-center bg-white dark:bg-[#1e2028] z-10
-                      ${
-                        isActive
-                          ? "border-purple-500 shadow-md shadow-purple-500/10"
-                          : "border-gray-300 dark:border-gray-600"
+                      ${isActive
+                        ? "border-purple-500 shadow-md shadow-purple-500/10"
+                        : "border-gray-300 dark:border-gray-600"
                       }
                     `}
                   >
@@ -146,12 +145,11 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
                 {/* Stepper Label */}
                 <span
                   className={`text-[8px] mt-2 font-bold uppercase tracking-wider text-center max-w-[76px] leading-tight select-none transition-colors duration-300
-                    ${
-                      isCurrent
-                        ? "text-purple-400 font-extrabold"
-                        : isActive
-                          ? "text-purple-500/80"
-                          : "text-gray-600 dark:text-gray-500"
+                    ${isCurrent
+                      ? "text-purple-400 font-extrabold"
+                      : isActive
+                        ? "text-purple-500/80"
+                        : "text-gray-600 dark:text-gray-500"
                     }
                   `}
                 >
@@ -428,7 +426,7 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
                               <td className="px-4 py-3 truncate max-w-[120px] font-medium">
                                 {p.product_name}
                               </td>
-                              <td className="px-4 py-3 font-mono text-gray-200 font-medium">
+                              <td className="px-4 py-3 font-mono text-black dark:text-gray-200 font-medium">
                                 {formatCurrency(p.seller_unit_price)}
                               </td>
                               <td className="px-4 py-3 font-mono font-medium">

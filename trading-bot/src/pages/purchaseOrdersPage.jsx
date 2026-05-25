@@ -98,12 +98,12 @@ export default function PurchaseOrdersPage() {
     setPurchaseOrdersData(prev => [tempPO, ...prev]);
     showToast("Purchase order created successfully", "success");
   };
-  
+
   const updatePOStatus = useCallback((id, status) => {
-    setPurchaseOrdersData(prev => 
+    setPurchaseOrdersData(prev =>
       prev.map(po => po.po_id === id ? { ...po, status } : po)
     );
-    setSelectedPO(prev => 
+    setSelectedPO(prev =>
       prev?.po_id === id ? { ...prev, status } : prev
     );
   }, [setPurchaseOrdersData]);
@@ -125,11 +125,11 @@ export default function PurchaseOrdersPage() {
         filterValue={filter}
         onFilterChange={(val) => { setFilter(val); setCurrentPage(1); }}
         filterOptions={[
-          { value: "All",       label: "All Status" },
-          { value: "PENDING",   label: "Pending" },
+          { value: "All", label: "All Status" },
+          { value: "PENDING", label: "Pending" },
           { value: "CONFIRMED", label: "Confirmed" },
-          { value: "SHIPPED",   label: "Shipped" },
-          { value: "CLOSED",    label: "Closed" },
+          { value: "SHIPPED", label: "Shipped" },
+          { value: "CLOSED", label: "Closed" },
         ]}
         onAdd={() => setIsAddModalOpen(true)}
         addLabel="Add Purchase Order"
