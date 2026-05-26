@@ -97,11 +97,14 @@ export default function AddEmployeeModal({
 
       setFormData((prev) => ({
         ...prev,
-        name: row.Name || prev.name,
-        email: row.Email || prev.email,
-        role: row.Role || prev.role,
-        department: row.Department || prev.department,
-        phone: row.Phone || prev.phone,
+        name: row.Name || row.name || row.FullName || row.fullName || prev.name,
+        email: row.Email || row.email || prev.email,
+        role: row.Role || row.role || prev.role,
+        department: row.Department || row.department || row.Dept || prev.department,
+        status: row.Status || row.status || prev.status,
+        phone: row.Phone || row.phone || row.Mobile || prev.phone,
+        joiningDate:
+          row.JoiningDate || row.joiningDate || row.Date || prev.joiningDate,
       }));
 
       Swal.fire({
@@ -302,6 +305,22 @@ export default function AddEmployeeModal({
                   ]}
                   className="w-full"
                 />
+              </div>
+
+              <div className="md:col-span-2 bg-purple-500/5 border border-purple-500/10 rounded-2xl p-6 mt-2">
+                <h4 className="text-xs font-bold text-purple-400 uppercase tracking-widest mb-3">
+                  Login Credentials
+                </h4>
+
+                <p className="text-sm text-gray-400 leading-relaxed mb-4">
+                  Employees will use their work email and a default password to login.
+                  Password resets can be initiated from the admin panel.
+                </p>
+
+                <label className={labelCls}>Access Level</label>
+                <div className="h-12 flex items-center bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-xl px-4 text-sm text-purple-400 font-mono">
+                  {formData.role || "Select a role to see access level"}
+                </div>
               </div>
             </div>
           </form>

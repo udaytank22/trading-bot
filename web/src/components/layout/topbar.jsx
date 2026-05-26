@@ -78,9 +78,9 @@ export default function Topbar({ onToggleSidebar }) {
             <path d="M3 12h18M3 6h18M3 18h18" />
           </svg>
         </button>
-        {/* <h1 className="text-gray-900 dark:text-white text-[14px] font-bold tracking-tight">
+        <h1 className="text-gray-900 dark:text-white text-[14px] font-bold tracking-tight">
           {title}
-        </h1> */}
+        </h1>
         <div className="relative hidden md:block">
           <SearchBar
             value={searchQuery}

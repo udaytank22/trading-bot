@@ -30,6 +30,7 @@ import { fetchInquiries, triggerRFQ } from "../services/n8nService";
 import { formatDateString } from "../services/marginEngine";
 import { useToast } from "../hooks/useToast";
 import InquiryTable from "../components/inquiryTable";
+import InquiryKanban from "../components/inquiryKanban";
 import QuoteModal from "../components/quoteModal";
 import RFQModal from "../components/rFQModal";
 import StockCheckModal from "../components/stockCheckModal";
@@ -78,6 +79,7 @@ export default function InquiriesPage() {
   const [filter, setFilter] = useState(location.state?.filter ?? "All");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(30);
+  const [viewMode, setViewMode] = useState("kanban"); // 'table' | 'kanban'
 
   // Data loading
   const [loading, setLoading] = useState(true);
@@ -491,7 +493,7 @@ export default function InquiriesPage() {
   }
 
   return (
-    <div className="flex flex-col w-full h-full pb-4 relative">
+    <div className="flex flex-col w-full h-full pb-4 relative overflow-hidden min-w-0">
       <Toast message={toast.message} type={toast.type} />
 
       {/* Centralized toolbar: search + status filter + Add Inquiry button */}
@@ -522,38 +524,91 @@ export default function InquiriesPage() {
         addLabel="Add Inquiry"
       />
 
-      {/* Table */}
-      <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg transition-colors duration-300">
-        {filteredInquiries.length > 0 ? (
-          <InquiryTable
-            items={currentItems}
-            onView={(inq) => {
-              setSelectedDeal(inq);
-              setIsDrawerOpen(true);
-            }}
-            onAction={handleAction}
-            currentUser={currentUser}
-          />
+      {/* View toggle + Table / Kanban */}
+      <div className="flex items-center justify-end mb-1 gap-2">
+        <div className="flex items-center bg-gray-100 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg p-0.5">
+          {/* Table view */}
+          <button
+            onClick={() => setViewMode("table")}
+            title="Table view"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-bold transition-all duration-200 ${viewMode === "table"
+              ? "bg-white dark:bg-[#0f1117] text-purple-600 dark:text-purple-400 shadow-sm"
+              : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+              }`}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M3 10h18M3 14h18M10 6h11M10 18h11M3 6h.01M3 18h.01" />
+            </svg>
+            Table
+          </button>
+          {/* Kanban view */}
+          <button
+            onClick={() => setViewMode("kanban")}
+            title="Kanban view"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-bold transition-all duration-200 ${viewMode === "kanban"
+              ? "bg-white dark:bg-[#0f1117] text-purple-600 dark:text-purple-400 shadow-sm"
+              : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+              }`}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+            </svg>
+            Kanban
+          </button>
+        </div>
+      </div>
+
+      {viewMode === "kanban" ? (
+        /* ── Kanban board (no pagination — shows all filtered) ── */
+        filteredInquiries.length > 0 ? (
+          <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
+            <InquiryKanban
+              items={filteredInquiries}
+              onView={(inq) => {
+                setSelectedDeal(inq);
+                setIsDrawerOpen(true);
+              }}
+              onAction={handleAction}
+              onStatusChange={(id, newStatus) => updateDealStatus(id, newStatus)}
+              currentUser={currentUser}
+            />
+          </div>
         ) : (
           <EmptyState />
-        )}
-
-        {/* Pagination */}
-        {/* Centralized pagination footer */}
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={filteredInquiries.length}
-          itemsPerPage={itemsPerPage}
-          onPrev={() => setCurrentPage((p) => p - 1)}
-          onNext={() => setCurrentPage((p) => p + 1)}
-          itemLabel="records"
-          onItemsPerPageChange={(val) => {
-            setItemsPerPage(val);
-            setCurrentPage(1);
-          }}
-        />
-      </div>
+        )
+      ) : (
+        /* ── Table view (with pagination) ── */
+        <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg transition-colors duration-300">
+          {filteredInquiries.length > 0 ? (
+            <InquiryTable
+              items={currentItems}
+              onView={(inq) => {
+                setSelectedDeal(inq);
+                setIsDrawerOpen(true);
+              }}
+              onAction={handleAction}
+              currentUser={currentUser}
+            />
+          ) : (
+            <EmptyState />
+          )}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredInquiries.length}
+            itemsPerPage={itemsPerPage}
+            onPrev={() => setCurrentPage((p) => p - 1)}
+            onNext={() => setCurrentPage((p) => p + 1)}
+            itemLabel="records"
+            onItemsPerPageChange={(val) => {
+              setItemsPerPage(val);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
+      )}
 
       <DealDrawer
         deal={selectedDeal}
