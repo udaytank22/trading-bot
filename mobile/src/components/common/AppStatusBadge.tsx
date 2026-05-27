@@ -1,97 +1,157 @@
 import React from 'react';
-import AppBadge from './AppBadge';
+import { View, StyleProp, ViewStyle } from 'react-native';
+import AppText from './AppText';
+import { useAppStore } from '../../store/appStore';
 
 interface AppStatusBadgeProps {
   status: string;
-  className?: string;
+  style?: StyleProp<ViewStyle>;
 }
 
-export const AppStatusBadge: React.FC<AppStatusBadgeProps> = ({
-  status,
-  className = '',
-}) => {
-  const normStatus = status.toUpperCase();
-  let label = status;
-  let variant: 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'gray' = 'primary';
+type BadgeVariant = {
+  bg: { light: string; dark: string };
+  text: { light: string; dark: string };
+  label: string;
+};
 
-  switch (normStatus) {
-    case 'PENDING':
-      label = 'Pending';
-      variant = 'warning';
-      break;
-    case 'RFQ_SENT':
-      label = 'RFQ Sent';
-      variant = 'info';
-      break;
-    case 'RFQ_RECEIVED':
-      label = 'RFQ Received';
-      variant = 'primary';
-      break;
-    case 'RFQ_READY':
-      label = 'RFQ Ready';
-      variant = 'info';
-      break;
-    case 'CLIENT_QUOTING':
-      label = 'Client Quoting';
-      variant = 'primary';
-      break;
-    case 'QUOTE_SENT':
-      label = 'Quote Sent';
-      variant = 'success';
-      break;
-    case 'TL_REVIEW':
-      label = 'TL Review';
-      variant = 'warning';
-      break;
-    case 'ADMIN_APPROVAL':
-      label = 'Admin Approval';
-      variant = 'danger';
-      break;
-    case 'EMPLOYEE_VERIFY':
-      label = 'Verify';
-      variant = 'warning';
-      break;
-    case 'CONFIRMED':
-    case 'PAID':
-    case 'DELIVERED':
-    case 'ACTIVE':
-    case 'VALID':
-      label = status.charAt(0) + status.slice(1).toLowerCase();
-      variant = 'success';
-      break;
-    case 'CANCELLED':
-    case 'EXPIRED':
-    case 'INACTIVE':
-      label = status.charAt(0) + status.slice(1).toLowerCase();
-      variant = 'danger';
-      break;
-    case 'IN_TRANSIT':
-      label = 'In Transit';
-      variant = 'info';
-      break;
-    case 'LOADING':
-      label = 'Loading';
-      variant = 'warning';
-      break;
-    case 'DRAFT':
-      label = 'Draft';
-      variant = 'gray';
-      break;
-    case 'SENT':
-      label = 'Sent';
-      variant = 'success';
-      break;
-    default:
-      variant = 'gray';
-      break;
-  }
+const BADGE_MAP: Record<string, BadgeVariant> = {
+  PENDING: {
+    bg: { light: '#fff7ed', dark: 'rgba(251,191,36,0.15)' },
+    text: { light: '#b45309', dark: '#fbbf24' },
+    label: 'Pending',
+  },
+  RFQ_SENT: {
+    bg: { light: '#eff6ff', dark: 'rgba(96,165,250,0.15)' },
+    text: { light: '#1d4ed8', dark: '#60a5fa' },
+    label: 'RFQ Sent',
+  },
+  RFQ_RECEIVED: {
+    bg: { light: '#f5f3ff', dark: 'rgba(167,139,250,0.15)' },
+    text: { light: '#6d28d9', dark: '#a78bfa' },
+    label: 'RFQ Received',
+  },
+  RFQ_READY: {
+    bg: { light: '#eff6ff', dark: 'rgba(96,165,250,0.15)' },
+    text: { light: '#1d4ed8', dark: '#60a5fa' },
+    label: 'RFQ Ready',
+  },
+  CLIENT_QUOTING: {
+    bg: { light: '#f5f3ff', dark: 'rgba(167,139,250,0.15)' },
+    text: { light: '#6d28d9', dark: '#a78bfa' },
+    label: 'Client Quoting',
+  },
+  QUOTE_SENT: {
+    bg: { light: '#ecfdf5', dark: 'rgba(52,211,153,0.15)' },
+    text: { light: '#065f46', dark: '#34d399' },
+    label: 'Quote Sent',
+  },
+  TL_REVIEW: {
+    bg: { light: '#fff7ed', dark: 'rgba(251,191,36,0.15)' },
+    text: { light: '#b45309', dark: '#fbbf24' },
+    label: 'TL Review',
+  },
+  ADMIN_APPROVAL: {
+    bg: { light: '#fef2f2', dark: 'rgba(248,113,113,0.15)' },
+    text: { light: '#b91c1c', dark: '#f87171' },
+    label: 'Admin Approval',
+  },
+  EMPLOYEE_VERIFY: {
+    bg: { light: '#fff7ed', dark: 'rgba(251,191,36,0.15)' },
+    text: { light: '#b45309', dark: '#fbbf24' },
+    label: 'Verify',
+  },
+  CONFIRMED: {
+    bg: { light: '#ecfdf5', dark: 'rgba(52,211,153,0.15)' },
+    text: { light: '#065f46', dark: '#34d399' },
+    label: 'Confirmed',
+  },
+  PAID: {
+    bg: { light: '#ecfdf5', dark: 'rgba(52,211,153,0.15)' },
+    text: { light: '#065f46', dark: '#34d399' },
+    label: 'Paid',
+  },
+  DELIVERED: {
+    bg: { light: '#ecfdf5', dark: 'rgba(52,211,153,0.15)' },
+    text: { light: '#065f46', dark: '#34d399' },
+    label: 'Delivered',
+  },
+  ACTIVE: {
+    bg: { light: '#ecfdf5', dark: 'rgba(52,211,153,0.15)' },
+    text: { light: '#065f46', dark: '#34d399' },
+    label: 'Active',
+  },
+  CANCELLED: {
+    bg: { light: '#fef2f2', dark: 'rgba(248,113,113,0.15)' },
+    text: { light: '#b91c1c', dark: '#f87171' },
+    label: 'Cancelled',
+  },
+  EXPIRED: {
+    bg: { light: '#fef2f2', dark: 'rgba(248,113,113,0.15)' },
+    text: { light: '#b91c1c', dark: '#f87171' },
+    label: 'Expired',
+  },
+  INACTIVE: {
+    bg: { light: '#fef2f2', dark: 'rgba(248,113,113,0.15)' },
+    text: { light: '#b91c1c', dark: '#f87171' },
+    label: 'Inactive',
+  },
+  IN_TRANSIT: {
+    bg: { light: '#eff6ff', dark: 'rgba(96,165,250,0.15)' },
+    text: { light: '#1d4ed8', dark: '#60a5fa' },
+    label: 'In Transit',
+  },
+  LOADING: {
+    bg: { light: '#fff7ed', dark: 'rgba(251,191,36,0.15)' },
+    text: { light: '#b45309', dark: '#fbbf24' },
+    label: 'Loading',
+  },
+  DRAFT: {
+    bg: { light: '#f3f4f6', dark: 'rgba(156,163,175,0.15)' },
+    text: { light: '#6b7280', dark: '#9ca3af' },
+    label: 'Draft',
+  },
+  SENT: {
+    bg: { light: '#ecfdf5', dark: 'rgba(52,211,153,0.15)' },
+    text: { light: '#065f46', dark: '#34d399' },
+    label: 'Sent',
+  },
+  VALID: {
+    bg: { light: '#ecfdf5', dark: 'rgba(52,211,153,0.15)' },
+    text: { light: '#065f46', dark: '#34d399' },
+    label: 'Valid',
+  },
+};
+
+export const AppStatusBadge: React.FC<AppStatusBadgeProps> = ({ status, style }) => {
+  const theme = useAppStore((state) => state.theme);
+  const isDark = theme === 'dark';
+
+  const normStatus = status.toUpperCase();
+  const variant = BADGE_MAP[normStatus] ?? {
+    bg: { light: '#f3f4f6', dark: 'rgba(156,163,175,0.15)' },
+    text: { light: '#6b7280', dark: '#9ca3af' },
+    label: status.charAt(0).toUpperCase() + status.slice(1).toLowerCase().replace('_', ' '),
+  };
 
   return (
-    <AppBadge 
-      label={label} 
-      variant={variant} 
-      className={className} 
-    />
+    <View style={[{
+      backgroundColor: isDark ? variant.bg.dark : variant.bg.light,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 6,
+      alignSelf: 'flex-start',
+    }, style as any]}>
+      <AppText style={{
+        fontSize: 10,
+        fontWeight: '700',
+        color: isDark ? variant.text.dark : variant.text.light,
+        textTransform: 'uppercase',
+        letterSpacing: 0.4,
+      }}>
+        {variant.label}
+      </AppText>
+    </View>
   );
 };
+
 export default AppStatusBadge;

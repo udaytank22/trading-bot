@@ -1,5 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { View, ScrollView, Alert, SafeAreaView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import Stylesheet from '../components/common/Stylesheet';
+
+import { View, ScrollView, Alert } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
@@ -8,6 +12,7 @@ import AppHeader from '../components/layout/AppHeader';
 import AppStatusBadge from '../components/common/AppStatusBadge';
 import AppButton from '../components/common/AppButton';
 import AppBottomSheet from '../components/modals/AppBottomSheet';
+import AppAlert from '../components/modals/AppAlert';
 import AppInput from '../components/inputs/AppInput';
 import AppDropdown from '../components/inputs/AppDropdown';
 import { formatDateString, formatUSD, calculateMargin } from '../utils/marginEngine';
@@ -16,6 +21,7 @@ import { RootStackParamList } from '../navigation/types';
 type InquiryDetailScreenRouteProp = RouteProp<RootStackParamList, 'InquiryDetail'>;
 
 export const InquiryDetailScreen = () => {
+  const theme = useAppStore((state) => state.theme);
   const route = useRoute<InquiryDetailScreenRouteProp>();
   const navigation = useNavigation();
   const { inquiriesData, updateInquiryStatus, updateInquiry, suppliersData } = useAppStore();
@@ -28,6 +34,13 @@ export const InquiryDetailScreen = () => {
   // Form overlay modal visible states
   const [activeSheet, setActiveSheet] = useState<'NONE' | 'STOCK_CHECK' | 'RFQ' | 'QUOTE_COST' | 'TL_MARGIN' | 'ADMIN_APPROVE' | 'VERIFY_CLIENT_DECISION'>('NONE');
 
+  // Custom Alert State
+  const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '' });
+
+  const showAlert = (title: string, message: string) => {
+    setAlertConfig({ visible: true, title, message });
+  };
+
   // Form states
   const [selectedSupplierId, setSelectedSupplierId] = useState('');
   const [costPriceInput, setCostPriceInput] = useState('100');
@@ -36,9 +49,9 @@ export const InquiryDetailScreen = () => {
 
   if (!inquiry) {
     return (
-      <SafeAreaView className="flex-1 justify-center items-center bg-gray-50 dark:bg-darkbg">
+      <SafeAreaView style={Stylesheet.cls(theme, "flex-1 justify-center items-center bg-gray-50 dark:bg-darkbg")}>
         <AppText variant="h2">Inquiry Not Found</AppText>
-        <AppButton title="Go Back" onPress={() => navigation.goBack()} className="mt-4" />
+        <AppButton title="Go Back" onPress={() => navigation.goBack()} style={Stylesheet.cls(theme, "mt-4")} />
       </SafeAreaView>
     );
   }
@@ -87,7 +100,7 @@ export const InquiryDetailScreen = () => {
           onPress: () => {
             // Automatically advance to client final review stage
             updateInquiryStatus(inquiry.inquiry_id, 'CLIENT_FINAL_APPROVAL');
-            Alert.alert('Quotation Sent', 'Quotation sent to buyer. Awaiting client decision.');
+            showAlert('Quotation Sent', 'Quotation sent to buyer. Awaiting client decision.');
           }
         };
       case 'CLIENT_FINAL_APPROVAL':
@@ -100,7 +113,7 @@ export const InquiryDetailScreen = () => {
           label: 'Confirm Order & Deploy Supply Logistics',
           onPress: () => {
             updateInquiryStatus(inquiry.inquiry_id, 'CONFIRMED');
-            Alert.alert('Deal Confirmed!', 'This order has been verified and sent to the Supply & Logistics division.');
+            showAlert('Deal Confirmed!', 'This order has been verified and sent to the Supply & Logistics division.');
           }
         };
       case 'CONFIRMED':
@@ -141,7 +154,7 @@ export const InquiryDetailScreen = () => {
   const handleRFQConfirm = () => {
     updateInquiryStatus(inquiry.inquiry_id, 'CLIENT_QUOTING');
     setActiveSheet('NONE');
-    Alert.alert('RFQ Dispatched', `RFQ email sent to ${inquiry.seller_quote?.seller_name}`);
+    showAlert('RFQ Dispatched', `RFQ email sent to ${inquiry.seller_quote?.seller_name}`);
   };
 
   const handleCostConfirm = () => {
@@ -205,10 +218,10 @@ export const InquiryDetailScreen = () => {
   const handleAdminApproveConfirm = (approve: boolean) => {
     if (approve) {
       updateInquiryStatus(inquiry.inquiry_id, 'EMPLOYEE_VERIFY');
-      Alert.alert('Approved', 'Margins and prices have been verified by Admin.');
+      showAlert('Approved', 'Margins and prices have been verified by Admin.');
     } else {
       updateInquiryStatus(inquiry.inquiry_id, 'TL_REVIEW');
-      Alert.alert('Rejected', 'Sent back to Team Lead for margin adjustment.');
+      showAlert('Rejected', 'Sent back to Team Lead for margin adjustment.');
     }
     setActiveSheet('NONE');
   };
@@ -216,55 +229,55 @@ export const InquiryDetailScreen = () => {
   const handleClientDecisionConfirm = (accept: boolean) => {
     if (accept) {
       updateInquiryStatus(inquiry.inquiry_id, 'QUOTE_SENT');
-      Alert.alert('Accepted', 'Quotation approved by buyer. Move to logistics confirmation.');
+      showAlert('Accepted', 'Quotation approved by buyer. Move to logistics confirmation.');
     } else {
       updateInquiryStatus(inquiry.inquiry_id, 'CLOSED');
-      Alert.alert('Rejected', 'Deal rejected and closed.');
+      showAlert('Rejected', 'Deal rejected and closed.');
     }
     setActiveSheet('NONE');
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-darkbg">
+    <SafeAreaView style={Stylesheet.cls(theme, "flex-1 bg-gray-50 dark:bg-darkbg")}>
       <AppHeader title="Deal Detail" showBack={true} />
 
-      <ScrollView className="flex-1 px-4 py-3" contentContainerStyle={{ paddingBottom: 60 }}>
+      <ScrollView style={Stylesheet.cls(theme, "flex-1 px-4 py-3")} contentContainerStyle={{ paddingBottom: 60 }}>
         {/* Main Details Card */}
-        <AppCard variant="bordered" className="mb-4">
-          <View className="flex-row justify-between items-center mb-3">
-            <AppText variant="h2" className="font-mono text-purple-600 dark:text-purple-400">
+        <AppCard variant="bordered" style={Stylesheet.cls(theme, "mb-4")}>
+          <View style={Stylesheet.cls(theme, "flex-row justify-between items-center mb-3")}>
+            <AppText variant="h2" style={Stylesheet.cls(theme, "font-mono text-purple-600 dark:text-purple-400")}>
               {inquiry.inquiry_id}
             </AppText>
             <AppStatusBadge status={inquiry.status} />
           </View>
 
-          <View className="space-y-2.5">
+          <View style={Stylesheet.cls(theme, "space-y-2.5")}>
             <View>
-              <AppText variant="captionSemibold" className="text-gray-400">Buyer / Customer</AppText>
-              <AppText variant="bodySemibold" className="text-gray-800 dark:text-gray-200 mt-0.5">
+              <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Buyer / Customer</AppText>
+              <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "text-gray-800 dark:text-gray-200 mt-0.5")}>
                 {inquiry.buyer_name} ({inquiry.buyer_email})
               </AppText>
             </View>
 
-            <View className="flex-row justify-between">
-              <View className="w-[48%]">
-                <AppText variant="captionSemibold" className="text-gray-400">Vessel</AppText>
-                <AppText variant="bodySemibold" className="text-gray-850 dark:text-gray-150 mt-0.5">
+            <View style={Stylesheet.cls(theme, "flex-row justify-between")}>
+              <View style={Stylesheet.cls(theme, "w-[48%]")}>
+                <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Vessel</AppText>
+                <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "text-gray-850 dark:text-gray-150 mt-0.5")}>
                   {inquiry.vessel_name || 'N/A'}
                 </AppText>
               </View>
 
-              <View className="w-[48%]">
-                <AppText variant="captionSemibold" className="text-gray-400">Ref Code</AppText>
-                <AppText variant="bodySemibold" className="text-gray-850 dark:text-gray-150 mt-0.5">
+              <View style={Stylesheet.cls(theme, "w-[48%]")}>
+                <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Ref Code</AppText>
+                <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "text-gray-850 dark:text-gray-150 mt-0.5")}>
                   {inquiry.vessel_ref || 'N/A'}
                 </AppText>
               </View>
             </View>
 
             <View>
-              <AppText variant="captionSemibold" className="text-gray-400">Received Date</AppText>
-              <AppText variant="body" className="text-gray-700 dark:text-gray-300 mt-0.5">
+              <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Received Date</AppText>
+              <AppText variant="body" style={Stylesheet.cls(theme, "text-gray-700 dark:text-gray-300 mt-0.5")}>
                 {formatDateString(inquiry.date_received)}
               </AppText>
             </View>
@@ -272,22 +285,22 @@ export const InquiryDetailScreen = () => {
         </AppCard>
 
         {/* Requirements Card */}
-        <AppCard variant="glass" className="mb-4">
-          <AppText variant="h3" className="font-bold mb-3">
+        <AppCard variant="glass" style={Stylesheet.cls(theme, "mb-4")}>
+          <AppText variant="h3" style={Stylesheet.cls(theme, "font-bold mb-3")}>
             Buyer Requirements
           </AppText>
           
           {inquiry.products.map((p, idx) => (
-            <View key={idx} className="pb-3 mb-3 border-b border-gray-100 dark:border-white/[0.04] last:border-0 last:pb-0 last:mb-0">
-              <View className="flex-row justify-between">
-                <AppText variant="bodySemibold" className="flex-1 pr-2">
+            <View key={idx} style={Stylesheet.cls(theme, "pb-3 mb-3 border-b border-gray-100 dark:border-white/[0.04] last:border-0 last:pb-0 last:mb-0")}>
+              <View style={Stylesheet.cls(theme, "flex-row justify-between")}>
+                <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "flex-1 pr-2")}>
                   {p.product_name}
                 </AppText>
-                <AppText variant="bodySemibold" className="text-purple-600 dark:text-purple-400">
+                <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "text-purple-600 dark:text-purple-400")}>
                   {p.quantity} {p.unit}
                 </AppText>
               </View>
-              <AppText variant="caption" className="mt-1 text-gray-500 dark:text-gray-405">
+              <AppText variant="caption" style={Stylesheet.cls(theme, "mt-1 text-gray-500 dark:text-gray-405")}>
                 Specs: {p.specs || 'N/A'}
               </AppText>
             </View>
@@ -296,17 +309,17 @@ export const InquiryDetailScreen = () => {
 
         {/* Sourcing Cost Card */}
         {inquiry.seller_quote ? (
-          <AppCard variant="glass" className="mb-4">
-            <AppText variant="h3" className="font-bold mb-1">
+          <AppCard variant="glass" style={Stylesheet.cls(theme, "mb-4")}>
+            <AppText variant="h3" style={Stylesheet.cls(theme, "font-bold mb-1")}>
               Supplier Pricing Details
             </AppText>
-            <AppText variant="captionSemibold" className="text-gray-400 dark:text-gray-500 mb-3">
+            <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400 dark:text-gray-500 mb-3")}>
               Assigned Sourcing Partner: {inquiry.seller_quote.seller_name}
             </AppText>
 
             {inquiry.seller_quote.products.map((p, idx) => (
-              <View key={idx} className="flex-row justify-between items-center py-2 border-b border-gray-100 dark:border-white/[0.04] last:border-0">
-                <AppText variant="body" className="flex-1 mr-2 text-gray-700 dark:text-gray-300">
+              <View key={idx} style={Stylesheet.cls(theme, "flex-row justify-between items-center py-2 border-b border-gray-100 dark:border-white/[0.04] last:border-0")}>
+                <AppText variant="body" style={Stylesheet.cls(theme, "flex-1 mr-2 text-gray-700 dark:text-gray-300")}>
                   {p.product_name}
                 </AppText>
                 <AppText variant="bodySemibold">
@@ -319,33 +332,33 @@ export const InquiryDetailScreen = () => {
 
         {/* Quote Calculation Card */}
         {inquiry.my_quote ? (
-          <AppCard variant="glass" className="mb-4 border-l-4 border-l-purple-500">
-            <AppText variant="h3" className="font-bold mb-1">
+          <AppCard variant="glass" style={Stylesheet.cls(theme, "mb-4 border-l-4 border-l-purple-500")}>
+            <AppText variant="h3" style={Stylesheet.cls(theme, "font-bold mb-1")}>
               Margin Calculation Summary
             </AppText>
-            <AppText variant="captionSemibold" className="text-gray-400 dark:text-gray-500 mb-3">
+            <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400 dark:text-gray-500 mb-3")}>
               Calculations based on {inquiry.margin_percent}% margin & {inquiry.discount_percent}% discount
             </AppText>
 
             {inquiry.my_quote.products.map((p, idx) => (
-              <View key={idx} className="pb-3 border-b border-gray-100 dark:border-white/[0.04] last:border-0 last:pb-0">
-                <AppText variant="bodySemibold" className="text-gray-800 dark:text-gray-250">
+              <View key={idx} style={Stylesheet.cls(theme, "pb-3 border-b border-gray-100 dark:border-white/[0.04] last:border-0 last:pb-0")}>
+                <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "text-gray-800 dark:text-gray-250")}>
                   {p.product_name}
                 </AppText>
-                <View className="flex-row justify-between mt-1.5">
-                  <AppText variant="caption" className="text-gray-500">
+                <View style={Stylesheet.cls(theme, "flex-row justify-between mt-1.5")}>
+                  <AppText variant="caption" style={Stylesheet.cls(theme, "text-gray-500")}>
                     Sell Unit Price: {formatUSD(p.my_unit_price)}
                   </AppText>
-                  <AppText variant="bodySemibold" className="text-purple-600 dark:text-purple-400">
+                  <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "text-purple-600 dark:text-purple-400")}>
                     Total: {formatUSD(p.total_price)}
                   </AppText>
                 </View>
               </View>
             ))}
             
-            <View className="mt-4 pt-3 border-t border-purple-500/20 flex-row justify-between items-center">
-              <AppText variant="bodySemibold" className="font-bold">Total Final Quote</AppText>
-              <AppText variant="h2" className="text-purple-600 dark:text-purple-400 font-extrabold">
+            <View style={Stylesheet.cls(theme, "mt-4 pt-3 border-t border-purple-500/20 flex-row justify-between items-center")}>
+              <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "font-bold")}>Total Final Quote</AppText>
+              <AppText variant="h2" style={Stylesheet.cls(theme, "text-purple-600 dark:text-purple-400 font-extrabold")}>
                 {formatUSD(inquiry.my_quote.products.reduce((sum, p) => sum + p.total_price, 0))}
               </AppText>
             </View>
@@ -357,7 +370,7 @@ export const InquiryDetailScreen = () => {
           <AppButton
             title={actionButton.label}
             onPress={actionButton.onPress}
-            className="mt-4 mb-8"
+            style={Stylesheet.cls(theme, "mt-4 mb-8")}
           />
         )}
       </ScrollView>
@@ -368,7 +381,7 @@ export const InquiryDetailScreen = () => {
         onClose={() => setActiveSheet('NONE')}
         title="Supplier Stock Check"
       >
-        <AppText variant="body" className="mb-4">
+        <AppText variant="body" style={Stylesheet.cls(theme, "mb-4")}>
           Select potential suppliers to check stock availability for requirements.
         </AppText>
         
@@ -382,7 +395,7 @@ export const InquiryDetailScreen = () => {
         <AppButton
           title="Confirm Supplier & Move to RFQ"
           onPress={handleStockConfirm}
-          className="mt-4"
+          style={Stylesheet.cls(theme, "mt-4")}
         />
       </AppBottomSheet>
 
@@ -392,25 +405,25 @@ export const InquiryDetailScreen = () => {
         onClose={() => setActiveSheet('NONE')}
         title="Review & Dispatch RFQ"
       >
-        <AppText variant="body" className="mb-4">
+        <AppText variant="body" style={Stylesheet.cls(theme, "mb-4")}>
           A Request for Quote will be sent to the sourcing supplier.
         </AppText>
         
-        <View className="p-4 bg-gray-150 dark:bg-white/[0.02] rounded-xl mb-4 border border-gray-200 dark:border-white/[0.04]">
-          <AppText variant="captionSemibold" className="text-gray-400">To:</AppText>
-          <AppText variant="bodySemibold" className="mb-2">{inquiry.seller_quote?.seller_name} ({inquiry.seller_quote?.seller_email})</AppText>
+        <View style={Stylesheet.cls(theme, "p-4 bg-gray-150 dark:bg-white/[0.02] rounded-xl mb-4 border border-gray-200 dark:border-white/[0.04]")}>
+          <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>To:</AppText>
+          <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "mb-2")}>{inquiry.seller_quote?.seller_name} ({inquiry.seller_quote?.seller_email})</AppText>
           
-          <AppText variant="captionSemibold" className="text-gray-400">Subject:</AppText>
-          <AppText variant="bodySemibold" className="mb-2">RFQ Request - Inquiry #{inquiry.inquiry_id}</AppText>
+          <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Subject:</AppText>
+          <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "mb-2")}>RFQ Request - Inquiry #{inquiry.inquiry_id}</AppText>
           
-          <AppText variant="captionSemibold" className="text-gray-400">Items:</AppText>
+          <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Items:</AppText>
           <AppText variant="body">{inquiry.products.map(p => `${p.product_name} x ${p.quantity}`).join(', ')}</AppText>
         </View>
 
         <AppButton
           title="Dispatch RFQ Email"
           onPress={handleRFQConfirm}
-          className="mt-4"
+          style={Stylesheet.cls(theme, "mt-4")}
         />
       </AppBottomSheet>
 
@@ -420,7 +433,7 @@ export const InquiryDetailScreen = () => {
         onClose={() => setActiveSheet('NONE')}
         title="Input Supplier Cost Prices"
       >
-        <AppText variant="body" className="mb-4">
+        <AppText variant="body" style={Stylesheet.cls(theme, "mb-4")}>
           Enter the cost price per unit quoted by the supplier.
         </AppText>
         
@@ -434,7 +447,7 @@ export const InquiryDetailScreen = () => {
         <AppButton
           title="Save Cost & Request TL Review"
           onPress={handleCostConfirm}
-          className="mt-4"
+          style={Stylesheet.cls(theme, "mt-4")}
         />
       </AppBottomSheet>
 
@@ -444,7 +457,7 @@ export const InquiryDetailScreen = () => {
         onClose={() => setActiveSheet('NONE')}
         title="Adjust Deal Profit Margins"
       >
-        <AppText variant="body" className="mb-4">
+        <AppText variant="body" style={Stylesheet.cls(theme, "mb-4")}>
           Apply markup margins and bulk discounts. Margin engine calculations will automatically apply.
         </AppText>
         
@@ -465,7 +478,7 @@ export const InquiryDetailScreen = () => {
         <AppButton
           title="Compute Quote & Send for Admin Approval"
           onPress={handleMarginConfirm}
-          className="mt-4"
+          style={Stylesheet.cls(theme, "mt-4")}
         />
       </AppBottomSheet>
 
@@ -475,23 +488,23 @@ export const InquiryDetailScreen = () => {
         onClose={() => setActiveSheet('NONE')}
         title="Admin Pricing Review"
       >
-        <AppText variant="body" className="mb-4">
+        <AppText variant="body" style={Stylesheet.cls(theme, "mb-4")}>
           Approve or reject the profit margins set by Sourcing.
         </AppText>
         
-        <View className="p-4 bg-gray-150 dark:bg-white/[0.02] border border-gray-200 dark:border-white/[0.04] rounded-xl mb-4">
-          <AppText variant="captionSemibold" className="text-gray-400">Total Sourced Cost:</AppText>
-          <AppText variant="bodySemibold" className="mb-2">
+        <View style={Stylesheet.cls(theme, "p-4 bg-gray-150 dark:bg-white/[0.02] border border-gray-200 dark:border-white/[0.04] rounded-xl mb-4")}>
+          <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Total Sourced Cost:</AppText>
+          <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "mb-2")}>
             {formatUSD(inquiry.seller_quote?.products.reduce((sum, p) => sum + (p.seller_unit_price * (inquiry.products[0]?.quantity || 1)), 0))}
           </AppText>
           
-          <AppText variant="captionSemibold" className="text-gray-400">Total Client Quote:</AppText>
-          <AppText variant="bodySemibold" className="text-purple-600 dark:text-purple-400 mb-2">
+          <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Total Client Quote:</AppText>
+          <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "text-purple-600 dark:text-purple-400 mb-2")}>
             {formatUSD(inquiry.my_quote?.products.reduce((sum, p) => sum + p.total_price, 0))}
           </AppText>
           
-          <AppText variant="captionSemibold" className="text-gray-400">Estimated Profit Yield:</AppText>
-          <AppText variant="bodySemibold" className="text-emerald-500">
+          <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Estimated Profit Yield:</AppText>
+          <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "text-emerald-500")}>
             {formatUSD(
               (inquiry.my_quote?.products.reduce((sum, p) => sum + p.total_price, 0) || 0) -
               (inquiry.seller_quote?.products.reduce((sum, p) => sum + (p.seller_unit_price * (inquiry.products[0]?.quantity || 1)), 0) || 0)
@@ -499,17 +512,17 @@ export const InquiryDetailScreen = () => {
           </AppText>
         </View>
 
-        <View className="flex-row justify-between">
+        <View style={Stylesheet.cls(theme, "flex-row justify-between")}>
           <AppButton
             title="Reject Quote"
             variant="danger"
             onPress={() => handleAdminApproveConfirm(false)}
-            className="w-[48%]"
+            style={Stylesheet.cls(theme, "w-[48%]")}
           />
           <AppButton
             title="Approve margins"
             onPress={() => handleAdminApproveConfirm(true)}
-            className="w-[48%]"
+            style={Stylesheet.cls(theme, "w-[48%]")}
           />
         </View>
       </AppBottomSheet>
@@ -520,25 +533,31 @@ export const InquiryDetailScreen = () => {
         onClose={() => setActiveSheet('NONE')}
         title="Log Client Final Decision"
       >
-        <AppText variant="body" className="mb-4">
+        <AppText variant="body" style={Stylesheet.cls(theme, "mb-4")}>
           Select whether the client accepted or declined the quotation offer.
         </AppText>
 
-        <View className="flex-row justify-between">
+        <View style={Stylesheet.cls(theme, "flex-row justify-between")}>
           <AppButton
             title="Client Declined"
             variant="danger"
             onPress={() => handleClientDecisionConfirm(false)}
-            className="w-[48%]"
+            style={Stylesheet.cls(theme, "w-[48%]")}
           />
           <AppButton
             title="Client Accepted"
             onPress={() => handleClientDecisionConfirm(true)}
-            className="w-[48%]"
+            style={Stylesheet.cls(theme, "w-[48%]")}
           />
         </View>
       </AppBottomSheet>
 
+      <AppAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        onClose={() => setAlertConfig({ ...alertConfig, visible: false })}
+      />
     </SafeAreaView>
   );
 };

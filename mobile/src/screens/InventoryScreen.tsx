@@ -1,5 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { View, FlatList, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import Stylesheet from '../components/common/Stylesheet';
+
+import { View, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
 import AppCard from '../components/common/AppCard';
@@ -13,6 +17,7 @@ import AppBadge from '../components/common/AppBadge';
 import { Product } from '../data/products';
 
 export const InventoryScreen = () => {
+  const theme = useAppStore((state) => state.theme);
   const { productsData } = useAppStore();
   const [products, setProducts] = useState<Product[]>(productsData);
 
@@ -114,7 +119,7 @@ export const InventoryScreen = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-darkbg">
+    <SafeAreaView style={Stylesheet.cls(theme, "flex-1 bg-gray-50 dark:bg-darkbg")}>
       <AppHeader 
         title="Inventory Stock" 
         showBack={true} 
@@ -122,17 +127,17 @@ export const InventoryScreen = () => {
           <AppButton
             title="+ Add Item"
             onPress={handleAddNewPress}
-            className="h-[34px] px-3.5"
+            style={Stylesheet.cls(theme, "h-[34px] px-3.5")}
           />
         }
       />
 
-      <View className="flex-1 p-4">
+      <View style={Stylesheet.cls(theme, "flex-1 p-4")}>
         <AppSearch
           value={search}
           onChangeText={setSearch}
           placeholder="Search by ID, name or category..."
-          className="mb-4"
+          style={Stylesheet.cls(theme, "mb-4")}
         />
 
         <FlatList
@@ -145,52 +150,52 @@ export const InventoryScreen = () => {
               item.status === 'Low Stock' ? 'warning' : 'danger';
 
             return (
-              <AppCard variant="glass" className="mb-3 p-4">
-                <View className="flex-row justify-between items-start mb-2">
+              <AppCard variant="glass" style={Stylesheet.cls(theme, "mb-3 p-4")}>
+                <View style={Stylesheet.cls(theme, "flex-row justify-between items-start mb-2")}>
                   <View>
-                    <AppText className="font-mono text-purple-600 dark:text-purple-400 font-bold text-xs">
+                    <AppText style={Stylesheet.cls(theme, "font-mono text-purple-600 dark:text-purple-400 font-bold text-xs")}>
                       {item.id}
                     </AppText>
-                    <AppText variant="bodySemibold" className="text-base font-bold text-gray-900 dark:text-white mt-0.5">
+                    <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "text-base font-bold text-gray-900 dark:text-white mt-0.5")}>
                       {item.name}
                     </AppText>
                   </View>
                   <AppBadge label={item.status} variant={statusColor} />
                 </View>
 
-                <View className="flex-row justify-between items-center py-2 border-t border-gray-150 dark:border-white/[0.04] mt-2">
+                <View style={Stylesheet.cls(theme, "flex-row justify-between items-center py-2 border-t border-gray-150 dark:border-white/[0.04] mt-2")}>
                   <View>
-                    <AppText variant="captionSemibold" className="text-gray-400">Category / Loc</AppText>
-                    <AppText variant="body" className="mt-0.5">{item.category} ({item.location})</AppText>
+                    <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Category / Loc</AppText>
+                    <AppText variant="body" style={Stylesheet.cls(theme, "mt-0.5")}>{item.category} ({item.location})</AppText>
                   </View>
 
-                  <View className="items-end">
-                    <AppText variant="captionSemibold" className="text-gray-400">Qty / Price</AppText>
-                    <AppText variant="bodySemibold" className="mt-0.5">{item.quantity} units • {item.price}</AppText>
+                  <View style={Stylesheet.cls(theme, "items-end")}>
+                    <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Qty / Price</AppText>
+                    <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "mt-0.5")}>{item.quantity} units • {item.price}</AppText>
                   </View>
                 </View>
 
-                <View className="flex-row justify-end space-x-3 pt-2 mt-1">
+                <View style={Stylesheet.cls(theme, "flex-row justify-end space-x-3 pt-2 mt-1")}>
                   <TouchableOpacity 
                     onPress={() => handleEditPress(item)}
-                    className="px-3.5 py-1.5 bg-purple-50 dark:bg-purple-950/20 border border-purple-100/50 dark:border-purple-900/30 rounded-xl mr-2"
+                    style={Stylesheet.cls(theme, "px-3.5 py-1.5 bg-purple-50 dark:bg-purple-950/20 border border-purple-100/50 dark:border-purple-900/30 rounded-xl mr-2")}
                   >
-                    <AppText className="text-[11px] font-bold text-purple-600 dark:text-purple-450">Edit</AppText>
+                    <AppText style={Stylesheet.cls(theme, "text-[11px] font-bold text-purple-600 dark:text-purple-450")}>Edit</AppText>
                   </TouchableOpacity>
 
                   <TouchableOpacity 
                     onPress={() => handleDelete(item.id)}
-                    className="px-3.5 py-1.5 bg-red-50 dark:bg-red-950/20 border border-red-100/50 dark:border-red-900/30 rounded-xl"
+                    style={Stylesheet.cls(theme, "px-3.5 py-1.5 bg-red-50 dark:bg-red-950/20 border border-red-100/50 dark:border-red-900/30 rounded-xl")}
                   >
-                    <AppText className="text-[11px] font-bold text-red-500">Delete</AppText>
+                    <AppText style={Stylesheet.cls(theme, "text-[11px] font-bold text-red-500")}>Delete</AppText>
                   </TouchableOpacity>
                 </View>
               </AppCard>
             );
           }}
           ListEmptyComponent={
-            <View className="mt-8">
-              <AppText variant="subtitle" className="text-center text-sm text-gray-500">
+            <View style={Stylesheet.cls(theme, "mt-8")}>
+              <AppText variant="subtitle" style={Stylesheet.cls(theme, "text-center text-sm text-gray-500")}>
                 No inventory products found.
               </AppText>
             </View>
@@ -254,7 +259,7 @@ export const InventoryScreen = () => {
         <AppButton
           title="Save Inventory Details"
           onPress={handleSave}
-          className="mt-4"
+          style={Stylesheet.cls(theme, "mt-4")}
         />
       </AppModal>
     </SafeAreaView>

@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
-import { View } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAppStore } from '../store/appStore';
 import { RootStackParamList, TabParamList } from './types';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Import Screens
 import LoginScreen from '../screens/LoginScreen';
@@ -12,7 +13,6 @@ import DashboardScreen from '../screens/DashboardScreen';
 import InquiriesScreen from '../screens/InquiriesScreen';
 import InquiryDetailScreen from '../screens/InquiryDetailScreen';
 import SupplyScreen from '../screens/SupplyScreen';
-import TodoScreen from '../screens/TodoScreen';
 import MoreScreen from '../screens/MoreScreen';
 import PurchaseOrdersScreen from '../screens/PurchaseOrdersScreen';
 import PurchaseOrderDetailScreen from '../screens/PurchaseOrderDetailScreen';
@@ -24,58 +24,43 @@ import AccountsScreen from '../screens/AccountsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
-import AppText from '../components/common/AppText';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 
-const TabBarIcon = ({ focused, icon }: { focused: boolean; icon: string }) => {
-  return (
-    <View className="items-center justify-center pt-1">
-      <AppText className={`text-base ${focused ? 'scale-110 opacity-100' : 'opacity-60'}`}>
-        {icon}
-      </AppText>
-    </View>
-  );
-};
-
-const DashboardIcon = ({ focused }: { focused: boolean }) => (
-  <TabBarIcon focused={focused} icon="📊" />
-);
-const InquiriesIcon = ({ focused }: { focused: boolean }) => (
-  <TabBarIcon focused={focused} icon="📩" />
-);
-const SupplyIcon = ({ focused }: { focused: boolean }) => (
-  <TabBarIcon focused={focused} icon="🚚" />
-);
-const TodoIcon = ({ focused }: { focused: boolean }) => (
-  <TabBarIcon focused={focused} icon="✅" />
-);
-const MoreIcon = ({ focused }: { focused: boolean }) => (
-  <TabBarIcon focused={focused} icon="🍔" />
-);
+// ─── Tab Navigator ────────────────────────────────────────────────────────────
 
 const TabNavigator = () => {
   const theme = useAppStore((state) => state.theme);
   const isDark = theme === 'dark';
+  const insets = useSafeAreaInsets();
+
+  const tabBg = isDark ? '#12141c' : '#ffffff';
+  const tabBorder = isDark ? '#1e2029' : '#e9eaf0';
+  // Height = icon+label area (48) + bottom safe area inset
+  const tabBarHeight = 48 + insets.bottom;
 
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#8b5cf6', // purple-500
-        tabBarInactiveTintColor: '#9ca3af',
+        tabBarActiveTintColor: '#8b5cf6',
+        tabBarInactiveTintColor: isDark ? '#6b7280' : '#9ca3af',
         tabBarStyle: {
-          backgroundColor: isDark ? '#12141c' : '#ffffff',
-          borderTopColor: isDark ? '#2a2d33' : '#e5e7eb',
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
+          backgroundColor: tabBg,
+          borderTopWidth: 1,
+          borderTopColor: tabBorder,
+          height: tabBarHeight,
+          paddingBottom: insets.bottom + 4,
+          paddingTop: 6,
+          elevation: 0,
+          shadowOpacity: 0,
         },
         tabBarLabelStyle: {
-          fontSize: 9,
-          fontWeight: 'bold',
-        }
+          fontSize: 10,
+          fontWeight: '600',
+          marginTop: 1,
+        },
       }}
     >
       <Tab.Screen
@@ -83,7 +68,13 @@ const TabNavigator = () => {
         component={DashboardScreen}
         options={{
           tabBarLabel: 'Dashboard',
-          tabBarIcon: DashboardIcon,
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialCommunityIcons
+              name={focused ? 'view-dashboard' : 'view-dashboard-outline'}
+              size={22}
+              color={color}
+            />
+          ),
         }}
       />
       <Tab.Screen
@@ -91,7 +82,13 @@ const TabNavigator = () => {
         component={InquiriesScreen}
         options={{
           tabBarLabel: 'Inquiries',
-          tabBarIcon: InquiriesIcon,
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialCommunityIcons
+              name={focused ? 'email' : 'email-outline'}
+              size={22}
+              color={color}
+            />
+          ),
         }}
       />
       <Tab.Screen
@@ -99,15 +96,27 @@ const TabNavigator = () => {
         component={SupplyScreen}
         options={{
           tabBarLabel: 'Logistics',
-          tabBarIcon: SupplyIcon,
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialCommunityIcons
+              name={focused ? 'truck' : 'truck-outline'}
+              size={22}
+              color={color}
+            />
+          ),
         }}
       />
       <Tab.Screen
-        name="Todo"
-        component={TodoScreen}
+        name="Invoices"
+        component={InvoicesScreen}
         options={{
-          tabBarLabel: 'Checklist',
-          tabBarIcon: TodoIcon,
+          tabBarLabel: 'Invoices',
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialCommunityIcons
+              name={focused ? 'file-document' : 'file-document-outline'}
+              size={22}
+              color={color}
+            />
+          ),
         }}
       />
       <Tab.Screen
@@ -115,12 +124,20 @@ const TabNavigator = () => {
         component={MoreScreen}
         options={{
           tabBarLabel: 'Menu',
-          tabBarIcon: MoreIcon,
+          tabBarIcon: ({ color, focused }) => (
+            <MaterialCommunityIcons
+              name={focused ? 'menu' : 'menu'}
+              size={22}
+              color={color}
+            />
+          ),
         }}
       />
     </Tab.Navigator>
   );
 };
+
+// ─── Root Navigator ───────────────────────────────────────────────────────────
 
 export const RootNavigator = () => {
   const { isAuthenticated, theme, initStore } = useAppStore();
@@ -131,9 +148,7 @@ export const RootNavigator = () => {
 
   const isDark = theme === 'dark';
   const navigationTheme = isDark ? DarkTheme : DefaultTheme;
-
-  // Custom Navigation styling overrides
-  navigationTheme.colors.background = isDark ? '#0c0e12' : '#f9fafb';
+  navigationTheme.colors.background = isDark ? '#0c0e12' : '#f4f5fb';
 
   return (
     <NavigationContainer theme={navigationTheme}>
@@ -146,7 +161,6 @@ export const RootNavigator = () => {
             <Stack.Screen name="InquiryDetail" component={InquiryDetailScreen} />
             <Stack.Screen name="PurchaseOrders" component={PurchaseOrdersScreen} />
             <Stack.Screen name="PurchaseOrderDetail" component={PurchaseOrderDetailScreen} />
-            <Stack.Screen name="Invoices" component={InvoicesScreen} />
             <Stack.Screen name="InvoiceDetail" component={InvoiceDetailScreen} />
             <Stack.Screen name="Inventory" component={InventoryScreen} />
             <Stack.Screen name="Employees" component={EmployeesScreen} />
@@ -160,4 +174,5 @@ export const RootNavigator = () => {
     </NavigationContainer>
   );
 };
+
 export default RootNavigator;

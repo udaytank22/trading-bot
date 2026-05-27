@@ -1,5 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { View, FlatList, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import Stylesheet from '../components/common/Stylesheet';
+
+import { View, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
 import AppCard from '../components/common/AppCard';
@@ -13,6 +17,7 @@ import AppAvatar from '../components/common/AppAvatar';
 import { Employee } from '../data/users';
 
 export const EmployeesScreen = () => {
+  const theme = useAppStore((state) => state.theme);
   const { employeesData, addEmployee, deleteEmployee } = useAppStore();
 
   const [search, setSearch] = useState('');
@@ -82,7 +87,7 @@ export const EmployeesScreen = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-darkbg">
+    <SafeAreaView style={Stylesheet.cls(theme, "flex-1 bg-gray-50 dark:bg-darkbg")}>
       <AppHeader 
         title="Staff Directory" 
         showBack={true} 
@@ -90,17 +95,17 @@ export const EmployeesScreen = () => {
           <AppButton
             title="+ Add Staff"
             onPress={() => setModalOpen(true)}
-            className="h-[34px] px-3.5"
+            style={Stylesheet.cls(theme, "h-[34px] px-3.5")}
           />
         }
       />
 
-      <View className="flex-1 p-4">
+      <View style={Stylesheet.cls(theme, "flex-1 p-4")}>
         <AppSearch
           value={search}
           onChangeText={setSearch}
           placeholder="Search by name, email or department..."
-          className="mb-4"
+          style={Stylesheet.cls(theme, "mb-4")}
         />
 
         <FlatList
@@ -108,18 +113,18 @@ export const EmployeesScreen = () => {
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ paddingBottom: 24 }}
           renderItem={({ item }) => (
-            <AppCard variant="glass" className="mb-3 p-3.5 flex-row justify-between items-center">
-              <View className="flex-row items-center flex-1 pr-3">
+            <AppCard variant="glass" style={Stylesheet.cls(theme, "mb-3 p-3.5 flex-row justify-between items-center")}>
+              <View style={Stylesheet.cls(theme, "flex-row items-center flex-1 pr-3")}>
                 <AppAvatar name={item.name} size="md" showStatus={item.status === 'Active'} />
                 
-                <View className="ml-3 flex-1">
-                  <AppText variant="bodySemibold" className="text-gray-900 dark:text-white" numberOfLines={1}>
+                <View style={Stylesheet.cls(theme, "ml-3 flex-1")}>
+                  <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "text-gray-900 dark:text-white")} numberOfLines={1}>
                     {item.name}
                   </AppText>
-                  <AppText variant="caption" className="text-gray-400" numberOfLines={1}>
+                  <AppText variant="caption" style={Stylesheet.cls(theme, "text-gray-400")} numberOfLines={1}>
                     {item.role} • {item.department}
                   </AppText>
-                  <AppText variant="small" className="text-gray-500 mt-0.5" numberOfLines={1}>
+                  <AppText variant="small" style={Stylesheet.cls(theme, "text-gray-500 mt-0.5")} numberOfLines={1}>
                     📧 {item.email} | 📞 {item.phone}
                   </AppText>
                 </View>
@@ -127,15 +132,15 @@ export const EmployeesScreen = () => {
 
               <TouchableOpacity 
                 onPress={() => handleDeleteEmployee(item.id, item.name)} 
-                className="p-2 bg-red-500/10 dark:bg-red-550/15 rounded-xl border border-red-500/10"
+                style={Stylesheet.cls(theme, "p-2 bg-red-500/10 dark:bg-red-550/15 rounded-xl border border-red-500/10")}
               >
-                <AppText className="text-[10px] font-bold text-red-500">REMOVE</AppText>
+                <AppText style={Stylesheet.cls(theme, "text-[10px] font-bold text-red-500")}>REMOVE</AppText>
               </TouchableOpacity>
             </AppCard>
           )}
           ListEmptyComponent={
-            <View className="mt-8">
-              <AppText variant="subtitle" className="text-center text-sm text-gray-500">
+            <View style={Stylesheet.cls(theme, "mt-8")}>
+              <AppText variant="subtitle" style={Stylesheet.cls(theme, "text-center text-sm text-gray-500")}>
                 No staff members found.
               </AppText>
             </View>
@@ -201,7 +206,7 @@ export const EmployeesScreen = () => {
         <AppButton
           title="Save Staff Member"
           onPress={handleAddEmployee}
-          className="mt-4"
+          style={Stylesheet.cls(theme, "mt-4")}
         />
       </AppModal>
     </SafeAreaView>

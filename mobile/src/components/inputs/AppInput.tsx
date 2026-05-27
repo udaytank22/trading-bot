@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { View, TextInput, TextInputProps } from 'react-native';
+import { View, TextInput, TextInputProps, StyleProp, ViewStyle } from 'react-native';
 import AppText from '../common/AppText';
 import { useAppStore } from '../../store/appStore';
+import Stylesheet from '../common/Stylesheet';
 
 interface AppInputProps extends TextInputProps {
   label?: string;
   error?: string;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
-  containerClassName?: string;
+  containerStyle?: StyleProp<ViewStyle>;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const AppInput: React.FC<AppInputProps> = ({
@@ -16,8 +18,8 @@ export const AppInput: React.FC<AppInputProps> = ({
   error,
   leftIcon,
   rightIcon,
-  containerClassName = '',
-  className = '',
+  containerStyle,
+  style,
   ...props
 }) => {
   const theme = useAppStore((state) => state.theme);
@@ -36,37 +38,42 @@ export const AppInput: React.FC<AppInputProps> = ({
       : 'border-gray-200';
   }
 
-  const bgStyles = isDark ? 'bg-[#151821]' : 'bg-white';
+  const bgStyles = isDark ? 'bg-darkcard' : 'bg-white';
   const textThemeColor = isDark ? '#ffffff' : '#111827';
   const placeholderThemeColor = isDark ? '#6b7280' : '#9ca3af';
 
+  const wrapperStyle = Stylesheet.cls(theme, 'w-full mb-4');
+  const labelStyle = Stylesheet.cls(theme, 'text-gray-550 dark:text-gray-400 mb-1.5 font-medium ml-1');
+  const innerContainerStyle = Stylesheet.cls(theme, `flex-row items-center h-[46px] rounded-xl px-3 shadow-inner ${bgStyles} ${borderStyles}`);
+  const inputStyle = Stylesheet.cls(theme, 'flex-1 text-[13.5px] font-medium h-full');
+  const errorStyle = Stylesheet.cls(theme, 'text-red-500 text-[11px] font-semibold mt-1 ml-1');
+
   return (
-    <View className={`w-full mb-4 ${containerClassName}`}>
+    <View style={[wrapperStyle, containerStyle]}>
       {label && (
-        <AppText variant="captionSemibold" className="text-gray-500 dark:text-gray-400 mb-1.5 font-medium ml-1">
+        <AppText variant="captionSemibold" style={labelStyle}>
           {label}
         </AppText>
       )}
       
       <View 
-        className={`flex-row items-center h-[46px] rounded-xl px-3 shadow-inner ${bgStyles} ${borderStyles} ${className}`}
+        style={[innerContainerStyle, style]}
       >
-        {leftIcon && <View className="mr-2">{leftIcon}</View>}
+        {leftIcon && <View style={Stylesheet.cls(theme, "mr-2")}>{leftIcon}</View>}
         
         <TextInput
-          className="flex-1 text-[13.5px] font-medium h-full"
-          style={{ color: textThemeColor }}
+          style={[inputStyle, { color: textThemeColor }]}
           placeholderTextColor={placeholderThemeColor}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           {...props}
         />
         
-        {rightIcon && <View className="ml-2">{rightIcon}</View>}
+        {rightIcon && <View style={Stylesheet.cls(theme, "ml-2")}>{rightIcon}</View>}
       </View>
       
       {error && (
-        <AppText className="text-red-500 text-[11px] font-semibold mt-1 ml-1">
+        <AppText style={errorStyle}>
           {error}
         </AppText>
       )}

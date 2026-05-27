@@ -75,6 +75,7 @@ interface AppState {
   // PO / Invoice Operations
   addPurchaseOrder: (po: PurchaseOrder) => void;
   addInvoice: (invoice: Invoice) => void;
+  updateInvoiceStatus: (id: string, status: string) => void;
   
   // Todo Operations
   addTodo: (todo: TodoItem) => void;
@@ -101,7 +102,7 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
-  theme: 'dark',
+  theme: 'light',
   isAuthenticated: false,
   currentUser: null,
   settings: {
@@ -136,7 +137,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       const savedSettings = await AsyncStorage.getItem('settings');
 
       set({
-        theme: (savedTheme as 'light' | 'dark') || 'dark',
+        theme: (savedTheme as 'light' | 'dark') || 'light',
         isAuthenticated: savedAuth === 'true',
         currentUser: savedUserProfile ? JSON.parse(savedUserProfile) : null,
         settings: savedSettings ? JSON.parse(savedSettings) : {
@@ -242,6 +243,14 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   addInvoice: (invoice) => {
     set({ invoicesData: [invoice, ...get().invoicesData] });
+  },
+
+  updateInvoiceStatus: (id, status) => {
+    set({
+      invoicesData: get().invoicesData.map(item => 
+        item.inquiry_id === id ? { ...item, invoice_status: status } : item
+      )
+    });
   },
 
   addTodo: (todo) => {

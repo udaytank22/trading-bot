@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { View, ScrollView, Alert, SafeAreaView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import Stylesheet from '../components/common/Stylesheet';
+
+import { View, ScrollView, Alert } from 'react-native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
 import AppCard from '../components/common/AppCard';
@@ -9,6 +13,7 @@ import AppInput from '../components/inputs/AppInput';
 import AppButton from '../components/common/AppButton';
 
 export const ProfileScreen = () => {
+  const theme = useAppStore((state) => state.theme);
   const { currentUser, login } = useAppStore();
 
   const [name, setName] = useState(currentUser?.name || 'Administrator');
@@ -30,21 +35,21 @@ export const ProfileScreen = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-darkbg">
+    <SafeAreaView style={Stylesheet.cls(theme, "flex-1 bg-gray-50 dark:bg-darkbg")}>
       <AppHeader title="My Profile" showBack={true} />
 
-      <ScrollView className="flex-1 p-4" contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView style={Stylesheet.cls(theme, "flex-1 p-4")} contentContainerStyle={{ paddingBottom: 40 }}>
         {/* Profile Card Header */}
-        <View className="items-center mb-6">
+        <View style={Stylesheet.cls(theme, "items-center mb-6")}>
           <AppAvatar name={name} size="lg" />
-          <AppText variant="h2" className="mt-3 font-extrabold">{name}</AppText>
-          <AppText variant="subtitle" className="text-xs uppercase tracking-wider text-purple-650 dark:text-purple-400 mt-1">
+          <AppText variant="h2" style={Stylesheet.cls(theme, "mt-3 font-extrabold")}>{name}</AppText>
+          <AppText variant="subtitle" style={Stylesheet.cls(theme, "text-xs uppercase tracking-wider text-purple-650 dark:text-purple-400 mt-1")}>
             {currentUser?.role || 'System Manager'}
           </AppText>
         </View>
 
         {/* Input Fields */}
-        <AppCard variant="bordered" className="mb-4">
+        <AppCard variant="bordered" style={Stylesheet.cls(theme, "mb-4")}>
           <AppInput
             label="Full Profile Name"
             placeholder="e.g. Arjun Sharma"
@@ -71,27 +76,27 @@ export const ProfileScreen = () => {
         </AppCard>
 
         {/* Business Settings info */}
-        <AppCard variant="glass" className="mb-6 p-4">
-          <AppText variant="captionSemibold" className="text-gray-400">Business Unit</AppText>
-          <AppText variant="bodySemibold" className="text-base font-bold text-gray-900 dark:text-white mt-0.5">
+        <AppCard variant="glass" style={Stylesheet.cls(theme, "mb-6 p-4")}>
+          <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Business Unit</AppText>
+          <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "text-base font-bold text-gray-900 dark:text-white mt-0.5")}>
             TradeMind Global Ltd
           </AppText>
           
-          <View className="flex-row justify-between items-center py-2.5 border-t border-gray-100 dark:border-white/[0.04] mt-3">
-            <AppText variant="captionSemibold" className="text-gray-400">Default Profit Margin</AppText>
-            <AppText variant="bodySemibold" className="text-purple-650 dark:text-purple-400">15%</AppText>
+          <View style={Stylesheet.cls(theme, "flex-row justify-between items-center py-2.5 border-t border-gray-100 dark:border-white/[0.04] mt-3")}>
+            <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Default Profit Margin</AppText>
+            <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "text-purple-650 dark:text-purple-400")}>15%</AppText>
           </View>
 
-          <View className="flex-row justify-between items-center py-2.5 border-t border-gray-100 dark:border-white/[0.04]">
-            <AppText variant="captionSemibold" className="text-gray-400">System Permissions</AppText>
-            <AppText variant="bodySemibold" className="text-emerald-500">Read & Write CRM Access</AppText>
+          <View style={Stylesheet.cls(theme, "flex-row justify-between items-center py-2.5 border-t border-gray-100 dark:border-white/[0.04]")}>
+            <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>System Permissions</AppText>
+            <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "text-emerald-500")}>Read & Write CRM Access</AppText>
           </View>
         </AppCard>
 
         <AppButton
           title="Save Profile Settings"
           onPress={handleSave}
-          className="rounded-2xl"
+          style={Stylesheet.cls(theme, "rounded-2xl")}
         />
       </ScrollView>
     </SafeAreaView>

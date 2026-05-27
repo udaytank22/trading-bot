@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { View, FlatList, Alert, SafeAreaView } from 'react-native';
+import Stylesheet from '../components/common/Stylesheet';
+
+import { View, FlatList, Alert } from 'react-native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
 import AppCard from '../components/common/AppCard';
@@ -8,8 +10,10 @@ import AppButton from '../components/common/AppButton';
 import AppModal from '../components/modals/AppModal';
 import AppInput from '../components/inputs/AppInput';
 import AppBadge from '../components/common/AppBadge';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export const AccountsScreen = () => {
+  const theme = useAppStore(state => state.theme);
   const { accountsData, addAccount } = useAppStore();
   const [accounts, setAccounts] = useState(accountsData);
 
@@ -32,7 +36,7 @@ export const AccountsScreen = () => {
       routingNumber: '02100000',
       currency,
       balance: parseFloat(balance) || 0,
-      status: 'Active'
+      status: 'Active',
     };
 
     const updatedAcc = [newAcc, ...accounts];
@@ -59,64 +63,139 @@ export const AccountsScreen = () => {
     .reduce((sum, a) => sum + a.balance, 0);
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-darkbg">
-      <AppHeader 
-        title="Bank Balances" 
-        showBack={true} 
+    <SafeAreaView
+      style={Stylesheet.cls(theme, 'flex-1 bg-gray-50 dark:bg-darkbg')}
+    >
+      <AppHeader
+        title="Bank Balances"
+        showBack={true}
         rightAction={
           <AppButton
             title="+ Link Bank"
             onPress={() => setModalOpen(true)}
-            className="h-[34px] px-3.5"
+            style={Stylesheet.cls(theme, 'h-[34px] px-3.5')}
           />
         }
       />
 
-      <View className="flex-1 p-4">
+      <View style={Stylesheet.cls(theme, 'flex-1 p-4')}>
         {/* Total Liquidity Panel */}
-        <AppCard variant="bordered" className="mb-4 bg-purple-650 dark:bg-purple-600 border-transparent p-5">
-          <AppText className="text-white/70 text-xs font-semibold uppercase tracking-wider">
+        <AppCard
+          variant="bordered"
+          style={Stylesheet.cls(
+            theme,
+            'mb-4 bg-purple-650 dark:bg-purple-600 border-transparent p-5',
+          )}
+        >
+          <AppText
+            style={Stylesheet.cls(
+              theme,
+              'text-white/70 text-xs font-semibold uppercase tracking-wider',
+            )}
+          >
             Total Liquid Assets (USD)
           </AppText>
-          <AppText className="text-white text-3xl font-extrabold mt-1">
-            ${totalLiquidityUSD.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+          <AppText
+            style={Stylesheet.cls(
+              theme,
+              'text-white text-3xl font-extrabold mt-1',
+            )}
+          >
+            $
+            {totalLiquidityUSD.toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+            })}
           </AppText>
-          <AppText className="text-white/60 text-[10px] mt-1.5 font-medium">
-            Active balances across {accounts.filter(a => a.currency === 'USD').length} USD channels
+          <AppText
+            style={Stylesheet.cls(
+              theme,
+              'text-white/60 text-[10px] mt-1.5 font-medium',
+            )}
+          >
+            Active balances across{' '}
+            {accounts.filter(a => a.currency === 'USD').length} USD channels
           </AppText>
         </AppCard>
 
         {/* Channels List */}
-        <AppText variant="h3" className="font-bold mb-3 ml-1">Connected Accounts</AppText>
-        
+        <AppText
+          variant="h3"
+          style={Stylesheet.cls(theme, 'font-bold mb-3 ml-1')}
+        >
+          Connected Accounts
+        </AppText>
+
         <FlatList
           data={accounts}
-          keyExtractor={(item) => item.id}
+          keyExtractor={item => item.id}
           contentContainerStyle={{ paddingBottom: 24 }}
           renderItem={({ item }) => (
-            <AppCard variant="glass" className="mb-3.5 p-4">
-              <View className="flex-row justify-between items-start mb-3">
+            <AppCard
+              variant="glass"
+              style={Stylesheet.cls(theme, 'mb-3.5 p-4')}
+            >
+              <View
+                style={Stylesheet.cls(
+                  theme,
+                  'flex-row justify-between items-start mb-3',
+                )}
+              >
                 <View>
-                  <AppText variant="bodySemibold" className="text-base font-bold text-gray-900 dark:text-white">
+                  <AppText
+                    variant="bodySemibold"
+                    style={Stylesheet.cls(
+                      theme,
+                      'text-base font-bold text-gray-900 dark:text-white',
+                    )}
+                  >
                     {item.bankName}
                   </AppText>
-                  <AppText variant="caption" className="text-gray-500 mt-0.5">
+                  <AppText
+                    variant="caption"
+                    style={Stylesheet.cls(theme, 'text-gray-500 mt-0.5')}
+                  >
                     {item.accountName} • •••• {item.accountNumber.slice(-4)}
                   </AppText>
                 </View>
-                
-                <AppBadge label={item.status} variant={item.status === 'Active' ? 'success' : 'gray'} />
+
+                <AppBadge
+                  label={item.status}
+                  variant={item.status === 'Active' ? 'success' : 'gray'}
+                />
               </View>
 
-              <View className="flex-row justify-between items-end pt-3 border-t border-gray-100 dark:border-white/[0.04] mt-1">
+              <View
+                style={Stylesheet.cls(
+                  theme,
+                  'flex-row justify-between items-end pt-3 border-t border-gray-100 dark:border-white/[0.04] mt-1',
+                )}
+              >
                 <View>
-                  <AppText variant="captionSemibold" className="text-gray-400">Account Type</AppText>
-                  <AppText variant="body" className="mt-0.5">{item.currency} Currency Ledger</AppText>
+                  <AppText
+                    variant="captionSemibold"
+                    style={Stylesheet.cls(theme, 'text-gray-400')}
+                  >
+                    Account Type
+                  </AppText>
+                  <AppText
+                    variant="body"
+                    style={Stylesheet.cls(theme, 'mt-0.5')}
+                  >
+                    {item.currency} Currency Ledger
+                  </AppText>
                 </View>
-                
-                <AppText variant="h2" className="font-extrabold text-purple-600 dark:text-purple-400">
+
+                <AppText
+                  variant="h2"
+                  style={Stylesheet.cls(
+                    theme,
+                    'font-extrabold text-purple-600 dark:text-purple-400',
+                  )}
+                >
                   {getCurrencySymbol(item.currency)}
-                  {item.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  {item.balance.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                  })}
                 </AppText>
               </View>
             </AppCard>
@@ -167,7 +246,7 @@ export const AccountsScreen = () => {
         <AppButton
           title="Verify & Link Bank"
           onPress={handleAddAccount}
-          className="mt-4"
+          style={Stylesheet.cls(theme, 'mt-4')}
         />
       </AppModal>
     </SafeAreaView>

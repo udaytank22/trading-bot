@@ -1,15 +1,16 @@
 import React from 'react';
-import { View, ViewProps } from 'react-native';
+import { View, ViewProps, StyleProp, ViewStyle } from 'react-native';
 import { useAppStore } from '../../store/appStore';
+import Stylesheet from './Stylesheet';
 
 interface AppCardProps extends ViewProps {
   variant?: 'default' | 'glass' | 'bordered';
-  className?: string;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const AppCard: React.FC<AppCardProps> = ({
   variant = 'default',
-  className = '',
+  style,
   children,
   ...props
 }) => {
@@ -46,9 +47,11 @@ export const AppCard: React.FC<AppCardProps> = ({
     }
   }
 
+  const parsedCardStyle = Stylesheet.cls(theme, cardStyles);
+
   return (
     <View
-      className={`${cardStyles} ${className}`}
+      style={[parsedCardStyle, style]}
       {...props}
     >
       {children}

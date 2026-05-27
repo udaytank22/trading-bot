@@ -1,6 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { View, FlatList, TouchableOpacity, SafeAreaView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/Feather';
+
+import Stylesheet from '../components/common/Stylesheet';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
 import AppCard from '../components/common/AppCard';
@@ -25,20 +29,28 @@ interface TabButtonProps {
 }
 
 const TabButton = ({ tab, label, activeTab, onPress }: TabButtonProps) => {
+  const theme = useAppStore(state => state.theme);
   const isSelected = activeTab === tab;
   return (
     <TouchableOpacity
       onPress={() => onPress(tab)}
-      className={`flex-1 py-2 items-center border-b-2 ${
-        isSelected ? 'border-purple-600 dark:border-purple-400' : 'border-transparent'
-      }`}
+      style={[
+        Stylesheet.cls(
+          theme,
+          `py-2 rounded-full justify-center items-center ${
+            isSelected ? 'px-7' : 'bg-transparent px-3'
+          }`,
+        ),
+        isSelected && { backgroundColor: '#4648D4' },
+      ]}
     >
-      <AppText 
-        className={`text-[12px] ${
-          isSelected 
-            ? 'text-purple-600 dark:text-purple-450 font-bold' 
-            : 'text-gray-500 dark:text-gray-400 font-semibold'
-        }`}
+      <AppText
+        style={Stylesheet.cls(
+          theme,
+          `text-[15px] ${
+            isSelected ? 'text-white' : 'text-[#4b5563] dark:text-[#9ca3af]'
+          }`,
+        )}
       >
         {label}
       </AppText>
@@ -47,12 +59,13 @@ const TabButton = ({ tab, label, activeTab, onPress }: TabButtonProps) => {
 };
 
 export const InquiriesScreen = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { inquiriesData, addInquiry } = useAppStore();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { inquiriesData, addInquiry, theme } = useAppStore();
 
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<TabFilter>('ALL');
-  
+
   // Add Inquiry Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newCustomer, setNewCustomer] = useState('');
@@ -63,14 +76,28 @@ export const InquiriesScreen = () => {
 
   // Filter inquiries
   const filteredInquiries = useMemo(() => {
-    let result = inquiriesData.filter((inq) => {
+    let result = inquiriesData.filter(inq => {
       // 1. Tab segment filter
       if (activeTab === 'PENDING_SOURCING') {
-        if (!['PENDING', 'RFQ_SENT', 'CLIENT_QUOTING'].includes(inq.status)) return false;
+        if (!['PENDING', 'RFQ_SENT', 'CLIENT_QUOTING'].includes(inq.status))
+          return false;
       } else if (activeTab === 'UNDER_REVIEW') {
-        if (!['TL_REVIEW', 'ADMIN_APPROVAL', 'EMPLOYEE_VERIFY', 'RFQ_READY'].includes(inq.status)) return false;
+        if (
+          ![
+            'TL_REVIEW',
+            'ADMIN_APPROVAL',
+            'EMPLOYEE_VERIFY',
+            'RFQ_READY',
+          ].includes(inq.status)
+        )
+          return false;
       } else if (activeTab === 'ACTIVE') {
-        if (!['QUOTE_SENT', 'CLIENT_FINAL_APPROVAL', 'CONFIRMED'].includes(inq.status)) return false;
+        if (
+          !['QUOTE_SENT', 'CLIENT_FINAL_APPROVAL', 'CONFIRMED'].includes(
+            inq.status,
+          )
+        )
+          return false;
       }
 
       // 2. Text search filter
@@ -81,7 +108,7 @@ export const InquiriesScreen = () => {
           inq.buyer_email.toLowerCase().includes(q) ||
           (inq.vessel_name && inq.vessel_name.toLowerCase().includes(q)) ||
           (inq.vessel_ref && inq.vessel_ref.toLowerCase().includes(q)) ||
-          inq.products.some((p) => p.product_name.toLowerCase().includes(q));
+          inq.products.some(p => p.product_name.toLowerCase().includes(q));
         if (!hit) return false;
       }
 
@@ -89,7 +116,11 @@ export const InquiriesScreen = () => {
     });
 
     // Sort by latest date first
-    return result.sort((a, b) => new Date(b.date_received).getTime() - new Date(a.date_received).getTime());
+    return result.sort(
+      (a, b) =>
+        new Date(b.date_received).getTime() -
+        new Date(a.date_received).getTime(),
+    );
   }, [inquiriesData, search, activeTab]);
 
   const handleAddInquiry = () => {
@@ -112,15 +143,15 @@ export const InquiriesScreen = () => {
           product_name: newProduct.trim(),
           quantity: parseInt(newQty, 10) || 1,
           unit: 'pcs',
-          specs: 'Standard specs'
-        }
+          specs: 'Standard specs',
+        },
       ],
       seller_quote: null,
-      my_quote: null
+      my_quote: null,
     };
 
     addInquiry(tempInquiry);
-    
+
     // reset form
     setNewCustomer('');
     setNewVessel('');
@@ -133,39 +164,100 @@ export const InquiriesScreen = () => {
   const renderInquiryCard = ({ item }: { item: Inquiry }) => {
     return (
       <TouchableOpacity
-        onPress={() => navigation.navigate('InquiryDetail', { inquiryId: item.inquiry_id })}
+        onPress={() =>
+          navigation.navigate('InquiryDetail', { inquiryId: item.inquiry_id })
+        }
         activeOpacity={0.8}
-        className="mb-3"
+        style={Stylesheet.cls(theme, 'mb-3 mx-4')}
       >
-        <AppCard variant="glass" className="p-4">
-          <View className="flex-row justify-between items-start mb-2">
-            <View>
-              <AppText className="font-mono text-purple-600 dark:text-purple-400 text-xs font-bold">
-                {item.inquiry_id}
-              </AppText>
-              <AppText variant="caption" className="text-gray-500 dark:text-gray-400 mt-0.5">
-                {formatDateString(item.date_received)}
-              </AppText>
+        <AppCard
+          style={Stylesheet.cls(
+            theme,
+            'p-4 border border-gray-100 dark:border-white/[0.05] rounded-xl bg-white dark:bg-darkcard',
+          )}
+        >
+          {item.status && item.status !== 'QUOTE_SENT' && (
+            <View
+              style={Stylesheet.cls(
+                theme,
+                'flex-row justify-between items-start mb-3',
+              )}
+            >
+              <View>
+                <AppText
+                  style={Stylesheet.cls(
+                    theme,
+                    'text-[#4F46E5] dark:text-[#818cf8] text-[11px] font-bold uppercase tracking-wider',
+                  )}
+                >
+                  {item.inquiry_id}
+                </AppText>
+                <AppText
+                  style={Stylesheet.cls(
+                    theme,
+                    'text-gray-500 dark:text-gray-400 mt-0.5 text-[11px]',
+                  )}
+                >
+                  {formatDateString(item.date_received)}
+                </AppText>
+              </View>
+              <AppStatusBadge status={item.status} />
             </View>
-            <AppStatusBadge status={item.status} />
-          </View>
+          )}
 
-          <AppText variant="bodySemibold" className="text-gray-900 dark:text-white text-base">
+          <AppText
+            style={Stylesheet.cls(
+              theme,
+              'text-gray-900 dark:text-white text-[15px] font-bold mt-1',
+            )}
+          >
             {item.buyer_name}
           </AppText>
 
-          <View className="flex-row items-center mt-2 pt-2 border-t border-gray-100 dark:border-white/[0.04]">
-            <View className="flex-1">
-              <AppText variant="captionSemibold" className="text-gray-400">Products</AppText>
-              <AppText variant="body" className="text-gray-700 dark:text-gray-300 mt-0.5" numberOfLines={1}>
+          <View
+            style={Stylesheet.cls(
+              theme,
+              'flex-row items-center mt-3 pt-3 border-t border-gray-100 dark:border-white/[0.04]',
+            )}
+          >
+            <View style={Stylesheet.cls(theme, 'flex-1 pr-2')}>
+              <AppText
+                style={Stylesheet.cls(
+                  theme,
+                  'text-gray-400 dark:text-gray-500 text-[11px] mb-1',
+                )}
+              >
+                Products
+              </AppText>
+              <AppText
+                style={Stylesheet.cls(
+                  theme,
+                  'text-gray-700 dark:text-gray-300 text-[13px]',
+                )}
+                numberOfLines={1}
+              >
                 {item.products[0]?.product_name}
-                {item.products.length > 1 ? ` (+${item.products.length - 1} more)` : ''}
+                {item.products.length > 1
+                  ? ` (+${item.products.length - 1} more)`
+                  : ''}
               </AppText>
             </View>
 
-            <View className="items-end">
-              <AppText variant="captionSemibold" className="text-gray-400">Vessel</AppText>
-              <AppText variant="bodySemibold" className="text-gray-800 dark:text-gray-200 mt-0.5">
+            <View style={Stylesheet.cls(theme, 'items-end pl-2')}>
+              <AppText
+                style={Stylesheet.cls(
+                  theme,
+                  'text-gray-400 dark:text-gray-500 text-[11px] mb-1',
+                )}
+              >
+                Vessel
+              </AppText>
+              <AppText
+                style={Stylesheet.cls(
+                  theme,
+                  'text-gray-900 dark:text-white text-[13px] font-bold',
+                )}
+              >
                 {item.vessel_name || 'N/A'}
               </AppText>
             </View>
@@ -176,50 +268,115 @@ export const InquiriesScreen = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-darkbg">
-      <AppHeader 
-        title="Inquiries" 
+    <SafeAreaView
+      style={Stylesheet.cls(theme, 'flex-1 bg-[#f8f9fc] dark:bg-darkbg')}
+      edges={['top']}
+    >
+      <AppHeader
+        title=""
+        style={Stylesheet.cls(
+          theme,
+          'bg-white dark:bg-[#12141c] border-b-0 px-4',
+        )}
+        leftAction={
+          <View style={Stylesheet.cls(theme, 'flex-row items-center')}>
+            <View
+              style={Stylesheet.cls(
+                theme,
+                'w-8 h-8 rounded-full bg-[#1e293b] dark:bg-gray-800 justify-center items-center mr-2.5',
+              )}
+            >
+              <Icon name="user" size={16} color="#38bdf8" />
+            </View>
+            <AppText
+              style={Stylesheet.cls(
+                theme,
+                'text-[#4F46E5] dark:text-[#818cf8] font-bold text-lg',
+              )}
+            >
+              Inquiries
+            </AppText>
+          </View>
+        }
         rightAction={
           <AppButton
             title="+ Add"
             variant="primary"
             onPress={() => setIsAddModalOpen(true)}
-            className="h-[34px] px-3.5"
+            style={Stylesheet.cls(
+              theme,
+              'h-[38px] px-5 rounded-full bg-[#A855F7] shadow-none',
+            )}
           />
         }
       />
 
-      {/* Tab filter bar */}
-      <View className="flex-row bg-white dark:bg-[#12141c] border-b border-gray-150 dark:border-white/[0.03] px-2">
-        <TabButton tab="ALL" label="All" activeTab={activeTab} onPress={setActiveTab} />
-        <TabButton tab="PENDING_SOURCING" label="Sourcing" activeTab={activeTab} onPress={setActiveTab} />
-        <TabButton tab="UNDER_REVIEW" label="Review" activeTab={activeTab} onPress={setActiveTab} />
-        <TabButton tab="ACTIVE" label="Active" activeTab={activeTab} onPress={setActiveTab} />
-      </View>
-
-      <View className="flex-1 p-4">
-        {/* Search */}
+      <View
+        style={Stylesheet.cls(
+          theme,
+          'bg-white dark:bg-[#12141c] px-4 py-3 border-b-0',
+        )}
+      >
         <AppSearch
           value={search}
           onChangeText={setSearch}
           placeholder="Search by buyer, vessel or product..."
-          className="mb-4"
-        />
-
-        <FlatList
-          data={filteredInquiries}
-          keyExtractor={(item) => item.inquiry_id}
-          renderItem={renderInquiryCard}
-          contentContainerStyle={{ paddingBottom: 24 }}
-          ListEmptyComponent={
-            <View className="mt-8">
-              <AppText variant="subtitle" className="text-center text-sm text-gray-500">
-                No inquiries match your filters.
-              </AppText>
-            </View>
-          }
+          style={Stylesheet.cls(
+            theme,
+            'bg-[#f8f9fc] dark:bg-darkcard border border-[#e5e7eb] dark:border-white/[0.05] rounded-[18px] h-[50px]',
+          )}
         />
       </View>
+
+      <View style={Stylesheet.cls(theme, 'bg-white dark:bg-[#12141c]')}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={Stylesheet.cls(theme, 'px-4 py-3 gap-6')}
+        >
+          <TabButton
+            tab="ALL"
+            label="All"
+            activeTab={activeTab}
+            onPress={setActiveTab}
+          />
+          <TabButton
+            tab="PENDING_SOURCING"
+            label="Sourcing"
+            activeTab={activeTab}
+            onPress={setActiveTab}
+          />
+          <TabButton
+            tab="UNDER_REVIEW"
+            label="Review"
+            activeTab={activeTab}
+            onPress={setActiveTab}
+          />
+          <TabButton
+            tab="ACTIVE"
+            label="Active"
+            activeTab={activeTab}
+            onPress={setActiveTab}
+          />
+        </ScrollView>
+      </View>
+
+      <FlatList
+        data={filteredInquiries}
+        keyExtractor={item => item.inquiry_id}
+        renderItem={renderInquiryCard}
+        contentContainerStyle={Stylesheet.cls(theme, 'pt-4 pb-24')}
+        ListEmptyComponent={
+          <View style={Stylesheet.cls(theme, 'mt-8')}>
+            <AppText
+              variant="subtitle"
+              style={Stylesheet.cls(theme, 'text-center text-sm text-gray-500')}
+            >
+              No inquiries match your filters.
+            </AppText>
+          </View>
+        }
+      />
 
       {/* Add Inquiry Modal */}
       <AppModal
@@ -262,7 +419,7 @@ export const InquiriesScreen = () => {
         <AppButton
           title="Save Inquiry"
           onPress={handleAddInquiry}
-          className="mt-4"
+          style={Stylesheet.cls(theme, 'mt-4')}
         />
       </AppModal>
     </SafeAreaView>

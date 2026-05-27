@@ -1,18 +1,21 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, StyleProp, ViewStyle } from 'react-native';
 import AppText from './AppText';
+import Stylesheet from './Stylesheet';
+import { useAppStore } from '../../store/appStore';
 
 interface AppBadgeProps {
   label: string | number;
   variant?: 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'gray';
-  className?: string;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const AppBadge: React.FC<AppBadgeProps> = ({
   label,
   variant = 'primary',
-  className = '',
+  style,
 }) => {
+  const theme = useAppStore((state) => state.theme);
   let badgeStyles = 'px-2 py-0.5 rounded-full items-center justify-center ';
   let textStyles = 'text-[11px] font-bold ';
 
@@ -44,9 +47,12 @@ export const AppBadge: React.FC<AppBadgeProps> = ({
       break;
   }
 
+  const parsedBadgeStyle = Stylesheet.cls(theme, badgeStyles);
+  const parsedTextStyle = Stylesheet.cls(theme, textStyles);
+
   return (
-    <View className={`${badgeStyles} ${className}`}>
-      <AppText className={textStyles}>{label}</AppText>
+    <View style={[parsedBadgeStyle, style]}>
+      <AppText style={parsedTextStyle}>{label}</AppText>
     </View>
   );
 };

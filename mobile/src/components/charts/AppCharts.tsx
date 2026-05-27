@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Dimensions } from 'react-native';
+import { View, Dimensions, StyleProp, ViewStyle } from 'react-native';
 import Svg, { Rect, Line, Text as SvgText, Path, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import AppText from '../common/AppText';
 import { useAppStore } from '../../store/appStore';
+import Stylesheet from '../common/Stylesheet';
 
 // Get screen width for responsiveness
 const screenWidth = Dimensions.get('window').width;
@@ -16,14 +17,14 @@ interface BarChartProps {
   data: BarChartData[];
   height?: number;
   color?: string;
-  className?: string;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const BarChart: React.FC<BarChartProps> = ({
   data,
   height = 160,
   color = '#8b5cf6', // purple-500
-  className = '',
+  style,
 }) => {
   const theme = useAppStore((state) => state.theme);
   const isDark = theme === 'dark';
@@ -43,8 +44,10 @@ export const BarChart: React.FC<BarChartProps> = ({
   const gridLineColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
   const labelColor = isDark ? '#9ca3af' : '#4b5563';
 
+  const containerStyle = Stylesheet.cls(theme, 'w-full items-center');
+
   return (
-    <View className={`w-full items-center ${className}`}>
+    <View style={[containerStyle, style]}>
       <Svg width={chartWidth} height={height}>
         {/* Y Axis Gridlines and Labels */}
         {yTicks.map((tick, i) => {
@@ -124,14 +127,14 @@ interface LineChartProps {
   data: BarChartData[];
   height?: number;
   color?: string;
-  className?: string;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const LineChart: React.FC<LineChartProps> = ({
   data,
   height = 160,
   color = '#8b5cf6',
-  className = '',
+  style,
 }) => {
   const theme = useAppStore((state) => state.theme);
   const isDark = theme === 'dark';
@@ -168,8 +171,10 @@ export const LineChart: React.FC<LineChartProps> = ({
     areaD = `${pathD} L ${points[points.length - 1].x} ${paddingTop + graphHeight} L ${points[0].x} ${paddingTop + graphHeight} Z`;
   }
 
+  const containerStyle = Stylesheet.cls(theme, 'w-full items-center');
+
   return (
-    <View className={`w-full items-center ${className}`}>
+    <View style={[containerStyle, style]}>
       <Svg width={chartWidth} height={height}>
         <Defs>
           <LinearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
@@ -249,24 +254,31 @@ interface DonutChartProps {
   data: DonutData[];
   size?: number;
   thickness?: number;
-  className?: string;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const DonutChart: React.FC<DonutChartProps> = ({
   data,
   size = 140,
   thickness = 22,
-  className = '',
+  style,
 }) => {
+  const theme = useAppStore((state) => state.theme);
   const total = data.reduce((sum, item) => sum + item.value, 0);
   const radius = (size - thickness) / 2;
   const circumference = 2 * Math.PI * radius;
   
   let accumulatedAngle = 0;
 
+  const containerStyle = Stylesheet.cls(theme, 'items-center flex-row justify-center');
+  const innerWrapperStyle = Stylesheet.cls(theme, 'absolute items-center justify-center');
+  const textStyle = Stylesheet.cls(theme, 'font-bold text-center');
+  const captionStyle = Stylesheet.cls(theme, 'text-gray-400 text-center uppercase tracking-wider text-[9px]');
+  const legendContainer = Stylesheet.cls(theme, 'ml-6 justify-center');
+
   return (
-    <View className={`items-center flex-row justify-center ${className}`}>
-      <View className="relative" style={{ width: size, height: size }}>
+    <View style={[containerStyle, style]}>
+      <View style={{ width: size, height: size, position: 'relative' }}>
         <Svg width={size} height={size}>
           {data.map((item, idx) => {
             const percentage = total > 0 ? item.value / total : 0;
@@ -295,34 +307,38 @@ export const DonutChart: React.FC<DonutChartProps> = ({
         
         {/* Central Overlay for Donut Text */}
         <View 
-          className="absolute items-center justify-center"
-          style={{
-            top: thickness,
-            left: thickness,
-            width: size - thickness * 2,
-            height: size - thickness * 2,
-          }}
+          style={[
+            innerWrapperStyle,
+            {
+              top: thickness,
+              left: thickness,
+              width: size - thickness * 2,
+              height: size - thickness * 2,
+            }
+          ]}
         >
-          <AppText variant="h2" className="font-bold text-center">
+          <AppText variant="h2" style={textStyle}>
             {total}
           </AppText>
-          <AppText variant="captionSemibold" className="text-gray-400 text-center uppercase tracking-wider text-[9px]">
+          <AppText variant="captionSemibold" style={captionStyle}>
             Total Deals
           </AppText>
         </View>
       </View>
       
       {/* Legend */}
-      <View className="ml-6 justify-center">
+      <View style={legendContainer}>
         {data.map((item, idx) => {
           const pct = total > 0 ? ((item.value / total) * 100).toFixed(0) : 0;
           return (
-            <View key={idx} className="flex-row items-center mb-2">
+            <View key={idx} style={Stylesheet.cls(theme, 'flex-row items-center mb-2')}>
               <View 
-                className="w-3 h-3 rounded-full mr-2"
-                style={{ backgroundColor: item.color }}
+                style={[
+                  Stylesheet.cls(theme, 'w-3 h-3 rounded-full mr-2'),
+                  { backgroundColor: item.color }
+                ]}
               />
-              <AppText variant="captionSemibold" className="text-gray-700 dark:text-gray-300">
+              <AppText variant="captionSemibold" style={Stylesheet.cls(theme, 'text-gray-700 dark:text-gray-300')}>
                 {item.label} ({pct}%)
               </AppText>
             </View>

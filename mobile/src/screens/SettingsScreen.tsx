@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { View, ScrollView, Alert, SafeAreaView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import Stylesheet from '../components/common/Stylesheet';
+
+import { View, ScrollView, Alert } from 'react-native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
 import AppCard from '../components/common/AppCard';
@@ -8,6 +12,7 @@ import AppInput from '../components/inputs/AppInput';
 import AppButton from '../components/common/AppButton';
 
 export const SettingsScreen = () => {
+  const theme = useAppStore((state) => state.theme);
   const { settings, updateSettings } = useAppStore();
 
   const [margin, setMargin] = useState(settings.default_margin_percent.toString());
@@ -27,13 +32,13 @@ export const SettingsScreen = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-darkbg">
+    <SafeAreaView style={Stylesheet.cls(theme, "flex-1 bg-gray-50 dark:bg-darkbg")}>
       <AppHeader title="System Settings" showBack={true} />
 
-      <ScrollView className="flex-1 p-4" contentContainerStyle={{ paddingBottom: 40 }}>
-        <AppText variant="h3" className="font-bold mb-3 ml-1">Quotation Configurations</AppText>
+      <ScrollView style={Stylesheet.cls(theme, "flex-1 p-4")} contentContainerStyle={{ paddingBottom: 40 }}>
+        <AppText variant="h3" style={Stylesheet.cls(theme, "font-bold mb-3 ml-1")}>Quotation Configurations</AppText>
         
-        <AppCard variant="bordered" className="mb-4">
+        <AppCard variant="bordered" style={Stylesheet.cls(theme, "mb-4")}>
           <AppInput
             label="Default Profit Markup (%)"
             placeholder="e.g. 15"
@@ -60,15 +65,15 @@ export const SettingsScreen = () => {
         </AppCard>
 
         {/* Informative tips */}
-        <AppCard variant="glass" className="mb-6 p-4">
-          <AppText variant="captionSemibold" className="text-gray-400">Margin Logic Rule 1</AppText>
-          <AppText className="text-xs text-gray-500 mt-1">
+        <AppCard variant="glass" style={Stylesheet.cls(theme, "mb-6 p-4")}>
+          <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Margin Logic Rule 1</AppText>
+          <AppText style={Stylesheet.cls(theme, "text-xs text-gray-500 mt-1")}>
             Category markups automatically override default values (e.g., Fasteners at 18%, Pipes at 12%).
           </AppText>
 
-          <View className="pt-3 mt-3 border-t border-gray-100 dark:border-white/[0.04]">
-            <AppText variant="captionSemibold" className="text-gray-400">Margin Logic Rule 2</AppText>
-            <AppText className="text-xs text-gray-500 mt-1">
+          <View style={Stylesheet.cls(theme, "pt-3 mt-3 border-t border-gray-100 dark:border-white/[0.04]")}>
+            <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Margin Logic Rule 2</AppText>
+            <AppText style={Stylesheet.cls(theme, "text-xs text-gray-500 mt-1")}>
               Price-tiers apply high markups on low unit prices (e.g., 25% margin below $100).
             </AppText>
           </View>
@@ -77,7 +82,7 @@ export const SettingsScreen = () => {
         <AppButton
           title="Save Configurations"
           onPress={handleSaveSettings}
-          className="rounded-2xl"
+          style={Stylesheet.cls(theme, "rounded-2xl")}
         />
       </ScrollView>
     </SafeAreaView>

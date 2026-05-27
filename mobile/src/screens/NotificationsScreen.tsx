@@ -1,11 +1,16 @@
 import React, { useEffect } from 'react';
-import { View, FlatList, SafeAreaView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import Stylesheet from '../components/common/Stylesheet';
+
+import { View, FlatList } from 'react-native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
 import AppCard from '../components/common/AppCard';
 import AppHeader from '../components/layout/AppHeader';
 
 export const NotificationsScreen = () => {
+  const theme = useAppStore((state) => state.theme);
   const { notificationsData, markNotificationsAsRead } = useAppStore();
 
   // Mark all notifications as read when the screen is viewed
@@ -34,7 +39,7 @@ export const NotificationsScreen = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-darkbg">
+    <SafeAreaView style={Stylesheet.cls(theme, "flex-1 bg-gray-50 dark:bg-darkbg")}>
       <AppHeader title="Notifications Log" showBack={true} />
 
       <FlatList
@@ -44,31 +49,31 @@ export const NotificationsScreen = () => {
         renderItem={({ item }) => (
           <AppCard 
             variant="glass" 
-            className={`mb-3.5 p-4 flex-row items-start ${item.isRead ? 'opacity-70' : 'border-l-4 border-l-purple-600'}`}
+            style={Stylesheet.cls(theme, `mb-3.5 p-4 flex-row items-start ${item.isRead ? 'opacity-70' : 'border-l-4 border-l-purple-600'}`)}
           >
-            <View className={`w-9 h-9 rounded-xl items-center justify-center mr-3.5 ${getIconColor(item.type)}`}>
-              <AppText className="text-base">{getIconEmoji(item.type)}</AppText>
+            <View style={Stylesheet.cls(theme, `w-9 h-9 rounded-xl items-center justify-center mr-3.5 ${getIconColor(item.type)}`)}>
+              <AppText style={Stylesheet.cls(theme, "text-base")}>{getIconEmoji(item.type)}</AppText>
             </View>
 
-            <View className="flex-1">
-              <View className="flex-row justify-between items-center mb-1">
-                <AppText variant="bodySemibold" className="text-gray-905 dark:text-white">
+            <View style={Stylesheet.cls(theme, "flex-1")}>
+              <View style={Stylesheet.cls(theme, "flex-row justify-between items-center mb-1")}>
+                <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "text-gray-905 dark:text-white")}>
                   {item.title}
                 </AppText>
-                <AppText variant="caption" className="text-[10px] text-gray-500">
+                <AppText variant="caption" style={Stylesheet.cls(theme, "text-[10px] text-gray-500")}>
                   {item.time}
                 </AppText>
               </View>
               
-              <AppText variant="caption" className="text-gray-600 dark:text-gray-400 leading-relaxed">
+              <AppText variant="caption" style={Stylesheet.cls(theme, "text-gray-600 dark:text-gray-400 leading-relaxed")}>
                 {item.message}
               </AppText>
             </View>
           </AppCard>
         )}
         ListEmptyComponent={
-          <View className="mt-8">
-            <AppText variant="subtitle" className="text-center text-sm text-gray-500">
+          <View style={Stylesheet.cls(theme, "mt-8")}>
+            <AppText variant="subtitle" style={Stylesheet.cls(theme, "text-center text-sm text-gray-500")}>
               No recent notifications logs.
             </AppText>
           </View>

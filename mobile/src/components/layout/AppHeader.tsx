@@ -1,15 +1,16 @@
 import React from 'react';
-import { View, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AppText from '../common/AppText';
 import { useAppStore } from '../../store/appStore';
+import Icon from 'react-native-vector-icons/Feather';
 
 interface AppHeaderProps {
   title: string;
   showBack?: boolean;
   rightAction?: React.ReactNode;
   leftAction?: React.ReactNode;
-  className?: string;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
@@ -17,7 +18,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   showBack = false,
   rightAction,
   leftAction,
-  className = '',
+  style,
 }) => {
   const navigation = useNavigation();
   const theme = useAppStore((state) => state.theme);
@@ -29,40 +30,61 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     }
   };
 
+  const bgColor = isDark ? '#0c0e12' : '#f4f5fb';
+  const borderBottom = isDark ? '#23262f' : '#e9eaf0';
+  const titleColor = isDark ? '#f1f5f9' : '#111827';
+  const iconColor = isDark ? '#e5e7eb' : '#374151';
+  const iconBg = isDark ? '#23262f' : '#ececf1';
+
   return (
-    <SafeAreaView className={isDark ? 'bg-darkbg' : 'bg-gray-50'}>
-      <View 
-        className={`flex-row items-center justify-between px-4 py-3 border-b ${
-          isDark 
-            ? 'bg-darkbg border-white/[0.04]' 
-            : 'bg-gray-50 border-gray-150'
-        } ${className}`}
-      >
-        <View className="flex-row items-center flex-1">
-          {showBack && navigation.canGoBack() ? (
-            <TouchableOpacity 
-              onPress={handleBack}
-              className="mr-3 p-1 rounded-lg active:bg-gray-200 dark:active:bg-white/5"
-            >
-              {/* Back Arrow SVG */}
-              <View className="w-5 h-5 justify-center items-center">
-                <View className="w-3.5 h-3.5 border-l-2 border-b-2 border-gray-800 dark:border-white transform rotate-45 ml-1" />
-              </View>
-            </TouchableOpacity>
-          ) : leftAction ? (
-            <View className="mr-3">{leftAction}</View>
-          ) : null}
-          
-          <AppText variant="h2" className="font-bold flex-1" numberOfLines={1}>
-            {title}
-          </AppText>
-        </View>
-        
-        {rightAction ? (
-          <View className="ml-3">{rightAction}</View>
+    <View style={[{
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      backgroundColor: bgColor,
+      borderBottomWidth: 1,
+      borderBottomColor: borderBottom,
+    }, style as any]}>
+      {/* Left side */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+        {showBack && navigation.canGoBack() ? (
+          <TouchableOpacity
+            onPress={handleBack}
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: 17,
+              backgroundColor: iconBg,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 10,
+            }}
+            activeOpacity={0.7}
+          >
+            <Icon name="arrow-left" size={18} color={iconColor} />
+          </TouchableOpacity>
+        ) : leftAction ? (
+          <View style={{ marginRight: 10 }}>{leftAction}</View>
         ) : null}
+
+        <AppText style={{
+          fontSize: 17,
+          fontWeight: '700',
+          color: titleColor,
+          flex: 1,
+        }} numberOfLines={1}>
+          {title}
+        </AppText>
       </View>
-    </SafeAreaView>
+
+      {/* Right side */}
+      {rightAction ? (
+        <View style={{ marginLeft: 10 }}>{rightAction}</View>
+      ) : null}
+    </View>
   );
 };
+
 export default AppHeader;

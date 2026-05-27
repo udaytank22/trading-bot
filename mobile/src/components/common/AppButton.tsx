@@ -1,6 +1,8 @@
 import React from 'react';
-import { TouchableOpacity, ActivityIndicator, View, TouchableOpacityProps } from 'react-native';
+import { TouchableOpacity, ActivityIndicator, View, TouchableOpacityProps, StyleProp, ViewStyle } from 'react-native';
 import AppText from './AppText';
+import Stylesheet from './Stylesheet';
+import { useAppStore } from '../../store/appStore';
 
 interface AppButtonProps extends TouchableOpacityProps {
   title: string;
@@ -8,7 +10,7 @@ interface AppButtonProps extends TouchableOpacityProps {
   loading?: boolean;
   disabled?: boolean;
   icon?: React.ReactNode;
-  className?: string;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const AppButton: React.FC<AppButtonProps> = ({
@@ -17,9 +19,10 @@ export const AppButton: React.FC<AppButtonProps> = ({
   loading = false,
   disabled = false,
   icon,
-  className = '',
+  style,
   ...props
 }) => {
+  const theme = useAppStore((state) => state.theme);
   const isDisableMode = disabled || loading;
 
   let btnStyles = 'flex-row items-center justify-center py-2.5 px-4 rounded-xl shadow-sm transition-all h-[44px]';
@@ -59,18 +62,21 @@ export const AppButton: React.FC<AppButtonProps> = ({
       break;
   }
 
+  const parsedBtnStyle = Stylesheet.cls(theme, btnStyles);
+  const parsedTextStyle = Stylesheet.cls(theme, textStyles);
+
   return (
     <TouchableOpacity
-      className={`${btnStyles} ${className}`}
+      style={[parsedBtnStyle, style]}
       disabled={isDisableMode}
       {...props}
     >
       {loading ? (
         <ActivityIndicator size="small" color={variant === 'outline' || variant === 'ghost' ? '#8b5cf6' : '#ffffff'} />
       ) : (
-        <View className="flex-row items-center justify-center">
-          {icon && <View className="mr-2">{icon}</View>}
-          <AppText className={textStyles}>{title}</AppText>
+        <View style={Stylesheet.cls(theme, "flex-row items-center justify-center")}>
+          {icon && <View style={Stylesheet.cls(theme, "mr-2")}>{icon}</View>}
+          <AppText style={parsedTextStyle}>{title}</AppText>
         </View>
       )}
     </TouchableOpacity>

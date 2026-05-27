@@ -1,5 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { View, FlatList, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import Stylesheet from '../components/common/Stylesheet';
+
+import { View, FlatList, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
 import AppCard from '../components/common/AppCard';
@@ -9,27 +13,42 @@ import AppStatusBadge from '../components/common/AppStatusBadge';
 import AppButton from '../components/common/AppButton';
 import AppBottomSheet from '../components/modals/AppBottomSheet';
 import AppInput from '../components/inputs/AppInput';
+import AppAlert from '../components/modals/AppAlert';
 import { SupplyItem } from '../data/activities';
 
 type SupplyFilter = 'All' | 'PENDING' | 'LOADING' | 'IN_TRANSIT' | 'DELIVERED';
 
-interface TabSelectorProps {
-  status: SupplyFilter;
+interface TabButtonProps {
+  tab: SupplyFilter;
   label: string;
-  currentFilter: SupplyFilter;
-  onSelect: (status: SupplyFilter) => void;
+  activeTab: SupplyFilter;
+  onPress: (tab: SupplyFilter) => void;
 }
 
-const TabSelector = ({ status, label, currentFilter, onSelect }: TabSelectorProps) => {
-  const isSelected = currentFilter === status;
+const TabButton = ({ tab, label, activeTab, onPress }: TabButtonProps) => {
+  const theme = useAppStore(state => state.theme);
+  const isSelected = activeTab === tab;
   return (
     <TouchableOpacity
-      onPress={() => onSelect(status)}
-      className={`px-3 py-1.5 rounded-full border border-gray-200 dark:border-white/[0.04] mr-2 mb-2 ${
-        isSelected ? 'bg-purple-650 dark:bg-purple-600' : 'bg-white dark:bg-white/[0.02]'
-      }`}
+      onPress={() => onPress(tab)}
+      style={[
+        Stylesheet.cls(
+          theme,
+          `py-2 rounded-full justify-center items-center ${
+            isSelected ? 'px-7' : 'bg-transparent px-3'
+          }`,
+        ),
+        isSelected && { backgroundColor: '#4648D4' },
+      ]}
     >
-      <AppText className={isSelected ? 'text-white font-bold' : 'text-gray-550 dark:text-gray-400 font-semibold'}>
+      <AppText 
+        style={Stylesheet.cls(
+          theme,
+          `text-[15px] ${
+            isSelected ? 'text-white' : 'text-[#4b5563] dark:text-[#9ca3af]'
+          }`,
+        )}
+      >
         {label}
       </AppText>
     </TouchableOpacity>
@@ -37,7 +56,7 @@ const TabSelector = ({ status, label, currentFilter, onSelect }: TabSelectorProp
 };
 
 export const SupplyScreen = () => {
-  const { supplyData, updateSupplyItem, addInvoice } = useAppStore();
+  const { supplyData, updateSupplyItem, addInvoice, theme } = useAppStore();
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<SupplyFilter>('All');
@@ -54,6 +73,21 @@ export const SupplyScreen = () => {
   // Invoice Modal State
   const [invoiceOpen, setInvoiceOpen] = useState(false);
   const [invoiceAmount, setInvoiceAmount] = useState('50000');
+
+  type AlertConfig = {
+    visible: boolean;
+    title: string;
+    message: string;
+    showCancel?: boolean;
+    onConfirm?: () => void;
+  };
+
+  // Custom Alert State
+  const [alertConfig, setAlertConfig] = useState<AlertConfig>({ visible: false, title: '', message: '' });
+
+  const showAlert = (title: string, message: string, showCancel?: boolean, onConfirm?: () => void) => {
+    setAlertConfig({ visible: true, title, message, showCancel, onConfirm });
+  };
 
   // Filter supply list
   const filteredSupply = useMemo(() => {
@@ -88,7 +122,7 @@ export const SupplyScreen = () => {
     setDriverPhone('');
     setAllotOpen(false);
     setSelectedItem(null);
-    Alert.alert('Vehicle Allotted', 'Vehicle registered. Shipment status updated to LOADING.');
+    showAlert('Vehicle Allotted', 'Vehicle registered. Shipment status updated to LOADING.');
   };
 
   // Process Shipment Progression
@@ -97,11 +131,25 @@ export const SupplyScreen = () => {
       setSelectedItem(item);
       setAllotOpen(true);
     } else if (item.status === 'LOADING') {
-      updateSupplyItem(item.inquiry_id, { status: 'IN_TRANSIT' });
-      Alert.alert('In Transit', 'The shipment is now in route.');
+      showAlert(
+        'Mark In Transit', 
+        'Are you sure you want to mark this shipment as in-route?', 
+        true, 
+        () => {
+          updateSupplyItem(item.inquiry_id, { status: 'IN_TRANSIT' });
+          setAlertConfig(prev => ({ ...prev, visible: false }));
+        }
+      );
     } else if (item.status === 'IN_TRANSIT') {
-      updateSupplyItem(item.inquiry_id, { status: 'DELIVERED' });
-      Alert.alert('Delivered', 'The cargo has successfully reached its destination.');
+      showAlert(
+        'Confirm Delivery', 
+        'Has the cargo successfully reached its destination?', 
+        true, 
+        () => {
+          updateSupplyItem(item.inquiry_id, { status: 'DELIVERED' });
+          setAlertConfig(prev => ({ ...prev, visible: false }));
+        }
+      );
     } else if (item.status === 'DELIVERED') {
       setSelectedItem(item);
       setInvoiceAmount('85000');
@@ -135,35 +183,42 @@ export const SupplyScreen = () => {
 
     setInvoiceOpen(false);
     setSelectedItem(null);
-    Alert.alert('Invoice Sent', `Quotation invoice for ${newInvoice.buyer_name} has been issued and emailed.`);
+    showAlert('Invoice Sent', `Quotation invoice for ${newInvoice.buyer_name} has been issued and emailed.`);
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-darkbg">
+    <SafeAreaView style={Stylesheet.cls(theme, "flex-1 bg-gray-50 dark:bg-darkbg")} edges={["top"]}>
       <AppHeader title="Logistics & Supply" />
 
-      <View className="flex-1 p-4">
+      <View style={Stylesheet.cls(theme, "flex-1 p-4")}>
         {/* Search */}
         <AppSearch
           value={search}
           onChangeText={setSearch}
           placeholder="Search by supplier, cargo or cargo destination..."
-          className="mb-3"
+          style={Stylesheet.cls(theme, "mb-3")}
         />
 
         {/* Categories scrollbar */}
-        <View className="flex-row flex-wrap mb-2">
-          <TabSelector status="All" label="All" currentFilter={filter} onSelect={setFilter} />
-          <TabSelector status="PENDING" label="Pending" currentFilter={filter} onSelect={setFilter} />
-          <TabSelector status="LOADING" label="Loading" currentFilter={filter} onSelect={setFilter} />
-          <TabSelector status="IN_TRANSIT" label="In Transit" currentFilter={filter} onSelect={setFilter} />
-          <TabSelector status="DELIVERED" label="Delivered" currentFilter={filter} onSelect={setFilter} />
+        <View style={Stylesheet.cls(theme, "mb-4")}>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={Stylesheet.cls(theme, "gap-6")}
+          >
+            <TabButton tab="All" label="All" activeTab={filter} onPress={setFilter} />
+            <TabButton tab="PENDING" label="Pending" activeTab={filter} onPress={setFilter} />
+            <TabButton tab="LOADING" label="Loading" activeTab={filter} onPress={setFilter} />
+            <TabButton tab="IN_TRANSIT" label="In Transit" activeTab={filter} onPress={setFilter} />
+            <TabButton tab="DELIVERED" label="Delivered" activeTab={filter} onPress={setFilter} />
+          </ScrollView>
         </View>
 
         {/* Cargo FlatList */}
         <FlatList
           data={filteredSupply}
           keyExtractor={(item) => item.inquiry_id}
+          showsVerticalScrollIndicator={false}
           renderItem={({ item }) => {
             const nextButtonLabel = 
               item.status === 'PENDING' ? 'Allot Vehicle' :
@@ -172,28 +227,28 @@ export const SupplyScreen = () => {
               item.status === 'DELIVERED' ? 'Dispatch Invoice' : 'Done';
             
             return (
-              <AppCard variant="glass" className="mb-3.5">
-                <View className="flex-row justify-between items-center mb-3">
-                  <AppText className="font-mono text-purple-600 dark:text-purple-400 font-bold text-xs">
+              <AppCard variant="glass" style={Stylesheet.cls(theme, "mb-3.5")}>
+                <View style={Stylesheet.cls(theme, "flex-row justify-between items-center mb-3")}>
+                  <AppText style={Stylesheet.cls(theme, "font-mono text-purple-600 dark:text-purple-400 font-bold text-xs")}>
                     {item.inquiry_id}
                   </AppText>
                   <AppStatusBadge status={item.status} />
                 </View>
 
-                <View className="space-y-1 mb-3">
-                  <AppText variant="captionSemibold" className="text-gray-400">Supplier & Cargo</AppText>
+                <View style={Stylesheet.cls(theme, "space-y-1 mb-3")}>
+                  <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Supplier & Cargo</AppText>
                   <AppText variant="bodySemibold">{item.supplier} - {item.cargo} ({item.quantity})</AppText>
                   
-                  <View className="flex-row justify-between pt-1">
+                  <View style={Stylesheet.cls(theme, "flex-row justify-between pt-1")}>
                     <View>
-                      <AppText variant="captionSemibold" className="text-gray-400">Destination</AppText>
-                      <AppText variant="body" className="mt-0.5">{item.destination}</AppText>
+                      <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Destination</AppText>
+                      <AppText variant="body" style={Stylesheet.cls(theme, "mt-0.5")}>{item.destination}</AppText>
                     </View>
                     
                     {item.vehicle ? (
-                      <View className="items-end">
-                        <AppText variant="captionSemibold" className="text-gray-400">Vehicle / Driver</AppText>
-                        <AppText variant="body" className="mt-0.5">{item.vehicle} ({item.driver})</AppText>
+                      <View style={Stylesheet.cls(theme, "items-end")}>
+                        <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Vehicle / Driver</AppText>
+                        <AppText variant="body" style={Stylesheet.cls(theme, "mt-0.5")}>{item.vehicle} ({item.driver})</AppText>
                       </View>
                     ) : null}
                   </View>
@@ -202,15 +257,15 @@ export const SupplyScreen = () => {
                 <AppButton
                   title={nextButtonLabel}
                   onPress={() => handleProgressShipment(item)}
-                  className="h-[38px] rounded-xl"
+                  style={Stylesheet.cls(theme, "h-[38px] rounded-xl")}
                   variant={item.status === 'DELIVERED' ? 'primary' : 'outline'}
                 />
               </AppCard>
             );
           }}
           ListEmptyComponent={
-            <View className="mt-8">
-              <AppText variant="subtitle" className="text-center text-sm text-gray-500">
+            <View style={Stylesheet.cls(theme, "mt-8")}>
+              <AppText variant="subtitle" style={Stylesheet.cls(theme, "text-center text-sm text-gray-500")}>
                 No active cargo supplies matching filters.
               </AppText>
             </View>
@@ -224,7 +279,7 @@ export const SupplyScreen = () => {
         onClose={() => { setAllotOpen(false); setSelectedItem(null); }}
         title="Vehicle & Driver Allotment"
       >
-        <AppText className="mb-4 text-xs">
+        <AppText style={Stylesheet.cls(theme, "mb-4 text-xs")}>
           Input transportation and driver details to process loading operations.
         </AppText>
 
@@ -253,7 +308,7 @@ export const SupplyScreen = () => {
         <AppButton
           title="Save & Progress Sourcing"
           onPress={handleAllotConfirm}
-          className="mt-4"
+          style={Stylesheet.cls(theme, "mt-4")}
         />
       </AppBottomSheet>
 
@@ -263,16 +318,16 @@ export const SupplyScreen = () => {
         onClose={() => { setInvoiceOpen(false); setSelectedItem(null); }}
         title="Invoice Dispatcher"
       >
-        <AppText className="mb-4 text-xs">
+        <AppText style={Stylesheet.cls(theme, "mb-4 text-xs")}>
           Draft invoice details for customer billing. Pushing this button will send the invoice and close the cargo deal.
         </AppText>
 
-        <View className="p-4 bg-gray-150 dark:bg-white/[0.02] border border-gray-200 dark:border-white/[0.04] rounded-xl mb-4">
-          <AppText variant="captionSemibold" className="text-gray-400">Bill To:</AppText>
-          <AppText variant="bodySemibold" className="mb-2">{selectedItem?.buyer_name} ({selectedItem?.buyer_email})</AppText>
+        <View style={Stylesheet.cls(theme, "p-4 bg-gray-150 dark:bg-white/[0.02] border border-gray-200 dark:border-white/[0.04] rounded-xl mb-4")}>
+          <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Bill To:</AppText>
+          <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "mb-2")}>{selectedItem?.buyer_name} ({selectedItem?.buyer_email})</AppText>
           
-          <AppText variant="captionSemibold" className="text-gray-400">Cargo Contents:</AppText>
-          <AppText variant="body" className="mb-2">{selectedItem?.cargo} ({selectedItem?.quantity})</AppText>
+          <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Cargo Contents:</AppText>
+          <AppText variant="body" style={Stylesheet.cls(theme, "mb-2")}>{selectedItem?.cargo} ({selectedItem?.quantity})</AppText>
         </View>
 
         <AppInput
@@ -285,9 +340,18 @@ export const SupplyScreen = () => {
         <AppButton
           title="Email Invoice & Close Deal"
           onPress={handleSendInvoiceConfirm}
-          className="mt-4"
+          style={Stylesheet.cls(theme, "mt-4")}
         />
       </AppBottomSheet>
+
+      <AppAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        showCancel={alertConfig.showCancel}
+        onConfirm={alertConfig.onConfirm}
+        onClose={() => setAlertConfig({ ...alertConfig, visible: false })}
+      />
     </SafeAreaView>
   );
 };

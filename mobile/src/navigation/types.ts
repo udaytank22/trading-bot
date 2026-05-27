@@ -8,7 +8,6 @@ export type RootStackParamList = {
   InquiryDetail: { inquiryId: string };
   PurchaseOrders: undefined;
   PurchaseOrderDetail: { poId: string };
-  Invoices: undefined;
   InvoiceDetail: { invoiceId: string };
   Inventory: undefined;
   Employees: undefined;
@@ -22,7 +21,7 @@ export type TabParamList = {
   Dashboard: undefined;
   Inquiries: undefined;
   Supply: undefined;
-  Todo: undefined;
+  Invoices: undefined;
   More: undefined;
 };
 

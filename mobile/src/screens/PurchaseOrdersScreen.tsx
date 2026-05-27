@@ -1,5 +1,9 @@
 import React from 'react';
-import { View, FlatList, TouchableOpacity, SafeAreaView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import Stylesheet from '../components/common/Stylesheet';
+
+import { View, FlatList, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
@@ -11,11 +15,12 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 
 export const PurchaseOrdersScreen = () => {
+  const theme = useAppStore((state) => state.theme);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { purchaseOrdersData } = useAppStore();
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-darkbg">
+    <SafeAreaView style={Stylesheet.cls(theme, "flex-1 bg-gray-50 dark:bg-darkbg")}>
       <AppHeader title="Purchase Orders" showBack={true} />
 
       <FlatList
@@ -26,12 +31,12 @@ export const PurchaseOrdersScreen = () => {
           <TouchableOpacity
             onPress={() => navigation.navigate('PurchaseOrderDetail', { poId: item.po_id })}
             activeOpacity={0.8}
-            className="mb-3.5"
+            style={Stylesheet.cls(theme, "mb-3.5")}
           >
-            <AppCard variant="glass" className="p-4 flex-row justify-between items-center">
-              <View className="flex-1 pr-2">
-                <View className="flex-row items-center">
-                  <AppText className="font-mono text-purple-600 dark:text-purple-400 font-bold text-xs mr-2">
+            <AppCard variant="glass" style={Stylesheet.cls(theme, "p-4 flex-row justify-between items-center")}>
+              <View style={Stylesheet.cls(theme, "flex-1 pr-2")}>
+                <View style={Stylesheet.cls(theme, "flex-row items-center")}>
+                  <AppText style={Stylesheet.cls(theme, "font-mono text-purple-600 dark:text-purple-400 font-bold text-xs mr-2")}>
                     {item.po_id}
                   </AppText>
                   <AppText variant="caption">
@@ -39,17 +44,17 @@ export const PurchaseOrdersScreen = () => {
                   </AppText>
                 </View>
                 
-                <AppText variant="bodySemibold" className="mt-1" numberOfLines={1}>
+                <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "mt-1")} numberOfLines={1}>
                   {item.customer}
                 </AppText>
-                <AppText variant="caption" className="text-gray-500 mt-0.5">
+                <AppText variant="caption" style={Stylesheet.cls(theme, "text-gray-500 mt-0.5")}>
                   Vessel: {item.vessel}
                 </AppText>
               </View>
 
-              <View className="items-end">
+              <View style={Stylesheet.cls(theme, "items-end")}>
                 <AppStatusBadge status={item.status} />
-                <AppText variant="bodySemibold" className="mt-2 text-purple-650 dark:text-purple-400 font-bold">
+                <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "mt-2 text-purple-650 dark:text-purple-400 font-bold")}>
                   {formatUSD(item.total_amount)}
                 </AppText>
               </View>
@@ -57,8 +62,8 @@ export const PurchaseOrdersScreen = () => {
           </TouchableOpacity>
         )}
         ListEmptyComponent={
-          <View className="mt-8">
-            <AppText variant="subtitle" className="text-center text-sm text-gray-500">
+          <View style={Stylesheet.cls(theme, "mt-8")}>
+            <AppText variant="subtitle" style={Stylesheet.cls(theme, "text-center text-sm text-gray-500")}>
               No purchase orders found.
             </AppText>
           </View>
