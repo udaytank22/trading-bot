@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { X, FileText, Eye, ChevronLeft } from "lucide-react";
-import { useAppContext } from "../../context";
+import { useUI } from "@context";
 
 // Local sample PDF served from /public folder
 const DUMMY_PDF_URL = "/memories/file-sample_150kB.pdf";
@@ -13,7 +13,7 @@ const mockUsers = [
 ];
 
 const ChatDrawer = ({ isOpen, onClose }) => {
-  const { /* startCall */ } = useAppContext();
+  const { startCall } = useUI();
   const [selectedUser, setSelectedUser] = useState(null);
   const [pdfViewerUrl, setPdfViewerUrl] = useState(null); // in-app PDF viewer state
   const [messages, setMessages] = useState([

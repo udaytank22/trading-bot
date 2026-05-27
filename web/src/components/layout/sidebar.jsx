@@ -1,6 +1,7 @@
+import { useAuth, useUI, useData } from '@context';
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { useAppContext } from "../../context";
+
 import logo from "../../../public/memories/logo.png";
 
 const NAV_LINKS = [
@@ -11,15 +12,12 @@ const NAV_LINKS = [
   { name: "Invoices", path: "/invoices", icon: <InvoicesIcon /> },
   { name: "Inventory", path: "/inventory", icon: <InventoryIcon /> },
   { name: "Employees", path: "/employees", icon: <UsersIcon /> },
-  // { name: "Documents", path: "/documents", icon: <DocumentIcon /> },
   { name: "To-Do", path: "/todo", icon: <TodoIcon /> },
-  // { name: "Profit Report", path: "/profit", icon: <ProfitIcon /> },
-  { name: "Notifications", path: "/notifications", icon: <BellIcon /> },
-  { name: "Profile", path: "/profile", icon: <ProfileIcon /> },
+  // { name: "Notifications", path: "/notifications", icon: <BellIcon /> },
 ];
 
 export default function Sidebar({ isOpen }) {
-  const { logout, currentUser } = useAppContext();
+  const { logout, currentUser } = useAuth();
   const [isHovered, setIsHovered] = useState(false);
   const effectiveOpen = isOpen || isHovered;
   const navigate = useNavigate();
@@ -31,7 +29,7 @@ export default function Sidebar({ isOpen }) {
 
   const filteredLinks = NAV_LINKS.filter(link => {
     if (currentUser?.role?.toLowerCase() === 'employee') {
-      const employeeTabs = ["Dashboard", "Inquiries", "Purchase Orders", "Supply", "Documents", "Profile", "Notifications", "To-Do"];
+      const employeeTabs = ["Dashboard", "Inquiries", "Purchase Orders", "Supply", "Documents", "Notifications", "To-Do"];
       return employeeTabs.includes(link.name);
     }
     return true; // Admin or others see all links
@@ -39,9 +37,9 @@ export default function Sidebar({ isOpen }) {
 
   return (
     <aside
-      // onMouseEnter={() => setIsHovered(true)}
-      // onMouseLeave={() => setIsHovered(false)}
-      className={`flex-shrink-0 bg-white dark:bg-[#1a1d23] text-gray-500 dark:text-gray-400 flex flex-col h-full border-r border-gray-200 dark:border-[#2a2d33] shadow-lg z-10 transition-all duration-300 overflow-hidden ${effectiveOpen ? "w-[200px]" : "w-13"}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className={`flex-shrink-0 bg-white dark:bg-[#1a1d23] text-gray-500 dark:text-gray-400 flex flex-col h-full border-r border-gray-200 dark:border-[#2a2d33] shadow-lg z-10 transition-all duration-300 overflow-hidden ${effectiveOpen ? "w-[200px]" : "w-[60px]"}`}
     >
       {/* Logo */}
       <div className="p-4 pb-4 flex items-center gap-2.5">
@@ -80,22 +78,6 @@ export default function Sidebar({ isOpen }) {
         ))}
       </nav>
 
-      {/* Footer Status */}
-      {/* <div className="p-6 mt-auto">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="relative flex w-2 h-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full w-2 h-2 bg-emerald-500" />
-          </span>
-          <span className="text-[12px] text-gray-400 font-medium tracking-wide uppercase">
-            UI Active
-          </span>
-        </div>
-        <div className="text-[11px] text-gray-600 font-mono tracking-wider ml-4 mt-2">
-          v1.0.0
-        </div>
-      </div> */}
-
       {/* Logout Button */}
       <div className="mt-auto border-t border-gray-200 dark:border-[#2a2d33] p-3">
         <button
@@ -116,180 +98,53 @@ export default function Sidebar({ isOpen }) {
 /* ── SVG Icons ── */
 function DashboardIcon() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.8}
-      stroke="currentColor"
-      className="w-full h-full"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"
-      />
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-full h-full">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
     </svg>
   );
 }
 function InquiriesIcon() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.8}
-      stroke="currentColor"
-      className="w-full h-full"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H6.911a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661Z"
-      />
-    </svg>
-  );
-}
-function ProfitIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.8}
-      stroke="currentColor"
-      className="w-full h-full"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"
-      />
-    </svg>
-  );
-}
-function ProfileIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.8}
-      stroke="currentColor"
-      className="w-full h-full"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-full h-full">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H6.911a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661Z" />
     </svg>
   );
 }
 function POIcon() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.8}
-      stroke="currentColor"
-      className="w-full h-full"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
-      />
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-full h-full">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
     </svg>
   );
 }
 function UsersIcon() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.8}
-      stroke="currentColor"
-      className="w-full h-full"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-2.123-7.674 4.125 4.125 0 0 0-2.122 7.674 9.337 9.337 0 0 0 4.121-.952 9.38 9.38 0 0 0 2.625.372M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.003c0 1.113.285 2.16.786 3.07M15 19.128A9.321 9.321 0 0 0 12 18a9.321 9.321 0 0 0-3 1.128m6 0c0 1.113-.285 2.16-.786 3.07M15 19.128c0-1.113-.285-2.16-.786-3.07M9.75 9.75c0 1.242 1.008 2.25 2.25 2.25s2.25-1.008 2.25-2.25-1.008-2.25-2.25-2.25-2.25 1.008-2.25 2.25Z"
-      />
-    </svg>
-  );
-}
-
-function DocumentIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.8}
-      stroke="currentColor"
-      className="w-full h-full"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-full h-full">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-2.123-7.674 4.125 4.125 0 0 0-2.122 7.674 9.337 9.337 0 0 0 4.121-.952 9.38 9.38 0 0 0 2.625.372M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.003c0 1.113.285 2.16.786 3.07M15 19.128A9.321 9.321 0 0 0 12 18a9.321 9.321 0 0 0-3 1.128m6 0c0 1.113-.285 2.16-.786 3.07M15 19.128c0-1.113-.285-2.16-.786-3.07M9.75 9.75c0 1.242 1.008 2.25 2.25 2.25s2.25-1.008 2.25-2.25-1.008-2.25-2.25-2.25-2.25 1.008-2.25 2.25Z" />
     </svg>
   );
 }
 function TodoIcon() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.8}
-      stroke="currentColor"
-      className="w-full h-full"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M9 12h3.75M9 15h3.75M9 18h3.75m.75-12h3.75M9 9h3.75M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18Zm-9-9a9 9 0 0 1 9-9"
-      />
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-full h-full">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m.75-12h3.75M9 9h3.75M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18Zm-9-9a9 9 0 0 1 9-9" />
     </svg>
   );
 }
-
 function BellIcon() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.8}
-      stroke="currentColor"
-      className="w-full h-full"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
-      />
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-full h-full">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
     </svg>
   );
 }
-
 function LogoutIcon() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.8}
-      stroke="currentColor"
-      className="w-full h-full"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"
-      />
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-full h-full">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
     </svg>
   );
 }
-
 function InventoryIcon() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-full h-full">

@@ -1,3 +1,4 @@
+import { useAuth, useUI, useData } from '@context';
 import React, { useState, useEffect } from 'react';
 import { 
   Phone, 
@@ -11,10 +12,10 @@ import {
   PhoneOff,
   User
 } from 'lucide-react';
-import { useAppContext } from '../../context';
+
 
 export default function CallOverlay() {
-  const { activeCall, endCall } = useAppContext();
+  const { activeCall, endCall } = useUI();
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);

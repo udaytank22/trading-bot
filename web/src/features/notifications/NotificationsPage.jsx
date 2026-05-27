@@ -1,0 +1,113 @@
+import React, { useState } from "react";
+import { Bell, CheckCircle, Info, AlertTriangle, MessageSquare, Trash2, Check } from "lucide-react";
+import { mockNotifications } from '@data/mockNotifications';
+
+const typeStyles = {
+  inquiry: { icon: MessageSquare, color: "text-purple-500", bg: "bg-purple-500/10" },
+  "purchase-order": { icon: CheckCircle, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+  document: { icon: Info, color: "text-blue-500", bg: "bg-blue-500/10" },
+  supply: { icon: CheckCircle, color: "text-amber-500", bg: "bg-amber-500/10" },
+  system: { icon: AlertTriangle, color: "text-rose-500", bg: "bg-rose-500/10" },
+};
+
+export default function NotificationsPage() {
+  const [notifications, setNotifications] = useState(mockNotifications);
+
+  const markAsRead = (id) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+  };
+
+  const markAllAsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  };
+
+  const deleteNotification = (id) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  return (
+    <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <h2 className="text-[15px] font-bold text-gray-900 dark:text-white">Notifications</h2>
+          <p className="text-gray-500 dark:text-gray-400 text-xs">Stay updated with your latest activities</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={markAllAsRead}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/10 transition-all shadow-sm"
+          >
+            <Check size={13} />
+            Mark all as read
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-[#161922] border border-gray-200 dark:border-white/10 rounded-xl overflow-hidden shadow-sm">
+        {notifications.length > 0 ? (
+          <div className="divide-y divide-gray-100 dark:divide-white/5">
+            {notifications.map((notif) => {
+              const Style = typeStyles[notif.type] || typeStyles.system;
+              const Icon = Style.icon;
+
+              return (
+                <div 
+                  key={notif.id}
+                  className={`px-4 py-3 flex items-start gap-3 transition-all hover:bg-gray-50 dark:hover:bg-white/[0.02] group ${notif.isRead ? 'opacity-70' : 'relative'}`}
+                >
+                  {!notif.isRead && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-purple-500 rounded-r-full" />
+                  )}
+                  
+                  <div className={`w-8 h-8 flex-shrink-0 rounded-lg ${Style.bg} flex items-center justify-center`}>
+                    <Icon className={`${Style.color} w-4 h-4`} />
+                  </div>
+
+                  <div className="flex-1 space-y-0.5">
+                    <div className="flex items-center justify-between">
+                      <h3 className={`font-bold text-[12px] ${notif.isRead ? 'text-gray-700 dark:text-gray-300' : 'text-gray-900 dark:text-white'}`}>
+                        {notif.title}
+                      </h3>
+                      <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500">{notif.time}</span>
+                    </div>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed max-w-2xl">
+                      {notif.message}
+                    </p>
+                    <div className="pt-1 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {!notif.isRead && (
+                        <button 
+                          onClick={() => markAsRead(notif.id)}
+                          className="text-[10px] font-bold text-purple-500 hover:text-purple-400 flex items-center gap-1"
+                        >
+                          <Check size={11} />
+                          Mark as read
+                        </button>
+                      )}
+                      <button 
+                        onClick={() => deleteNotification(notif.id)}
+                        className="text-[10px] font-bold text-rose-500 hover:text-rose-400 flex items-center gap-1"
+                      >
+                        <Trash2 size={11} />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="p-12 text-center flex flex-col items-center justify-center gap-3">
+            <div className="w-14 h-14 bg-gray-100 dark:bg-white/5 rounded-full flex items-center justify-center">
+              <Bell size={28} className="text-gray-300 dark:text-gray-600" />
+            </div>
+            <div className="space-y-0.5">
+              <h3 className="text-[14px] font-bold text-gray-900 dark:text-white">No notifications</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-xs">You're all caught up! Check back later.</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -1,11 +1,12 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
 
 const VARIANT_STYLES = {
   form: [
     "bg-gray-100 dark:bg-[#0c0e12]",
     "border-gray-200 dark:border-[#2a2d33]",
-    "rounded-lg px-4 py-2.5 text-sm",
+    "rounded-lg px-4 h-[35px] py-0 text-sm",
     "text-gray-900 dark:text-white",
     "hover:bg-gray-200 dark:hover:bg-[#14171c]",
   ].join(" "),
@@ -38,10 +39,43 @@ export default function Select({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const menuRef = useRef(null);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+
+  const updateCoords = () => {
+    if (dropdownRef.current) {
+      const rect = dropdownRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom,
+        left: rect.left,
+        width: rect.width,
+      });
+    }
+  };
+
+  useLayoutEffect(() => {
+    if (isOpen) {
+      updateCoords();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    window.addEventListener("scroll", updateCoords, true);
+    window.addEventListener("resize", updateCoords);
+
+    return () => {
+      window.removeEventListener("scroll", updateCoords, true);
+      window.removeEventListener("resize", updateCoords);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      const clickedDropdown = dropdownRef.current && dropdownRef.current.contains(event.target);
+      const clickedMenu = menuRef.current && menuRef.current.contains(event.target);
+      if (!clickedDropdown && !clickedMenu) {
         setIsOpen(false);
       }
     }
@@ -84,34 +118,43 @@ export default function Select({
         />
       </button>
 
-      {isOpen && (
-        <div
-          role="listbox"
-          className="absolute z-50 w-full min-w-[120px] mt-1 bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150 py-1"
-        >
-          {options.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              role="option"
-              aria-selected={value === opt.value}
-              onClick={() => {
-                onChange(opt.value);
-                setIsOpen(false);
-              }}
-              className={[
-                "w-full text-left px-3 py-2 font-medium transition-colors",
-                itemTextSize,
-                value === opt.value
-                  ? "bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400"
-                  : "text-gray-900 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#242830]",
-              ].join(" ")}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      )}
+      {isOpen &&
+        createPortal(
+          <div
+            ref={menuRef}
+            role="listbox"
+            style={{
+              position: "fixed",
+              top: `${coords.top}px`,
+              left: `${coords.left}px`,
+              width: `${coords.width}px`,
+            }}
+            className="z-[999999] min-w-[120px] mt-1 bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg shadow-lg max-h-[150px] overflow-y-auto py-1"
+          >
+            {options.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                role="option"
+                aria-selected={value === opt.value}
+                onClick={() => {
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+                className={[
+                  "w-full text-left px-3 py-2 font-medium transition-colors",
+                  itemTextSize,
+                  value === opt.value
+                    ? "bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400"
+                    : "text-gray-900 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#242830]",
+                ].join(" ")}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

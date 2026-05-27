@@ -92,16 +92,4 @@ export function calculateMargin(sellerProducts, settings) {
   };
 }
 
-export function formatINR(amount) {
-  if (amount === undefined || amount === null) return "₹ 0";
-  const formatted = new Intl.NumberFormat('en-IN').format(amount);
-  return `₹ ${formatted}`;
-}
-
-export function formatDateString(dateStr) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return dateStr;
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
-}
+export { formatINR, formatDateString } from '@utils/formatters';

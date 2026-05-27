@@ -1,17 +1,22 @@
-import { mockInquiries } from '../data/mockInquiries';
+import { mockInquiries } from '@data/mockInquiries';
+import { USE_MOCK, apiGet, apiPost } from './apiClient';
 
 export const fetchInquiries = async () => {
-  return mockInquiries;
+  if (USE_MOCK) return mockInquiries;
+  return apiGet('/webhook/inquiries');
 };
 
 export const triggerRFQ = async (deal) => {
-  return { success: true };
+  if (USE_MOCK) return { success: true };
+  return apiPost('/webhook/rfq', deal);
 };
 
 export const triggerBuyerQuote = async (deal) => {
-  return { success: true };
+  if (USE_MOCK) return { success: true };
+  return apiPost('/webhook/quote', deal);
 };
 
 export const updateDealStatus = async (dealId, status) => {
-  return { success: true };
+  if (USE_MOCK) return { success: true };
+  return apiPost('/webhook/status', { dealId, status });
 };
