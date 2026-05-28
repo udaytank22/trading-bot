@@ -1,0 +1,143 @@
+const service = require('./purchaseOrders.service');
+const { sendSuccess, sendError } = require('../../utils/response');
+const { createAuditLog } = require('../auditLogs/auditLogs.service');
+const { createNotification } = require('../notifications/notifications.service');
+
+/**
+ * Get all purchase orders
+ */
+const getPurchaseOrders = async (req, res) => {
+  const pos = await service.getAllPurchaseOrders();
+  return sendSuccess(res, 'Purchase orders list retrieved successfully', pos);
+};
+
+/**
+ * Get purchase order by ID
+ */
+const getPurchaseOrder = async (req, res) => {
+  const po = await service.getPurchaseOrderById(req.params.id);
+  if (!po) {
+    return sendError(res, 'Purchase order not found', [], 404);
+  }
+  return sendSuccess(res, 'Purchase order details retrieved successfully', po);
+};
+
+/**
+ * Create a new Purchase Order
+ */
+const createPurchaseOrder = async (req, res) => {
+  const po = await service.createPurchaseOrder(req.body, req.user.id);
+
+  await createAuditLog({
+    userId: req.user.id,
+    module: 'purchaseOrders',
+    action: 'create',
+    recordId: po.id,
+    newValue: po,
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent']
+  });
+
+  await createNotification({
+    userId: req.user.id,
+    title: 'Purchase Order Created',
+    message: `Purchase Order ${po.poNumber} has been generated.`,
+    type: 'purchase-order',
+    relatedModule: 'purchaseOrders',
+    relatedRecordId: po.id
+  });
+
+  return sendSuccess(res, 'Purchase order created successfully', po, 201);
+};
+
+/**
+ * Update Purchase Order details
+ */
+const updatePurchaseOrder = async (req, res) => {
+  const old = await service.getPurchaseOrderById(req.params.id);
+  if (!old) {
+    return sendError(res, 'Purchase order not found', [], 404);
+  }
+
+  const po = await service.updatePurchaseOrder(req.params.id, req.body, req.user.id);
+
+  await createAuditLog({
+    userId: req.user.id,
+    module: 'purchaseOrders',
+    action: 'update',
+    recordId: po.id,
+    oldValue: old,
+    newValue: po,
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent']
+  });
+
+  return sendSuccess(res, 'Purchase order updated successfully', po);
+};
+
+/**
+ * Delete Purchase Order
+ */
+const deletePurchaseOrder = async (req, res) => {
+  const old = await service.getPurchaseOrderById(req.params.id);
+  if (!old) {
+    return sendError(res, 'Purchase order not found', [], 404);
+  }
+
+  await service.deletePurchaseOrder(req.params.id, req.user.id);
+
+  await createAuditLog({
+    userId: req.user.id,
+    module: 'purchaseOrders',
+    action: 'delete',
+    recordId: req.params.id,
+    oldValue: old,
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent']
+  });
+
+  return sendSuccess(res, 'Purchase order deleted successfully');
+};
+
+/**
+ * Dispatch Purchase Order via simulated email
+ */
+const sendEmail = async (req, res) => {
+  const old = await service.getPurchaseOrderById(req.params.id);
+  if (!old) {
+    return sendError(res, 'Purchase order not found', [], 404);
+  }
+
+  const po = await service.sendPOEmail(req.params.id, req.user.id);
+
+  await createAuditLog({
+    userId: req.user.id,
+    module: 'purchaseOrders',
+    action: 'update',
+    recordId: po.id,
+    oldValue: old,
+    newValue: po,
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent']
+  });
+
+  await createNotification({
+    userId: req.user.id,
+    title: 'PO Dispatched',
+    message: `Purchase Order ${po.poNumber} has been emailed to supplier.`,
+    type: 'purchase-order',
+    relatedModule: 'purchaseOrders',
+    relatedRecordId: po.id
+  });
+
+  return sendSuccess(res, 'Purchase order email sent successfully', po);
+};
+
+module.exports = {
+  getPurchaseOrders,
+  getPurchaseOrder,
+  createPurchaseOrder,
+  updatePurchaseOrder,
+  deletePurchaseOrder,
+  sendEmail
+};

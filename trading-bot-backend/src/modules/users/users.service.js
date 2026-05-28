@@ -1,0 +1,105 @@
+const prisma = require('../../prisma/client');
+const bcrypt = require('bcryptjs');
+
+/**
+ * Get all users who are not deleted
+ */
+const getAllUsers = async () => {
+  return await prisma.user.findMany({
+    where: { deletedAt: null },
+    include: {
+      role: true
+    },
+    orderBy: { createdAt: 'desc' }
+  });
+};
+
+/**
+ * Get a user by ID
+ */
+const getUserById = async (id) => {
+  return await prisma.user.findFirst({
+    where: { id, deletedAt: null },
+    include: {
+      role: true
+    }
+  });
+};
+
+/**
+ * Create a new user with hashed password
+ */
+const createUser = async (data, creatorId) => {
+  const hashedPassword = await bcrypt.hash(data.password, 10);
+  return await prisma.user.create({
+    data: {
+      email: data.email,
+      password: hashedPassword,
+      roleId: data.roleId,
+      createdById: creatorId,
+      isActive: data.isActive !== undefined ? data.isActive : true
+    },
+    include: {
+      role: true
+    }
+  });
+};
+
+/**
+ * Update user details
+ */
+const updateUser = async (id, data, updaterId) => {
+  const updateData = {
+    updatedById: updaterId
+  };
+
+  if (data.email) updateData.email = data.email;
+  if (data.roleId) updateData.roleId = data.roleId;
+  if (data.isActive !== undefined) updateData.isActive = data.isActive;
+  if (data.password) {
+    updateData.password = await bcrypt.hash(data.password, 10);
+  }
+
+  return await prisma.user.update({
+    where: { id },
+    data: updateData,
+    include: {
+      role: true
+    }
+  });
+};
+
+/**
+ * Soft delete a user
+ */
+const deleteUser = async (id, deleterId) => {
+  const user = await prisma.user.findFirst({
+    where: { id },
+    include: { role: true }
+  });
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  if (user.role && user.role.name === 'Super Admin') {
+    throw new Error('Super Admin user cannot be deleted');
+  }
+
+  return await prisma.user.update({
+    where: { id },
+    data: {
+      deletedAt: new Date(),
+      isActive: false,
+      updatedById: deleterId
+    }
+  });
+};
+
+module.exports = {
+  getAllUsers,
+  getUserById,
+  createUser,
+  updateUser,
+  deleteUser
+};
