@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import Stylesheet from '../components/common/Stylesheet';
 
+import { ScaledSheet } from 'react-native-size-matters';
 import { View, FlatList, Alert } from 'react-native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
@@ -64,7 +64,7 @@ export const AccountsScreen = () => {
 
   return (
     <SafeAreaView
-      style={Stylesheet.cls(theme, 'flex-1 bg-gray-50 dark:bg-darkbg')}
+      style={[styles.safeAreaView, theme === 'dark' && styles.safeAreaViewDark]}
     >
       <AppHeader
         title="Bank Balances"
@@ -73,33 +73,24 @@ export const AccountsScreen = () => {
           <AppButton
             title="+ Link Bank"
             onPress={() => setModalOpen(true)}
-            style={Stylesheet.cls(theme, 'h-[34px] px-3.5')}
+            style={styles.appButton1}
           />
         }
       />
 
-      <View style={Stylesheet.cls(theme, 'flex-1 p-4')}>
+      <View style={styles.view2}>
         {/* Total Liquidity Panel */}
         <AppCard
           variant="bordered"
-          style={Stylesheet.cls(
-            theme,
-            'mb-4 bg-purple-650 dark:bg-purple-600 border-transparent p-5',
-          )}
+          style={[styles.appCard1, theme === 'dark' && styles.appCard1Dark]}
         >
           <AppText
-            style={Stylesheet.cls(
-              theme,
-              'text-white/70 text-xs font-semibold uppercase tracking-wider',
-            )}
+            style={styles.appText8}
           >
             Total Liquid Assets (USD)
           </AppText>
           <AppText
-            style={Stylesheet.cls(
-              theme,
-              'text-white text-3xl font-extrabold mt-1',
-            )}
+            style={styles.appText7}
           >
             $
             {totalLiquidityUSD.toLocaleString('en-US', {
@@ -107,10 +98,7 @@ export const AccountsScreen = () => {
             })}
           </AppText>
           <AppText
-            style={Stylesheet.cls(
-              theme,
-              'text-white/60 text-[10px] mt-1.5 font-medium',
-            )}
+            style={styles.appText6}
           >
             Active balances across{' '}
             {accounts.filter(a => a.currency === 'USD').length} USD channels
@@ -120,7 +108,7 @@ export const AccountsScreen = () => {
         {/* Channels List */}
         <AppText
           variant="h3"
-          style={Stylesheet.cls(theme, 'font-bold mb-3 ml-1')}
+          style={styles.appText5}
         >
           Connected Accounts
         </AppText>
@@ -132,27 +120,21 @@ export const AccountsScreen = () => {
           renderItem={({ item }) => (
             <AppCard
               variant="glass"
-              style={Stylesheet.cls(theme, 'mb-3.5 p-4')}
+              style={styles.appCard}
             >
               <View
-                style={Stylesheet.cls(
-                  theme,
-                  'flex-row justify-between items-start mb-3',
-                )}
+                style={styles.view1}
               >
                 <View>
                   <AppText
                     variant="bodySemibold"
-                    style={Stylesheet.cls(
-                      theme,
-                      'text-base font-bold text-gray-900 dark:text-white',
-                    )}
+                    style={[styles.appText4, theme === 'dark' && styles.appText4Dark]}
                   >
                     {item.bankName}
                   </AppText>
                   <AppText
                     variant="caption"
-                    style={Stylesheet.cls(theme, 'text-gray-500 mt-0.5')}
+                    style={styles.appText3}
                   >
                     {item.accountName} • •••• {item.accountNumber.slice(-4)}
                   </AppText>
@@ -165,21 +147,18 @@ export const AccountsScreen = () => {
               </View>
 
               <View
-                style={Stylesheet.cls(
-                  theme,
-                  'flex-row justify-between items-end pt-3 border-t border-gray-100 dark:border-white/[0.04] mt-1',
-                )}
+                style={[styles.view, theme === 'dark' && styles.viewDark]}
               >
                 <View>
                   <AppText
                     variant="captionSemibold"
-                    style={Stylesheet.cls(theme, 'text-gray-400')}
+                    style={styles.appText2}
                   >
                     Account Type
                   </AppText>
                   <AppText
                     variant="body"
-                    style={Stylesheet.cls(theme, 'mt-0.5')}
+                    style={styles.appText1}
                   >
                     {item.currency} Currency Ledger
                   </AppText>
@@ -187,10 +166,7 @@ export const AccountsScreen = () => {
 
                 <AppText
                   variant="h2"
-                  style={Stylesheet.cls(
-                    theme,
-                    'font-extrabold text-purple-600 dark:text-purple-400',
-                  )}
+                  style={[styles.appText, theme === 'dark' && styles.appTextDark]}
                 >
                   {getCurrencySymbol(item.currency)}
                   {item.balance.toLocaleString('en-US', {
@@ -246,10 +222,111 @@ export const AccountsScreen = () => {
         <AppButton
           title="Verify & Link Bank"
           onPress={handleAddAccount}
-          style={Stylesheet.cls(theme, 'mt-4')}
+          style={styles.appButton}
         />
       </AppModal>
     </SafeAreaView>
   );
 };
+
+const styles = ScaledSheet.create({
+  appButton: {
+    marginTop: '16@ms',
+  },
+  appButton1: {
+    height: '34.0@vs',
+    paddingHorizontal: '14@ms',
+  },
+  appCard: {
+    marginBottom: '14@ms',
+    padding: '16@ms',
+  },
+  appCard1: {
+    marginBottom: '16@ms',
+    backgroundColor: '#8b5cf6',
+    borderColor: 'transparent',
+    padding: '20@ms',
+  },
+  appCard1Dark: {
+    backgroundColor: '#7c3aed',
+  },
+  appText: {
+    fontWeight: '800',
+    color: '#7c3aed',
+  },
+  appText1: {
+    marginTop: '2@ms',
+  },
+  appText2: {
+    color: '#9ca3af',
+  },
+  appText3: {
+    color: '#6b7280',
+    marginTop: '2@ms',
+  },
+  appText4: {
+    fontSize: '16@ms',
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  appText4Dark: {
+    color: '#ffffff',
+  },
+  appText5: {
+    fontWeight: 'bold',
+    marginBottom: '12@ms',
+    marginLeft: '4@ms',
+  },
+  appText6: {
+    color: 'rgba(255, 255, 255, 0.60)',
+    fontSize: '10@ms',
+    marginTop: '6@ms',
+    fontWeight: '500',
+  },
+  appText7: {
+    color: '#ffffff',
+    fontSize: '30@ms',
+    fontWeight: '800',
+    marginTop: '4@ms',
+  },
+  appText8: {
+    color: 'rgba(255, 255, 255, 0.70)',
+    fontSize: '12@ms',
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  appTextDark: {
+    color: '#c084fc',
+  },
+  safeAreaView: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  safeAreaViewDark: {
+    backgroundColor: '#0c0e12',
+  },
+  view: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    paddingTop: '12@ms',
+    borderTopWidth: 1,
+    borderColor: '#f3f4f6',
+    marginTop: '4@ms',
+  },
+  view1: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: '12@ms',
+  },
+  view2: {
+    flex: 1,
+    padding: '16@ms',
+  },
+  viewDark: {
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+  },
+});
+
 export default AccountsScreen;

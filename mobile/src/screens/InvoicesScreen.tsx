@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import Stylesheet from '../components/common/Stylesheet';
 
+import { ScaledSheet } from 'react-native-size-matters';
 import { View, FlatList, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAppStore } from '../store/appStore';
@@ -36,26 +36,26 @@ export const InvoicesScreen = () => {
   };
 
   return (
-    <SafeAreaView style={Stylesheet.cls(theme, "flex-1 bg-gray-50 dark:bg-darkbg")}>
+    <SafeAreaView style={[styles.safeAreaView, theme === 'dark' && styles.safeAreaViewDark]}>
       <AppHeader title="Invoices Log" showBack={true} />
 
       <FlatList
         data={invoicesData}
         keyExtractor={(item) => item.inquiry_id}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={styles.contentContainer}
         renderItem={({ item }) => {
           const totalVal = item.products.reduce((sum, p) => sum + (p.total_price || 0), 0);
           return (
             <TouchableOpacity
               onPress={() => navigation.navigate('InvoiceDetail', { invoiceId: item.inquiry_id })}
               activeOpacity={0.8}
-              style={Stylesheet.cls(theme, "mb-3.5")}
+              style={styles.style}
             >
-              <AppCard variant="glass" style={Stylesheet.cls(theme, "p-4")}>
-                <View style={Stylesheet.cls(theme, "flex-row justify-between items-center")}>
-                  <View style={Stylesheet.cls(theme, "flex-1 pr-2")}>
-                    <View style={Stylesheet.cls(theme, "flex-row items-center")}>
-                      <AppText style={Stylesheet.cls(theme, "font-mono text-purple-600 dark:text-purple-400 font-bold text-xs mr-2")}>
+              <AppCard variant="glass" style={styles.appCard}>
+                <View style={styles.view5}>
+                  <View style={styles.view4}>
+                    <View style={styles.view3}>
+                      <AppText style={[styles.appText4, theme === 'dark' && styles.appText4Dark]}>
                         {item.inquiry_id}
                       </AppText>
                       <AppText variant="caption">
@@ -63,24 +63,24 @@ export const InvoicesScreen = () => {
                       </AppText>
                     </View>
                     
-                    <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "mt-1")} numberOfLines={1}>
+                    <AppText variant="bodySemibold" style={styles.appText3} numberOfLines={1}>
                       {item.buyer_name}
                     </AppText>
-                    <AppText variant="caption" style={Stylesheet.cls(theme, "text-gray-500 mt-0.5")} numberOfLines={1}>
+                    <AppText variant="caption" style={styles.appText2} numberOfLines={1}>
                       Cargo: {item.cargo}
                     </AppText>
                   </View>
 
-                  <View style={Stylesheet.cls(theme, "items-end")}>
+                  <View style={styles.view2}>
                     <AppStatusBadge status={item.invoice_status} />
-                    <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "mt-2 text-purple-650 dark:text-purple-400 font-bold")}>
+                    <AppText variant="bodySemibold" style={[styles.appText1, theme === 'dark' && styles.appText1Dark]}>
                       {formatUSD(totalVal)}
                     </AppText>
                   </View>
                 </View>
 
                 {item.invoice_status === 'DRAFT' && (
-                  <View style={Stylesheet.cls(theme, "mt-4 pt-3 border-t border-gray-100 dark:border-white/[0.05]")}>
+                  <View style={[styles.view1, theme === 'dark' && styles.view1Dark]}>
                     <AppButton
                       title="Dispatch Invoice"
                       onPress={() => {
@@ -98,8 +98,8 @@ export const InvoicesScreen = () => {
           );
         }}
         ListEmptyComponent={
-          <View style={Stylesheet.cls(theme, "mt-8")}>
-            <AppText variant="subtitle" style={Stylesheet.cls(theme, "text-center text-sm text-gray-500")}>
+          <View style={styles.view}>
+            <AppText variant="subtitle" style={styles.appText}>
               No billed invoices found.
             </AppText>
           </View>
@@ -118,4 +118,82 @@ export const InvoicesScreen = () => {
     </SafeAreaView>
   );
 };
+
+const styles = ScaledSheet.create({
+  contentContainer: {
+    padding: '16@ms',
+  },
+  appCard: {
+    padding: '16@ms',
+  },
+  appText: {
+    textAlign: 'center',
+    fontSize: '14@ms',
+    color: '#6b7280',
+  },
+  appText1: {
+    marginTop: '8@ms',
+    color: '#8b5cf6',
+    fontWeight: 'bold',
+  },
+  appText1Dark: {
+    color: '#c084fc',
+  },
+  appText2: {
+    color: '#6b7280',
+    marginTop: '2@ms',
+  },
+  appText3: {
+    marginTop: '4@ms',
+  },
+  appText4: {
+    fontFamily: 'monospace',
+    color: '#7c3aed',
+    fontWeight: 'bold',
+    fontSize: '12@ms',
+    marginRight: '8@ms',
+  },
+  appText4Dark: {
+    color: '#c084fc',
+  },
+  safeAreaView: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  safeAreaViewDark: {
+    backgroundColor: '#0c0e12',
+  },
+  style: {
+    marginBottom: '14@ms',
+  },
+  view: {
+    marginTop: '32@ms',
+  },
+  view1: {
+    marginTop: '16@ms',
+    paddingTop: '12@ms',
+    borderTopWidth: 1,
+    borderColor: '#f3f4f6',
+  },
+  view1Dark: {
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  view2: {
+    alignItems: 'flex-end',
+  },
+  view3: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  view4: {
+    flex: 1,
+    paddingRight: '8@ms',
+  },
+  view5: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+});
+
 export default InvoicesScreen;

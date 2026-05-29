@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import Stylesheet from '../components/common/Stylesheet';
 
+import { ScaledSheet } from 'react-native-size-matters';
 import { View, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
@@ -119,7 +119,7 @@ export const InventoryScreen = () => {
   };
 
   return (
-    <SafeAreaView style={Stylesheet.cls(theme, "flex-1 bg-gray-50 dark:bg-darkbg")}>
+    <SafeAreaView style={[styles.safeAreaView, theme === 'dark' && styles.safeAreaViewDark]}>
       <AppHeader 
         title="Inventory Stock" 
         showBack={true} 
@@ -127,17 +127,17 @@ export const InventoryScreen = () => {
           <AppButton
             title="+ Add Item"
             onPress={handleAddNewPress}
-            style={Stylesheet.cls(theme, "h-[34px] px-3.5")}
+            style={styles.appButton1}
           />
         }
       />
 
-      <View style={Stylesheet.cls(theme, "flex-1 p-4")}>
+      <View style={styles.view5}>
         <AppSearch
           value={search}
           onChangeText={setSearch}
           placeholder="Search by ID, name or category..."
-          style={Stylesheet.cls(theme, "mb-4")}
+          style={styles.style}
         />
 
         <FlatList
@@ -150,52 +150,52 @@ export const InventoryScreen = () => {
               item.status === 'Low Stock' ? 'warning' : 'danger';
 
             return (
-              <AppCard variant="glass" style={Stylesheet.cls(theme, "mb-3 p-4")}>
-                <View style={Stylesheet.cls(theme, "flex-row justify-between items-start mb-2")}>
+              <AppCard variant="glass" style={styles.appCard}>
+                <View style={styles.view4}>
                   <View>
-                    <AppText style={Stylesheet.cls(theme, "font-mono text-purple-600 dark:text-purple-400 font-bold text-xs")}>
+                    <AppText style={[styles.appText8, theme === 'dark' && styles.appText8Dark]}>
                       {item.id}
                     </AppText>
-                    <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "text-base font-bold text-gray-900 dark:text-white mt-0.5")}>
+                    <AppText variant="bodySemibold" style={[styles.appText7, theme === 'dark' && styles.appText7Dark]}>
                       {item.name}
                     </AppText>
                   </View>
                   <AppBadge label={item.status} variant={statusColor} />
                 </View>
 
-                <View style={Stylesheet.cls(theme, "flex-row justify-between items-center py-2 border-t border-gray-150 dark:border-white/[0.04] mt-2")}>
+                <View style={[styles.view3, theme === 'dark' && styles.view3Dark]}>
                   <View>
-                    <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Category / Loc</AppText>
-                    <AppText variant="body" style={Stylesheet.cls(theme, "mt-0.5")}>{item.category} ({item.location})</AppText>
+                    <AppText variant="captionSemibold" style={styles.appText6}>Category / Loc</AppText>
+                    <AppText variant="body" style={styles.appText5}>{item.category} ({item.location})</AppText>
                   </View>
 
-                  <View style={Stylesheet.cls(theme, "items-end")}>
-                    <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Qty / Price</AppText>
-                    <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "mt-0.5")}>{item.quantity} units • {item.price}</AppText>
+                  <View style={styles.view2}>
+                    <AppText variant="captionSemibold" style={styles.appText4}>Qty / Price</AppText>
+                    <AppText variant="bodySemibold" style={styles.appText3}>{item.quantity} units • {item.price}</AppText>
                   </View>
                 </View>
 
-                <View style={Stylesheet.cls(theme, "flex-row justify-end space-x-3 pt-2 mt-1")}>
+                <View style={styles.view1}>
                   <TouchableOpacity 
                     onPress={() => handleEditPress(item)}
-                    style={Stylesheet.cls(theme, "px-3.5 py-1.5 bg-purple-50 dark:bg-purple-950/20 border border-purple-100/50 dark:border-purple-900/30 rounded-xl mr-2")}
+                    style={[styles.touchableOpacity1, theme === 'dark' && styles.touchableOpacity1Dark]}
                   >
-                    <AppText style={Stylesheet.cls(theme, "text-[11px] font-bold text-purple-600 dark:text-purple-450")}>Edit</AppText>
+                    <AppText style={styles.appText2}>Edit</AppText>
                   </TouchableOpacity>
 
                   <TouchableOpacity 
                     onPress={() => handleDelete(item.id)}
-                    style={Stylesheet.cls(theme, "px-3.5 py-1.5 bg-red-50 dark:bg-red-950/20 border border-red-100/50 dark:border-red-900/30 rounded-xl")}
+                    style={styles.touchableOpacity}
                   >
-                    <AppText style={Stylesheet.cls(theme, "text-[11px] font-bold text-red-500")}>Delete</AppText>
+                    <AppText style={styles.appText1}>Delete</AppText>
                   </TouchableOpacity>
                 </View>
               </AppCard>
             );
           }}
           ListEmptyComponent={
-            <View style={Stylesheet.cls(theme, "mt-8")}>
-              <AppText variant="subtitle" style={Stylesheet.cls(theme, "text-center text-sm text-gray-500")}>
+            <View style={styles.view}>
+              <AppText variant="subtitle" style={styles.appText}>
                 No inventory products found.
               </AppText>
             </View>
@@ -259,10 +259,131 @@ export const InventoryScreen = () => {
         <AppButton
           title="Save Inventory Details"
           onPress={handleSave}
-          style={Stylesheet.cls(theme, "mt-4")}
+          style={styles.appButton}
         />
       </AppModal>
     </SafeAreaView>
   );
 };
+
+const styles = ScaledSheet.create({
+  appButton: {
+    marginTop: '16@ms',
+  },
+  appButton1: {
+    height: '34.0@vs',
+    paddingHorizontal: '14@ms',
+  },
+  appCard: {
+    marginBottom: '12@ms',
+    padding: '16@ms',
+  },
+  appText: {
+    textAlign: 'center',
+    fontSize: '14@ms',
+    color: '#6b7280',
+  },
+  appText1: {
+    fontSize: '11@ms',
+    fontWeight: 'bold',
+    color: '#ef4444',
+  },
+  appText2: {
+    fontSize: '11@ms',
+    fontWeight: 'bold',
+    color: '#7c3aed',
+  },
+  appText3: {
+    marginTop: '2@ms',
+  },
+  appText4: {
+    color: '#9ca3af',
+  },
+  appText5: {
+    marginTop: '2@ms',
+  },
+  appText6: {
+    color: '#9ca3af',
+  },
+  appText7: {
+    fontSize: '16@ms',
+    fontWeight: 'bold',
+    color: '#111827',
+    marginTop: '2@ms',
+  },
+  appText7Dark: {
+    color: '#ffffff',
+  },
+  appText8: {
+    fontFamily: 'monospace',
+    color: '#7c3aed',
+    fontWeight: 'bold',
+    fontSize: '12@ms',
+  },
+  appText8Dark: {
+    color: '#c084fc',
+  },
+  safeAreaView: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  safeAreaViewDark: {
+    backgroundColor: '#0c0e12',
+  },
+  style: {
+    marginBottom: '16@ms',
+  },
+  touchableOpacity: {
+    paddingHorizontal: '14@ms',
+    paddingVertical: '6@ms',
+    borderWidth: 1,
+    borderRadius: '12@ms',
+  },
+  touchableOpacity1: {
+    paddingHorizontal: '14@ms',
+    paddingVertical: '6@ms',
+    borderWidth: 1,
+    borderColor: 'rgba(243, 232, 255, 0.5)',
+    borderRadius: '12@ms',
+    marginRight: '8@ms',
+  },
+  touchableOpacity1Dark: {
+    backgroundColor: 'rgba(59, 7, 100, 0.2)',
+  },
+  view: {
+    marginTop: '32@ms',
+  },
+  view1: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingTop: '8@ms',
+    marginTop: '4@ms',
+  },
+  view2: {
+    alignItems: 'flex-end',
+  },
+  view3: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: '8@ms',
+    borderTopWidth: 1,
+    borderColor: '#eef2f6',
+    marginTop: '8@ms',
+  },
+  view3Dark: {
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+  },
+  view4: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: '8@ms',
+  },
+  view5: {
+    flex: 1,
+    padding: '16@ms',
+  },
+});
+
 export default InventoryScreen;

@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import Stylesheet from '../components/common/Stylesheet';
 
+import { ScaledSheet } from 'react-native-size-matters';
 import { View, FlatList } from 'react-native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
@@ -18,16 +18,6 @@ export const NotificationsScreen = () => {
     markNotificationsAsRead();
   }, [markNotificationsAsRead]);
 
-  const getIconColor = (type: string) => {
-    switch (type) {
-      case 'inquiry': return 'bg-purple-100 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400';
-      case 'purchase-order': return 'bg-emerald-100 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400';
-      case 'document': return 'bg-blue-100 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400';
-      case 'supply': return 'bg-amber-100 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400';
-      default: return 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400';
-    }
-  };
-
   const getIconEmoji = (type: string) => {
     switch (type) {
       case 'inquiry': return '📩';
@@ -39,41 +29,64 @@ export const NotificationsScreen = () => {
   };
 
   return (
-    <SafeAreaView style={Stylesheet.cls(theme, "flex-1 bg-gray-50 dark:bg-darkbg")}>
+    <SafeAreaView style={[styles.safeAreaView, theme === 'dark' && styles.safeAreaViewDark]}>
       <AppHeader title="Notifications Log" showBack={true} />
 
       <FlatList
         data={notificationsData}
         keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={{ padding: 16 }}
-        renderItem={({ item }) => (
-          <AppCard 
-            variant="glass" 
-            style={Stylesheet.cls(theme, `mb-3.5 p-4 flex-row items-start ${item.isRead ? 'opacity-70' : 'border-l-4 border-l-purple-600'}`)}
-          >
-            <View style={Stylesheet.cls(theme, `w-9 h-9 rounded-xl items-center justify-center mr-3.5 ${getIconColor(item.type)}`)}>
-              <AppText style={Stylesheet.cls(theme, "text-base")}>{getIconEmoji(item.type)}</AppText>
-            </View>
+        contentContainerStyle={styles.contentContainer}
+        renderItem={({ item }) => {
+          const isDark = theme === 'dark';
+          const cardStyle = [
+            styles.card,
+            item.isRead ? styles.cardRead : styles.cardUnread,
+          ];
 
-            <View style={Stylesheet.cls(theme, "flex-1")}>
-              <View style={Stylesheet.cls(theme, "flex-row justify-between items-center mb-1")}>
-                <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "text-gray-905 dark:text-white")}>
+          const getIconBgStyle = () => {
+            switch (item.type) {
+              case 'inquiry':
+                return isDark ? styles.iconInquiryDark : styles.iconInquiry;
+              case 'purchase-order':
+                return isDark ? styles.iconPODark : styles.iconPO;
+              case 'document':
+                return isDark ? styles.iconDocumentDark : styles.iconDocument;
+              case 'supply':
+                return isDark ? styles.iconSupplyDark : styles.iconSupply;
+              default:
+                return isDark ? styles.iconDefaultDark : styles.iconDefault;
+            }
+          };
+
+          return (
+            <AppCard 
+              variant="glass" 
+              style={cardStyle}
+            >
+              <View style={[styles.iconContainer, getIconBgStyle()]}>
+                <AppText style={styles.appText4}>{getIconEmoji(item.type)}</AppText>
+              </View>
+
+            <View style={styles.view2}>
+              <View style={styles.view1}>
+                <AppText variant="bodySemibold" style={[styles.appText3, theme === 'dark' && styles.appText3Dark]}>
                   {item.title}
                 </AppText>
-                <AppText variant="caption" style={Stylesheet.cls(theme, "text-[10px] text-gray-500")}>
+                <AppText variant="caption" style={styles.appText2}>
                   {item.time}
                 </AppText>
               </View>
               
-              <AppText variant="caption" style={Stylesheet.cls(theme, "text-gray-600 dark:text-gray-400 leading-relaxed")}>
+              <AppText variant="caption" style={[styles.appText1, theme === 'dark' && styles.appText1Dark]}>
                 {item.message}
               </AppText>
             </View>
           </AppCard>
-        )}
+        );
+      }}
         ListEmptyComponent={
-          <View style={Stylesheet.cls(theme, "mt-8")}>
-            <AppText variant="subtitle" style={Stylesheet.cls(theme, "text-center text-sm text-gray-500")}>
+          <View style={styles.view}>
+            <AppText variant="subtitle" style={styles.appText}>
               No recent notifications logs.
             </AppText>
           </View>
@@ -82,4 +95,101 @@ export const NotificationsScreen = () => {
     </SafeAreaView>
   );
 };
+
+const styles = ScaledSheet.create({
+  contentContainer: {
+    padding: '16@ms',
+  },
+  appText: {
+    textAlign: 'center',
+    fontSize: '14@ms',
+    color: '#6b7280',
+  },
+  appText1: {},
+  appText1Dark: {
+    color: '#9ca3af',
+  },
+  appText2: {
+    fontSize: '10@ms',
+    color: '#6b7280',
+  },
+  appText3: {},
+  appText3Dark: {
+    color: '#ffffff',
+  },
+  appText4: {
+    fontSize: '16@ms',
+  },
+  safeAreaView: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  safeAreaViewDark: {
+    backgroundColor: '#0c0e12',
+  },
+  view: {
+    marginTop: '32@ms',
+  },
+  view1: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '4@ms',
+  },
+  view2: {
+    flex: 1,
+  },
+  card: {
+    marginBottom: '14@ms',
+    padding: '16@ms',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  cardRead: {
+    opacity: 0.7,
+  },
+  cardUnread: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#7c3aed',
+  },
+  iconContainer: {
+    width: '36@s',
+    height: '36@vs',
+    borderRadius: '12@ms',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: '14@ms',
+  },
+  iconInquiry: {
+    backgroundColor: '#f3e8ff',
+  },
+  iconInquiryDark: {
+    backgroundColor: 'rgba(59, 7, 100, 0.3)',
+  },
+  iconPO: {
+    backgroundColor: '#d1fae5',
+  },
+  iconPODark: {
+    backgroundColor: 'rgba(6, 78, 59, 0.3)',
+  },
+  iconDocument: {
+    backgroundColor: '#dbeafe',
+  },
+  iconDocumentDark: {
+    backgroundColor: 'rgba(23, 37, 84, 0.3)',
+  },
+  iconSupply: {
+    backgroundColor: '#fef3c7',
+  },
+  iconSupplyDark: {
+    backgroundColor: 'rgba(69, 26, 3, 0.3)',
+  },
+  iconDefault: {
+    backgroundColor: '#f3f4f6',
+  },
+  iconDefaultDark: {
+    backgroundColor: '#1f2937',
+  },
+});
+
 export default NotificationsScreen;

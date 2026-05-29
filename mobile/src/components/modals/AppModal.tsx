@@ -1,8 +1,8 @@
 import React from 'react';
+import { ScaledSheet } from 'react-native-size-matters';
 import { Modal, View, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import AppText from '../common/AppText';
 import { useAppStore } from '../../store/appStore';
-import Stylesheet from '../common/Stylesheet';
 
 interface AppModalProps {
   visible: boolean;
@@ -20,7 +20,7 @@ export const AppModal: React.FC<AppModalProps> = ({
   const theme = useAppStore((state) => state.theme);
   const isDark = theme === 'dark';
 
-  const modalOverlayStyle = Stylesheet.cls(theme, 'flex-1 justify-center bg-black/70 p-4');
+  const modalOverlayStyle = styles.modalOverlayStyle;
   
   // Backdrop touchable needs absolute layout to cover screen
   const backdropStyle = {
@@ -31,15 +31,19 @@ export const AppModal: React.FC<AppModalProps> = ({
     right: 0,
   };
 
-  const modalBg = isDark ? 'bg-[#161920] border-white/[0.08]' : 'bg-white border-gray-200';
-  const modalWrapperStyle = Stylesheet.cls(theme, `w-full max-h-[80%] rounded-3xl overflow-hidden shadow-2xl border ${modalBg}`);
+  const modalWrapperStyle = [
+    styles.modalWrapperStyle,
+    isDark ? styles.modalWrapperDark : styles.modalWrapperLight,
+  ];
   
-  const headerBg = isDark ? 'bg-darkbg dark:bg-[#1a1d23]' : 'bg-gray-50';
-  const headerStyle = Stylesheet.cls(theme, `px-5 py-4 border-b border-gray-100 dark:border-white/[0.04] flex-row justify-between items-center ${headerBg}`);
-  const titleStyle = Stylesheet.cls(theme, 'font-bold');
-  const closeBtnStyle = Stylesheet.cls(theme, 'p-1 rounded-lg active:bg-gray-200 dark:active:bg-white/5');
-  const closeTextStyle = Stylesheet.cls(theme, 'text-gray-400 dark:text-gray-500 font-bold text-sm');
-  const contentStyle = Stylesheet.cls(theme, 'p-5');
+  const headerStyle = [
+    styles.headerStyle,
+    isDark ? styles.headerStyleDark : styles.headerStyleLight,
+  ];
+  const titleStyle = styles.titleStyle;
+  const closeBtnStyle = [styles.closeBtnStyle, theme === 'dark' && styles.closeBtnStyleDark];
+  const closeTextStyle = [styles.closeTextStyle, theme === 'dark' && styles.closeTextStyleDark];
+  const contentStyle = styles.contentStyle;
 
   return (
     <Modal
@@ -50,7 +54,7 @@ export const AppModal: React.FC<AppModalProps> = ({
     >
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={Stylesheet.cls(theme, "flex-1")}
+        style={styles.keyboardAvoidingView}
       >
         <View style={modalOverlayStyle}>
           {/* Backdrop close */}
@@ -88,4 +92,70 @@ export const AppModal: React.FC<AppModalProps> = ({
     </Modal>
   );
 };
+
+const styles = ScaledSheet.create({
+  closeBtnStyle: {
+    padding: '4@ms',
+    borderRadius: '8@ms',
+    backgroundColor: '#e5e7eb',
+  },
+  closeBtnStyleDark: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  closeTextStyle: {
+    color: '#9ca3af',
+    fontWeight: 'bold',
+    fontSize: '14@ms',
+  },
+  closeTextStyleDark: {
+    color: '#6b7280',
+  },
+  contentStyle: {
+    padding: '20@ms',
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  modalOverlayStyle: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.70)',
+    padding: '16@ms',
+  },
+  modalWrapperStyle: {
+    width: '100%',
+    maxHeight: '80%',
+    borderRadius: '24@ms',
+    overflow: 'hidden',
+    borderWidth: 1,
+  },
+  modalWrapperLight: {
+    backgroundColor: '#ffffff',
+    borderColor: '#e5e7eb',
+  },
+  modalWrapperDark: {
+    backgroundColor: '#161920',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  headerStyle: {
+    paddingHorizontal: '20@ms',
+    paddingVertical: '16@ms',
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerStyleLight: {
+    borderColor: '#f3f4f6',
+    backgroundColor: '#f9fafb',
+  },
+  headerStyleDark: {
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+    backgroundColor: '#1a1d23',
+  },
+  titleStyle: {
+    fontWeight: 'bold',
+  },
+});
+
 export default AppModal;

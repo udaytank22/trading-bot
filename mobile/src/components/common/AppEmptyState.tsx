@@ -1,8 +1,8 @@
 import React from 'react';
+import { ScaledSheet } from 'react-native-size-matters';
 import { View, StyleProp, ViewStyle } from 'react-native';
 import AppText from './AppText';
 import AppButton from './AppButton';
-import Stylesheet from './Stylesheet';
 import { useAppStore } from '../../store/appStore';
 
 interface AppEmptyStateProps {
@@ -23,12 +23,12 @@ export const AppEmptyState: React.FC<AppEmptyStateProps> = ({
 }) => {
   const theme = useAppStore((state) => state.theme);
 
-  const containerStyle = Stylesheet.cls(theme, 'items-center justify-center p-8 rounded-2xl bg-white dark:bg-darkcard border border-gray-100 dark:border-white/[0.03]');
-  const iconContainerStyle = Stylesheet.cls(theme, 'w-14 h-14 rounded-full bg-purple-100 dark:bg-purple-950/20 items-center justify-center mb-4');
-  const iconPlaceholderStyle = Stylesheet.cls(theme, 'w-6 h-6 border-2 border-purple-500 rounded-lg border-dashed items-center justify-center');
-  const titleStyle = Stylesheet.cls(theme, 'font-bold text-center mb-1');
-  const descStyle = Stylesheet.cls(theme, 'text-center text-xs mb-6 px-4');
-  const btnStyle = Stylesheet.cls(theme, 'h-[38px] px-6');
+  const containerStyle = [styles.containerStyle, theme === 'dark' && styles.containerStyleDark];
+  const iconContainerStyle = [styles.iconContainerStyle, theme === 'dark' && styles.iconContainerStyleDark];
+  const iconPlaceholderStyle = styles.iconPlaceholderStyle;
+  const titleStyle = styles.titleStyle;
+  const descStyle = styles.descStyle;
+  const btnStyle = styles.btnStyle;
 
   return (
     <View style={[containerStyle, style]}>
@@ -56,4 +56,56 @@ export const AppEmptyState: React.FC<AppEmptyStateProps> = ({
     </View>
   );
 };
+
+const styles = ScaledSheet.create({
+  btnStyle: {
+    height: '38.0@vs',
+    paddingHorizontal: '24@ms',
+  },
+  containerStyle: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '32@ms',
+    borderRadius: '16@ms',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
+  },
+  containerStyleDark: {
+    backgroundColor: '#161920',
+    borderColor: 'rgba(255, 255, 255, 0.03)',
+  },
+  descStyle: {
+    textAlign: 'center',
+    fontSize: '12@ms',
+    marginBottom: '24@ms',
+    paddingHorizontal: '16@ms',
+  },
+  iconContainerStyle: {
+    width: '56@s',
+    height: '56@vs',
+    borderRadius: '9999@ms',
+    backgroundColor: '#f3e8ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: '16@ms',
+  },
+  iconContainerStyleDark: {
+    backgroundColor: 'rgba(59, 7, 100, 0.2)',
+  },
+  iconPlaceholderStyle: {
+    width: '24@s',
+    height: '24@vs',
+    borderColor: '#a855f7',
+    borderRadius: '8@ms',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titleStyle: {
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: '4@ms',
+  },
+});
+
 export default AppEmptyState;

@@ -1,15 +1,13 @@
 import React from 'react';
-import {
-  View,
+import { ScaledSheet } from 'react-native-size-matters';
+import { View,
   TextInput,
   TouchableOpacity,
   StyleProp,
-  ViewStyle,
-} from 'react-native';
+  ViewStyle } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useAppStore } from '../../store/appStore';
 import AppText from '../common/AppText';
-import Stylesheet from '../common/Stylesheet';
 
 interface AppSearchProps {
   value: string;
@@ -32,22 +30,16 @@ export const AppSearch: React.FC<AppSearchProps> = ({
   const textThemeColor = isDark ? '#ffffff' : '#111827';
   const placeholderThemeColor = isDark ? '#6b7280' : '#9ca3af';
 
-  const searchBg = isDark
-    ? 'bg-darkcard border-darkborder'
-    : 'bg-white border-gray-200';
-  const containerStyle = Stylesheet.cls(
-    theme,
-    `flex-row items-center h-[42px] rounded-xl px-3 border border-transparent shadow-inner ${searchBg}`,
-  );
+  const containerStyle = [
+    styles.containerStyle,
+    isDark ? styles.containerDark : styles.containerLight,
+  ];
 
-  const iconContainerStyle = Stylesheet.cls(theme, 'mr-2.5 ml-1 opacity-70');
+  const iconContainerStyle = styles.iconContainerStyle;
 
-  const inputStyle = Stylesheet.cls(theme, 'flex-1 text-[15px] h-full');
-  const clearBtnStyle = Stylesheet.cls(theme, 'p-1');
-  const clearTextStyle = Stylesheet.cls(
-    theme,
-    'text-gray-400 dark:text-gray-500 text-xs font-bold px-1',
-  );
+  const inputStyle = styles.inputStyle;
+  const clearBtnStyle = styles.clearBtnStyle;
+  const clearTextStyle = [styles.clearTextStyle, theme === 'dark' && styles.clearTextStyleDark];
 
   return (
     <View style={[containerStyle, style]}>
@@ -77,4 +69,46 @@ export const AppSearch: React.FC<AppSearchProps> = ({
     </View>
   );
 };
+
+const styles = ScaledSheet.create({
+  clearBtnStyle: {
+    padding: '4@ms',
+  },
+  clearTextStyle: {
+    color: '#9ca3af',
+    fontSize: '12@ms',
+    fontWeight: 'bold',
+    paddingHorizontal: '4@ms',
+  },
+  clearTextStyleDark: {
+    color: '#6b7280',
+  },
+  iconContainerStyle: {
+    marginRight: '10@ms',
+    marginLeft: '4@ms',
+    opacity: 0.7,
+  },
+  inputStyle: {
+    flex: 1,
+    fontSize: '15@ms',
+    height: '100%',
+  },
+  containerStyle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: '42@vs',
+    borderRadius: '12@ms',
+    paddingHorizontal: '12@ms',
+    borderWidth: 1,
+  },
+  containerLight: {
+    backgroundColor: '#ffffff',
+    borderColor: '#e5e7eb',
+  },
+  containerDark: {
+    backgroundColor: '#161920',
+    borderColor: '#2a2d33',
+  },
+});
+
 export default AppSearch;

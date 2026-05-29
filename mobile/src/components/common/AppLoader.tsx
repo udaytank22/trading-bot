@@ -1,7 +1,7 @@
 import React from 'react';
+import { ScaledSheet } from 'react-native-size-matters';
 import { View, ActivityIndicator, StyleProp, ViewStyle } from 'react-native';
 import AppText from './AppText';
-import Stylesheet from './Stylesheet';
 import { useAppStore } from '../../store/appStore';
 
 interface AppLoaderProps {
@@ -14,8 +14,8 @@ export const AppLoader: React.FC<AppLoaderProps> = ({
   style,
 }) => {
   const theme = useAppStore((state) => state.theme);
-  const containerStyle = Stylesheet.cls(theme, 'flex-1 items-center justify-center bg-gray-50 dark:bg-darkbg p-6');
-  const labelStyle = Stylesheet.cls(theme, 'mt-3 text-center text-sm');
+  const containerStyle = [styles.containerStyle, theme === 'dark' && styles.containerStyleDark];
+  const labelStyle = styles.labelStyle;
 
   return (
     <View style={[containerStyle, style]}>
@@ -31,11 +31,40 @@ export const AppLoader: React.FC<AppLoaderProps> = ({
 
 export const AppSkeletonItem: React.FC<{ style?: StyleProp<ViewStyle> }> = ({ style }) => {
   const theme = useAppStore((state) => state.theme);
-  const itemStyle = Stylesheet.cls(theme, 'w-full rounded-2xl bg-gray-200 dark:bg-gray-800 h-16 mb-3');
+  const itemStyle = [styles.itemStyle, theme === 'dark' && styles.itemStyleDark];
 
   return (
     <View style={[itemStyle, style]} />
   );
 };
+
+
+const styles = ScaledSheet.create({
+  containerStyle: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f9fafb',
+    padding: '24@ms',
+  },
+  containerStyleDark: {
+    backgroundColor: '#0c0e12',
+  },
+  itemStyle: {
+    width: '100%',
+    borderRadius: '16@ms',
+    backgroundColor: '#e5e7eb',
+    height: '64@vs',
+    marginBottom: '12@ms',
+  },
+  itemStyleDark: {
+    backgroundColor: '#1f2937',
+  },
+  labelStyle: {
+    marginTop: '12@ms',
+    textAlign: 'center',
+    fontSize: '14@ms',
+  },
+});
 
 export default AppLoader;

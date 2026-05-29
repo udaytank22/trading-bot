@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ScaledSheet } from 'react-native-size-matters';
 import { View, TouchableOpacity, ScrollView, Modal, StyleProp, ViewStyle } from 'react-native';
 import AppText from '../common/AppText';
 import { useAppStore } from '../../store/appStore';
-import Stylesheet from '../common/Stylesheet';
 
 export interface DropdownOption {
   value: string | number;
@@ -36,20 +36,8 @@ export const AppDropdown: React.FC<AppDropdownProps> = ({
 
   const selectedOption = options.find((opt) => opt.value === value);
 
-  const wrapperStyle = Stylesheet.cls(theme, 'w-full mb-4');
-  const labelStyle = Stylesheet.cls(theme, 'text-gray-550 dark:text-gray-400 mb-1.5 font-medium ml-1');
-  
-  let dropdownBtnClass = `flex-row items-center justify-between h-[46px] rounded-xl px-3 border border-transparent shadow-inner ${
-    isDark ? 'bg-darkcard border-darkborder' : 'bg-white border-gray-200'
-  }`;
-  if (error) dropdownBtnClass += ' border-red-500';
-  
-  const dropdownBtnStyle = Stylesheet.cls(theme, dropdownBtnClass);
-  
-  const selectedTextClass = `text-[13.5px] font-medium ${
-    selectedOption ? '' : 'text-gray-400 dark:text-gray-500'
-  }`;
-  const selectedTextStyle = Stylesheet.cls(theme, selectedTextClass);
+  const wrapperStyle = styles.wrapperStyle;
+  const labelStyle = [styles.labelStyle, theme === 'dark' && styles.labelStyleDark];
   
   // Down Arrow Styling: border-r border-b border-gray-500 w-2.5 h-2.5 rotate-45
   const arrowStyle = {
@@ -58,19 +46,19 @@ export const AppDropdown: React.FC<AppDropdownProps> = ({
     borderRightWidth: 1,
     borderBottomWidth: 1,
     borderColor: '#6b7280',
-    transform: [{ rotate: '45deg' }],
+    transform: [{ rotate: '45deg' } as const],
     marginBottom: 4,
   };
 
-  const errorStyle = Stylesheet.cls(theme, 'text-red-500 text-[11px] font-semibold mt-1 ml-1');
+  const errorStyle = styles.errorStyle;
 
   // Modal styling
-  const modalContainerStyle = Stylesheet.cls(theme, 'flex-1 justify-end bg-black/60');
-  const modalContentStyle = Stylesheet.cls(theme, 'bg-gray-50 dark:bg-darkbg rounded-t-3xl max-h-[50%]');
-  const modalHeaderStyle = Stylesheet.cls(theme, 'px-5 py-4 border-b border-gray-100 dark:border-white/[0.04] flex-row justify-between items-center bg-white dark:bg-[#12141c]');
-  const modalTitleStyle = Stylesheet.cls(theme, 'font-bold');
-  const modalCancelTextStyle = Stylesheet.cls(theme, 'text-purple-600 dark:text-purple-400 font-bold text-sm');
-  const modalScrollStyle = Stylesheet.cls(theme, 'p-3');
+  const modalContainerStyle = styles.modalContainerStyle;
+  const modalContentStyle = [styles.modalContentStyle, theme === 'dark' && styles.modalContentStyleDark];
+  const modalHeaderStyle = [styles.modalHeaderStyle, theme === 'dark' && styles.modalHeaderStyleDark];
+  const modalTitleStyle = styles.modalTitleStyle;
+  const modalCancelTextStyle = [styles.modalCancelTextStyle, theme === 'dark' && styles.modalCancelTextStyleDark];
+  const modalScrollStyle = styles.modalScrollStyle;
 
   return (
     <View style={[wrapperStyle, containerStyle]}>
@@ -82,9 +70,17 @@ export const AppDropdown: React.FC<AppDropdownProps> = ({
 
       <TouchableOpacity
         onPress={() => setModalVisible(true)}
-        style={dropdownBtnStyle}
+        style={[
+          styles.dropdownBtn,
+          isDark && styles.dropdownBtnDark,
+          !!error && styles.dropdownBtnError,
+        ]}
       >
-        <AppText style={selectedTextStyle}>
+        <AppText style={[
+          styles.selectedText,
+          isDark && styles.selectedTextDark,
+          !selectedOption && (isDark ? styles.selectedTextPlaceholderDark : styles.selectedTextPlaceholder)
+        ]}>
           {selectedOption ? selectedOption.label : placeholder}
         </AppText>
         
@@ -107,7 +103,7 @@ export const AppDropdown: React.FC<AppDropdownProps> = ({
       >
         <View style={modalContainerStyle}>
           <TouchableOpacity 
-            style={Stylesheet.cls(theme, "flex-1")} 
+            style={styles.touchableOpacity} 
             activeOpacity={1} 
             onPress={() => setModalVisible(false)} 
           />
@@ -126,18 +122,19 @@ export const AppDropdown: React.FC<AppDropdownProps> = ({
             <ScrollView style={modalScrollStyle}>
               {options.map((option) => {
                 const isSelected = option.value === value;
-                
-                let optionClass = 'p-4 rounded-xl flex-row justify-between items-center mb-1.5';
-                if (isSelected) optionClass += ' bg-purple-100/60 dark:bg-purple-950/20';
-                else optionClass += ' active:bg-gray-200 dark:active:bg-white/5';
-                
-                let textClass = 'text-sm';
-                if (isSelected) textClass += ' text-purple-700 dark:text-purple-400 font-bold';
-                else textClass += ' font-medium';
 
-                const optionStyle = Stylesheet.cls(theme, optionClass);
-                const textOptionStyle = Stylesheet.cls(theme, textClass);
-                const dotStyle = Stylesheet.cls(theme, 'w-2 h-2 rounded-full bg-purple-600 dark:bg-purple-400');
+                const optionStyle = [
+                  styles.optionItem,
+                  isDark && styles.optionItemDark,
+                  isSelected && (isDark ? styles.optionItemSelectedDark : styles.optionItemSelected)
+                ];
+
+                const textOptionStyle = [
+                  styles.optionText,
+                  isSelected && styles.optionTextSelected,
+                  isSelected && isDark && styles.optionTextSelectedDark
+                ];
+                const dotStyle = [styles.dotStyle, theme === 'dark' && styles.dotStyleDark];
 
                 return (
                   <TouchableOpacity
@@ -164,4 +161,139 @@ export const AppDropdown: React.FC<AppDropdownProps> = ({
     </View>
   );
 };
+
+const styles = ScaledSheet.create({
+  dropdownBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    height: '46@vs',
+    borderRadius: '12@ms',
+    paddingHorizontal: '12@ms',
+    borderWidth: 1,
+    backgroundColor: '#ffffff',
+    borderColor: '#e5e7eb',
+  },
+  dropdownBtnDark: {
+    backgroundColor: '#161920',
+    borderColor: '#2a2d33',
+  },
+  dropdownBtnError: {
+    borderColor: '#ef4444',
+  },
+  selectedText: {
+    fontSize: '13.5@ms',
+    fontWeight: '500',
+  },
+  selectedTextDark: {
+    color: '#ffffff',
+  },
+  selectedTextPlaceholder: {
+    color: '#9ca3af',
+  },
+  selectedTextPlaceholderDark: {
+    color: '#6b7280',
+  },
+  optionItem: {
+    padding: '16@ms',
+    borderRadius: '12@ms',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '6@ms',
+    backgroundColor: '#e5e7eb',
+  },
+  optionItemDark: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  optionItemSelected: {
+    backgroundColor: 'rgba(243, 232, 255, 0.60)',
+  },
+  optionItemSelectedDark: {
+    backgroundColor: 'rgba(59, 7, 100, 0.20)',
+  },
+  optionText: {
+    fontSize: '14@ms',
+    fontWeight: '500',
+  },
+  optionTextSelected: {
+    color: '#6d28d9',
+    fontWeight: 'bold',
+  },
+  optionTextSelectedDark: {
+    color: '#c084fc',
+  },
+  dotStyle: {
+    width: '8@s',
+    height: '8@vs',
+    borderRadius: '9999@ms',
+    backgroundColor: '#7c3aed',
+  },
+  dotStyleDark: {
+    backgroundColor: '#c084fc',
+  },
+  errorStyle: {
+    color: '#ef4444',
+    fontSize: '11@ms',
+    fontWeight: '600',
+    marginTop: '4@ms',
+    marginLeft: '4@ms',
+  },
+  labelStyle: {
+    color: '#4b5563',
+    marginBottom: '6@ms',
+    fontWeight: '500',
+    marginLeft: '4@ms',
+  },
+  labelStyleDark: {
+    color: '#9ca3af',
+  },
+  modalCancelTextStyle: {
+    color: '#7c3aed',
+    fontWeight: 'bold',
+    fontSize: '14@ms',
+  },
+  modalCancelTextStyleDark: {
+    color: '#c084fc',
+  },
+  modalContainerStyle: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.60)',
+  },
+  modalContentStyle: {
+    backgroundColor: '#f9fafb',
+  },
+  modalContentStyleDark: {
+    backgroundColor: '#0c0e12',
+  },
+  modalHeaderStyle: {
+    paddingHorizontal: '20@ms',
+    paddingVertical: '16@ms',
+    borderBottomWidth: 1,
+    borderColor: '#f3f4f6',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+  },
+  modalHeaderStyleDark: {
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+    backgroundColor: '#12141c',
+  },
+  modalScrollStyle: {
+    padding: '12@ms',
+  },
+  modalTitleStyle: {
+    fontWeight: 'bold',
+  },
+  touchableOpacity: {
+    flex: 1,
+  },
+  wrapperStyle: {
+    width: '100%',
+    marginBottom: '16@ms',
+  },
+});
+
 export default AppDropdown;

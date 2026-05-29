@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import Stylesheet from '../components/common/Stylesheet';
 
+import { ScaledSheet } from 'react-native-size-matters';
 import { View, ScrollView, Alert } from 'react-native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
@@ -32,13 +32,13 @@ export const SettingsScreen = () => {
   };
 
   return (
-    <SafeAreaView style={Stylesheet.cls(theme, "flex-1 bg-gray-50 dark:bg-darkbg")}>
+    <SafeAreaView style={[styles.safeAreaView, theme === 'dark' && styles.safeAreaViewDark]}>
       <AppHeader title="System Settings" showBack={true} />
 
-      <ScrollView style={Stylesheet.cls(theme, "flex-1 p-4")} contentContainerStyle={{ paddingBottom: 40 }}>
-        <AppText variant="h3" style={Stylesheet.cls(theme, "font-bold mb-3 ml-1")}>Quotation Configurations</AppText>
+      <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingBottom: 40 }}>
+        <AppText variant="h3" style={styles.appText4}>Quotation Configurations</AppText>
         
-        <AppCard variant="bordered" style={Stylesheet.cls(theme, "mb-4")}>
+        <AppCard variant="bordered" style={styles.appCard1}>
           <AppInput
             label="Default Profit Markup (%)"
             placeholder="e.g. 15"
@@ -65,15 +65,15 @@ export const SettingsScreen = () => {
         </AppCard>
 
         {/* Informative tips */}
-        <AppCard variant="glass" style={Stylesheet.cls(theme, "mb-6 p-4")}>
-          <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Margin Logic Rule 1</AppText>
-          <AppText style={Stylesheet.cls(theme, "text-xs text-gray-500 mt-1")}>
+        <AppCard variant="glass" style={styles.appCard}>
+          <AppText variant="captionSemibold" style={styles.appText3}>Margin Logic Rule 1</AppText>
+          <AppText style={styles.appText2}>
             Category markups automatically override default values (e.g., Fasteners at 18%, Pipes at 12%).
           </AppText>
 
-          <View style={Stylesheet.cls(theme, "pt-3 mt-3 border-t border-gray-100 dark:border-white/[0.04]")}>
-            <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Margin Logic Rule 2</AppText>
-            <AppText style={Stylesheet.cls(theme, "text-xs text-gray-500 mt-1")}>
+          <View style={[styles.view, theme === 'dark' && styles.viewDark]}>
+            <AppText variant="captionSemibold" style={styles.appText1}>Margin Logic Rule 2</AppText>
+            <AppText style={styles.appText}>
               Price-tiers apply high markups on low unit prices (e.g., 25% margin below $100).
             </AppText>
           </View>
@@ -82,10 +82,65 @@ export const SettingsScreen = () => {
         <AppButton
           title="Save Configurations"
           onPress={handleSaveSettings}
-          style={Stylesheet.cls(theme, "rounded-2xl")}
+          style={styles.appButton}
         />
       </ScrollView>
     </SafeAreaView>
   );
 };
+
+const styles = ScaledSheet.create({
+  appButton: {
+    borderRadius: '16@ms',
+  },
+  appCard: {
+    marginBottom: '24@ms',
+    padding: '16@ms',
+  },
+  appCard1: {
+    marginBottom: '16@ms',
+  },
+  appText: {
+    fontSize: '12@ms',
+    color: '#6b7280',
+    marginTop: '4@ms',
+  },
+  appText1: {
+    color: '#9ca3af',
+  },
+  appText2: {
+    fontSize: '12@ms',
+    color: '#6b7280',
+    marginTop: '4@ms',
+  },
+  appText3: {
+    color: '#9ca3af',
+  },
+  appText4: {
+    fontWeight: 'bold',
+    marginBottom: '12@ms',
+    marginLeft: '4@ms',
+  },
+  safeAreaView: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  safeAreaViewDark: {
+    backgroundColor: '#0c0e12',
+  },
+  scrollView: {
+    flex: 1,
+    padding: '16@ms',
+  },
+  view: {
+    paddingTop: '12@ms',
+    marginTop: '12@ms',
+    borderTopWidth: 1,
+    borderColor: '#f3f4f6',
+  },
+  viewDark: {
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+  },
+});
+
 export default SettingsScreen;

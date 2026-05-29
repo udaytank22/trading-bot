@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import Stylesheet from '../components/common/Stylesheet';
 
+import { ScaledSheet } from 'react-native-size-matters';
 import { View, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
@@ -70,44 +70,42 @@ export const LoginScreen = () => {
     login(profile);
   };
 
-  const bgStyle = isDark ? 'bg-darkbg' : 'bg-gray-50';
-
   return (
-    <SafeAreaView style={Stylesheet.cls(theme, `flex-1 ${bgStyle}`)}>
+    <SafeAreaView style={[styles.container, isDark ? styles.containerDark : styles.containerLight]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={Stylesheet.cls(theme, "flex-1")}
+        style={styles.keyboardAvoidingView}
       >
         <ScrollView 
-          style={Stylesheet.cls(theme, "flex-1 px-5")} 
+          style={styles.scrollView} 
           contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingVertical: 20 }}
           keyboardShouldPersistTaps="handled"
         >
           {/* Header branding */}
-          <View style={Stylesheet.cls(theme, "items-center mb-8")}>
-            <View style={Stylesheet.cls(theme, "w-14 h-14 bg-purple-600 rounded-2xl items-center justify-center shadow-lg shadow-purple-500/30 mb-4")}>
-              <AppText variant="h1" style={Stylesheet.cls(theme, "text-white font-extrabold")}>T</AppText>
+          <View style={styles.view4}>
+            <View style={styles.view3}>
+              <AppText variant="h1" style={styles.appText8}>T</AppText>
             </View>
-            <AppText variant="h1" style={Stylesheet.cls(theme, "font-extrabold text-2xl tracking-tight text-center")}>
+            <AppText variant="h1" style={styles.appText7}>
               TradeMind
             </AppText>
-            <AppText variant="subtitle" style={Stylesheet.cls(theme, "text-center text-xs mt-1")}>
+            <AppText variant="subtitle" style={styles.appText6}>
               Quotation & Margin CRM Panel
             </AppText>
           </View>
 
           {/* Login Card */}
-          <AppCard variant="glass" style={Stylesheet.cls(theme, "p-6")}>
-            <AppText variant="h2" style={Stylesheet.cls(theme, "font-bold text-lg mb-1")}>
+          <AppCard variant="glass" style={styles.appCard}>
+            <AppText variant="h2" style={styles.appText5}>
               Welcome Back
             </AppText>
-            <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400 dark:text-gray-500 mb-6")}>
+            <AppText variant="captionSemibold" style={[styles.appText4, theme === 'dark' && styles.appText4Dark]}>
               Sign in to manage supplier RFQs & deals
             </AppText>
 
             {error ? (
-              <View style={Stylesheet.cls(theme, "mb-4 p-3 bg-red-100/50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 rounded-xl")}>
-                <AppText style={Stylesheet.cls(theme, "text-red-500 text-xs font-semibold text-center")}>{error}</AppText>
+              <View style={styles.view2}>
+                <AppText style={styles.appText3}>{error}</AppText>
               </View>
             ) : null}
 
@@ -129,7 +127,7 @@ export const LoginScreen = () => {
               autoCapitalize="none"
               rightIcon={
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                  <AppText style={Stylesheet.cls(theme, "text-purple-600 dark:text-purple-400 text-xs font-bold px-2")}>
+                  <AppText style={[styles.appText2, theme === 'dark' && styles.appText2Dark]}>
                     {showPassword ? 'HIDE' : 'SHOW'}
                   </AppText>
                 </TouchableOpacity>
@@ -140,23 +138,23 @@ export const LoginScreen = () => {
               title="Sign In"
               onPress={handleSignIn}
               loading={isLoading}
-              style={Stylesheet.cls(theme, "mt-4")}
+              style={styles.style1}
             />
 
             {/* Quick Access Dev Grid */}
-            <View style={Stylesheet.cls(theme, "mt-6 pt-5 border-t border-gray-100 dark:border-white/[0.04]")}>
-              <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-450 uppercase tracking-widest text-center mb-3")}>
+            <View style={[styles.view1, theme === 'dark' && styles.view1Dark]}>
+              <AppText variant="captionSemibold" style={styles.appText1}>
                 Quick Access for Testing
               </AppText>
               
-              <View style={Stylesheet.cls(theme, "flex-row flex-wrap justify-between")}>
+              <View style={styles.view}>
                 {['ADMIN', 'EMPLOYEE', 'TEAM_LEAD', 'CLIENT'].map((role) => (
                   <TouchableOpacity
                     key={role}
                     onPress={() => handleQuickLogin(role)}
-                    style={Stylesheet.cls(theme, "w-[48%] py-2.5 mb-2 rounded-xl bg-purple-50 dark:bg-purple-950/10 border border-purple-100/50 dark:border-purple-900/30 items-center active:opacity-75")}
+                    style={[styles.style, theme === 'dark' && styles.styleDark]}
                   >
-                    <AppText style={Stylesheet.cls(theme, "text-[10px] font-bold text-purple-600 dark:text-purple-450 tracking-wider")}>
+                    <AppText style={styles.appText}>
                       {role}
                     </AppText>
                   </TouchableOpacity>
@@ -169,4 +167,128 @@ export const LoginScreen = () => {
     </SafeAreaView>
   );
 };
+
+const styles = ScaledSheet.create({
+  appCard: {
+    padding: '24@ms',
+  },
+  appText: {
+    fontSize: '10@ms',
+    fontWeight: 'bold',
+    color: '#7c3aed',
+    letterSpacing: 0.5,
+  },
+  appText1: {
+    textAlign: 'center',
+    marginBottom: '12@ms',
+  },
+  appText2: {
+    color: '#7c3aed',
+    fontSize: '12@ms',
+    fontWeight: 'bold',
+    paddingHorizontal: '8@ms',
+  },
+  appText2Dark: {
+    color: '#c084fc',
+  },
+  appText3: {
+    color: '#ef4444',
+    fontSize: '12@ms',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  appText4: {
+    color: '#9ca3af',
+    marginBottom: '24@ms',
+  },
+  appText4Dark: {
+    color: '#6b7280',
+  },
+  appText5: {
+    fontWeight: 'bold',
+    fontSize: '18@ms',
+    marginBottom: '4@ms',
+  },
+  appText6: {
+    textAlign: 'center',
+    fontSize: '12@ms',
+    marginTop: '4@ms',
+  },
+  appText7: {
+    fontWeight: '800',
+    fontSize: '24@ms',
+    letterSpacing: -0.5,
+    textAlign: 'center',
+  },
+  appText8: {
+    color: '#ffffff',
+    fontWeight: '800',
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+    paddingHorizontal: '20@ms',
+  },
+  style: {
+    width: '48%',
+    paddingVertical: '10@ms',
+    marginBottom: '8@ms',
+    borderRadius: '12@ms',
+    borderWidth: 1,
+    borderColor: 'rgba(243, 232, 255, 0.5)',
+    alignItems: 'center',
+    opacity: 0.75,
+  },
+  style1: {
+    marginTop: '16@ms',
+  },
+  styleDark: {
+    backgroundColor: 'rgba(59, 7, 100, 0.1)',
+  },
+  view: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  view1: {
+    marginTop: '24@ms',
+    paddingTop: '20@ms',
+    borderTopWidth: 1,
+    borderColor: '#f3f4f6',
+  },
+  view1Dark: {
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+  },
+  view2: {
+    marginBottom: '16@ms',
+    padding: '12@ms',
+    borderWidth: 1,
+    borderRadius: '12@ms',
+  },
+  view3: {
+    width: '56@s',
+    height: '56@vs',
+    backgroundColor: '#7c3aed',
+    borderRadius: '16@ms',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: '16@ms',
+  },
+  view4: {
+    alignItems: 'center',
+    marginBottom: '32@ms',
+  },
+  container: {
+    flex: 1,
+  },
+  containerLight: {
+    backgroundColor: '#f9fafb',
+  },
+  containerDark: {
+    backgroundColor: '#0c0e12',
+  },
+});
+
 export default LoginScreen;

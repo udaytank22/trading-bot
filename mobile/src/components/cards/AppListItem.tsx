@@ -1,8 +1,8 @@
 import React from 'react';
+import { ScaledSheet } from 'react-native-size-matters';
 import { TouchableOpacity, View, StyleProp, ViewStyle } from 'react-native';
 import AppText from '../common/AppText';
 import AppCard from '../common/AppCard';
-import Stylesheet from '../common/Stylesheet';
 import { useAppStore } from '../../store/appStore';
 
 interface AppListItemProps {
@@ -29,16 +29,16 @@ export const AppListItem: React.FC<AppListItemProps> = ({
   const theme = useAppStore((state) => state.theme);
   const Container = onPress ? TouchableOpacity : View;
 
-  const cardStyle = Stylesheet.cls(theme, 'flex-row items-center justify-between p-3.5');
-  const leftContainer = Stylesheet.cls(theme, 'flex-row items-center flex-1 pr-2');
-  const leftIconContainer = Stylesheet.cls(theme, 'mr-3');
-  const titleContainer = Stylesheet.cls(theme, 'flex-1');
-  const titleText = Stylesheet.cls(theme, 'text-gray-900 dark:text-white');
-  const subtitleText = Stylesheet.cls(theme, 'text-gray-500 dark:text-gray-400 mt-0.5');
+  const cardStyle = styles.cardStyle;
+  const leftContainer = styles.leftContainerStyle;
+  const leftIconContainer = styles.leftIconContainerStyle;
+  const titleContainer = styles.titleContainerStyle;
+  const titleText = [styles.titleTextStyle, theme === 'dark' && styles.titleTextStyleDark];
+  const subtitleText = [styles.subtitleTextStyle, theme === 'dark' && styles.subtitleTextStyleDark];
   
-  const rightContainer = Stylesheet.cls(theme, 'flex-row items-center');
-  const badgeContainer = Stylesheet.cls(theme, 'mr-2');
-  const rightTextStyle = Stylesheet.cls(theme, 'text-gray-700 dark:text-gray-300 mr-1.5');
+  const rightContainer = styles.rightContainerStyle;
+  const badgeContainer = styles.badgeContainerStyle;
+  const rightTextStyle = [styles.rightTextStyle, theme === 'dark' && styles.rightTextStyleDark];
   
   // Chevron styling: border-r border-t border-gray-400 dark:border-gray-600 w-1.5 h-1.5 rotate-45
   const chevronStyle = {
@@ -56,7 +56,7 @@ export const AppListItem: React.FC<AppListItemProps> = ({
     <Container
       onPress={onPress}
       activeOpacity={0.8}
-      style={Stylesheet.cls(theme, "mb-2.5")}
+      style={styles.container}
     >
       <AppCard variant="glass" style={[cardStyle, style]}>
         <View style={leftContainer}>
@@ -93,4 +93,56 @@ export const AppListItem: React.FC<AppListItemProps> = ({
     </Container>
   );
 };
+
+const styles = ScaledSheet.create({
+  badgeContainerStyle: {
+    marginRight: '8@ms',
+  },
+  cardStyle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '14@ms',
+  },
+  container: {
+    marginBottom: '10@ms',
+  },
+  leftContainerStyle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    paddingRight: '8@ms',
+  },
+  leftIconContainerStyle: {
+    marginRight: '12@ms',
+  },
+  rightContainerStyle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  rightTextStyle: {
+    color: '#374151',
+    marginRight: '6@ms',
+  },
+  rightTextStyleDark: {
+    color: '#d1d5db',
+  },
+  subtitleTextStyle: {
+    color: '#6b7280',
+    marginTop: '2@ms',
+  },
+  subtitleTextStyleDark: {
+    color: '#9ca3af',
+  },
+  titleContainerStyle: {
+    flex: 1,
+  },
+  titleTextStyle: {
+    color: '#111827',
+  },
+  titleTextStyleDark: {
+    color: '#ffffff',
+  },
+});
+
 export default AppListItem;

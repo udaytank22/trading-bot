@@ -1,8 +1,8 @@
 import React from 'react';
+import { ScaledSheet } from 'react-native-size-matters';
 import { Modal, View, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
 import AppText from '../common/AppText';
 import { useAppStore } from '../../store/appStore';
-import Stylesheet from '../common/Stylesheet';
 
 interface AppAlertProps {
   visible: boolean;
@@ -26,10 +26,12 @@ export const AppAlert: React.FC<AppAlertProps> = ({
   const theme = useAppStore((state) => state.theme);
   const isDark = theme === 'dark';
 
-  const overlayStyle = Stylesheet.cls(theme, 'flex-1 justify-center items-center bg-black/60 p-4');
+  const overlayStyle = styles.overlayStyle;
   
-  const modalBg = isDark ? 'bg-[#161920] border-white/[0.08]' : 'bg-white border-gray-100';
-  const containerStyle = Stylesheet.cls(theme, `w-[85%] max-w-sm rounded-2xl p-6 shadow-2xl border ${modalBg}`);
+  const containerStyle = [
+    styles.containerStyle,
+    isDark ? styles.containerDark : styles.containerLight,
+  ];
 
   return (
     <Modal
@@ -42,17 +44,17 @@ export const AppAlert: React.FC<AppAlertProps> = ({
         <View style={overlayStyle}>
           <TouchableWithoutFeedback>
             <View style={containerStyle}>
-              <AppText variant="h3" style={Stylesheet.cls(theme, "mb-3 font-bold")}>
+              <AppText variant="h3" style={styles.appText3}>
                 {title}
               </AppText>
-          <AppText style={Stylesheet.cls(theme, "text-gray-600 dark:text-gray-400 text-[15px] mb-8 leading-relaxed")}>
+          <AppText style={[styles.appText2, theme === 'dark' && styles.appText2Dark]}>
             {message}
           </AppText>
           
-          <View style={Stylesheet.cls(theme, "flex-row justify-end gap-3")}>
+          <View style={styles.view}>
             {showCancel && (
-              <TouchableOpacity onPress={onClose} style={Stylesheet.cls(theme, "px-5 py-2.5 bg-gray-100 dark:bg-white/[0.05] rounded-xl")}>
-                <AppText style={Stylesheet.cls(theme, "text-gray-700 dark:text-gray-300 font-bold text-[14px]")}>
+              <TouchableOpacity onPress={onClose} style={[styles.touchableOpacity, theme === 'dark' && styles.touchableOpacityDark]}>
+                <AppText style={[styles.appText1, theme === 'dark' && styles.appText1Dark]}>
                   Cancel
                 </AppText>
               </TouchableOpacity>
@@ -66,9 +68,9 @@ export const AppAlert: React.FC<AppAlertProps> = ({
                     onClose();
                   }
                 }} 
-                style={Stylesheet.cls(theme, "px-5 py-2.5 bg-[#4F46E5] dark:bg-[#4F46E5] rounded-xl")}
+                style={[styles.style, theme === 'dark' && styles.styleDark]}
               >
-                <AppText style={Stylesheet.cls(theme, "text-white font-bold text-[14px]")}>
+                <AppText style={styles.appText}>
                   OK
                 </AppText>
               </TouchableOpacity>
@@ -81,5 +83,78 @@ export const AppAlert: React.FC<AppAlertProps> = ({
     </Modal>
   );
 };
+
+
+const styles = ScaledSheet.create({
+  appText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: '14@ms',
+  },
+  appText1: {
+    color: '#374151',
+    fontWeight: 'bold',
+    fontSize: '14@ms',
+  },
+  appText1Dark: {
+    color: '#d1d5db',
+  },
+  appText2: {
+    fontSize: '15@ms',
+    marginBottom: '32@ms',
+  },
+  appText2Dark: {
+    color: '#9ca3af',
+  },
+  appText3: {
+    marginBottom: '12@ms',
+    fontWeight: 'bold',
+  },
+  overlayStyle: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.60)',
+    padding: '16@ms',
+  },
+  containerStyle: {
+    width: '85%',
+    maxWidth: '384@s',
+    borderRadius: '16@ms',
+    padding: '24@ms',
+    borderWidth: 1,
+  },
+  containerLight: {
+    backgroundColor: '#ffffff',
+    borderColor: '#f3f4f6',
+  },
+  containerDark: {
+    backgroundColor: '#161920',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  style: {
+    paddingHorizontal: '20@ms',
+    paddingVertical: '10@ms',
+    backgroundColor: '#4F46E5',
+    borderRadius: '12@ms',
+  },
+  styleDark: {
+    backgroundColor: '#4F46E5',
+  },
+  touchableOpacity: {
+    paddingHorizontal: '20@ms',
+    paddingVertical: '10@ms',
+    backgroundColor: '#f3f4f6',
+    borderRadius: '12@ms',
+  },
+  touchableOpacityDark: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  view: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: '12@ms',
+  },
+});
 
 export default AppAlert;

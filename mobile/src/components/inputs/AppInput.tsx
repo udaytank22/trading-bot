@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
+import { ScaledSheet } from 'react-native-size-matters';
 import { View, TextInput, TextInputProps, StyleProp, ViewStyle } from 'react-native';
 import AppText from '../common/AppText';
 import { useAppStore } from '../../store/appStore';
-import Stylesheet from '../common/Stylesheet';
 
 interface AppInputProps extends TextInputProps {
   label?: string;
@@ -26,27 +26,22 @@ export const AppInput: React.FC<AppInputProps> = ({
   const isDark = theme === 'dark';
   const [isFocused, setIsFocused] = useState(false);
 
-  // Border styling depending on focus and error states
-  let borderStyles = 'border ';
-  if (error) {
-    borderStyles += 'border-red-500';
-  } else if (isFocused) {
-    borderStyles += 'border-purple-500';
-  } else {
-    borderStyles += isDark 
-      ? 'border-[#2a2d33]' 
-      : 'border-gray-200';
-  }
-
-  const bgStyles = isDark ? 'bg-darkcard' : 'bg-white';
   const textThemeColor = isDark ? '#ffffff' : '#111827';
   const placeholderThemeColor = isDark ? '#6b7280' : '#9ca3af';
 
-  const wrapperStyle = Stylesheet.cls(theme, 'w-full mb-4');
-  const labelStyle = Stylesheet.cls(theme, 'text-gray-550 dark:text-gray-400 mb-1.5 font-medium ml-1');
-  const innerContainerStyle = Stylesheet.cls(theme, `flex-row items-center h-[46px] rounded-xl px-3 shadow-inner ${bgStyles} ${borderStyles}`);
-  const inputStyle = Stylesheet.cls(theme, 'flex-1 text-[13.5px] font-medium h-full');
-  const errorStyle = Stylesheet.cls(theme, 'text-red-500 text-[11px] font-semibold mt-1 ml-1');
+  const wrapperStyle = styles.wrapperStyle;
+  const labelStyle = [styles.labelStyle, theme === 'dark' && styles.labelStyleDark];
+  const innerContainerStyle = [
+    styles.innerContainerStyle,
+    isDark ? styles.bgDark : styles.bgLight,
+    error 
+      ? styles.borderError 
+      : isFocused 
+      ? styles.borderFocused 
+      : (isDark ? styles.borderDefaultDark : styles.borderDefault)
+  ];
+  const inputStyle = styles.inputStyle;
+  const errorStyle = styles.errorStyle;
 
   return (
     <View style={[wrapperStyle, containerStyle]}>
@@ -59,7 +54,7 @@ export const AppInput: React.FC<AppInputProps> = ({
       <View 
         style={[innerContainerStyle, style]}
       >
-        {leftIcon && <View style={Stylesheet.cls(theme, "mr-2")}>{leftIcon}</View>}
+        {leftIcon && <View style={styles.view1}>{leftIcon}</View>}
         
         <TextInput
           style={[inputStyle, { color: textThemeColor }]}
@@ -69,7 +64,7 @@ export const AppInput: React.FC<AppInputProps> = ({
           {...props}
         />
         
-        {rightIcon && <View style={Stylesheet.cls(theme, "ml-2")}>{rightIcon}</View>}
+        {rightIcon && <View style={styles.view}>{rightIcon}</View>}
       </View>
       
       {error && (
@@ -80,4 +75,66 @@ export const AppInput: React.FC<AppInputProps> = ({
     </View>
   );
 };
+
+const styles = ScaledSheet.create({
+  errorStyle: {
+    color: '#ef4444',
+    fontSize: '11@ms',
+    fontWeight: '600',
+    marginTop: '4@ms',
+    marginLeft: '4@ms',
+  },
+  inputStyle: {
+    flex: 1,
+    fontSize: '13.5@ms',
+    fontWeight: '500',
+    height: '100%',
+  },
+  labelStyle: {
+    color: '#4b5563',
+    marginBottom: '6@ms',
+    fontWeight: '500',
+    marginLeft: '4@ms',
+  },
+  labelStyleDark: {
+    color: '#9ca3af',
+  },
+  innerContainerStyle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: '46@vs',
+    borderRadius: '12@ms',
+    paddingHorizontal: '12@ms',
+    borderWidth: 1,
+  },
+  borderDefault: {
+    borderColor: '#e5e7eb',
+  },
+  borderDefaultDark: {
+    borderColor: '#2a2d33',
+  },
+  borderFocused: {
+    borderColor: '#a855f7',
+  },
+  borderError: {
+    borderColor: '#ef4444',
+  },
+  bgLight: {
+    backgroundColor: '#ffffff',
+  },
+  bgDark: {
+    backgroundColor: '#161920',
+  },
+  view: {
+    marginLeft: '8@ms',
+  },
+  view1: {
+    marginRight: '8@ms',
+  },
+  wrapperStyle: {
+    width: '100%',
+    marginBottom: '16@ms',
+  },
+});
+
 export default AppInput;

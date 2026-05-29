@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import Stylesheet from '../components/common/Stylesheet';
 
+import { ScaledSheet } from 'react-native-size-matters';
 import { View, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
@@ -87,7 +87,7 @@ export const EmployeesScreen = () => {
   };
 
   return (
-    <SafeAreaView style={Stylesheet.cls(theme, "flex-1 bg-gray-50 dark:bg-darkbg")}>
+    <SafeAreaView style={[styles.safeAreaView, theme === 'dark' && styles.safeAreaViewDark]}>
       <AppHeader 
         title="Staff Directory" 
         showBack={true} 
@@ -95,17 +95,17 @@ export const EmployeesScreen = () => {
           <AppButton
             title="+ Add Staff"
             onPress={() => setModalOpen(true)}
-            style={Stylesheet.cls(theme, "h-[34px] px-3.5")}
+            style={styles.appButton1}
           />
         }
       />
 
-      <View style={Stylesheet.cls(theme, "flex-1 p-4")}>
+      <View style={styles.view3}>
         <AppSearch
           value={search}
           onChangeText={setSearch}
           placeholder="Search by name, email or department..."
-          style={Stylesheet.cls(theme, "mb-4")}
+          style={styles.style}
         />
 
         <FlatList
@@ -113,18 +113,18 @@ export const EmployeesScreen = () => {
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ paddingBottom: 24 }}
           renderItem={({ item }) => (
-            <AppCard variant="glass" style={Stylesheet.cls(theme, "mb-3 p-3.5 flex-row justify-between items-center")}>
-              <View style={Stylesheet.cls(theme, "flex-row items-center flex-1 pr-3")}>
+            <AppCard variant="glass" style={styles.appCard}>
+              <View style={styles.view2}>
                 <AppAvatar name={item.name} size="md" showStatus={item.status === 'Active'} />
                 
-                <View style={Stylesheet.cls(theme, "ml-3 flex-1")}>
-                  <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "text-gray-900 dark:text-white")} numberOfLines={1}>
+                <View style={styles.view1}>
+                  <AppText variant="bodySemibold" style={[styles.appText4, theme === 'dark' && styles.appText4Dark]} numberOfLines={1}>
                     {item.name}
                   </AppText>
-                  <AppText variant="caption" style={Stylesheet.cls(theme, "text-gray-400")} numberOfLines={1}>
+                  <AppText variant="caption" style={styles.appText3} numberOfLines={1}>
                     {item.role} • {item.department}
                   </AppText>
-                  <AppText variant="small" style={Stylesheet.cls(theme, "text-gray-500 mt-0.5")} numberOfLines={1}>
+                  <AppText variant="small" style={styles.appText2} numberOfLines={1}>
                     📧 {item.email} | 📞 {item.phone}
                   </AppText>
                 </View>
@@ -132,15 +132,15 @@ export const EmployeesScreen = () => {
 
               <TouchableOpacity 
                 onPress={() => handleDeleteEmployee(item.id, item.name)} 
-                style={Stylesheet.cls(theme, "p-2 bg-red-500/10 dark:bg-red-550/15 rounded-xl border border-red-500/10")}
+                style={styles.touchableOpacity}
               >
-                <AppText style={Stylesheet.cls(theme, "text-[10px] font-bold text-red-500")}>REMOVE</AppText>
+                <AppText style={styles.appText1}>REMOVE</AppText>
               </TouchableOpacity>
             </AppCard>
           )}
           ListEmptyComponent={
-            <View style={Stylesheet.cls(theme, "mt-8")}>
-              <AppText variant="subtitle" style={Stylesheet.cls(theme, "text-center text-sm text-gray-500")}>
+            <View style={styles.view}>
+              <AppText variant="subtitle" style={styles.appText}>
                 No staff members found.
               </AppText>
             </View>
@@ -206,10 +206,83 @@ export const EmployeesScreen = () => {
         <AppButton
           title="Save Staff Member"
           onPress={handleAddEmployee}
-          style={Stylesheet.cls(theme, "mt-4")}
+          style={styles.appButton}
         />
       </AppModal>
     </SafeAreaView>
   );
 };
+
+const styles = ScaledSheet.create({
+  appButton: {
+    marginTop: '16@ms',
+  },
+  appButton1: {
+    height: '34.0@vs',
+    paddingHorizontal: '14@ms',
+  },
+  appCard: {
+    marginBottom: '12@ms',
+    padding: '14@ms',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  appText: {
+    textAlign: 'center',
+    fontSize: '14@ms',
+    color: '#6b7280',
+  },
+  appText1: {
+    fontSize: '10@ms',
+    fontWeight: 'bold',
+    color: '#ef4444',
+  },
+  appText2: {
+    color: '#6b7280',
+    marginTop: '2@ms',
+  },
+  appText3: {
+    color: '#9ca3af',
+  },
+  appText4: {
+    color: '#111827',
+  },
+  appText4Dark: {
+    color: '#ffffff',
+  },
+  safeAreaView: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  safeAreaViewDark: {
+    backgroundColor: '#0c0e12',
+  },
+  style: {
+    marginBottom: '16@ms',
+  },
+  touchableOpacity: {
+    padding: '8@ms',
+    borderRadius: '12@ms',
+    borderWidth: 1,
+  },
+  view: {
+    marginTop: '32@ms',
+  },
+  view1: {
+    marginLeft: '12@ms',
+    flex: 1,
+  },
+  view2: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    paddingRight: '12@ms',
+  },
+  view3: {
+    flex: 1,
+    padding: '16@ms',
+  },
+});
+
 export default EmployeesScreen;

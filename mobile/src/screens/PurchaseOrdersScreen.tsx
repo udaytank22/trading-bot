@@ -1,8 +1,8 @@
 import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import Stylesheet from '../components/common/Stylesheet';
 
+import { ScaledSheet } from 'react-native-size-matters';
 import { View, FlatList, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAppStore } from '../store/appStore';
@@ -20,23 +20,23 @@ export const PurchaseOrdersScreen = () => {
   const { purchaseOrdersData } = useAppStore();
 
   return (
-    <SafeAreaView style={Stylesheet.cls(theme, "flex-1 bg-gray-50 dark:bg-darkbg")}>
+    <SafeAreaView style={[styles.safeAreaView, theme === 'dark' && styles.safeAreaViewDark]}>
       <AppHeader title="Purchase Orders" showBack={true} />
 
       <FlatList
         data={purchaseOrdersData}
         keyExtractor={(item) => item.po_id}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={styles.contentContainer}
         renderItem={({ item }) => (
           <TouchableOpacity
             onPress={() => navigation.navigate('PurchaseOrderDetail', { poId: item.po_id })}
             activeOpacity={0.8}
-            style={Stylesheet.cls(theme, "mb-3.5")}
+            style={styles.style}
           >
-            <AppCard variant="glass" style={Stylesheet.cls(theme, "p-4 flex-row justify-between items-center")}>
-              <View style={Stylesheet.cls(theme, "flex-1 pr-2")}>
-                <View style={Stylesheet.cls(theme, "flex-row items-center")}>
-                  <AppText style={Stylesheet.cls(theme, "font-mono text-purple-600 dark:text-purple-400 font-bold text-xs mr-2")}>
+            <AppCard variant="glass" style={styles.appCard}>
+              <View style={styles.view3}>
+                <View style={styles.view2}>
+                  <AppText style={[styles.appText4, theme === 'dark' && styles.appText4Dark]}>
                     {item.po_id}
                   </AppText>
                   <AppText variant="caption">
@@ -44,17 +44,17 @@ export const PurchaseOrdersScreen = () => {
                   </AppText>
                 </View>
                 
-                <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "mt-1")} numberOfLines={1}>
+                <AppText variant="bodySemibold" style={styles.appText3} numberOfLines={1}>
                   {item.customer}
                 </AppText>
-                <AppText variant="caption" style={Stylesheet.cls(theme, "text-gray-500 mt-0.5")}>
+                <AppText variant="caption" style={styles.appText2}>
                   Vessel: {item.vessel}
                 </AppText>
               </View>
 
-              <View style={Stylesheet.cls(theme, "items-end")}>
+              <View style={styles.view1}>
                 <AppStatusBadge status={item.status} />
-                <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "mt-2 text-purple-650 dark:text-purple-400 font-bold")}>
+                <AppText variant="bodySemibold" style={[styles.appText1, theme === 'dark' && styles.appText1Dark]}>
                   {formatUSD(item.total_amount)}
                 </AppText>
               </View>
@@ -62,8 +62,8 @@ export const PurchaseOrdersScreen = () => {
           </TouchableOpacity>
         )}
         ListEmptyComponent={
-          <View style={Stylesheet.cls(theme, "mt-8")}>
-            <AppText variant="subtitle" style={Stylesheet.cls(theme, "text-center text-sm text-gray-500")}>
+          <View style={styles.view}>
+            <AppText variant="subtitle" style={styles.appText}>
               No purchase orders found.
             </AppText>
           </View>
@@ -72,4 +72,71 @@ export const PurchaseOrdersScreen = () => {
     </SafeAreaView>
   );
 };
+
+const styles = ScaledSheet.create({
+  contentContainer: {
+    padding: '16@ms',
+  },
+  appCard: {
+    padding: '16@ms',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  appText: {
+    textAlign: 'center',
+    fontSize: '14@ms',
+    color: '#6b7280',
+  },
+  appText1: {
+    marginTop: '8@ms',
+    color: '#8b5cf6',
+    fontWeight: 'bold',
+  },
+  appText1Dark: {
+    color: '#c084fc',
+  },
+  appText2: {
+    color: '#6b7280',
+    marginTop: '2@ms',
+  },
+  appText3: {
+    marginTop: '4@ms',
+  },
+  appText4: {
+    fontFamily: 'monospace',
+    color: '#7c3aed',
+    fontWeight: 'bold',
+    fontSize: '12@ms',
+    marginRight: '8@ms',
+  },
+  appText4Dark: {
+    color: '#c084fc',
+  },
+  safeAreaView: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  safeAreaViewDark: {
+    backgroundColor: '#0c0e12',
+  },
+  style: {
+    marginBottom: '14@ms',
+  },
+  view: {
+    marginTop: '32@ms',
+  },
+  view1: {
+    alignItems: 'flex-end',
+  },
+  view2: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  view3: {
+    flex: 1,
+    paddingRight: '8@ms',
+  },
+});
+
 export default PurchaseOrdersScreen;

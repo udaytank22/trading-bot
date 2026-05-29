@@ -15,6 +15,7 @@ export type RootStackParamList = {
   Profile: undefined;
   Settings: undefined;
   Notifications: undefined;
+  Todo: undefined;
 };
 
 export type TabParamList = {

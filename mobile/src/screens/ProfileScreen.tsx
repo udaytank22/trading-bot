@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import Stylesheet from '../components/common/Stylesheet';
 
+import { ScaledSheet } from 'react-native-size-matters';
 import { View, ScrollView, Alert } from 'react-native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
@@ -35,21 +35,21 @@ export const ProfileScreen = () => {
   };
 
   return (
-    <SafeAreaView style={Stylesheet.cls(theme, "flex-1 bg-gray-50 dark:bg-darkbg")}>
+    <SafeAreaView style={[styles.safeAreaView, theme === 'dark' && styles.safeAreaViewDark]}>
       <AppHeader title="My Profile" showBack={true} />
 
-      <ScrollView style={Stylesheet.cls(theme, "flex-1 p-4")} contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingBottom: 40 }}>
         {/* Profile Card Header */}
-        <View style={Stylesheet.cls(theme, "items-center mb-6")}>
+        <View style={styles.view2}>
           <AppAvatar name={name} size="lg" />
-          <AppText variant="h2" style={Stylesheet.cls(theme, "mt-3 font-extrabold")}>{name}</AppText>
-          <AppText variant="subtitle" style={Stylesheet.cls(theme, "text-xs uppercase tracking-wider text-purple-650 dark:text-purple-400 mt-1")}>
+          <AppText variant="h2" style={styles.appText7}>{name}</AppText>
+          <AppText variant="subtitle" style={[styles.appText6, theme === 'dark' && styles.appText6Dark]}>
             {currentUser?.role || 'System Manager'}
           </AppText>
         </View>
 
         {/* Input Fields */}
-        <AppCard variant="bordered" style={Stylesheet.cls(theme, "mb-4")}>
+        <AppCard variant="bordered" style={styles.appCard1}>
           <AppInput
             label="Full Profile Name"
             placeholder="e.g. Arjun Sharma"
@@ -76,30 +76,122 @@ export const ProfileScreen = () => {
         </AppCard>
 
         {/* Business Settings info */}
-        <AppCard variant="glass" style={Stylesheet.cls(theme, "mb-6 p-4")}>
-          <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Business Unit</AppText>
-          <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "text-base font-bold text-gray-900 dark:text-white mt-0.5")}>
+        <AppCard variant="glass" style={styles.appCard}>
+          <AppText variant="captionSemibold" style={styles.appText5}>Business Unit</AppText>
+          <AppText variant="bodySemibold" style={[styles.appText4, theme === 'dark' && styles.appText4Dark]}>
             TradeMind Global Ltd
           </AppText>
           
-          <View style={Stylesheet.cls(theme, "flex-row justify-between items-center py-2.5 border-t border-gray-100 dark:border-white/[0.04] mt-3")}>
-            <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Default Profit Margin</AppText>
-            <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "text-purple-650 dark:text-purple-400")}>15%</AppText>
+          <View style={[styles.view1, theme === 'dark' && styles.view1Dark]}>
+            <AppText variant="captionSemibold" style={styles.appText3}>Default Profit Margin</AppText>
+            <AppText variant="bodySemibold" style={[styles.appText2, theme === 'dark' && styles.appText2Dark]}>15%</AppText>
           </View>
 
-          <View style={Stylesheet.cls(theme, "flex-row justify-between items-center py-2.5 border-t border-gray-100 dark:border-white/[0.04]")}>
-            <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>System Permissions</AppText>
-            <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "text-emerald-500")}>Read & Write CRM Access</AppText>
+          <View style={[styles.view, theme === 'dark' && styles.viewDark]}>
+            <AppText variant="captionSemibold" style={styles.appText1}>System Permissions</AppText>
+            <AppText variant="bodySemibold" style={styles.appText}>Read & Write CRM Access</AppText>
           </View>
         </AppCard>
 
         <AppButton
           title="Save Profile Settings"
           onPress={handleSave}
-          style={Stylesheet.cls(theme, "rounded-2xl")}
+          style={styles.appButton}
         />
       </ScrollView>
     </SafeAreaView>
   );
 };
+
+const styles = ScaledSheet.create({
+  appButton: {
+    borderRadius: '16@ms',
+  },
+  appCard: {
+    marginBottom: '24@ms',
+    padding: '16@ms',
+  },
+  appCard1: {
+    marginBottom: '16@ms',
+  },
+  appText: {
+    color: '#10b981',
+  },
+  appText1: {
+    color: '#9ca3af',
+  },
+  appText2: {
+    color: '#8b5cf6',
+  },
+  appText2Dark: {
+    color: '#c084fc',
+  },
+  appText3: {
+    color: '#9ca3af',
+  },
+  appText4: {
+    fontSize: '16@ms',
+    fontWeight: 'bold',
+    color: '#111827',
+    marginTop: '2@ms',
+  },
+  appText4Dark: {
+    color: '#ffffff',
+  },
+  appText5: {
+    color: '#9ca3af',
+  },
+  appText6: {
+    fontSize: '12@ms',
+    letterSpacing: 0.5,
+    color: '#8b5cf6',
+    marginTop: '4@ms',
+  },
+  appText6Dark: {
+    color: '#c084fc',
+  },
+  appText7: {
+    marginTop: '12@ms',
+    fontWeight: '800',
+  },
+  safeAreaView: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  safeAreaViewDark: {
+    backgroundColor: '#0c0e12',
+  },
+  scrollView: {
+    flex: 1,
+    padding: '16@ms',
+  },
+  view: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: '10@ms',
+    borderTopWidth: 1,
+    borderColor: '#f3f4f6',
+  },
+  view1: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: '10@ms',
+    borderTopWidth: 1,
+    borderColor: '#f3f4f6',
+    marginTop: '12@ms',
+  },
+  view1Dark: {
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+  },
+  view2: {
+    alignItems: 'center',
+    marginBottom: '24@ms',
+  },
+  viewDark: {
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+  },
+});
+
 export default ProfileScreen;

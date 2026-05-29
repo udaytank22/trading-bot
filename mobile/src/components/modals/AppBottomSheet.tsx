@@ -1,10 +1,10 @@
 import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ScaledSheet } from 'react-native-size-matters';
 import { Modal, View, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import AppText from '../common/AppText';
 import { useAppStore } from '../../store/appStore';
-import Stylesheet from '../common/Stylesheet';
 
 interface AppBottomSheetProps {
   visible: boolean;
@@ -24,19 +24,21 @@ export const AppBottomSheet: React.FC<AppBottomSheetProps> = ({
   const theme = useAppStore((state) => state.theme);
   const isDark = theme === 'dark';
 
-  const containerStyle = Stylesheet.cls(theme, 'flex-1 justify-end bg-black/60');
+  const containerStyle = styles.containerStyle;
   
-  const bottomSheetBg = isDark ? 'bg-darkbg border-white/[0.05]' : 'bg-gray-50 border-gray-200';
-  const bottomSheetStyle = Stylesheet.cls(theme, `rounded-t-3xl border-t shadow-2xl ${bottomSheetBg}`);
+  const bottomSheetStyle = [
+    styles.bottomSheetStyle,
+    isDark ? styles.bottomSheetDark : styles.bottomSheetLight,
+  ];
   
-  const grabContainerStyle = Stylesheet.cls(theme, 'items-center py-2 bg-white dark:bg-[#12141c] rounded-t-3xl');
-  const grabHandleStyle = Stylesheet.cls(theme, 'w-12 h-1 bg-gray-300 dark:bg-gray-700 rounded-full');
+  const grabContainerStyle = [styles.grabContainerStyle, theme === 'dark' && styles.grabContainerStyleDark];
+  const grabHandleStyle = [styles.grabHandleStyle, theme === 'dark' && styles.grabHandleStyleDark];
   
-  const headerStyle = Stylesheet.cls(theme, 'px-5 pb-3 pt-1 flex-row justify-between items-center bg-white dark:bg-[#12141c] border-b border-gray-100 dark:border-white/[0.04]');
-  const titleStyle = Stylesheet.cls(theme, 'font-bold flex-1');
-  const doneBtnStyle = Stylesheet.cls(theme, 'px-2 py-1 rounded-lg active:bg-gray-100 dark:active:bg-white/5');
-  const doneTextStyle = Stylesheet.cls(theme, 'text-purple-600 dark:text-purple-400 font-bold text-sm');
-  const scrollStyle = Stylesheet.cls(theme, 'p-4');
+  const headerStyle = [styles.headerStyle, theme === 'dark' && styles.headerStyleDark];
+  const titleStyle = styles.titleStyle;
+  const doneBtnStyle = [styles.doneBtnStyle, theme === 'dark' && styles.doneBtnStyleDark];
+  const doneTextStyle = [styles.doneTextStyle, theme === 'dark' && styles.doneTextStyleDark];
+  const scrollStyle = styles.scrollStyle;
 
   return (
     <Modal
@@ -47,12 +49,12 @@ export const AppBottomSheet: React.FC<AppBottomSheetProps> = ({
     >
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={Stylesheet.cls(theme, "flex-1")}
+        style={styles.keyboardAvoidingView}
       >
         <View style={containerStyle}>
           {/* Backdrop */}
           <TouchableOpacity 
-            style={Stylesheet.cls(theme, "flex-1")} 
+            style={styles.touchableOpacity} 
             activeOpacity={1} 
             onPress={onClose} 
           />
@@ -91,4 +93,88 @@ export const AppBottomSheet: React.FC<AppBottomSheetProps> = ({
     </Modal>
   );
 };
+
+const styles = ScaledSheet.create({
+  containerStyle: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.60)',
+  },
+  bottomSheetStyle: {
+    borderTopLeftRadius: '24@ms',
+    borderTopRightRadius: '24@ms',
+    borderTopWidth: 1,
+  },
+  bottomSheetLight: {
+    backgroundColor: '#f9fafb',
+    borderColor: '#e5e7eb',
+  },
+  bottomSheetDark: {
+    backgroundColor: '#0c0e12',
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  doneBtnStyle: {
+    paddingHorizontal: '8@ms',
+    paddingVertical: '4@ms',
+    borderRadius: '8@ms',
+    backgroundColor: '#f3f4f6',
+  },
+  doneBtnStyleDark: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  doneTextStyle: {
+    color: '#7c3aed',
+    fontWeight: 'bold',
+    fontSize: '14@ms',
+  },
+  doneTextStyleDark: {
+    color: '#c084fc',
+  },
+  grabContainerStyle: {
+    alignItems: 'center',
+    paddingVertical: '8@ms',
+    backgroundColor: '#ffffff',
+  },
+  grabContainerStyleDark: {
+    backgroundColor: '#12141c',
+  },
+  grabHandleStyle: {
+    width: '48@s',
+    height: '4@vs',
+    backgroundColor: '#d1d5db',
+    borderRadius: '9999@ms',
+  },
+  grabHandleStyleDark: {
+    backgroundColor: '#374151',
+  },
+  headerStyle: {
+    paddingHorizontal: '20@ms',
+    paddingBottom: '12@ms',
+    paddingTop: '4@ms',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderColor: '#f3f4f6',
+  },
+  headerStyleDark: {
+    backgroundColor: '#12141c',
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  scrollStyle: {
+    padding: '16@ms',
+  },
+  titleStyle: {
+    fontWeight: 'bold',
+    flex: 1,
+  },
+  touchableOpacity: {
+    flex: 1,
+  },
+});
+
 export default AppBottomSheet;

@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Stylesheet from '../components/common/Stylesheet';
 import { View, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAppStore } from '../store/appStore';
@@ -12,6 +11,7 @@ import { formatUSD, formatDateString } from '../utils/marginEngine';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import Icon from 'react-native-vector-icons/Feather';
+import { s, vs, ms } from 'react-native-size-matters';
 
 // ─── Quick Action Button ──────────────────────────────────────────────────────
 
@@ -58,15 +58,15 @@ const QuickActionBtn = ({ title, onPress, variant = 'purple' }: QuickActionBtnPr
         backgroundColor: v.bg,
         borderWidth: 1,
         borderColor: v.border,
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-        borderRadius: 999,
-        marginRight: 10,
+        paddingHorizontal: s(16),
+        paddingVertical: vs(10),
+        borderRadius: ms(999),
+        marginRight: s(10),
         alignItems: 'center',
         justifyContent: 'center',
       }}
     >
-      <AppText style={{ color: v.text, fontSize: 13, fontWeight: '600' }}>
+      <AppText style={{ color: v.text, fontSize: ms(13), fontWeight: '600' }}>
         {title}
       </AppText>
     </TouchableOpacity>
@@ -90,62 +90,60 @@ const KpiCard = ({ label, value, sub, valueColor }: KpiCardProps) => {
     <View style={{
       width: '48%',
       backgroundColor: isDark ? '#1a1d27' : '#ffffff',
-      borderRadius: 14,
+      borderRadius: ms(14),
       borderWidth: 1,
       borderColor: isDark ? '#2a2d3a' : '#e9eaf0',
-      padding: 14,
+      padding: ms(14),
     }}>
-      <AppText style={{ fontSize: 12, color: isDark ? '#9ca3af' : '#6b7280', marginBottom: 6 }}>
+      <AppText style={{ fontSize: ms(12), color: isDark ? '#9ca3af' : '#6b7280', marginBottom: vs(6) }}>
         {label}
       </AppText>
-      <AppText style={{ fontSize: 26, fontWeight: '700', color: valueColor, marginBottom: 4 }}>
+      <AppText style={{ fontSize: ms(26), fontWeight: '700', color: valueColor, marginBottom: vs(4) }}>
         {value}
       </AppText>
-      <AppText style={{ fontSize: 11, color: isDark ? '#6b7280' : '#9ca3af' }}>
+      <AppText style={{ fontSize: ms(11), color: isDark ? '#6b7280' : '#9ca3af' }}>
         {sub}
       </AppText>
     </View>
   );
 };
 
-// ─── Inquiry Row ─────────────────────────────────────────────────────────────
-
 const InquiryRow = ({ inq, onPress, isDark }: any) => (
   <TouchableOpacity
     onPress={onPress}
     activeOpacity={0.8}
     style={{
-      paddingVertical: 14,
+      paddingVertical: vs(14),
       borderBottomWidth: 1,
       borderBottomColor: isDark ? '#23262f' : '#f0f1f5',
     }}
   >
     <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
       {/* Left content */}
-      <View style={{ flex: 1, paddingRight: 10 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 3 }}>
+      <View style={{ flex: 1, paddingRight: s(10) }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: vs(3) }}>
           <AppText style={{
-            fontSize: 11,
+            fontSize: ms(11),
             fontWeight: '600',
             color: isDark ? '#818cf8' : '#6366f1',
             fontFamily: 'monospace',
-            marginRight: 8,
+            marginRight: s(8),
           }}>
             {inq.inquiry_id}
           </AppText>
-          <AppText style={{ fontSize: 11, color: isDark ? '#6b7280' : '#9ca3af' }}>
+          <AppText style={{ fontSize: ms(11), color: isDark ? '#6b7280' : '#9ca3af' }}>
             {formatDateString(inq.date_received)}
           </AppText>
         </View>
         <AppText style={{
-          fontSize: 14,
+          fontSize: ms(14),
           fontWeight: '700',
           color: isDark ? '#f1f5f9' : '#111827',
-          marginBottom: 2,
+          marginBottom: vs(2),
         }} numberOfLines={1}>
           {inq.buyer_name}
         </AppText>
-        <AppText style={{ fontSize: 12, color: isDark ? '#6b7280' : '#9ca3af' }} numberOfLines={1}>
+        <AppText style={{ fontSize: ms(12), color: isDark ? '#6b7280' : '#9ca3af' }} numberOfLines={1}>
           {inq.products[0]?.product_name}{inq.products.length > 1 ? ` +${inq.products.length - 1} more` : ''}
         </AppText>
       </View>
@@ -154,10 +152,10 @@ const InquiryRow = ({ inq, onPress, isDark }: any) => (
       <View style={{ alignItems: 'flex-end' }}>
         <AppStatusBadge status={inq.status} />
         <AppText style={{
-          fontSize: 11,
+          fontSize: ms(11),
           fontWeight: '600',
           color: isDark ? '#6b7280' : '#9ca3af',
-          marginTop: 6,
+          marginTop: vs(6),
           textTransform: 'uppercase',
           letterSpacing: 0.3,
         }}>
@@ -231,17 +229,17 @@ export const DashboardScreen = () => {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingHorizontal: s(16),
+        paddingVertical: vs(12),
         backgroundColor: bgColor,
       }}>
         {/* Left: Avatar + Title */}
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={{ marginRight: 10 }}>
+          <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={{ marginRight: s(10) }}>
             <AppAvatar name={currentUser?.name || 'Admin'} size="sm" showStatus={true} />
           </TouchableOpacity>
           <AppText style={{
-            fontSize: 18,
+            fontSize: ms(18),
             fontWeight: '700',
             color: isDark ? '#f1f5f9' : '#111827',
           }}>
@@ -250,13 +248,13 @@ export const DashboardScreen = () => {
         </View>
 
         {/* Right: Theme toggle + Bell */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: s(8) }}>
           <TouchableOpacity
             onPress={toggleTheme}
             style={{
-              width: 36,
-              height: 36,
-              borderRadius: 18,
+              width: s(36),
+              height: s(36),
+              borderRadius: s(18),
               backgroundColor: iconBg,
               alignItems: 'center',
               justifyContent: 'center',
@@ -269,9 +267,9 @@ export const DashboardScreen = () => {
           <TouchableOpacity
             onPress={() => navigation.navigate('Notifications')}
             style={{
-              width: 36,
-              height: 36,
-              borderRadius: 18,
+              width: s(36),
+              height: s(36),
+              borderRadius: s(18),
               backgroundColor: iconBg,
               alignItems: 'center',
               justifyContent: 'center',
@@ -282,11 +280,11 @@ export const DashboardScreen = () => {
             {/* Red dot */}
             <View style={{
               position: 'absolute',
-              top: 7,
-              right: 7,
-              width: 7,
-              height: 7,
-              borderRadius: 4,
+              top: vs(7),
+              right: s(7),
+              width: s(7),
+              height: s(7),
+              borderRadius: s(4),
               backgroundColor: '#ef4444',
               borderWidth: 1.5,
               borderColor: iconBg,
@@ -298,24 +296,24 @@ export const DashboardScreen = () => {
       {/* ── Body ── */}
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingHorizontal: s(16), paddingBottom: vs(40) }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#8b5cf6" />
         }
       >
         {/* Welcome */}
-        <View style={{ marginBottom: 20, marginTop: 4 }}>
-          <AppText style={{ fontSize: 11, fontWeight: '600', color: isDark ? '#6b7280' : '#9ca3af', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+        <View style={{ marginBottom: vs(20), marginTop: vs(4) }}>
+          <AppText style={{ fontSize: ms(11), fontWeight: '600', color: isDark ? '#6b7280' : '#9ca3af', textTransform: 'uppercase', letterSpacing: 1, marginBottom: vs(4) }}>
             Overview
           </AppText>
-          <AppText style={{ fontSize: 26, fontWeight: '800', color: isDark ? '#f1f5f9' : '#111827' }}>
+          <AppText style={{ fontSize: ms(26), fontWeight: '800', color: isDark ? '#f1f5f9' : '#111827' }}>
             Welcome back, {currentUser?.name?.split(' ')[0] || 'Trader'}
           </AppText>
         </View>
 
         {/* KPI Grid */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: vs(12) }}>
           <KpiCard
             label="Total Inquiries"
             value={metrics.totalInqToday || 14}
@@ -329,7 +327,7 @@ export const DashboardScreen = () => {
             valueColor={isDark ? '#34d399' : '#059669'}
           />
         </View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: vs(24) }}>
           <KpiCard
             label="Pending Replies"
             value={metrics.pendingReplies || 1}
@@ -345,8 +343,8 @@ export const DashboardScreen = () => {
         </View>
 
         {/* Quick Actions */}
-        <View style={{ marginBottom: 24 }}>
-          <AppText style={{ fontSize: 16, fontWeight: '700', color: isDark ? '#f1f5f9' : '#111827', marginBottom: 12 }}>
+        <View style={{ marginBottom: vs(24) }}>
+          <AppText style={{ fontSize: ms(16), fontWeight: '700', color: isDark ? '#f1f5f9' : '#111827', marginBottom: vs(12) }}>
             Quick Actions
           </AppText>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -363,7 +361,7 @@ export const DashboardScreen = () => {
             <QuickActionBtn
               title="📝 Checklist"
               variant="green"
-              onPress={() => navigation.navigate('MainTabs', { screen: 'Todo' })}
+              onPress={() => navigation.navigate('Todo')}
             />
             <QuickActionBtn
               title="⚙️ Settings"
@@ -376,36 +374,36 @@ export const DashboardScreen = () => {
         {/* Weekly Profit Chart */}
         <View style={{
           backgroundColor: cardBg,
-          borderRadius: 16,
+          borderRadius: ms(16),
           borderWidth: 1,
           borderColor: borderColor,
-          padding: 16,
-          marginBottom: 24,
+          padding: ms(16),
+          marginBottom: vs(24),
         }}>
-          <AppText style={{ fontSize: 15, fontWeight: '700', color: isDark ? '#f1f5f9' : '#111827', marginBottom: 2 }}>
+          <AppText style={{ fontSize: ms(15), fontWeight: '700', color: isDark ? '#f1f5f9' : '#111827', marginBottom: vs(2) }}>
             Weekly Profit Trend
           </AppText>
-          <AppText style={{ fontSize: 12, color: isDark ? '#6b7280' : '#9ca3af', marginBottom: 14 }}>
+          <AppText style={{ fontSize: ms(12), color: isDark ? '#6b7280' : '#9ca3af', marginBottom: vs(14) }}>
             Daily closed deals margin yields
           </AppText>
           <BarChart
             data={weeklyTrendData.map(item => ({ label: item.day, value: item.profit }))}
-            height={160}
+            height={vs(160)}
             color="#8b5cf6"
           />
         </View>
 
         {/* Recent Inquiries */}
-        <View style={{ marginBottom: 8 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-            <AppText style={{ fontSize: 16, fontWeight: '700', color: isDark ? '#f1f5f9' : '#111827' }}>
+        <View style={{ marginBottom: vs(8) }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: vs(4) }}>
+            <AppText style={{ fontSize: ms(16), fontWeight: '700', color: isDark ? '#f1f5f9' : '#111827' }}>
               Recent Inquiries
             </AppText>
             <TouchableOpacity
               onPress={() => navigation.navigate('MainTabs', { screen: 'Inquiries' })}
               style={{ flexDirection: 'row', alignItems: 'center' }}
             >
-              <AppText style={{ fontSize: 13, fontWeight: '600', color: '#8b5cf6', marginRight: 2 }}>
+              <AppText style={{ fontSize: ms(13), fontWeight: '600', color: '#8b5cf6', marginRight: s(2) }}>
                 View All
               </AppText>
               <Icon name="chevron-right" size={14} color="#8b5cf6" />
@@ -414,10 +412,10 @@ export const DashboardScreen = () => {
 
           <View style={{
             backgroundColor: cardBg,
-            borderRadius: 16,
+            borderRadius: ms(16),
             borderWidth: 1,
             borderColor: borderColor,
-            paddingHorizontal: 14,
+            paddingHorizontal: s(14),
           }}>
             {latestInquiries.map((inq) => (
               <InquiryRow

@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScaledSheet } from 'react-native-size-matters';
 import { View, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 
-import Stylesheet from '../components/common/Stylesheet';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
 import AppCard from '../components/common/AppCard';
@@ -35,22 +35,15 @@ const TabButton = ({ tab, label, activeTab, onPress }: TabButtonProps) => {
     <TouchableOpacity
       onPress={() => onPress(tab)}
       style={[
-        Stylesheet.cls(
-          theme,
-          `py-2 rounded-full justify-center items-center ${
-            isSelected ? 'px-7' : 'bg-transparent px-3'
-          }`,
-        ),
-        isSelected && { backgroundColor: '#4648D4' },
+        styles.tabButton,
+        isSelected ? styles.tabButtonSelected : styles.tabButtonUnselected,
       ]}
     >
       <AppText
-        style={Stylesheet.cls(
-          theme,
-          `text-[15px] ${
-            isSelected ? 'text-white' : 'text-[#4b5563] dark:text-[#9ca3af]'
-          }`,
-        )}
+        style={[
+          styles.tabText,
+          isSelected ? styles.tabTextSelected : (theme === 'dark' ? styles.tabTextUnselectedDark : styles.tabTextUnselected),
+        ]}
       >
         {label}
       </AppText>
@@ -168,35 +161,23 @@ export const InquiriesScreen = () => {
           navigation.navigate('InquiryDetail', { inquiryId: item.inquiry_id })
         }
         activeOpacity={0.8}
-        style={Stylesheet.cls(theme, 'mb-3 mx-4')}
+        style={styles.style3}
       >
         <AppCard
-          style={Stylesheet.cls(
-            theme,
-            'p-4 border border-gray-100 dark:border-white/[0.05] rounded-xl bg-white dark:bg-darkcard',
-          )}
+          style={[styles.appCard, theme === 'dark' && styles.appCardDark]}
         >
           {item.status && item.status !== 'QUOTE_SENT' && (
             <View
-              style={Stylesheet.cls(
-                theme,
-                'flex-row justify-between items-start mb-3',
-              )}
+              style={styles.view8}
             >
               <View>
                 <AppText
-                  style={Stylesheet.cls(
-                    theme,
-                    'text-[#4F46E5] dark:text-[#818cf8] text-[11px] font-bold uppercase tracking-wider',
-                  )}
+                  style={[styles.appText8, theme === 'dark' && styles.appText8Dark]}
                 >
                   {item.inquiry_id}
                 </AppText>
                 <AppText
-                  style={Stylesheet.cls(
-                    theme,
-                    'text-gray-500 dark:text-gray-400 mt-0.5 text-[11px]',
-                  )}
+                  style={[styles.appText7, theme === 'dark' && styles.appText7Dark]}
                 >
                   {formatDateString(item.date_received)}
                 </AppText>
@@ -206,34 +187,22 @@ export const InquiriesScreen = () => {
           )}
 
           <AppText
-            style={Stylesheet.cls(
-              theme,
-              'text-gray-900 dark:text-white text-[15px] font-bold mt-1',
-            )}
+            style={[styles.appText6, theme === 'dark' && styles.appText6Dark]}
           >
             {item.buyer_name}
           </AppText>
 
           <View
-            style={Stylesheet.cls(
-              theme,
-              'flex-row items-center mt-3 pt-3 border-t border-gray-100 dark:border-white/[0.04]',
-            )}
+            style={[styles.view7, theme === 'dark' && styles.view7Dark]}
           >
-            <View style={Stylesheet.cls(theme, 'flex-1 pr-2')}>
+            <View style={styles.view6}>
               <AppText
-                style={Stylesheet.cls(
-                  theme,
-                  'text-gray-400 dark:text-gray-500 text-[11px] mb-1',
-                )}
+                style={[styles.appText5, theme === 'dark' && styles.appText5Dark]}
               >
                 Products
               </AppText>
               <AppText
-                style={Stylesheet.cls(
-                  theme,
-                  'text-gray-700 dark:text-gray-300 text-[13px]',
-                )}
+                style={[styles.appText4, theme === 'dark' && styles.appText4Dark]}
                 numberOfLines={1}
               >
                 {item.products[0]?.product_name}
@@ -243,20 +212,14 @@ export const InquiriesScreen = () => {
               </AppText>
             </View>
 
-            <View style={Stylesheet.cls(theme, 'items-end pl-2')}>
+            <View style={styles.view5}>
               <AppText
-                style={Stylesheet.cls(
-                  theme,
-                  'text-gray-400 dark:text-gray-500 text-[11px] mb-1',
-                )}
+                style={[styles.appText3, theme === 'dark' && styles.appText3Dark]}
               >
                 Vessel
               </AppText>
               <AppText
-                style={Stylesheet.cls(
-                  theme,
-                  'text-gray-900 dark:text-white text-[13px] font-bold',
-                )}
+                style={[styles.appText2, theme === 'dark' && styles.appText2Dark]}
               >
                 {item.vessel_name || 'N/A'}
               </AppText>
@@ -269,30 +232,21 @@ export const InquiriesScreen = () => {
 
   return (
     <SafeAreaView
-      style={Stylesheet.cls(theme, 'flex-1 bg-[#f8f9fc] dark:bg-darkbg')}
+      style={[styles.safeAreaView, theme === 'dark' && styles.safeAreaViewDark]}
       edges={['top']}
     >
       <AppHeader
         title=""
-        style={Stylesheet.cls(
-          theme,
-          'bg-white dark:bg-[#12141c] border-b-0 px-4',
-        )}
+        style={[styles.appHeader, theme === 'dark' && styles.appHeaderDark]}
         leftAction={
-          <View style={Stylesheet.cls(theme, 'flex-row items-center')}>
+          <View style={styles.view4}>
             <View
-              style={Stylesheet.cls(
-                theme,
-                'w-8 h-8 rounded-full bg-[#1e293b] dark:bg-gray-800 justify-center items-center mr-2.5',
-              )}
+              style={[styles.view3, theme === 'dark' && styles.view3Dark]}
             >
               <Icon name="user" size={16} color="#38bdf8" />
             </View>
             <AppText
-              style={Stylesheet.cls(
-                theme,
-                'text-[#4F46E5] dark:text-[#818cf8] font-bold text-lg',
-              )}
+              style={[styles.appText1, theme === 'dark' && styles.appText1Dark]}
             >
               Inquiries
             </AppText>
@@ -303,36 +257,27 @@ export const InquiriesScreen = () => {
             title="+ Add"
             variant="primary"
             onPress={() => setIsAddModalOpen(true)}
-            style={Stylesheet.cls(
-              theme,
-              'h-[38px] px-5 rounded-full bg-[#A855F7] shadow-none',
-            )}
+            style={styles.style2}
           />
         }
       />
 
       <View
-        style={Stylesheet.cls(
-          theme,
-          'bg-white dark:bg-[#12141c] px-4 py-3 border-b-0',
-        )}
+        style={[styles.view2, theme === 'dark' && styles.view2Dark]}
       >
         <AppSearch
           value={search}
           onChangeText={setSearch}
           placeholder="Search by buyer, vessel or product..."
-          style={Stylesheet.cls(
-            theme,
-            'bg-[#f8f9fc] dark:bg-darkcard border border-[#e5e7eb] dark:border-white/[0.05] rounded-[18px] h-[50px]',
-          )}
+          style={[styles.style1, theme === 'dark' && styles.style1Dark]}
         />
       </View>
 
-      <View style={Stylesheet.cls(theme, 'bg-white dark:bg-[#12141c]')}>
+      <View style={[styles.view1, theme === 'dark' && styles.view1Dark]}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={Stylesheet.cls(theme, 'px-4 py-3 gap-6')}
+          contentContainerStyle={styles.scrollView}
         >
           <TabButton
             tab="ALL"
@@ -365,12 +310,12 @@ export const InquiriesScreen = () => {
         data={filteredInquiries}
         keyExtractor={item => item.inquiry_id}
         renderItem={renderInquiryCard}
-        contentContainerStyle={Stylesheet.cls(theme, 'pt-4 pb-24')}
+        contentContainerStyle={styles.style}
         ListEmptyComponent={
-          <View style={Stylesheet.cls(theme, 'mt-8')}>
+          <View style={styles.view}>
             <AppText
               variant="subtitle"
-              style={Stylesheet.cls(theme, 'text-center text-sm text-gray-500')}
+              style={styles.appText}
             >
               No inquiries match your filters.
             </AppText>
@@ -419,10 +364,225 @@ export const InquiriesScreen = () => {
         <AppButton
           title="Save Inquiry"
           onPress={handleAddInquiry}
-          style={Stylesheet.cls(theme, 'mt-4')}
+          style={styles.appButton}
         />
       </AppModal>
     </SafeAreaView>
   );
 };
+
+const styles = ScaledSheet.create({
+  appButton: {
+    marginTop: '16@ms',
+  },
+  appCard: {
+    padding: '16@ms',
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
+    borderRadius: '12@ms',
+    backgroundColor: '#ffffff',
+  },
+  appCardDark: {
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: '#161920',
+  },
+  appHeader: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: '16@ms',
+  },
+  appHeaderDark: {
+    backgroundColor: '#12141c',
+  },
+  appText: {
+    textAlign: 'center',
+    fontSize: '14@ms',
+    color: '#6b7280',
+  },
+  appText1: {
+    color: '#4F46E5',
+    fontWeight: 'bold',
+    fontSize: '18@ms',
+  },
+  appText1Dark: {
+    color: '#818cf8',
+  },
+  appText2: {
+    color: '#111827',
+    fontSize: '13@ms',
+    fontWeight: 'bold',
+  },
+  appText2Dark: {
+    color: '#ffffff',
+  },
+  appText3: {
+    color: '#9ca3af',
+    fontSize: '11@ms',
+    marginBottom: '4@ms',
+  },
+  appText3Dark: {
+    color: '#6b7280',
+  },
+  appText4: {
+    color: '#374151',
+    fontSize: '13@ms',
+  },
+  appText4Dark: {
+    color: '#d1d5db',
+  },
+  appText5: {
+    color: '#9ca3af',
+    fontSize: '11@ms',
+    marginBottom: '4@ms',
+  },
+  appText5Dark: {
+    color: '#6b7280',
+  },
+  appText6: {
+    color: '#111827',
+    fontSize: '15@ms',
+    fontWeight: 'bold',
+    marginTop: '4@ms',
+  },
+  appText6Dark: {
+    color: '#ffffff',
+  },
+  appText7: {
+    color: '#6b7280',
+    marginTop: '2@ms',
+    fontSize: '11@ms',
+  },
+  appText7Dark: {
+    color: '#9ca3af',
+  },
+  appText8: {
+    color: '#4F46E5',
+    fontSize: '11@ms',
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  appText8Dark: {
+    color: '#818cf8',
+  },
+  safeAreaView: {
+    flex: 1,
+    backgroundColor: '#f8f9fc',
+  },
+  safeAreaViewDark: {
+    backgroundColor: '#0c0e12',
+  },
+  scrollView: {
+    paddingHorizontal: '16@ms',
+    paddingVertical: '12@ms',
+    gap: '24@ms',
+  },
+  style: {
+    paddingTop: '16@ms',
+    paddingBottom: '96@ms',
+  },
+  style1: {
+    backgroundColor: '#f8f9fc',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    height: '50.0@vs',
+  },
+  style1Dark: {
+    backgroundColor: '#161920',
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  style2: {
+    height: '38.0@vs',
+    paddingHorizontal: '20@ms',
+    borderRadius: '9999@ms',
+    backgroundColor: '#A855F7',
+  },
+  style3: {
+    marginBottom: '12@ms',
+    marginHorizontal: '16@ms',
+  },
+  view: {
+    marginTop: '32@ms',
+  },
+  view1: {
+    backgroundColor: '#ffffff',
+  },
+  view1Dark: {
+    backgroundColor: '#12141c',
+  },
+  view2: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: '16@ms',
+    paddingVertical: '12@ms',
+  },
+  view2Dark: {
+    backgroundColor: '#12141c',
+  },
+  view3: {
+    width: '32@s',
+    height: '32@vs',
+    borderRadius: '9999@ms',
+    backgroundColor: '#1e293b',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: '10@ms',
+  },
+  view3Dark: {
+    backgroundColor: '#1f2937',
+  },
+  view4: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  view5: {
+    alignItems: 'flex-end',
+    paddingLeft: '8@ms',
+  },
+  view6: {
+    flex: 1,
+    paddingRight: '8@ms',
+  },
+  view7: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: '12@ms',
+    paddingTop: '12@ms',
+    borderTopWidth: 1,
+    borderColor: '#f3f4f6',
+  },
+  view7Dark: {
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+  },
+  view8: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: '12@ms',
+  },
+  tabButton: {
+    paddingVertical: '8@ms',
+    borderRadius: '9999@ms',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tabButtonSelected: {
+    paddingHorizontal: '28@ms',
+    backgroundColor: '#4648D4',
+  },
+  tabButtonUnselected: {
+    paddingHorizontal: '12@ms',
+    backgroundColor: 'transparent',
+  },
+  tabText: {
+    fontSize: '15@ms',
+  },
+  tabTextSelected: {
+    color: '#ffffff',
+  },
+  tabTextUnselected: {
+    color: '#4b5563',
+  },
+  tabTextUnselectedDark: {
+    color: '#9ca3af',
+  },
+});
+
 export default InquiriesScreen;

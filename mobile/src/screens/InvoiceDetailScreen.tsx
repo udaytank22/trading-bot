@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import Stylesheet from '../components/common/Stylesheet';
 
+import { ScaledSheet } from 'react-native-size-matters';
 import { View, ScrollView } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { useAppStore } from '../store/appStore';
@@ -45,9 +45,9 @@ export const InvoiceDetailScreen = () => {
 
   if (!invoice) {
     return (
-      <SafeAreaView style={Stylesheet.cls(theme, "flex-1 justify-center items-center bg-gray-50 dark:bg-darkbg")}>
+      <SafeAreaView style={[styles.safeAreaView1, theme === 'dark' && styles.safeAreaView1Dark]}>
         <AppText variant="h2">Invoice Not Found</AppText>
-        <AppButton title="Go Back" onPress={() => navigation.goBack()} style={Stylesheet.cls(theme, "mt-4")} />
+        <AppButton title="Go Back" onPress={() => navigation.goBack()} style={styles.appButton} />
       </SafeAreaView>
     );
   }
@@ -55,34 +55,34 @@ export const InvoiceDetailScreen = () => {
   const totalValue = invoice.products.reduce((sum, p) => sum + (p.total_price || 0), 0);
 
   return (
-    <SafeAreaView style={Stylesheet.cls(theme, "flex-1 bg-gray-50 dark:bg-darkbg")}>
+    <SafeAreaView style={[styles.safeAreaView, theme === 'dark' && styles.safeAreaViewDark]}>
       <AppHeader title="Invoice Details" showBack={true} />
 
-      <ScrollView style={Stylesheet.cls(theme, "flex-1 p-4")} contentContainerStyle={{ paddingBottom: 40 }}>
-        <AppCard variant="bordered" style={Stylesheet.cls(theme, "mb-4")}>
-          <View style={Stylesheet.cls(theme, "flex-row justify-between items-center mb-3.5")}>
-            <AppText variant="h2" style={Stylesheet.cls(theme, "font-mono text-purple-650 dark:text-purple-400")}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingBottom: 40 }}>
+        <AppCard variant="bordered" style={styles.appCard1}>
+          <View style={styles.view6}>
+            <AppText variant="h2" style={[styles.appText12, theme === 'dark' && styles.appText12Dark]}>
               {invoice.inquiry_id}
             </AppText>
             <AppStatusBadge status={invoice.invoice_status} />
           </View>
 
-          <View style={Stylesheet.cls(theme, "space-y-2.5")}>
+          <View style={{}}>
             <View>
-              <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Buyer / Customer</AppText>
-              <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "mt-0.5")}>{invoice.buyer_name}</AppText>
-              <AppText variant="caption" style={Stylesheet.cls(theme, "text-gray-500 mt-0.5")}>{invoice.buyer_email}</AppText>
+              <AppText variant="captionSemibold" style={styles.appText11}>Buyer / Customer</AppText>
+              <AppText variant="bodySemibold" style={styles.appText10}>{invoice.buyer_name}</AppText>
+              <AppText variant="caption" style={styles.appText9}>{invoice.buyer_email}</AppText>
             </View>
 
-            <View style={Stylesheet.cls(theme, "flex-row justify-between")}>
-              <View style={Stylesheet.cls(theme, "w-[48%]")}>
-                <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Cargo Handled</AppText>
-                <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "mt-0.5")}>{invoice.cargo}</AppText>
+            <View style={styles.view5}>
+              <View style={styles.view4}>
+                <AppText variant="captionSemibold" style={styles.appText8}>Cargo Handled</AppText>
+                <AppText variant="bodySemibold" style={styles.appText7}>{invoice.cargo}</AppText>
               </View>
 
-              <View style={Stylesheet.cls(theme, "w-[48%]")}>
-                <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Issued Date</AppText>
-                <AppText variant="body" style={Stylesheet.cls(theme, "mt-0.5")}>
+              <View style={styles.view3}>
+                <AppText variant="captionSemibold" style={styles.appText6}>Issued Date</AppText>
+                <AppText variant="body" style={styles.appText5}>
                   {invoice.invoice_date ? formatDateString(invoice.invoice_date) : 'Draft'}
                 </AppText>
               </View>
@@ -91,30 +91,30 @@ export const InvoiceDetailScreen = () => {
         </AppCard>
 
         {/* Breakdown Card */}
-        <AppCard variant="glass" style={Stylesheet.cls(theme, "mb-4")}>
-          <AppText variant="h3" style={Stylesheet.cls(theme, "font-bold mb-3.5")}>
+        <AppCard variant="glass" style={styles.appCard}>
+          <AppText variant="h3" style={styles.appText4}>
             Billing Breakdown
           </AppText>
 
           {invoice.products.map((p, idx) => (
-            <View key={idx} style={Stylesheet.cls(theme, "pb-3 border-b border-gray-100 dark:border-white/[0.04] last:border-0 last:pb-0")}>
+            <View key={idx} style={[styles.view2, theme === 'dark' && styles.view2Dark]}>
               <AppText variant="bodySemibold">
                 {p.product_name}
               </AppText>
-              <View style={Stylesheet.cls(theme, "flex-row justify-between mt-1.5")}>
-                <AppText variant="caption" style={Stylesheet.cls(theme, "text-gray-500")}>
+              <View style={styles.view1}>
+                <AppText variant="caption" style={styles.appText3}>
                   Qty: {p.quantity}
                 </AppText>
-                <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "text-purple-600 dark:text-purple-400")}>
+                <AppText variant="bodySemibold" style={[styles.appText2, theme === 'dark' && styles.appText2Dark]}>
                   {formatUSD(p.total_price || 0)}
                 </AppText>
               </View>
             </View>
           ))}
 
-          <View style={Stylesheet.cls(theme, "mt-4 pt-3.5 border-t border-gray-100 dark:border-white/[0.05] flex-row justify-between items-center")}>
-            <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "font-bold")}>Total Amount Due</AppText>
-            <AppText variant="h2" style={Stylesheet.cls(theme, "text-purple-600 dark:text-purple-400 font-extrabold")}>
+          <View style={[styles.view, theme === 'dark' && styles.viewDark]}>
+            <AppText variant="bodySemibold" style={styles.appText1}>Total Amount Due</AppText>
+            <AppText variant="h2" style={[styles.appText, theme === 'dark' && styles.appTextDark]}>
               {formatUSD(totalValue)}
             </AppText>
           </View>
@@ -130,7 +130,7 @@ export const InvoiceDetailScreen = () => {
                 setTimeout(() => setAlertConfig(prev => ({ ...prev, visible: false })), 1500);
               });
             }}
-            style={Stylesheet.cls(theme, "mt-2 mb-8")}
+            style={styles.style1}
           />
         )}
         
@@ -144,7 +144,7 @@ export const InvoiceDetailScreen = () => {
                 setTimeout(() => setAlertConfig(prev => ({ ...prev, visible: false })), 1500);
               });
             }}
-            style={Stylesheet.cls(theme, "mt-2 mb-8")}
+            style={styles.style}
           />
         )}
       </ScrollView>
@@ -161,4 +161,138 @@ export const InvoiceDetailScreen = () => {
     </SafeAreaView>
   );
 };
+
+const styles = ScaledSheet.create({
+  appButton: {
+    marginTop: '16@ms',
+  },
+  appCard: {
+    marginBottom: '16@ms',
+  },
+  appCard1: {
+    marginBottom: '16@ms',
+  },
+  appText: {
+    color: '#7c3aed',
+    fontWeight: '800',
+  },
+  appText1: {
+    fontWeight: 'bold',
+  },
+  appText10: {
+    marginTop: '2@ms',
+  },
+  appText11: {
+    color: '#9ca3af',
+  },
+  appText12: {
+    fontFamily: 'monospace',
+    color: '#8b5cf6',
+  },
+  appText12Dark: {
+    color: '#c084fc',
+  },
+  appText2: {
+    color: '#7c3aed',
+  },
+  appText2Dark: {
+    color: '#c084fc',
+  },
+  appText3: {
+    color: '#6b7280',
+  },
+  appText4: {
+    fontWeight: 'bold',
+    marginBottom: '14@ms',
+  },
+  appText5: {
+    marginTop: '2@ms',
+  },
+  appText6: {
+    color: '#9ca3af',
+  },
+  appText7: {
+    marginTop: '2@ms',
+  },
+  appText8: {
+    color: '#9ca3af',
+  },
+  appText9: {
+    color: '#6b7280',
+    marginTop: '2@ms',
+  },
+  appTextDark: {
+    color: '#c084fc',
+  },
+  safeAreaView: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  safeAreaView1: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+  },
+  safeAreaView1Dark: {
+    backgroundColor: '#0c0e12',
+  },
+  safeAreaViewDark: {
+    backgroundColor: '#0c0e12',
+  },
+  scrollView: {
+    flex: 1,
+    padding: '16@ms',
+  },
+  style: {
+    marginTop: '8@ms',
+    marginBottom: '32@ms',
+  },
+  style1: {
+    marginTop: '8@ms',
+    marginBottom: '32@ms',
+  },
+  view: {
+    marginTop: '16@ms',
+    paddingTop: '14@ms',
+    borderTopWidth: 1,
+    borderColor: '#f3f4f6',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  view1: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: '6@ms',
+  },
+  view2: {
+    paddingBottom: '12@ms',
+    borderBottomWidth: 1,
+    borderColor: '#f3f4f6',
+  },
+  view2Dark: {
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+  },
+  view3: {
+    width: '48%',
+  },
+  view4: {
+    width: '48%',
+  },
+  view5: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  view6: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '14@ms',
+  },
+  viewDark: {
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+});
+
 export default InvoiceDetailScreen;

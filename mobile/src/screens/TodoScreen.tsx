@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import Stylesheet from '../components/common/Stylesheet';
 
+import { ScaledSheet } from 'react-native-size-matters';
 import { View, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
@@ -26,14 +26,20 @@ interface SubTabButtonProps {
 const SubTabButton = ({ type, label, activeSubTab, onPress }: SubTabButtonProps) => {
   const theme = useAppStore((state) => state.theme);
   const isSelected = activeSubTab === type;
+  const isDark = theme === 'dark';
   return (
     <TouchableOpacity
       onPress={() => onPress(type)}
-      style={Stylesheet.cls(theme, `flex-1 py-2 items-center border-b-2 ${
-        isSelected ? 'border-purple-650 dark:border-purple-400' : 'border-transparent'
-      }`)}
+      style={[
+        styles.subTabButton,
+        isSelected ? (isDark ? styles.subTabButtonSelectedDark : styles.subTabButtonSelected) : styles.subTabButtonUnselected,
+      ]}
     >
-      <AppText style={Stylesheet.cls(theme, isSelected ? 'text-purple-650 dark:text-purple-450 font-bold' : 'text-gray-550 dark:text-gray-400 font-semibold')}>
+      <AppText style={
+        isSelected 
+          ? (isDark ? styles.subTabTextSelectedDark : styles.subTabTextSelected) 
+          : (isDark ? styles.subTabTextUnselectedDark : styles.subTabTextUnselected)
+      }>
         {label}
       </AppText>
     </TouchableOpacity>
@@ -97,31 +103,31 @@ export const TodoScreen = () => {
   };
 
   return (
-    <SafeAreaView style={Stylesheet.cls(theme, "flex-1 bg-gray-50 dark:bg-darkbg")} edges={["top"]}>
+    <SafeAreaView style={[styles.safeAreaView, theme === 'dark' && styles.safeAreaViewDark]} edges={["top"]}>
       <AppHeader 
         title="Checklist & Events"
         rightAction={
           <AppButton
             title="+ Add"
             onPress={() => setIsAddModalOpen(true)}
-            style={Stylesheet.cls(theme, "h-[34px] px-3.5")}
+            style={styles.appButton1}
           />
         }
       />
 
       {/* Sub tabs */}
-      <View style={Stylesheet.cls(theme, "flex-row bg-white dark:bg-[#12141c] border-b border-gray-150 dark:border-white/[0.03] px-2 mb-3")}>
+      <View style={[styles.view10, theme === 'dark' && styles.view10Dark]}>
         <SubTabButton type="TASKS" label="Active Checklist" activeSubTab={activeSubTab} onPress={setActiveSubTab} />
         <SubTabButton type="CALENDAR" label="Leaves & Celebrations" activeSubTab={activeSubTab} onPress={setActiveSubTab} />
       </View>
 
       {activeSubTab === 'TASKS' ? (
-        <View style={Stylesheet.cls(theme, "flex-1 p-4")}>
+        <View style={styles.view9}>
           <AppSearch
             value={search}
             onChangeText={setSearch}
             placeholder="Search checklist tasks..."
-            style={Stylesheet.cls(theme, "mb-4")}
+            style={styles.style}
           />
 
           <FlatList
@@ -132,46 +138,59 @@ export const TodoScreen = () => {
                 item.priority === 'High' ? 'danger' :
                 item.priority === 'Medium' ? 'warning' : 'info';
 
+              const isDark = theme === 'dark';
               return (
-                <AppCard variant="glass" style={Stylesheet.cls(theme, `mb-2.5 p-3 flex-row items-center justify-between ${item.completed ? 'opacity-55' : ''}`)}>
-                  <View style={Stylesheet.cls(theme, "flex-row items-center flex-1 pr-3")}>
+                <AppCard 
+                  variant="glass" 
+                  style={[
+                    styles.taskCard,
+                    item.completed && styles.taskCardCompleted,
+                  ]}
+                >
+                  <View style={styles.view8}>
                     <TouchableOpacity 
                       onPress={() => toggleTodo(item.id)}
-                      style={Stylesheet.cls(theme, `w-6 h-6 rounded-lg border-2 items-center justify-center mr-3 ${
+                      style={[
+                        styles.checkbox,
                         item.completed 
-                          ? 'bg-purple-600 border-purple-600' 
-                          : 'border-gray-400 dark:border-gray-600'
-                      }`)}
+                          ? styles.checkboxCompleted 
+                          : (isDark ? styles.checkboxUncompletedDark : styles.checkboxUncompleted),
+                      ]}
                     >
-                      {item.completed && <AppText style={Stylesheet.cls(theme, "text-white text-xs font-bold")}>✓</AppText>}
+                      {item.completed && <AppText style={styles.appText14}>✓</AppText>}
                     </TouchableOpacity>
 
-                    <View style={Stylesheet.cls(theme, "flex-1")}>
+                    <View style={styles.view7}>
                       <AppText 
                         variant="bodySemibold" 
-                        style={Stylesheet.cls(theme, item.completed ? 'line-through text-gray-550' : 'text-gray-800 dark:text-gray-100')}
+                        style={[
+                          styles.taskTitle,
+                          item.completed 
+                            ? styles.taskTitleCompleted 
+                            : (isDark ? styles.taskTitleActiveDark : styles.taskTitleActive),
+                        ]}
                       >
                         {item.title}
                       </AppText>
-                      <AppText variant="caption" style={Stylesheet.cls(theme, "text-gray-500 mt-0.5")}>
+                      <AppText variant="caption" style={styles.appText13}>
                         🕒 {item.time} | 📍 {item.location}
                       </AppText>
                     </View>
                   </View>
 
-                  <View style={Stylesheet.cls(theme, "flex-row items-center")}>
-                    <AppBadge label={item.priority} variant={priorityColor} style={Stylesheet.cls(theme, "mr-2")} />
+                  <View style={styles.view6}>
+                    <AppBadge label={item.priority} variant={priorityColor} style={styles.appBadge} />
                     
-                    <TouchableOpacity onPress={() => deleteTodo(item.id)} style={Stylesheet.cls(theme, "p-1")}>
-                      <AppText style={Stylesheet.cls(theme, "text-red-500 font-bold text-sm")}>✕</AppText>
+                    <TouchableOpacity onPress={() => deleteTodo(item.id)} style={styles.touchableOpacity}>
+                      <AppText style={styles.appText12}>✕</AppText>
                     </TouchableOpacity>
                   </View>
                 </AppCard>
               );
             }}
             ListEmptyComponent={
-              <View style={Stylesheet.cls(theme, "mt-8")}>
-                <AppText variant="subtitle" style={Stylesheet.cls(theme, "text-center text-sm text-gray-500")}>
+              <View style={styles.view5}>
+                <AppText variant="subtitle" style={styles.appText11}>
                   Checklist is empty. Add a new task above!
                 </AppText>
               </View>
@@ -179,46 +198,46 @@ export const TodoScreen = () => {
           />
         </View>
       ) : (
-        <ScrollView style={Stylesheet.cls(theme, "flex-1 p-4")} contentContainerStyle={{ paddingBottom: 32 }}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingBottom: 32 }}>
           {/* Celebrations */}
-          <AppCard variant="glass" style={Stylesheet.cls(theme, "mb-4")}>
-            <AppText variant="h3" style={Stylesheet.cls(theme, "font-bold text-rose-500 mb-3")}>
+          <AppCard variant="glass" style={styles.appCard2}>
+            <AppText variant="h3" style={styles.appText10}>
               🎂 Today's Birthdays
             </AppText>
             
-            <View style={Stylesheet.cls(theme, "flex-row items-center p-2 border-b border-gray-100 dark:border-white/[0.04] pb-3 mb-2")}>
-              <View style={Stylesheet.cls(theme, "w-10 h-10 rounded-full bg-rose-500/10 items-center justify-center mr-3")}>
-                <AppText style={Stylesheet.cls(theme, "text-rose-500 font-bold")}>PP</AppText>
+            <View style={[styles.view4, theme === 'dark' && styles.view4Dark]}>
+              <View style={styles.view3}>
+                <AppText style={styles.appText9}>PP</AppText>
               </View>
               <View>
                 <AppText variant="bodySemibold">Priya Patel</AppText>
-                <AppText variant="caption" style={Stylesheet.cls(theme, "text-gray-500")}>Sales Executive • May 13</AppText>
+                <AppText variant="caption" style={styles.appText8}>Sales Executive • May 13</AppText>
               </View>
             </View>
 
-            <View style={Stylesheet.cls(theme, "flex-row items-center p-2")}>
-              <View style={Stylesheet.cls(theme, "w-10 h-10 rounded-full bg-rose-500/10 items-center justify-center mr-3")}>
-                <AppText style={Stylesheet.cls(theme, "text-rose-500 font-bold")}>RV</AppText>
+            <View style={styles.view2}>
+              <View style={styles.view1}>
+                <AppText style={styles.appText7}>RV</AppText>
               </View>
               <View>
                 <AppText variant="bodySemibold">Rahul Verma</AppText>
-                <AppText variant="caption" style={Stylesheet.cls(theme, "text-gray-500")}>Sourcing Manager • Work Anniversary (3 Years)</AppText>
+                <AppText variant="caption" style={styles.appText6}>Sourcing Manager • Work Anniversary (3 Years)</AppText>
               </View>
             </View>
           </AppCard>
 
           {/* Leaves */}
-          <AppCard variant="glass" style={Stylesheet.cls(theme, "mb-4")}>
-            <AppText variant="h3" style={Stylesheet.cls(theme, "font-bold text-blue-500 mb-3")}>
+          <AppCard variant="glass" style={styles.appCard1}>
+            <AppText variant="h3" style={styles.appText5}>
               ✈️ Out of Office Today
             </AppText>
             
             {mockLeaves.map(leave => (
-              <View key={leave.id} style={Stylesheet.cls(theme, "flex-row justify-between items-center py-2.5 border-b border-gray-100 dark:border-white/[0.04] last:border-0")}>
-                <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "text-gray-800 dark:text-gray-200")}>
+              <View key={leave.id} style={[styles.view, theme === 'dark' && styles.viewDark]}>
+                <AppText variant="bodySemibold" style={[styles.appText4, theme === 'dark' && styles.appText4Dark]}>
                   {leave.name}
                 </AppText>
-                <AppText variant="caption" style={Stylesheet.cls(theme, "text-gray-500")}>
+                <AppText variant="caption" style={styles.appText3}>
                   {leave.type} ({leave.duration})
                 </AppText>
               </View>
@@ -226,12 +245,12 @@ export const TodoScreen = () => {
           </AppCard>
 
           {/* Office Festival */}
-          <AppCard variant="glass" style={Stylesheet.cls(theme, "bg-amber-500/5 dark:bg-amber-950/10 border border-amber-250/20")}>
-            <AppText variant="h3" style={Stylesheet.cls(theme, "font-bold text-amber-600 dark:text-amber-400 mb-1")}>
+          <AppCard variant="glass" style={styles.appCard}>
+            <AppText variant="h3" style={styles.appText2}>
               🎉 Upcoming Festival
             </AppText>
-            <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "mt-1")}>Ganesh Chaturthi</AppText>
-            <AppText variant="caption" style={Stylesheet.cls(theme, "text-gray-500 dark:text-gray-400 mt-0.5")}>
+            <AppText variant="bodySemibold" style={styles.appText1}>Ganesh Chaturthi</AppText>
+            <AppText variant="caption" style={[styles.appText, theme === 'dark' && styles.appTextDark]}>
               Traditional celebration and sweets arrangement in the office lobby at 4 PM.
             </AppText>
           </AppCard>
@@ -277,10 +296,263 @@ export const TodoScreen = () => {
         <AppButton
           title="Confirm & Schedule Task"
           onPress={handleAddTask}
-          style={Stylesheet.cls(theme, "mt-4")}
+          style={styles.appButton}
         />
       </AppModal>
     </SafeAreaView>
   );
 };
+
+const styles = ScaledSheet.create({
+  appBadge: {
+    marginRight: '8@ms',
+  },
+  appButton: {
+    marginTop: '16@ms',
+  },
+  appButton1: {
+    height: '34.0@vs',
+    paddingHorizontal: '14@ms',
+  },
+  appCard: {
+    borderWidth: 1,
+  },
+  appCard1: {
+    marginBottom: '16@ms',
+  },
+  appCard2: {
+    marginBottom: '16@ms',
+  },
+  appText: {
+    color: '#6b7280',
+    marginTop: '2@ms',
+  },
+  appText1: {
+    marginTop: '4@ms',
+  },
+  appText10: {
+    fontWeight: 'bold',
+    marginBottom: '12@ms',
+  },
+  appText11: {
+    textAlign: 'center',
+    fontSize: '14@ms',
+    color: '#6b7280',
+  },
+  appText12: {
+    color: '#ef4444',
+    fontWeight: 'bold',
+    fontSize: '14@ms',
+  },
+  appText13: {
+    color: '#6b7280',
+    marginTop: '2@ms',
+  },
+  appText14: {
+    color: '#ffffff',
+    fontSize: '12@ms',
+    fontWeight: 'bold',
+  },
+  appText2: {
+    fontWeight: 'bold',
+    marginBottom: '4@ms',
+  },
+  appText3: {
+    color: '#6b7280',
+  },
+  appText4: {
+    color: '#1f2937',
+  },
+  appText4Dark: {
+    color: '#e5e7eb',
+  },
+  appText5: {
+    fontWeight: 'bold',
+    color: '#3b82f6',
+    marginBottom: '12@ms',
+  },
+  appText6: {
+    color: '#6b7280',
+  },
+  appText7: {
+    fontWeight: 'bold',
+  },
+  appText8: {
+    color: '#6b7280',
+  },
+  appText9: {
+    fontWeight: 'bold',
+  },
+  appTextDark: {
+    color: '#9ca3af',
+  },
+  safeAreaView: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  safeAreaViewDark: {
+    backgroundColor: '#0c0e12',
+  },
+  scrollView: {
+    flex: 1,
+    padding: '16@ms',
+  },
+  style: {
+    marginBottom: '16@ms',
+  },
+  touchableOpacity: {
+    padding: '4@ms',
+  },
+  view: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: '10@ms',
+    borderBottomWidth: 1,
+    borderColor: '#f3f4f6',
+  },
+  view1: {
+    width: '40@s',
+    height: '40@vs',
+    borderRadius: '9999@ms',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: '12@ms',
+  },
+  view10: {
+    flexDirection: 'row',
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderColor: '#eef2f6',
+    paddingHorizontal: '8@ms',
+    marginBottom: '12@ms',
+  },
+  view10Dark: {
+    backgroundColor: '#12141c',
+    borderColor: 'rgba(255, 255, 255, 0.03)',
+  },
+  view2: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: '8@ms',
+  },
+  view3: {
+    width: '40@s',
+    height: '40@vs',
+    borderRadius: '9999@ms',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: '12@ms',
+  },
+  view4: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: '8@ms',
+    borderBottomWidth: 1,
+    borderColor: '#f3f4f6',
+    paddingBottom: '12@ms',
+    marginBottom: '8@ms',
+  },
+  view4Dark: {
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+  },
+  view5: {
+    marginTop: '32@ms',
+  },
+  view6: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  view7: {
+    flex: 1,
+  },
+  view8: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    paddingRight: '12@ms',
+  },
+  view9: {
+    flex: 1,
+    padding: '16@ms',
+  },
+  viewDark: {
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+  },
+  subTabButton: {
+    flex: 1,
+    paddingVertical: '8@ms',
+    alignItems: 'center',
+    borderBottomWidth: 2,
+  },
+  subTabButtonSelected: {
+    borderColor: '#8b5cf6',
+  },
+  subTabButtonSelectedDark: {
+    borderColor: '#c084fc',
+  },
+  subTabButtonUnselected: {
+    borderColor: 'transparent',
+  },
+  subTabTextSelected: {
+    color: '#8b5cf6',
+    fontWeight: 'bold',
+  },
+  subTabTextSelectedDark: {
+    color: '#c084fc',
+    fontWeight: 'bold',
+  },
+  subTabTextUnselected: {
+    color: '#4b5563',
+    fontWeight: '600',
+  },
+  subTabTextUnselectedDark: {
+    color: '#9ca3af',
+    fontWeight: '600',
+  },
+  taskCard: {
+    marginBottom: '10@ms',
+    padding: '12@ms',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  taskCardCompleted: {
+    opacity: 0.55,
+  },
+  checkbox: {
+    width: '24@s',
+    height: '24@vs',
+    borderRadius: '8@ms',
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: '12@ms',
+  },
+  checkboxCompleted: {
+    backgroundColor: '#7c3aed',
+    borderColor: '#7c3aed',
+  },
+  checkboxUncompleted: {
+    borderColor: '#9ca3af',
+  },
+  checkboxUncompletedDark: {
+    borderColor: '#4b5563',
+  },
+  taskTitle: {
+    fontSize: '14@ms',
+    fontWeight: '600',
+  },
+  taskTitleCompleted: {
+    textDecorationLine: 'line-through',
+    color: '#4b5563',
+  },
+  taskTitleActive: {
+    color: '#1f2937',
+  },
+  taskTitleActiveDark: {
+    color: '#f3f4f6',
+  },
+});
+
 export default TodoScreen;

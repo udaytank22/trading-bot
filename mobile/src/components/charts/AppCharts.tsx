@@ -1,9 +1,9 @@
 import React from 'react';
+import { ScaledSheet } from 'react-native-size-matters';
 import { View, Dimensions, StyleProp, ViewStyle } from 'react-native';
 import Svg, { Rect, Line, Text as SvgText, Path, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import AppText from '../common/AppText';
 import { useAppStore } from '../../store/appStore';
-import Stylesheet from '../common/Stylesheet';
 
 // Get screen width for responsiveness
 const screenWidth = Dimensions.get('window').width;
@@ -44,7 +44,7 @@ export const BarChart: React.FC<BarChartProps> = ({
   const gridLineColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
   const labelColor = isDark ? '#9ca3af' : '#4b5563';
 
-  const containerStyle = Stylesheet.cls(theme, 'w-full items-center');
+  const containerStyle = styles.containerStyle2;
 
   return (
     <View style={[containerStyle, style]}>
@@ -171,7 +171,7 @@ export const LineChart: React.FC<LineChartProps> = ({
     areaD = `${pathD} L ${points[points.length - 1].x} ${paddingTop + graphHeight} L ${points[0].x} ${paddingTop + graphHeight} Z`;
   }
 
-  const containerStyle = Stylesheet.cls(theme, 'w-full items-center');
+  const containerStyle = styles.containerStyle1;
 
   return (
     <View style={[containerStyle, style]}>
@@ -270,11 +270,11 @@ export const DonutChart: React.FC<DonutChartProps> = ({
   
   let accumulatedAngle = 0;
 
-  const containerStyle = Stylesheet.cls(theme, 'items-center flex-row justify-center');
-  const innerWrapperStyle = Stylesheet.cls(theme, 'absolute items-center justify-center');
-  const textStyle = Stylesheet.cls(theme, 'font-bold text-center');
-  const captionStyle = Stylesheet.cls(theme, 'text-gray-400 text-center uppercase tracking-wider text-[9px]');
-  const legendContainer = Stylesheet.cls(theme, 'ml-6 justify-center');
+  const containerStyle = styles.containerStyle;
+  const innerWrapperStyle = styles.innerWrapperStyle;
+  const textStyle = styles.textStyle;
+  const captionStyle = styles.captionStyle;
+  const legendContainer = styles.legendContainerStyle;
 
   return (
     <View style={[containerStyle, style]}>
@@ -331,14 +331,14 @@ export const DonutChart: React.FC<DonutChartProps> = ({
         {data.map((item, idx) => {
           const pct = total > 0 ? ((item.value / total) * 100).toFixed(0) : 0;
           return (
-            <View key={idx} style={Stylesheet.cls(theme, 'flex-row items-center mb-2')}>
+            <View key={idx} style={styles.view1}>
               <View 
                 style={[
-                  Stylesheet.cls(theme, 'w-3 h-3 rounded-full mr-2'),
+                  styles.view,
                   { backgroundColor: item.color }
                 ]}
               />
-              <AppText variant="captionSemibold" style={Stylesheet.cls(theme, 'text-gray-700 dark:text-gray-300')}>
+              <AppText variant="captionSemibold" style={[styles.appText, theme === 'dark' && styles.appTextDark]}>
                 {item.label} ({pct}%)
               </AppText>
             </View>
@@ -348,4 +348,57 @@ export const DonutChart: React.FC<DonutChartProps> = ({
     </View>
   );
 };
+
+const styles = ScaledSheet.create({
+  appText: {
+    color: '#374151',
+  },
+  appTextDark: {
+    color: '#d1d5db',
+  },
+  captionStyle: {
+    color: '#9ca3af',
+    textAlign: 'center',
+    letterSpacing: 0.5,
+    fontSize: '9@ms',
+  },
+  containerStyle: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  containerStyle1: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  containerStyle2: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  innerWrapperStyle: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  legendContainerStyle: {
+    marginLeft: '24@ms',
+    justifyContent: 'center',
+  },
+  textStyle: {
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  view: {
+    width: '12@s',
+    height: '12@vs',
+    borderRadius: '9999@ms',
+    marginRight: '8@ms',
+  },
+  view1: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: '8@ms',
+  },
+});
+
 export default BarChart;

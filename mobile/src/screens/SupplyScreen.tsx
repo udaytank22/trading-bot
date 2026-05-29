@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import Stylesheet from '../components/common/Stylesheet';
 
+import { ScaledSheet } from 'react-native-size-matters';
 import { View, FlatList, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
@@ -32,22 +32,15 @@ const TabButton = ({ tab, label, activeTab, onPress }: TabButtonProps) => {
     <TouchableOpacity
       onPress={() => onPress(tab)}
       style={[
-        Stylesheet.cls(
-          theme,
-          `py-2 rounded-full justify-center items-center ${
-            isSelected ? 'px-7' : 'bg-transparent px-3'
-          }`,
-        ),
-        isSelected && { backgroundColor: '#4648D4' },
+        styles.tabButton,
+        isSelected ? styles.tabButtonSelected : styles.tabButtonUnselected,
       ]}
     >
       <AppText 
-        style={Stylesheet.cls(
-          theme,
-          `text-[15px] ${
-            isSelected ? 'text-white' : 'text-[#4b5563] dark:text-[#9ca3af]'
-          }`,
-        )}
+        style={[
+          styles.tabText,
+          isSelected ? styles.tabTextSelected : (theme === 'dark' ? styles.tabTextUnselectedDark : styles.tabTextUnselected),
+        ]}
       >
         {label}
       </AppText>
@@ -187,24 +180,24 @@ export const SupplyScreen = () => {
   };
 
   return (
-    <SafeAreaView style={Stylesheet.cls(theme, "flex-1 bg-gray-50 dark:bg-darkbg")} edges={["top"]}>
+    <SafeAreaView style={[styles.safeAreaView, theme === 'dark' && styles.safeAreaViewDark]} edges={["top"]}>
       <AppHeader title="Logistics & Supply" />
 
-      <View style={Stylesheet.cls(theme, "flex-1 p-4")}>
+      <View style={styles.view7}>
         {/* Search */}
         <AppSearch
           value={search}
           onChangeText={setSearch}
           placeholder="Search by supplier, cargo or cargo destination..."
-          style={Stylesheet.cls(theme, "mb-3")}
+          style={styles.style2}
         />
 
         {/* Categories scrollbar */}
-        <View style={Stylesheet.cls(theme, "mb-4")}>
+        <View style={styles.view6}>
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={Stylesheet.cls(theme, "gap-6")}
+            contentContainerStyle={styles.style1}
           >
             <TabButton tab="All" label="All" activeTab={filter} onPress={setFilter} />
             <TabButton tab="PENDING" label="Pending" activeTab={filter} onPress={setFilter} />
@@ -227,28 +220,28 @@ export const SupplyScreen = () => {
               item.status === 'DELIVERED' ? 'Dispatch Invoice' : 'Done';
             
             return (
-              <AppCard variant="glass" style={Stylesheet.cls(theme, "mb-3.5")}>
-                <View style={Stylesheet.cls(theme, "flex-row justify-between items-center mb-3")}>
-                  <AppText style={Stylesheet.cls(theme, "font-mono text-purple-600 dark:text-purple-400 font-bold text-xs")}>
+              <AppCard variant="glass" style={styles.appCard}>
+                <View style={styles.view5}>
+                  <AppText style={[styles.appText12, theme === 'dark' && styles.appText12Dark]}>
                     {item.inquiry_id}
                   </AppText>
                   <AppStatusBadge status={item.status} />
                 </View>
 
-                <View style={Stylesheet.cls(theme, "space-y-1 mb-3")}>
-                  <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Supplier & Cargo</AppText>
+                <View style={styles.view4}>
+                  <AppText variant="captionSemibold" style={styles.appText11}>Supplier & Cargo</AppText>
                   <AppText variant="bodySemibold">{item.supplier} - {item.cargo} ({item.quantity})</AppText>
                   
-                  <View style={Stylesheet.cls(theme, "flex-row justify-between pt-1")}>
+                  <View style={styles.view3}>
                     <View>
-                      <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Destination</AppText>
-                      <AppText variant="body" style={Stylesheet.cls(theme, "mt-0.5")}>{item.destination}</AppText>
+                      <AppText variant="captionSemibold" style={styles.appText10}>Destination</AppText>
+                      <AppText variant="body" style={styles.appText9}>{item.destination}</AppText>
                     </View>
                     
                     {item.vehicle ? (
-                      <View style={Stylesheet.cls(theme, "items-end")}>
-                        <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Vehicle / Driver</AppText>
-                        <AppText variant="body" style={Stylesheet.cls(theme, "mt-0.5")}>{item.vehicle} ({item.driver})</AppText>
+                      <View style={styles.view2}>
+                        <AppText variant="captionSemibold" style={styles.appText8}>Vehicle / Driver</AppText>
+                        <AppText variant="body" style={styles.appText7}>{item.vehicle} ({item.driver})</AppText>
                       </View>
                     ) : null}
                   </View>
@@ -257,15 +250,15 @@ export const SupplyScreen = () => {
                 <AppButton
                   title={nextButtonLabel}
                   onPress={() => handleProgressShipment(item)}
-                  style={Stylesheet.cls(theme, "h-[38px] rounded-xl")}
+                  style={styles.style}
                   variant={item.status === 'DELIVERED' ? 'primary' : 'outline'}
                 />
               </AppCard>
             );
           }}
           ListEmptyComponent={
-            <View style={Stylesheet.cls(theme, "mt-8")}>
-              <AppText variant="subtitle" style={Stylesheet.cls(theme, "text-center text-sm text-gray-500")}>
+            <View style={styles.view1}>
+              <AppText variant="subtitle" style={styles.appText6}>
                 No active cargo supplies matching filters.
               </AppText>
             </View>
@@ -279,7 +272,7 @@ export const SupplyScreen = () => {
         onClose={() => { setAllotOpen(false); setSelectedItem(null); }}
         title="Vehicle & Driver Allotment"
       >
-        <AppText style={Stylesheet.cls(theme, "mb-4 text-xs")}>
+        <AppText style={styles.appText5}>
           Input transportation and driver details to process loading operations.
         </AppText>
 
@@ -308,7 +301,7 @@ export const SupplyScreen = () => {
         <AppButton
           title="Save & Progress Sourcing"
           onPress={handleAllotConfirm}
-          style={Stylesheet.cls(theme, "mt-4")}
+          style={styles.appButton1}
         />
       </AppBottomSheet>
 
@@ -318,16 +311,16 @@ export const SupplyScreen = () => {
         onClose={() => { setInvoiceOpen(false); setSelectedItem(null); }}
         title="Invoice Dispatcher"
       >
-        <AppText style={Stylesheet.cls(theme, "mb-4 text-xs")}>
+        <AppText style={styles.appText4}>
           Draft invoice details for customer billing. Pushing this button will send the invoice and close the cargo deal.
         </AppText>
 
-        <View style={Stylesheet.cls(theme, "p-4 bg-gray-150 dark:bg-white/[0.02] border border-gray-200 dark:border-white/[0.04] rounded-xl mb-4")}>
-          <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Bill To:</AppText>
-          <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "mb-2")}>{selectedItem?.buyer_name} ({selectedItem?.buyer_email})</AppText>
+        <View style={[styles.view, theme === 'dark' && styles.viewDark]}>
+          <AppText variant="captionSemibold" style={styles.appText3}>Bill To:</AppText>
+          <AppText variant="bodySemibold" style={styles.appText2}>{selectedItem?.buyer_name} ({selectedItem?.buyer_email})</AppText>
           
-          <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Cargo Contents:</AppText>
-          <AppText variant="body" style={Stylesheet.cls(theme, "mb-2")}>{selectedItem?.cargo} ({selectedItem?.quantity})</AppText>
+          <AppText variant="captionSemibold" style={styles.appText1}>Cargo Contents:</AppText>
+          <AppText variant="body" style={styles.appText}>{selectedItem?.cargo} ({selectedItem?.quantity})</AppText>
         </View>
 
         <AppInput
@@ -340,7 +333,7 @@ export const SupplyScreen = () => {
         <AppButton
           title="Email Invoice & Close Deal"
           onPress={handleSendInvoiceConfirm}
-          style={Stylesheet.cls(theme, "mt-4")}
+          style={styles.appButton}
         />
       </AppBottomSheet>
 
@@ -355,4 +348,148 @@ export const SupplyScreen = () => {
     </SafeAreaView>
   );
 };
+
+const styles = ScaledSheet.create({
+  appButton: {
+    marginTop: '16@ms',
+  },
+  appButton1: {
+    marginTop: '16@ms',
+  },
+  appCard: {
+    marginBottom: '14@ms',
+  },
+  appText: {
+    marginBottom: '8@ms',
+  },
+  appText1: {
+    color: '#9ca3af',
+  },
+  appText10: {
+    color: '#9ca3af',
+  },
+  appText11: {
+    color: '#9ca3af',
+  },
+  appText12: {
+    fontFamily: 'monospace',
+    color: '#7c3aed',
+    fontWeight: 'bold',
+    fontSize: '12@ms',
+  },
+  appText12Dark: {
+    color: '#c084fc',
+  },
+  appText2: {
+    marginBottom: '8@ms',
+  },
+  appText3: {
+    color: '#9ca3af',
+  },
+  appText4: {
+    marginBottom: '16@ms',
+    fontSize: '12@ms',
+  },
+  appText5: {
+    marginBottom: '16@ms',
+    fontSize: '12@ms',
+  },
+  appText6: {
+    textAlign: 'center',
+    fontSize: '14@ms',
+    color: '#6b7280',
+  },
+  appText7: {
+    marginTop: '2@ms',
+  },
+  appText8: {
+    color: '#9ca3af',
+  },
+  appText9: {
+    marginTop: '2@ms',
+  },
+  safeAreaView: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  safeAreaViewDark: {
+    backgroundColor: '#0c0e12',
+  },
+  style: {
+    height: '38.0@vs',
+    borderRadius: '12@ms',
+  },
+  style1: {
+    gap: '24@ms',
+  },
+  style2: {
+    marginBottom: '12@ms',
+  },
+  view: {
+    padding: '16@ms',
+    backgroundColor: '#eef2f6',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: '12@ms',
+    marginBottom: '16@ms',
+  },
+  view1: {
+    marginTop: '32@ms',
+  },
+  view2: {
+    alignItems: 'flex-end',
+  },
+  view3: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: '4@ms',
+  },
+  view4: {
+    marginBottom: '12@ms',
+  },
+  view5: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '12@ms',
+  },
+  view6: {
+    marginBottom: '16@ms',
+  },
+  view7: {
+    flex: 1,
+    padding: '16@ms',
+  },
+  viewDark: {
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+  },
+  tabButton: {
+    paddingVertical: '8@ms',
+    borderRadius: '9999@ms',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tabButtonSelected: {
+    paddingHorizontal: '28@ms',
+    backgroundColor: '#4648D4',
+  },
+  tabButtonUnselected: {
+    paddingHorizontal: '12@ms',
+    backgroundColor: 'transparent',
+  },
+  tabText: {
+    fontSize: '15@ms',
+  },
+  tabTextSelected: {
+    color: '#ffffff',
+  },
+  tabTextUnselected: {
+    color: '#4b5563',
+  },
+  tabTextUnselectedDark: {
+    color: '#9ca3af',
+  },
+});
+
 export default SupplyScreen;

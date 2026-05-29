@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import Stylesheet from '../components/common/Stylesheet';
 
+import { ScaledSheet } from 'react-native-size-matters';
 import { View, ScrollView } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { useAppStore } from '../store/appStore';
@@ -29,56 +29,56 @@ export const PurchaseOrderDetailScreen = () => {
 
   if (!po) {
     return (
-      <SafeAreaView style={Stylesheet.cls(theme, "flex-1 justify-center items-center bg-gray-50 dark:bg-darkbg")}>
+      <SafeAreaView style={[styles.safeAreaView1, theme === 'dark' && styles.safeAreaView1Dark]}>
         <AppText variant="h2">PO Not Found</AppText>
-        <AppButton title="Go Back" onPress={() => navigation.goBack()} style={Stylesheet.cls(theme, "mt-4")} />
+        <AppButton title="Go Back" onPress={() => navigation.goBack()} style={styles.appButton} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={Stylesheet.cls(theme, "flex-1 bg-gray-50 dark:bg-darkbg")}>
+    <SafeAreaView style={[styles.safeAreaView, theme === 'dark' && styles.safeAreaViewDark]}>
       <AppHeader title="PO Contract Details" showBack={true} />
 
-      <ScrollView style={Stylesheet.cls(theme, "flex-1 p-4")} contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingBottom: 40 }}>
         {/* Info card */}
-        <AppCard variant="bordered" style={Stylesheet.cls(theme, "mb-4")}>
-          <View style={Stylesheet.cls(theme, "flex-row justify-between items-center mb-3.5")}>
-            <AppText variant="h2" style={Stylesheet.cls(theme, "font-mono text-purple-650 dark:text-purple-400")}>
+        <AppCard variant="bordered" style={styles.appCard1}>
+          <View style={styles.view5}>
+            <AppText variant="h2" style={[styles.appText10, theme === 'dark' && styles.appText10Dark]}>
               {po.po_id}
             </AppText>
             <AppStatusBadge status={po.status} />
           </View>
 
-          <View style={Stylesheet.cls(theme, "space-y-2.5")}>
+          <View style={{}}>
             <View>
-              <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Client / Customer</AppText>
-              <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "mt-0.5")}>{po.customer}</AppText>
+              <AppText variant="captionSemibold" style={styles.appText9}>Client / Customer</AppText>
+              <AppText variant="bodySemibold" style={styles.appText8}>{po.customer}</AppText>
             </View>
 
-            <View style={Stylesheet.cls(theme, "flex-row justify-between")}>
-              <View style={Stylesheet.cls(theme, "w-[48%]")}>
-                <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Vessel Assigned</AppText>
-                <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "mt-0.5")}>{po.vessel}</AppText>
+            <View style={styles.view4}>
+              <View style={styles.view3}>
+                <AppText variant="captionSemibold" style={styles.appText7}>Vessel Assigned</AppText>
+                <AppText variant="bodySemibold" style={styles.appText6}>{po.vessel}</AppText>
               </View>
 
-              <View style={Stylesheet.cls(theme, "w-[48%]")}>
-                <AppText variant="captionSemibold" style={Stylesheet.cls(theme, "text-gray-400")}>Order Date</AppText>
-                <AppText variant="body" style={Stylesheet.cls(theme, "mt-0.5")}>{formatDateString(po.date)}</AppText>
+              <View style={styles.view2}>
+                <AppText variant="captionSemibold" style={styles.appText5}>Order Date</AppText>
+                <AppText variant="body" style={styles.appText4}>{formatDateString(po.date)}</AppText>
               </View>
             </View>
           </View>
         </AppCard>
 
         {/* Products Card */}
-        <AppCard variant="glass" style={Stylesheet.cls(theme, "mb-4")}>
-          <AppText variant="h3" style={Stylesheet.cls(theme, "font-bold mb-3.5")}>
+        <AppCard variant="glass" style={styles.appCard}>
+          <AppText variant="h3" style={styles.appText3}>
             Order Products & Quantities
           </AppText>
 
           {po.products.map((p, idx) => (
-            <View key={idx} style={Stylesheet.cls(theme, "flex-row justify-between items-center py-2.5 border-b border-gray-100 dark:border-white/[0.04] last:border-0")}>
-              <AppText variant="body" style={Stylesheet.cls(theme, "flex-1 mr-2 text-gray-700 dark:text-gray-300")}>
+            <View key={idx} style={[styles.view1, theme === 'dark' && styles.view1Dark]}>
+              <AppText variant="body" style={[styles.appText2, theme === 'dark' && styles.appText2Dark]}>
                 {p.product_name}
               </AppText>
               <AppText variant="bodySemibold">
@@ -87,9 +87,9 @@ export const PurchaseOrderDetailScreen = () => {
             </View>
           ))}
 
-          <View style={Stylesheet.cls(theme, "mt-4 pt-3.5 border-t border-gray-100 dark:border-white/[0.05] flex-row justify-between items-center")}>
-            <AppText variant="bodySemibold" style={Stylesheet.cls(theme, "font-bold")}>Contract Total Worth</AppText>
-            <AppText variant="h2" style={Stylesheet.cls(theme, "text-purple-600 dark:text-purple-400 font-extrabold")}>
+          <View style={[styles.view, theme === 'dark' && styles.viewDark]}>
+            <AppText variant="bodySemibold" style={styles.appText1}>Contract Total Worth</AppText>
+            <AppText variant="h2" style={[styles.appText, theme === 'dark' && styles.appTextDark]}>
               {formatUSD(po.total_amount)}
             </AppText>
           </View>
@@ -98,4 +98,123 @@ export const PurchaseOrderDetailScreen = () => {
     </SafeAreaView>
   );
 };
+
+const styles = ScaledSheet.create({
+  appButton: {
+    marginTop: '16@ms',
+  },
+  appCard: {
+    marginBottom: '16@ms',
+  },
+  appCard1: {
+    marginBottom: '16@ms',
+  },
+  appText: {
+    color: '#7c3aed',
+    fontWeight: '800',
+  },
+  appText1: {
+    fontWeight: 'bold',
+  },
+  appText10: {
+    fontFamily: 'monospace',
+    color: '#8b5cf6',
+  },
+  appText10Dark: {
+    color: '#c084fc',
+  },
+  appText2: {
+    flex: 1,
+    marginRight: '8@ms',
+    color: '#374151',
+  },
+  appText2Dark: {
+    color: '#d1d5db',
+  },
+  appText3: {
+    fontWeight: 'bold',
+    marginBottom: '14@ms',
+  },
+  appText4: {
+    marginTop: '2@ms',
+  },
+  appText5: {
+    color: '#9ca3af',
+  },
+  appText6: {
+    marginTop: '2@ms',
+  },
+  appText7: {
+    color: '#9ca3af',
+  },
+  appText8: {
+    marginTop: '2@ms',
+  },
+  appText9: {
+    color: '#9ca3af',
+  },
+  appTextDark: {
+    color: '#c084fc',
+  },
+  safeAreaView: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  safeAreaView1: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+  },
+  safeAreaView1Dark: {
+    backgroundColor: '#0c0e12',
+  },
+  safeAreaViewDark: {
+    backgroundColor: '#0c0e12',
+  },
+  scrollView: {
+    flex: 1,
+    padding: '16@ms',
+  },
+  view: {
+    marginTop: '16@ms',
+    paddingTop: '14@ms',
+    borderTopWidth: 1,
+    borderColor: '#f3f4f6',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  view1: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: '10@ms',
+    borderBottomWidth: 1,
+    borderColor: '#f3f4f6',
+  },
+  view1Dark: {
+    borderColor: 'rgba(255, 255, 255, 0.04)',
+  },
+  view2: {
+    width: '48%',
+  },
+  view3: {
+    width: '48%',
+  },
+  view4: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  view5: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '14@ms',
+  },
+  viewDark: {
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+});
+
 export default PurchaseOrderDetailScreen;
