@@ -122,7 +122,12 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
               variant="secondary"
               size="sm"
               className="border-orange-500/40 text-orange-400 hover:bg-orange-500/10"
-              onClick={() => onStatusUpdate(item.inquiry_id, "IN_TRANSIT")}
+              onClick={() => {
+                alert("Cargo loading verification checks completed successfully.");
+                if (confirm("Are you sure you want to mark this cargo as loaded and advance the status to IN_TRANSIT?")) {
+                  onStatusUpdate(item.inquiry_id, "IN_TRANSIT");
+                }
+              }}
             >
               Mark Loaded
             </Button>

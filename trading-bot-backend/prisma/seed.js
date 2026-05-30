@@ -7,6 +7,9 @@ async function main() {
   console.log('Seeding database started...');
 
   // 1. Clean existing records (Optional, in order of dependencies)
+  await prisma.stockMovement.deleteMany({});
+  await prisma.warehouseStock.deleteMany({});
+  await prisma.inventoryItem.deleteMany({});
   await prisma.rolePermission.deleteMany({});
   await prisma.permission.deleteMany({});
   await prisma.user.deleteMany({});
@@ -48,8 +51,6 @@ async function main() {
     }
   }
 
-  console.log(`Seeded ${permissions.length} module-action permissions.`);
-
   // 4. Map permissions to Roles
   const rolePermissions = [];
 
@@ -67,8 +68,8 @@ async function main() {
   // Team Lead: dashboard read, reports read, inquiries read/create/update/approve, others read
   permissions.forEach((perm) => {
     if (
-      perm.module === 'inquiries' || 
-      perm.module === 'reports' || 
+      perm.module === 'inquiries' ||
+      perm.module === 'reports' ||
       perm.module === 'dashboard'
     ) {
       if (perm.action !== 'delete') {
@@ -218,7 +219,31 @@ async function main() {
     }
   });
 
-  console.log('Seeded sample products.');
+  const inv1 = await prisma.inventoryItem.create({
+    data: {
+      itemName: 'Flange Bolts (High Strength)',
+      sku: 'FLG-BLT-001',
+      category: 'Fasteners',
+      unit: 'Box (100pcs)',
+      sellingPrice: 1500.00,
+      purchasePrice: 1000.00,
+      createdById: superAdminUser.id
+    }
+  });
+
+  const inv2 = await prisma.inventoryItem.create({
+    data: {
+      itemName: 'Steel Gate Valve 2-inch',
+      sku: 'STL-VLV-002',
+      category: 'Valves',
+      unit: 'Pcs',
+      sellingPrice: 45000.00,
+      purchasePrice: 30000.00,
+      createdById: superAdminUser.id
+    }
+  });
+
+  console.log('Seeded sample products and inventory items.');
 
   // 9. Seed Bank Accounts
   await prisma.bankAccount.create({
@@ -271,7 +296,7 @@ async function main() {
   // 11. Initial Warehouse Stock balances & movement ledger entries
   await prisma.stockMovement.create({
     data: {
-      inventoryItemId: prod1.id,
+      inventoryItemId: inv1.id,
       warehouseId: warehouse.id,
       type: 'IN',
       quantity: 100,
@@ -283,14 +308,14 @@ async function main() {
   await prisma.warehouseStock.create({
     data: {
       warehouseId: warehouse.id,
-      inventoryItemId: prod1.id,
+      inventoryItemId: inv1.id,
       quantity: 100
     }
   });
 
   await prisma.stockMovement.create({
     data: {
-      inventoryItemId: prod2.id,
+      inventoryItemId: inv2.id,
       warehouseId: warehouse.id,
       type: 'IN',
       quantity: 50,
@@ -302,7 +327,7 @@ async function main() {
   await prisma.warehouseStock.create({
     data: {
       warehouseId: warehouse.id,
-      inventoryItemId: prod2.id,
+      inventoryItemId: inv2.id,
       quantity: 50
     }
   });

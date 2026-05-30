@@ -1,8 +1,7 @@
 import { useAuth, useUI, useData } from '@context';
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
-
+import { User, Lock, Eye, EyeOff, Zap } from "lucide-react";
 
 const LoginPage = () => {
   const { login, isAuthenticated } = useAuth();
@@ -33,153 +32,160 @@ const LoginPage = () => {
         return;
       }
 
+      // Check if user exists in local test database
       const user = employeesData.find(emp => emp.email.toLowerCase() === email.toLowerCase());
       
       if (user || email === "admin@trademind.com") { // Allow admin by default too
         setIsLoading(false);
-        login(user);
+        login(user || { name: "Admin", role: "Admin", email: "admin@trademind.com" });
         navigate("/");
       } else {
         setIsLoading(false);
-        setError("Invalid email or password. Please try again.");
+        setError("Invalid username/email or password. Please try again.");
       }
     }, 1500);
   };
 
-
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 dark:bg-[#0c0e12] relative overflow-hidden transition-colors duration-300">
-      {/* Background Decorative Elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-600/20 blur-[120px] rounded-full" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[120px] rounded-full" />
+    <div className="h-screen w-full grid grid-cols-1 md:grid-cols-2 bg-[#f8f9fd] dark:bg-[#070913] overflow-hidden transition-colors duration-300 relative">
       
-      <div className="w-full max-w-md p-8 z-10">
-        <div className="bg-white/80 dark:bg-[#161922]/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 p-10 rounded-3xl shadow-2xl">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-tr from-purple-600 to-blue-600 rounded-2xl mb-6 shadow-lg shadow-purple-500/20">
-              <Lock className="text-white w-8 h-8" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Welcome Back</h1>
-            <p className="text-gray-500 dark:text-gray-400">Please enter your details to sign in</p>
+      {/* Left Column - Form */}
+      <div className="h-full flex flex-col justify-center items-center px-6 sm:px-12 md:px-16 lg:px-24 py-6 z-10 bg-gradient-to-br from-[#f3f6fc] to-[#e6ecf8] relative overflow-hidden">
+        
+        {/* Subtle background glow matching illustration colors */}
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-[#00d2ff]/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-[#4f46e5]/10 rounded-full blur-[120px] pointer-events-none" />
+
+        <div className="w-full max-w-md space-y-8 z-10">
+          
+          {/* Header */}
+          <div className="text-center space-y-3">
+            <h1 className="text-4xl font-black tracking-wider text-slate-800 uppercase">
+              LOGIN
+            </h1>
+            <p className="text-xs font-bold text-[#2563eb] uppercase tracking-widest">
+              ERP & LOGISTICS HUB
+            </p>
+            <p className="text-xs font-medium text-slate-500 max-w-[280px] mx-auto leading-relaxed">
+              Enter your credentials to access the central trading control panel.
+            </p>
           </div>
 
           {error && (
-            <div className="mb-6 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold text-center animate-in fade-in slide-in-from-top-2">
+            <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-600 text-xs font-bold text-center animate-in fade-in slide-in-from-top-2">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">Email Address</label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-purple-500 transition-colors">
-                  <Mail size={18} />
-                </div>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-11 pr-4 py-3 bg-white dark:bg-[#0c0e12] border border-gray-200 dark:border-white/5 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
-                  placeholder="name@example.com"
-                />
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            
+            {/* Username Input */}
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#2563eb] transition-colors">
+                <User className="w-5 h-5" />
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between items-center ml-1">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-                <span className="text-xs text-gray-400 dark:text-gray-600 cursor-default select-none" title="Coming soon">Forgot password?</span>
-              </div>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-purple-500 transition-colors">
-                  <Lock size={18} />
-                </div>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-11 pr-12 py-3 bg-white dark:bg-[#0c0e12] border border-gray-200 dark:border-white/5 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all"
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-gray-300 transition-colors"
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2 ml-1">
               <input
-                type="checkbox"
-                id="remember"
-                className="w-4 h-4 rounded border-gray-300 dark:border-gray-700 bg-white dark:bg-[#0c0e12] text-purple-600 focus:ring-purple-500/20 focus:ring-offset-0 transition-all"
+                type="text"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="block w-full pl-14 pr-5 py-4 bg-white border border-slate-300 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 focus:border-[#2563eb] hover:border-slate-400 text-sm font-medium transition-all shadow-[0_2px_6px_rgba(0,0,0,0.03)]"
+                placeholder="Username / Email"
               />
-              <label htmlFor="remember" className="text-sm text-gray-500 dark:text-gray-400 cursor-pointer select-none">Remember me for 30 days</label>
             </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full group relative flex items-center justify-center py-3 px-4 border border-transparent rounded-xl text-white font-semibold bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all disabled:opacity-70 disabled:cursor-not-allowed overflow-hidden"
-            >
-              <span className={`flex items-center ${isLoading ? "opacity-0" : "opacity-100"}`}>
-                Sign In <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </span>
-              {isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                </div>
-              )}
-            </button>
+            {/* Password Input */}
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#2563eb] transition-colors">
+                <Lock className="w-5 h-5" />
+              </div>
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="block w-full pl-14 pr-12 py-4 bg-white border border-slate-300 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2563eb]/20 focus:border-[#2563eb] hover:border-slate-400 text-sm font-medium transition-all shadow-[0_2px_6px_rgba(0,0,0,0.03)]"
+                placeholder="Password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-[#2563eb] transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-center pt-2">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-4 bg-gradient-to-r from-[#00d2ff] via-[#2563eb] to-[#4f46e5] text-white font-bold rounded-2xl shadow-lg shadow-blue-500/10 hover:opacity-95 hover:scale-[1.01] active:scale-[0.99] transition-all text-sm disabled:opacity-70 disabled:cursor-not-allowed relative text-center uppercase tracking-wider"
+              >
+                <span className={isLoading ? "opacity-0" : "opacity-100"}>Login Now</span>
+                {isLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                )}
+              </button>
+            </div>
           </form>
 
-          <div className="mt-8 pt-8 border-t border-gray-100 dark:border-white/5">
-            <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest text-center mb-4">Quick Access for Testing</p>
-            <div className="grid grid-cols-2 gap-2">
+          {/* Quick Access for Testing */}
+          <div className="mt-8 pt-6 border-t border-slate-200">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center mb-3">
+              Quick Access for Testing
+            </p>
+            <div className="grid grid-cols-2 gap-2.5">
               <button 
+                type="button"
                 onClick={() => login({ name: "Admin", role: "Admin", email: "admin@trademind.com" })}
-                className="px-3 py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-500 text-[10px] font-bold rounded-lg transition-all"
+                className="px-3 py-3.5 bg-white hover:bg-slate-50 border border-slate-200/60 text-[#2563eb] text-[11px] font-bold rounded-2xl transition-all uppercase tracking-wider shadow-sm"
               >
                 ADMIN
               </button>
               <button 
+                type="button"
                 onClick={() => login({ name: "Sales Exec", role: "employee", email: "priya@trademind.com" })}
-                className="px-3 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 text-[10px] font-bold rounded-lg transition-all"
+                className="px-3 py-3.5 bg-white hover:bg-slate-50 border border-slate-200/60 text-[#2563eb] text-[11px] font-bold rounded-2xl transition-all uppercase tracking-wider shadow-sm"
               >
                 EMPLOYEE
               </button>
               <button 
+                type="button"
                 onClick={() => login({ name: "Team Lead", role: "Sourcing Manager", email: "rahul@trademind.com" })}
-                className="px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 text-[10px] font-bold rounded-lg transition-all"
+                className="px-3 py-3.5 bg-white hover:bg-slate-50 border border-slate-200/60 text-[#2563eb] text-[11px] font-bold rounded-2xl transition-all uppercase tracking-wider shadow-sm"
               >
                 TEAM LEAD
               </button>
               <button 
+                type="button"
                 onClick={() => login({ name: "Demo Client", role: "Client", email: "client@demo.com" })}
-                className="px-3 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-500 text-[10px] font-bold rounded-lg transition-all"
+                className="px-3 py-3.5 bg-white hover:bg-slate-50 border border-slate-200/60 text-[#2563eb] text-[11px] font-bold rounded-2xl transition-all uppercase tracking-wider shadow-sm"
               >
                 CLIENT
               </button>
             </div>
           </div>
 
-          <div className="mt-8 text-center">
-            <p className="text-sm text-gray-500">
-              Don't have an account?{" "}
-              <span className="font-medium text-gray-400 dark:text-gray-600 cursor-default select-none" title="Contact admin for access">Contact admin</span>
-            </p>
-          </div>
         </div>
       </div>
+
+      {/* Right Column - Full-Screen Illustration */}
+      <div className="hidden md:block relative w-full h-full bg-[#070913] overflow-hidden select-none">
+        <img 
+          src="/erp_illustration.png" 
+          alt="Trading ERP Dashboard" 
+          className="w-full h-full object-cover object-center"
+        />
+      </div>
+
     </div>
   );
 };

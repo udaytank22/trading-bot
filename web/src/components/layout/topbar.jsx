@@ -107,11 +107,11 @@ export default function Topbar({ onToggleSidebar }) {
           <span className="text-[12px] font-medium text-slate-500 dark:text-gray-400">
             {todayDate}
           </span>
-          <div className="flex items-center bg-[#eef2fc] dark:bg-purple-900/20 px-4 py-1.5 rounded-full">
+          {/* <div className="flex items-center bg-[#eef2fc] dark:bg-purple-900/20 px-4 py-1.5 rounded-full">
             <span className="text-[11px] font-bold text-slate-500 dark:text-gray-300 tracking-wider">
               WELCOME BACK, <span className="text-purple-600 dark:text-purple-400 uppercase">{firstName}</span>
             </span>
-          </div>
+          </div> */}
         </div>
 
         <div className="flex items-center gap-1 text-slate-500 dark:text-gray-400">

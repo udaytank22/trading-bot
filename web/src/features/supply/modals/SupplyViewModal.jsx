@@ -322,7 +322,7 @@ export default function SupplyViewModal({
                   <div className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-4">
                     Associated Documents
                   </div>
-                  <div className="grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {[
                       { name: "Delivery Challan", type: "PDF", size: "1.2 MB" },
                       {
@@ -355,8 +355,15 @@ export default function SupplyViewModal({
                           >
                             {doc.type}
                           </div>
-                          <div>
-                            <p className="text-gray-900 dark:text-white text-sm font-medium group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors">
+                          <div
+                            onClick={() => {
+                              setPdfLabel(doc.name);
+                              setShowPdf(true);
+                            }}
+                            className="cursor-pointer"
+                            title="Click to view document"
+                          >
+                            <p className="text-gray-900 dark:text-white text-sm font-medium group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors hover:underline">
                               {doc.name}
                             </p>
                             <p className="text-gray-500 text-[11px]">
