@@ -17,11 +17,11 @@ export const KANBAN_COLUMNS = [
     bodyCls: "bg-[#f8f6fc] dark:bg-[#15181f]/40 border-purple-200/50 dark:border-purple-900/10",
   },
   {
-    id: "CLIENT_QUOTING",
-    label: "Client Quoting",
-    dotCls: "bg-[#06b6d4]",
-    countBadgeCls: "bg-cyan-100 text-cyan-800 dark:bg-cyan-950/60 dark:text-cyan-400",
-    bodyCls: "bg-[#f0f7f9] dark:bg-[#15181f]/40 border-cyan-200/50 dark:border-cyan-900/10",
+    id: "RFQ_SENT",
+    label: "RFQ Sent",
+    dotCls: "bg-[#2563eb]",
+    countBadgeCls: "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-400",
+    bodyCls: "bg-[#f3f7fd] dark:bg-[#15181f]/40 border-blue-200/50 dark:border-blue-900/10",
   },
   {
     id: "TL_REVIEW",
@@ -81,9 +81,6 @@ const ACTION_MAP = {
   RFQ_READY: {
     label: "Create RFQ",
   },
-  CLIENT_QUOTING: {
-    label: "Quote Prices",
-  },
   TL_REVIEW: {
     label: "Set Margin",
   },
@@ -104,7 +101,6 @@ const ACTION_MAP = {
 const ACTION_THEME_MAP = {
   PENDING: "bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:hover:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800/30",
   RFQ_READY: "bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950/20 dark:hover:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800/30",
-  CLIENT_QUOTING: "bg-cyan-50 hover:bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-950/20 dark:hover:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-800/30",
   TL_REVIEW: "bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950/20 dark:hover:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800/30",
   ADMIN_APPROVAL: "bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-950/20 dark:hover:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800/30",
   EMPLOYEE_VERIFY: "bg-sky-50 hover:bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-950/20 dark:hover:bg-sky-900/30 dark:text-sky-400 dark:border-sky-800/30",
@@ -115,7 +111,7 @@ const ACTION_THEME_MAP = {
 const STATUS_BADGE_MAP = {
   PENDING: "bg-amber-100/80 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
   RFQ_READY: "bg-purple-100/80 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300",
-  CLIENT_QUOTING: "bg-cyan-100/80 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300",
+  RFQ_SENT: "bg-blue-100/80 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300",
   TL_REVIEW: "bg-rose-100/80 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300",
   ADMIN_APPROVAL: "bg-orange-100/80 text-orange-800 dark:bg-orange-950/40 dark:text-orange-300",
   EMPLOYEE_VERIFY: "bg-sky-100/80 text-sky-800 dark:bg-sky-950/40 dark:text-sky-300",
@@ -126,14 +122,13 @@ const STATUS_BADGE_MAP = {
 };
 
 const ROLE_GATES = {
-  PENDING: ["Sales Executive", "Sourcing Manager", "Admin", "Administrator"],
-  RFQ_READY: ["Sales Executive", "Sourcing Manager", "Admin", "Administrator"],
-  CLIENT_QUOTING: ["Client", "Admin", "Administrator"],
-  TL_REVIEW: ["Sourcing Manager", "Admin", "Administrator"],
+  PENDING: ["Sales Executive", "User", "Sourcing Manager", "Team Leader", "Admin", "Administrator"],
+  RFQ_READY: ["Sales Executive", "User", "Sourcing Manager", "Team Leader", "Admin", "Administrator"],
+  TL_REVIEW: ["Sourcing Manager", "Team Leader", "Admin", "Administrator"],
   ADMIN_APPROVAL: ["Admin", "Administrator"],
-  EMPLOYEE_VERIFY: ["Sales Executive", "Sourcing Manager", "Admin", "Administrator"],
+  EMPLOYEE_VERIFY: ["Sales Executive", "User", "Sourcing Manager", "Team Leader", "Admin", "Administrator"],
   CLIENT_FINAL_APPROVAL: ["Client", "Admin", "Administrator"],
-  QUOTE_SENT: ["Admin", "Administrator", "Sales Executive"],
+  QUOTE_SENT: ["Admin", "Administrator", "Sales Executive", "User"],
 };
 
 const AVATARS = [
@@ -216,10 +211,11 @@ function KanbanCard({
   currentUser,
 }) {
   const role = currentUser?.role || "Admin";
-  const isAdmin = role === "Admin" || role === "Administrator";
+  const rLower = role.toLowerCase();
+  const isAdmin = rLower === "admin" || rLower === "administrator" || rLower === "super admin";
+  const isEmployee = rLower === "employee";
   const actionCfg = ACTION_MAP[inq.status];
-  const gates = ROLE_GATES[inq.status] || [];
-  const canAct = actionCfg && (isAdmin || gates.includes(role));
+  const canAct = actionCfg && (isAdmin || isEmployee);
 
   const route = getRoute(inq.inquiry_id, inq.buyer_name);
   const weight = getWeight(inq.products, inq.inquiry_id);
@@ -311,7 +307,7 @@ function KanbanCard({
         </div>
 
         {/* Right side: Awaiting Feedback or Avatars */}
-        {inq.status === "CLIENT_QUOTING" || inq.status === "CLIENT_FINAL_APPROVAL" ? (
+        {inq.status === "CLIENT_FINAL_APPROVAL" ? (
           <span className="bg-cyan-50 text-cyan-600 dark:bg-cyan-950/30 dark:text-cyan-400 px-2 py-0.5 rounded-md text-[9px] font-extrabold border border-cyan-100/30 dark:border-cyan-900/30">
             Awaiting Feedback
           </span>

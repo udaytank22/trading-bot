@@ -28,7 +28,7 @@ const getDashboardStats = async () => {
   // 3. Pending replies count
   const pendingReplies = await prisma.inquiry.count({
     where: {
-      currentStatus: { in: ['PENDING', 'RFQ_SENT', 'CLIENT_QUOTING'] },
+      currentStatus: { in: ['PENDING', 'RFQ_SENT', 'TL_REVIEW'] },
       deletedAt: null
     }
   });

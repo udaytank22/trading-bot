@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
-import { fetchProfitData } from '@services/sheetsService';
+import { api } from '@services/api';
 import { formatINR } from '@services/marginEngine';
 import { DataTable, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
 
@@ -35,14 +35,35 @@ export default function ProfitPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchProfitData()
-      .then(res => {
-        if (res) {
-          setClosedDeals(res.closedDeals ?? []);
-          setWeeklyTrend(res.weeklyTrend ?? []);
-        }
-      })
-      .finally(() => setLoading(false));
+    Promise.all([
+      api.reports.getProfitReport(),
+      api.reports.getDashboardStats()
+    ]).then(([profitRes, statsRes]) => {
+      if (profitRes.success && profitRes.data) {
+        const mappedDeals = (profitRes.data.deals || []).map(d => ({
+          inquiry_id: d.inquiryNumber,
+          buyer_name: d.clientName,
+          my_price: d.revenue,
+          seller_cost: d.cost,
+          profit: d.profit,
+          margin_percent: parseFloat(d.marginPercentage)
+        }));
+        setClosedDeals(mappedDeals);
+      }
+      if (statsRes.success && statsRes.data && statsRes.data.weeklyTrend) {
+        const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        const formattedTrend = statsRes.data.weeklyTrend.map(item => {
+          const d = new Date(item.date);
+          return {
+            day: days[d.getDay()],
+            profit: item.profit
+          };
+        });
+        setWeeklyTrend(formattedTrend);
+      }
+    }).catch(e => {
+      console.error(e);
+    }).finally(() => setLoading(false));
   }, []);
 
   const { totalRevenue, totalCost, totalProfit, marginPercent } = useMemo(() => {

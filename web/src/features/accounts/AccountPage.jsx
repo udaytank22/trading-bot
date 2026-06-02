@@ -1,4 +1,5 @@
 import { useAuth, useUI, useData } from '@context';
+import { api } from '@services/api';
 /**
  * @file AccountPage.jsx
  * @description Bank Accounts management page — list, add, edit, delete accounts.
@@ -35,7 +36,7 @@ const ITEMS_PER_PAGE = 5;
 // ─── Main Page Component ───────────────────────────────────────────────────────
 export default function AccountPage() {
   // Global accounts data from AppContext
-  const { accountsData, setAccountsData } = useData();
+  const { accountsData, refreshAll } = useData();
 
   // ── Local UI state ────────────────────────────────────────────────────────
   const [search, setSearch]             = useState("");
@@ -85,29 +86,53 @@ export default function AccountPage() {
       confirmButtonText: "Yes, delete it!",
     });
     if (isConfirmed) {
-      setAccountsData((prev) => prev.filter((acc) => acc.id !== id));
-      showToast("Account deleted successfully", "success");
+      try {
+        const res = await api.bankAccounts.deleteBankAccount(id);
+        if (res.success) {
+          showToast("Account deleted successfully", "success");
+          refreshAll();
+        } else {
+          showToast(res.message || "Failed to delete bank account", "error");
+        }
+      } catch (e) {
+        console.error(e);
+        showToast("An error occurred while deleting bank account", "error");
+      }
     }
   };
 
   // ── Handler: save (create or update) ─────────────────────────────────────
-  const handleSaveAccount = (formData) => {
-    if (accountToEdit) {
-      // UPDATE: preserve existing ID
-      setAccountsData((prev) =>
-        prev.map((acc) =>
-          acc.id === accountToEdit.id ? { ...formData, id: accountToEdit.id } : acc
-        )
-      );
-      showToast("Account updated successfully", "success");
-    } else {
-      // CREATE: generate sequential ID
-      const newAccount = {
-        ...formData,
-        id: `BANK-00${accountsData.length + 1}`,
+  const handleSaveAccount = async (formData) => {
+    try {
+      const payload = {
+        bankName: formData.bankName,
+        accountHolderName: formData.accountName,
+        accountNumber: formData.accountNumber,
+        routingNumber: formData.routingNumber,
+        currency: formData.currency,
+        status: formData.status === 'Active' ? 'ACTIVE' : 'INACTIVE'
       };
-      setAccountsData((prev) => [newAccount, ...prev]);
-      showToast("Account added successfully", "success");
+
+      if (accountToEdit) {
+        const res = await api.bankAccounts.updateBankAccount(accountToEdit.id, payload);
+        if (res.success) {
+          showToast("Account updated successfully", "success");
+          refreshAll();
+        } else {
+          showToast(res.message || "Failed to update bank account", "error");
+        }
+      } else {
+        const res = await api.bankAccounts.createBankAccount(payload);
+        if (res.success) {
+          showToast("Account added successfully", "success");
+          refreshAll();
+        } else {
+          showToast(res.message || "Failed to add bank account", "error");
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("An error occurred while saving bank account", "error");
     }
   };
 

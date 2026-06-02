@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useAuth, useUI, useData } from '@context';
+import { api } from '@services/api';
 import ContactModal from '@features/accounts/modals/ContactModal';
 import SupplyViewModal from './modals/SupplyViewModal';
 import AddSupplyModal from './modals/AddSupplyModal';
@@ -43,7 +44,7 @@ const ITEMS_PER_PAGE = 5;
 
 // ─── Main Page Component ───────────────────────────────────────────────────────
 export default function SupplyPage() {
-  const { supplyData, setSupplyData, setInvoicesData } = useData();
+  const { supplyData, refreshAll } = useData();
 
   // ── Local UI state ────────────────────────────────────────────────────────
   const [search, setSearch] = useState("");
@@ -97,7 +98,7 @@ export default function SupplyPage() {
   }, [filteredData, currentPage]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
-  const handleStatusUpdate = (id, newStatus) => {
+  const handleStatusUpdate = async (id, newStatus) => {
     if (newStatus === "SEND_INVOICE") {
       const deal = supplyData.find((d) => d.inquiry_id === id);
       if (deal) {
@@ -107,32 +108,43 @@ export default function SupplyPage() {
       return;
     }
 
-    // When invoice is sent, move the record from supply to invoices module
     if (newStatus === "INVOICE_SENT") {
       const deal = supplyData.find((d) => d.inquiry_id === id);
       if (deal) {
-        // Remove from supply list
-        setSupplyData((prev) => prev.filter((item) => item.inquiry_id !== id));
-
-        // Add to invoices list with invoice metadata
-        setInvoicesData((prev) => [
-          {
-            ...deal,
-            invoice_date: new Date().toISOString(),
-            invoice_status: "SENT",
-          },
-          ...prev,
-        ]);
+        try {
+          const res = await api.shipments.updateShipment(id, { currentStatus: "DELIVERED" });
+          if (res.success) {
+            const invoicePayload = {
+              clientId: deal.clientId,
+              inquiryId: deal.inquiryId,
+              shipmentId: deal.id,
+              subtotal: 1000.00,
+              status: 'SENT',
+              items: deal.products?.map(p => ({
+                description: p.product_name || 'Product',
+                quantity: p.quantity || 1,
+                unitPrice: p.price || 1000.00,
+                totalPrice: (p.quantity || 1) * (p.price || 1000.00)
+              })) || []
+            };
+            await api.invoices.createInvoice(invoicePayload);
+            refreshAll();
+          }
+        } catch (e) {
+          console.error("Failed to transition shipment to invoice:", e);
+        }
       }
-
       return;
     }
 
-    setSupplyData((prev) =>
-      prev.map((item) =>
-        item.inquiry_id === id ? { ...item, status: newStatus } : item
-      )
-    );
+    try {
+      const res = await api.shipments.updateShipment(id, { currentStatus: newStatus });
+      if (res.success) {
+        refreshAll();
+      }
+    } catch (e) {
+      console.error("Failed to update shipment status:", e);
+    }
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -213,11 +225,19 @@ export default function SupplyPage() {
         deal={allotModalDeal}
         isOpen={isAllotModalOpen}
         onClose={() => setIsAllotModalOpen(false)}
-        onAllot={(id, vehicle) => {
-          // Update status to LOADING when vehicle is allotted
-          setSupplyData(prev => prev.map(item =>
-            item.inquiry_id === id ? { ...item, status: "LOADING", vehicle } : item
-          ));
+        onAllot={async (id, vehicle) => {
+          try {
+            const res = await api.shipments.updateShipment(id, {
+              currentStatus: "LOADING",
+              vehicleDetails: vehicle.vehicle_no,
+              driverDetails: `${vehicle.owner_name} (${vehicle.owner_phone})`
+            });
+            if (res.success) {
+              refreshAll();
+            }
+          } catch (e) {
+            console.error("Failed to allot vehicle:", e);
+          }
         }}
       />
 

@@ -1,4 +1,5 @@
 import { useAuth, useUI, useData } from '@context';
+import { api } from '@services/api';
 /**
  * @file PurchaseOrdersPage.jsx
  * @description Purchase Orders management page — list, add, view, send order emails.
@@ -51,7 +52,7 @@ function EmptyState() {
 }
 
 export default function PurchaseOrdersPage() {
-  const { purchaseOrdersData, setPurchaseOrdersData } = useData();
+  const { purchaseOrdersData, refreshAll } = useData();
   const { toast, showToast } = useToast();
 
   const [search, setSearch] = useState("");
@@ -87,27 +88,47 @@ export default function PurchaseOrdersPage() {
     return filteredPOs.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredPOs, currentPage]);
 
-  const handleAddPO = (newPO) => {
-    const tempPO = {
-      ...newPO,
-      po_id: `PO-${Date.now()}`,
-      status: "PENDING",
-      date: new Date().toISOString(),
-      total_amount: 0, // Simplified
-    };
+  const handleAddPO = async (newPO) => {
+    try {
+      const payload = {
+        supplierId: newPO.supplierId,
+        clientId: newPO.clientId,
+        amount: 0,
+        items: newPO.products?.map(p => ({
+          productId: p.productId || '',
+          description: p.description || p.product || 'Product',
+          quantity: parseInt(p.qty, 10) || 1,
+          unitPrice: parseFloat(p.unitPrice) || 0,
+          totalPrice: (parseInt(p.qty, 10) || 1) * (parseFloat(p.unitPrice) || 0)
+        })) || []
+      };
 
-    setPurchaseOrdersData(prev => [tempPO, ...prev]);
-    showToast("Purchase order created successfully", "success");
+      payload.amount = payload.items.reduce((sum, item) => sum + item.totalPrice, 0);
+
+      const res = await api.purchaseOrders.createPurchaseOrder(payload);
+      if (res.success) {
+        showToast("Purchase order created successfully", "success");
+        refreshAll();
+      } else {
+        showToast(res.message || "Failed to create purchase order", "error");
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("An error occurred while saving purchase order", "error");
+    }
   };
 
-  const updatePOStatus = useCallback((id, status) => {
-    setPurchaseOrdersData(prev =>
-      prev.map(po => po.po_id === id ? { ...po, status } : po)
-    );
-    setSelectedPO(prev =>
-      prev?.po_id === id ? { ...prev, status } : prev
-    );
-  }, [setPurchaseOrdersData]);
+  const updatePOStatus = useCallback(async (id, status) => {
+    try {
+      const res = await api.purchaseOrders.updatePurchaseOrder(id, { status });
+      if (res.success) {
+        refreshAll();
+        setSelectedPO(prev => prev?.id === id ? { ...prev, status } : prev);
+      }
+    } catch (e) {
+      console.error("Failed to update PO status:", e);
+    }
+  }, [refreshAll]);
 
   const startShowing = filteredPOs.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1;
   const endShowing = Math.min(currentPage * ITEMS_PER_PAGE, filteredPOs.length);

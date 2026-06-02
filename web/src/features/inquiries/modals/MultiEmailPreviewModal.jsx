@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { triggerRFQ } from '@services/n8nService';
+import { api } from '@services/api';
 import { formatINR } from '@services/marginEngine';
 
 const EmailDraftCard = ({ rfq, inquiryId, buyerName, allProducts }) => {
@@ -62,10 +62,10 @@ export default function MultiEmailPreviewModal({ isOpen, onClose, stagedRFQs, in
   const handleSendAll = async () => {
     setSendState('sending');
     try {
-      // Send all RFQs in parallel
-      await Promise.all(stagedRFQs.map(() => triggerRFQ(inquiryDeal)));
+      // Dispatch RFQs via backend API
+      await api.inquiries.sendRFQ(inquiryDeal.id);
 
-      if (onStatusUpdate) onStatusUpdate(inquiryDeal.inquiry_id, 'CLIENT_QUOTING');
+      if (onStatusUpdate) onStatusUpdate(inquiryDeal.inquiry_id, 'RFQ_SENT');
 
       setSendState('success');
       setTimeout(() => {

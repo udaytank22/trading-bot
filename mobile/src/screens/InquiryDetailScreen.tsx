@@ -72,14 +72,7 @@ export const InquiryDetailScreen = () => {
           label: 'Send RFQ to Supplier',
           onPress: () => setActiveSheet('RFQ')
         };
-      case 'CLIENT_QUOTING':
-        return {
-          label: 'Input Sourced Cost Prices',
-          onPress: () => {
-            setCostPriceInput('500');
-            setActiveSheet('QUOTE_COST');
-          }
-        };
+
       case 'TL_REVIEW':
         return {
           label: 'Set Custom Profit Margins',
@@ -152,7 +145,21 @@ export const InquiryDetailScreen = () => {
   };
 
   const handleRFQConfirm = () => {
-    updateInquiryStatus(inquiry.inquiry_id, 'CLIENT_QUOTING');
+    const cost = 500; // default cost price
+    const updatedInq = {
+      ...inquiry,
+      status: 'TL_REVIEW',
+      seller_quote: {
+        ...inquiry.seller_quote,
+        date_received: new Date().toISOString(),
+        products: inquiry.seller_quote?.products.map(p => ({
+          ...p,
+          seller_unit_price: cost
+        })) || []
+      }
+    };
+    updateInquiry(updatedInq);
+    updateInquiryStatus(inquiry.inquiry_id, 'TL_REVIEW');
     setActiveSheet('NONE');
     showAlert('RFQ Dispatched', `RFQ email sent to ${inquiry.seller_quote?.seller_name}`);
   };

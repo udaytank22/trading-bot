@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Select, Field, Modal } from "@components/ui";
+import { useData } from "@context";
 
 const PRODUCTS = ["Safety Helmet", "Marine Paint", "Engine Oil", "Cables"];
 
@@ -25,7 +26,10 @@ const emptyProduct = () => ({
 });
 
 export default function AddPurchaseOrderModal({ isOpen, onClose, onSubmit }) {
+  const { clientsData, suppliersData } = useData();
   const [formData, setFormData] = useState({
+    clientId: "",
+    supplierId: "",
     vessel: "",
     vesselRef: "",
     imoNumber: "",
@@ -76,6 +80,20 @@ export default function AddPurchaseOrderModal({ isOpen, onClose, onSubmit }) {
     });
   };
 
+  const updateField = (name, value) => {
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: value };
+      if (name === "supplierId") {
+        const supplier = suppliersData.find(s => s.id === value);
+        if (supplier) {
+          updated.supplierEmail = supplier.email || "";
+          updated.supplierTel = supplier.phone || "";
+        }
+      }
+      return updated;
+    });
+  };
+
   const addProduct = () => {
     setFormData((prev) => ({
       ...prev,
@@ -118,6 +136,36 @@ export default function AddPurchaseOrderModal({ isOpen, onClose, onSubmit }) {
       onExcelUpload={handleExcelUpload}
     >
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-5">
+        <div>
+          <label className={labelClass}>Customer (Client)</label>
+          <Select
+            variant="form"
+            value={formData.clientId}
+            onChange={(val) => updateField("clientId", val)}
+            options={clientsData.map((client) => ({
+              value: client.id,
+              label: client.name,
+            }))}
+            className="w-full text-gray-900"
+            placeholder="Select customer"
+          />
+        </div>
+
+        <div>
+          <label className={labelClass}>Supplier (Vendor)</label>
+          <Select
+            variant="form"
+            value={formData.supplierId}
+            onChange={(val) => updateField("supplierId", val)}
+            options={suppliersData.map((supplier) => ({
+              value: supplier.id,
+              label: supplier.name,
+            }))}
+            className="w-full text-gray-900"
+            placeholder="Select supplier"
+          />
+        </div>
+
         <Field
           label="Vessel"
           name="vessel"

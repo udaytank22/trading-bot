@@ -22,9 +22,9 @@ export function UIProvider({ children }) {
   }, [theme]);
 
   const toggleSidebar = useCallback(() => setIsSidebarOpen(p => !p), []);
-  const toggleTheme   = useCallback(() => setTheme(p => p === THEME.DARK ? THEME.LIGHT : THEME.DARK), []);
-  const startCall     = useCallback((user, type = 'voice') => setActiveCall({ caller: user, type, status: 'ongoing', startTime: Date.now(), duration: 0 }), []);
-  const endCall       = useCallback(() => setActiveCall(null), []);
+  const toggleTheme = useCallback(() => setTheme(p => p === THEME.DARK ? THEME.LIGHT : THEME.DARK), []);
+  const startCall = useCallback((user, type = 'voice') => setActiveCall({ caller: user, type, status: 'ongoing', startTime: Date.now(), duration: 0 }), []);
+  const endCall = useCallback(() => setActiveCall(null), []);
 
   return (
     <UIContext.Provider value={{ isSidebarOpen, theme, activeCall, toggleSidebar, toggleTheme, startCall, endCall }}>

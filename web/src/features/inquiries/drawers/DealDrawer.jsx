@@ -53,7 +53,7 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
     const steps = [
       { id: "PENDING", label: "Created" },
       { id: "RFQ_READY", label: "Stock Checked" },
-      { id: "CLIENT_QUOTING", label: "Client Quoting" },
+      { id: "RFQ_SENT", label: "RFQ Sent" },
       { id: "TL_REVIEW", label: "TL Review" },
       { id: "ADMIN_APPROVAL", label: "Admin Approval" },
       { id: "EMPLOYEE_VERIFY", label: "Employee Verify" },

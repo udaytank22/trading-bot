@@ -7,9 +7,36 @@ async function main() {
   console.log('Seeding database started...');
 
   // 1. Clean existing records (Optional, in order of dependencies)
+  await prisma.attendance.deleteMany({});
+  await prisma.employee.deleteMany({});
+
+  await prisma.payment.deleteMany({});
+  await prisma.invoiceItem.deleteMany({});
+  await prisma.invoice.deleteMany({});
+
+  await prisma.shipment.deleteMany({});
+  await prisma.purchaseOrderItem.deleteMany({});
+  await prisma.purchaseOrder.deleteMany({});
+
+  await prisma.document.deleteMany({});
+  await prisma.notification.deleteMany({});
+  await prisma.auditLog.deleteMany({});
+
   await prisma.stockMovement.deleteMany({});
   await prisma.warehouseStock.deleteMany({});
   await prisma.inventoryItem.deleteMany({});
+
+  await prisma.supplierQuoteItem.deleteMany({});
+  await prisma.supplierQuote.deleteMany({});
+  await prisma.clientQuotationItem.deleteMany({});
+  await prisma.clientQuotation.deleteMany({});
+  await prisma.approvalLog.deleteMany({});
+
+  await prisma.inquiryStatusHistory.deleteMany({});
+  await prisma.inquirySupplier.deleteMany({});
+  await prisma.inquiryItem.deleteMany({});
+  await prisma.inquiry.deleteMany({});
+
   await prisma.rolePermission.deleteMany({});
   await prisma.permission.deleteMany({});
   await prisma.user.deleteMany({});
@@ -28,7 +55,8 @@ async function main() {
     admin: await prisma.role.create({ data: { name: 'Admin' } }),
     teamLead: await prisma.role.create({ data: { name: 'Team Lead' } }),
     employee: await prisma.role.create({ data: { name: 'Employee' } }),
-    viewer: await prisma.role.create({ data: { name: 'Viewer' } })
+    viewer: await prisma.role.create({ data: { name: 'Viewer' } }),
+    client: await prisma.role.create({ data: { name: 'Client' } })
   };
 
   console.log('Seeded roles.');
@@ -80,10 +108,15 @@ async function main() {
     }
   });
 
-  // Employee: dashboard, inquiries read/create/update, others read/create/update except Settings/Reports
+  // Employee: dashboard, inquiries read/create/update/approve, others read/create/update except Settings/Reports
   permissions.forEach((perm) => {
     if (['settings', 'reports'].includes(perm.module)) return;
-    if (perm.action === 'read' || perm.action === 'create' || perm.action === 'update') {
+    if (
+      perm.action === 'read' || 
+      perm.action === 'create' || 
+      perm.action === 'update' ||
+      (perm.module === 'inquiries' && perm.action === 'approve')
+    ) {
       rolePermissions.push({ roleId: roles.employee.id, permissionId: perm.id });
     }
   });
@@ -93,6 +126,16 @@ async function main() {
     if (perm.module === 'settings') return;
     if (perm.action === 'read' || perm.action === 'export') {
       rolePermissions.push({ roleId: roles.viewer.id, permissionId: perm.id });
+    }
+  });
+
+  // Client: inquiries read/approve, suppliers read
+  permissions.forEach((perm) => {
+    if (
+      (perm.module === 'inquiries' && ['read', 'approve'].includes(perm.action)) ||
+      (perm.module === 'suppliers' && perm.action === 'read')
+    ) {
+      rolePermissions.push({ roleId: roles.client.id, permissionId: perm.id });
     }
   });
 
@@ -138,6 +181,15 @@ async function main() {
       email: 'employee@trademind.com',
       password: passwordHash,
       roleId: roles.employee.id,
+      isActive: true
+    }
+  });
+
+  await prisma.user.create({
+    data: {
+      email: 'client@trademind.com',
+      password: passwordHash,
+      roleId: roles.client.id,
       isActive: true
     }
   });

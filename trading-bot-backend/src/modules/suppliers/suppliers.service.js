@@ -30,6 +30,7 @@ const createSupplier = async (data, creatorId) => {
       phone: data.phone || null,
       company: data.company || null,
       address: data.address || null,
+      products: data.products || [],
       createdById: creatorId,
       isActive: data.isActive !== undefined ? data.isActive : true
     }
@@ -48,23 +49,72 @@ const updateSupplier = async (id, data, updaterId) => {
       phone: data.phone,
       company: data.company,
       address: data.address,
+      products: data.products !== undefined ? data.products : undefined,
       isActive: data.isActive,
       updatedById: updaterId
     }
   });
 };
 
-/**
- * Soft delete supplier
- */
 const deleteSupplier = async (id, updaterId) => {
-  return await prisma.supplier.update({
-    where: { id },
-    data: {
-      deletedAt: new Date(),
-      isActive: false,
-      updatedById: updaterId
+  return await prisma.$transaction(async (tx) => {
+    // 1. Delete InquirySupplier associations
+    await tx.inquirySupplier.deleteMany({
+      where: { supplierId: id }
+    });
+
+    // 2. Delete SupplierQuoteItems and SupplierQuotes
+    const quotes = await tx.supplierQuote.findMany({
+      where: { supplierId: id },
+      select: { id: true }
+    });
+    const quoteIds = quotes.map(q => q.id);
+    if (quoteIds.length > 0) {
+      await tx.supplierQuoteItem.deleteMany({
+        where: { supplierQuoteId: { in: quoteIds } }
+      });
+      await tx.supplierQuote.deleteMany({
+        where: { id: { in: quoteIds } }
+      });
     }
+
+    // 3. Delete PurchaseOrderItems and PurchaseOrders
+    const purchaseOrders = await tx.purchaseOrder.findMany({
+      where: { supplierId: id },
+      select: { id: true }
+    });
+    const poIds = purchaseOrders.map(po => po.id);
+    if (poIds.length > 0) {
+      await tx.purchaseOrderItem.deleteMany({
+        where: { purchaseOrderId: { in: poIds } }
+      });
+      await tx.purchaseOrder.deleteMany({
+        where: { id: { in: poIds } }
+      });
+    }
+
+    // 4. Handle Shipments
+    const shipments = await tx.shipment.findMany({
+      where: { supplierId: id },
+      select: { id: true }
+    });
+    const shipmentIds = shipments.map(s => s.id);
+    if (shipmentIds.length > 0) {
+      // Disassociate shipments from invoices (set shipmentId to null)
+      await tx.invoice.updateMany({
+        where: { shipmentId: { in: shipmentIds } },
+        data: { shipmentId: null }
+      });
+      // Delete shipments
+      await tx.shipment.deleteMany({
+        where: { id: { in: shipmentIds } }
+      });
+    }
+
+    // 5. Finally, delete the supplier from the database
+    return await tx.supplier.delete({
+      where: { id }
+    });
   });
 };
 

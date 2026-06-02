@@ -1,4 +1,5 @@
 import { useAuth, useUI, useData } from '@context';
+import { api } from '@services/api';
 import React, { useState, useContext, useMemo } from "react";
 
 import { useToast } from '@hooks/useToast';
@@ -102,7 +103,7 @@ const KanbanColumn = ({ title, status, documents, onEdit, onDelete, colorClass }
 );
 
 export default function DocumentsPage() {
-  const { documentsData, setDocumentsData } = useData();
+  const { documentsData, refreshAll } = useData();
   const [activeTab, setActiveTab] = useState("Employee");
   const [search, setSearch] = useState("");
   const { toast, showToast } = useToast();
@@ -134,8 +135,18 @@ export default function DocumentsPage() {
     });
 
     if (isConfirmed) {
-      setDocumentsData(prev => prev.filter(doc => doc.id !== id));
-      showToast("Document deleted successfully", "success");
+      try {
+        const res = await api.documents.deleteDocument(id);
+        if (res.success) {
+          showToast("Document deleted successfully", "success");
+          refreshAll();
+        } else {
+          showToast(res.message || "Failed to delete document", "error");
+        }
+      } catch (e) {
+        console.error(e);
+        showToast("An error occurred while deleting document", "error");
+      }
     }
   };
 
@@ -144,13 +155,37 @@ export default function DocumentsPage() {
     setIsModalOpen(true);
   };
 
-  const handleSaveDocument = (docData) => {
-    if (documentToEdit) {
-      setDocumentsData(prev => prev.map(d => d.id === documentToEdit.id ? { ...docData, id: documentToEdit.id } : d));
-      showToast("Document updated successfully", "success");
-    } else {
-      setDocumentsData(prev => [{ ...docData, id: `DOC-${Date.now()}`, uploadedAt: new Date().toISOString() }, ...prev]);
-      showToast("Document added successfully", "success");
+  const handleSaveDocument = async (docData) => {
+    try {
+      const payload = {
+        title: docData.title,
+        category: docData.category,
+        entityType: docData.entityType,
+        entityId: docData.entityName, // map entityName to entityId for schema consistency
+        expiryDate: docData.expiryDate,
+        filePath: docData.filePath || 'uploads/doc.pdf', // default fallback path
+      };
+
+      if (documentToEdit) {
+        const res = await api.documents.updateDocument(documentToEdit.id, payload);
+        if (res.success) {
+          showToast("Document updated successfully", "success");
+          refreshAll();
+        } else {
+          showToast(res.message || "Failed to update document", "error");
+        }
+      } else {
+        const res = await api.documents.createDocument(payload);
+        if (res.success) {
+          showToast("Document added successfully", "success");
+          refreshAll();
+        } else {
+          showToast(res.message || "Failed to add document", "error");
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("An error occurred while saving document", "error");
     }
   };
 

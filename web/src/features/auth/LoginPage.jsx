@@ -2,10 +2,10 @@ import { useAuth, useUI, useData } from '@context';
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, Lock, Eye, EyeOff, Zap } from "lucide-react";
+import { api } from '@services/api';
 
 const LoginPage = () => {
   const { login, isAuthenticated } = useAuth();
-  const { employeesData } = useData();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -19,31 +19,35 @@ const LoginPage = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
-    // Simulate API call and validation
-    setTimeout(() => {
-      if (!password.trim()) {
-        setIsLoading(false);
-        setError("Please enter your password.");
-        return;
-      }
+    try {
+      const res = await api.auth.login(email.trim(), password);
+      if (res.success && res.data) {
+        const { user, accessToken, refreshToken, token } = res.data;
+        const usedToken = accessToken ?? token;
+        const normalizedRole = user.role ? user.role.name : "User";
 
-      // Check if user exists in local test database
-      const user = employeesData.find(emp => emp.email.toLowerCase() === email.toLowerCase());
-      
-      if (user || email === "admin@trademind.com") { // Allow admin by default too
-        setIsLoading(false);
-        login(user || { name: "Admin", role: "Admin", email: "admin@trademind.com" });
+        login({
+          id: user.id,
+          name: user.employeeProfile ? user.employeeProfile.fullName : (user.email.split('@')[0]),
+          role: normalizedRole,
+          email: user.email
+        }, usedToken, refreshToken);
+
         navigate("/");
       } else {
-        setIsLoading(false);
-        setError("Invalid username/email or password. Please try again.");
+        setError("Invalid email or password.");
       }
-    }, 1500);
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || "Invalid email or password. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -136,43 +140,6 @@ const LoginPage = () => {
               </button>
             </div>
           </form>
-
-          {/* Quick Access for Testing */}
-          <div className="mt-8 pt-6 border-t border-slate-200">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center mb-3">
-              Quick Access for Testing
-            </p>
-            <div className="grid grid-cols-2 gap-2.5">
-              <button 
-                type="button"
-                onClick={() => login({ name: "Admin", role: "Admin", email: "admin@trademind.com" })}
-                className="px-3 py-3.5 bg-white hover:bg-slate-50 border border-slate-200/60 text-[#2563eb] text-[11px] font-bold rounded-2xl transition-all uppercase tracking-wider shadow-sm"
-              >
-                ADMIN
-              </button>
-              <button 
-                type="button"
-                onClick={() => login({ name: "Sales Exec", role: "employee", email: "priya@trademind.com" })}
-                className="px-3 py-3.5 bg-white hover:bg-slate-50 border border-slate-200/60 text-[#2563eb] text-[11px] font-bold rounded-2xl transition-all uppercase tracking-wider shadow-sm"
-              >
-                EMPLOYEE
-              </button>
-              <button 
-                type="button"
-                onClick={() => login({ name: "Team Lead", role: "Sourcing Manager", email: "rahul@trademind.com" })}
-                className="px-3 py-3.5 bg-white hover:bg-slate-50 border border-slate-200/60 text-[#2563eb] text-[11px] font-bold rounded-2xl transition-all uppercase tracking-wider shadow-sm"
-              >
-                TEAM LEAD
-              </button>
-              <button 
-                type="button"
-                onClick={() => login({ name: "Demo Client", role: "Client", email: "client@demo.com" })}
-                className="px-3 py-3.5 bg-white hover:bg-slate-50 border border-slate-200/60 text-[#2563eb] text-[11px] font-bold rounded-2xl transition-all uppercase tracking-wider shadow-sm"
-              >
-                CLIENT
-              </button>
-            </div>
-          </div>
 
         </div>
       </div>

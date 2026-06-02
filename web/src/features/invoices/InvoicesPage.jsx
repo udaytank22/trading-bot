@@ -1,15 +1,16 @@
 import { useAuth, useUI, useData } from '@context';
 import React, { useMemo, useState } from "react";
+import { api } from '@services/api';
 
-import { PageToolbar, Pagination, Button, StatusBadge, DataTable, rowStripeClass, ROW_HOVER_CLS, DatePicker } from '@components/ui';
+import { PageToolbar, Pagination, Button, StatusBadge, DataTable, rowStripeClass, ROW_HOVER_CLS, DatePicker, Select } from '@components/ui';
 
 export default function InvoicesPage() {
-    const { invoicesData, setInvoicesData } = useData();
+    const { invoicesData, refreshAll, accountsData } = useData();
 
     const [search, setSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [paymentModalInvoice, setPaymentModalInvoice] = useState(null);
-    const [paymentForm, setPaymentForm] = useState({ amount: "", date: "", reference: "" });
+    const [paymentForm, setPaymentForm] = useState({ amount: "", date: "", reference: "", bankAccountId: "", paymentMode: "Bank Transfer" });
     const ITEMS_PER_PAGE = 10;
 
     const filtered = useMemo(() => {
@@ -26,37 +27,53 @@ export default function InvoicesPage() {
     const totalPages = Math.max(1, Math.ceil((filtered?.length || 0) / ITEMS_PER_PAGE));
     const currentItems = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
-    const handleSend = (id) => {
-        setInvoicesData((prev) =>
-            prev.map((inv) => (inv.inquiry_id === id ? { ...inv, invoice_status: "SENT", invoice_date: new Date().toISOString() } : inv)),
-        );
+    const handleSend = async (id) => {
+        try {
+            const res = await api.invoices.updateInvoice(id, { status: "SENT" });
+            if (res.success) {
+                refreshAll();
+            }
+        } catch (e) {
+            console.error("Failed to send invoice:", e);
+        }
     };
 
     const openPaymentModal = (inv) => {
         const defaultAmount = inv.products?.reduce((s, p) => s + (p.total_price || 0), 0) || "";
-        setPaymentForm({ amount: defaultAmount, date: new Date().toISOString().split("T")[0], reference: "" });
+        const defaultBankId = accountsData?.[0]?.id || "";
+        setPaymentForm({
+            amount: defaultAmount,
+            date: new Date().toISOString().split("T")[0],
+            reference: "",
+            bankAccountId: defaultBankId,
+            paymentMode: "Bank Transfer"
+        });
         setPaymentModalInvoice(inv);
     };
 
-    const handleMarkPaid = () => {
+    const handleMarkPaid = async () => {
         if (!paymentModalInvoice) return;
-        const id = paymentModalInvoice.inquiry_id;
-        setInvoicesData((prev) =>
-            prev.map((inv) =>
-                inv.inquiry_id === id
-                    ? {
-                        ...inv,
-                        invoice_status: "PAID",
-                        payment: {
-                            amount: paymentForm.amount,
-                            date: paymentForm.date,
-                            reference: paymentForm.reference,
-                        },
-                    }
-                    : inv,
-            ),
-        );
-        setPaymentModalInvoice(null);
+        try {
+            const payload = {
+                invoiceId: paymentModalInvoice.id,
+                amount: parseFloat(paymentForm.amount),
+                paymentDate: paymentForm.date,
+                paymentMode: paymentForm.paymentMode,
+                bankAccountId: paymentForm.bankAccountId,
+                transactionReference: paymentForm.reference,
+                notes: `Payment for Invoice ${paymentModalInvoice.invoiceNumber || paymentModalInvoice.id}`
+            };
+
+            const res = await api.payments.createPayment(payload);
+            if (res.success) {
+                setPaymentModalInvoice(null);
+                refreshAll();
+            } else {
+                console.error("Failed to save payment:", res.message);
+            }
+        } catch (e) {
+            console.error("Failed to mark paid:", e);
+        }
     };
 
     return (
@@ -189,6 +206,45 @@ export default function InvoicesPage() {
                                         setPaymentForm((p) => ({ ...p, date: e.target.value }))
                                     }
                                     className="h-11 border border-gray-300 dark:border-[#343844] focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                                    Payment Mode
+                                </label>
+                                <Select
+                                    variant="form"
+                                    value={paymentForm.paymentMode}
+                                    onChange={(val) =>
+                                        setPaymentForm((p) => ({ ...p, paymentMode: val }))
+                                    }
+                                    options={[
+                                        { value: "Bank Transfer", label: "Bank Transfer" },
+                                        { value: "Cash", label: "Cash" },
+                                        { value: "Cheque", label: "Cheque" },
+                                        { value: "Online", label: "Online" }
+                                    ]}
+                                    className="w-full text-gray-900"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                                    Bank Account
+                                </label>
+                                <Select
+                                    variant="form"
+                                    value={paymentForm.bankAccountId}
+                                    onChange={(val) =>
+                                        setPaymentForm((p) => ({ ...p, bankAccountId: val }))
+                                    }
+                                    options={accountsData.map(acc => ({
+                                        value: acc.id,
+                                        label: `${acc.bankName} - ${acc.accountNumber}`
+                                    }))}
+                                    className="w-full text-gray-900"
+                                    placeholder="Select bank account"
                                 />
                             </div>
 

@@ -180,7 +180,7 @@ const supplierQuote = async (req, res) => {
   await createNotification({
     userId: req.user.id,
     title: 'Supplier Quote Logged',
-    message: `A supplier quote has been linked to Inquiry ${updated.inquiryNumber}. Status is CLIENT_QUOTING.`,
+    message: `A supplier quote has been linked to Inquiry ${updated.inquiryNumber}. Status is TL_REVIEW.`,
     type: 'inquiry',
     relatedModule: 'inquiries',
     relatedRecordId: updated.id

@@ -1,4 +1,5 @@
 import { useAuth, useUI, useData } from '@context';
+import { api } from '@services/api';
 /**
  * @file EmployeesPage.jsx
  * @description Employee management page — list, add, edit, delete, view attendance.
@@ -39,7 +40,7 @@ const ITEMS_PER_PAGE = 8;
 // ─── Main Page Component ───────────────────────────────────────────────────────
 export default function EmployeesPage() {
   // Global employee data from AppContext (shared across pages)
-  const { employeesData, setEmployeesData } = useData();
+  const { employeesData, refreshAll } = useData();
 
   // ── Local UI state ────────────────────────────────────────────────────────
   const [search, setSearch]               = useState("");         // Search input value
@@ -77,28 +78,38 @@ export default function EmployeesPage() {
   }, [filteredEmployees, currentPage]);
 
   // ── Handler: add new or update existing employee ──────────────────────────
-  const handleAddOrEdit = (formData) => {
-    if (employeeToEdit) {
-      // UPDATE: replace the matching employee, preserve its ID
-      setEmployeesData((prev) =>
-        prev.map((emp) =>
-          emp.id === employeeToEdit.id ? { ...formData, id: emp.id } : emp
-        )
-      );
-      showToast("Employee updated successfully", "success");
-    } else {
-      // CREATE: generate a new ID and derive avatar initials
-      const newEmp = {
-        ...formData,
-        id: `EMP-${Math.floor(Math.random() * 1000).toString().padStart(3, "0")}`,
-        avatar: formData.name
-          .split(" ")
-          .map((n) => n[0])
-          .join("")
-          .toUpperCase(),
+  const handleAddOrEdit = async (formData) => {
+    try {
+      const payload = {
+        fullName: formData.name,
+        email: formData.email,
+        phone: formData.phone || '',
+        department: formData.department || '',
+        designation: formData.role || '',
+        status: formData.status === 'Active' ? 'ACTIVE' : 'INACTIVE',
+        joiningDate: formData.joiningDate
       };
-      setEmployeesData((prev) => [newEmp, ...prev]);
-      showToast("New employee registered", "success");
+
+      if (employeeToEdit) {
+        const res = await api.employees.updateEmployee(employeeToEdit.id, payload);
+        if (res.success) {
+          showToast("Employee updated successfully", "success");
+          refreshAll();
+        } else {
+          showToast(res.message || "Failed to update employee", "error");
+        }
+      } else {
+        const res = await api.employees.createEmployee(payload);
+        if (res.success) {
+          showToast("New employee registered", "success");
+          refreshAll();
+        } else {
+          showToast(res.message || "Failed to register employee", "error");
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("An error occurred while saving employee details", "error");
     }
     // Reset modal state after save
     setIsModalOpen(false);
@@ -114,8 +125,18 @@ export default function EmployeesPage() {
     });
 
     if (isConfirmed) {
-      setEmployeesData((prev) => prev.filter((emp) => emp.id !== id));
-      showToast("Employee record deleted", "success");
+      try {
+        const res = await api.employees.deleteEmployee(id);
+        if (res.success) {
+          showToast("Employee record deleted", "success");
+          refreshAll();
+        } else {
+          showToast(res.message || "Failed to delete employee", "error");
+        }
+      } catch (e) {
+        console.error(e);
+        showToast("An error occurred while deleting employee", "error");
+      }
     }
   };
 

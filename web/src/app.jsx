@@ -1,14 +1,19 @@
 import React, { Suspense } from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, UIProvider, DataProvider, useAuth } from '@context';
 import AppShell                from '@components/layout/AppShell';
 import PageLoader              from '@components/common/PageLoader';
 import { PUBLIC_ROUTES, PROTECTED_ROUTES } from '@config/routes';
 
 function ProtectedApp() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, currentUser } = useAuth();
+  const location = useLocation();
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+
+  if (currentUser?.role?.toLowerCase() === 'client' && location.pathname !== '/client-rfqs') {
+    return <Navigate to="/client-rfqs" replace />;
+  }
 
   return (
     <AppShell>

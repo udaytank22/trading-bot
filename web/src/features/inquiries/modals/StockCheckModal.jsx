@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from "react";
-import { mockSuppliers } from '@data/mockSuppliers';
+import { useData } from '@context';
 
 const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
+  const { suppliersData } = useData();
   const [selectedSuppliers, setSelectedSuppliers] = useState([]);
 
   const [supplierSearch, setSupplierSearch] = useState("");
@@ -10,28 +11,29 @@ const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
     if (!deal || !deal.products) return [];
     
     return deal.products.map(product => {
-      const availableSuppliers = mockSuppliers.filter(s => 
-        s.products.some(p => p.toLowerCase() === product.product_name.toLowerCase())
+      const availableSuppliers = suppliersData.filter(s => 
+        (s.products || []).some(p => p.toLowerCase() === product.product_name.toLowerCase())
       );
       return {
         ...product,
         availableSuppliers
       };
     });
-  }, [deal]);
+  }, [deal, suppliersData]);
 
   const suppliersWithMatchInfo = useMemo(() => {
-    return mockSuppliers.map(s => {
+    return suppliersData.map(s => {
       const matchingProducts = deal?.products?.filter(p => 
-        s.products.some(sp => sp.toLowerCase() === p.product_name.toLowerCase())
+        (s.products || []).some(sp => sp.toLowerCase() === p.product_name.toLowerCase())
       ) || [];
       return {
         ...s,
+        location: s.address || s.location || '',
         isMatch: matchingProducts.length > 0,
         matchingCount: matchingProducts.length
       };
     }).sort((a, b) => b.isMatch - a.isMatch); // Matches first
-  }, [deal]);
+  }, [deal, suppliersData]);
 
   const filteredSuppliers = suppliersWithMatchInfo.filter(s => 
     s.name.toLowerCase().includes(supplierSearch.toLowerCase()) ||

@@ -33,6 +33,17 @@ const getAllInquiries = async (query = {}) => {
           product: true
         }
       },
+      suppliers: {
+        include: {
+          supplier: true
+        }
+      },
+      supplierQuotes: {
+        include: {
+          supplier: true,
+          items: true
+        }
+      },
       assignedEmployee: {
         select: { id: true, email: true }
       },
@@ -257,7 +268,7 @@ const sendRFQ = async (id, data, userId) => {
 };
 
 /**
- * 3. Receive Supplier Quote Action (RFQ_SENT -> CLIENT_QUOTING)
+ * 3. Receive Supplier Quote Action (RFQ_SENT -> TL_REVIEW)
  */
 const submitSupplierQuote = async (id, data, userId) => {
   return await prisma.$transaction(async (tx) => {
@@ -293,10 +304,104 @@ const submitSupplierQuote = async (id, data, userId) => {
       });
     }
 
-    // Update status
+    // Automatically generate Client Quotation
+    const quoteCount = await tx.clientQuotation.count();
+    const quotationNumber = `QT-${1000 + quoteCount + 1}`;
+
+    let totalClientAmount = 0;
+    const clientItems = [];
+
+    const defaultMarginEnv = parseFloat(process.env.DEFAULT_MARGIN) || 15;
+    const minMargin = 10;
+
+    const getMargin = (productName, unitPrice) => {
+      const name = (productName || "").toLowerCase();
+      let margin = defaultMarginEnv;
+      
+      const keywords12 = ["pipe", "rod", "bar", "sheet", "plate"];
+      const keywords18 = ["bolt", "nut", "screw", "fastener", "washer"];
+
+      if (keywords18.some(kw => name.includes(kw))) {
+        margin = 18;
+      } else if (keywords12.some(kw => name.includes(kw))) {
+        margin = 12;
+      }
+      
+      let rule2Margin = 0;
+      if (unitPrice < 100) {
+        rule2Margin = 25;
+      } else if (unitPrice >= 100 && unitPrice <= 500) {
+        rule2Margin = 18;
+      } else if (unitPrice > 500 && unitPrice <= 2000) {
+        rule2Margin = 15;
+      } else if (unitPrice > 2000) {
+        rule2Margin = 12;
+      }
+      
+      return Math.max(margin, rule2Margin);
+    };
+
+    const roundUpToTen = (num) => {
+      return Math.ceil(num / 10) * 10;
+    };
+
+    const inquiryItems = await tx.inquiryItem.findMany({ where: { inquiryId: id } });
+    const inquiryItemMap = new Map(inquiryItems.map(item => [item.id, item]));
+
+    for (const item of data.items) {
+      const dbItem = inquiryItemMap.get(item.inquiryItemId);
+      const description = dbItem ? dbItem.description : '';
+      const unitPrice = parseFloat(item.unitPrice);
+      const qty = parseInt(item.quantity, 10);
+      
+      const margin = getMargin(description, unitPrice);
+      let finalMargin = margin;
+      if (qty > 5000) finalMargin -= 4;
+      else if (qty > 1000) finalMargin -= 2;
+      finalMargin = Math.max(finalMargin, minMargin);
+
+      const sellingPrice = roundUpToTen(unitPrice * (1 + finalMargin / 100));
+      const totalPrice = sellingPrice * qty;
+      totalClientAmount += totalPrice;
+
+      clientItems.push({
+        inquiryItemId: item.inquiryItemId,
+        sellingPrice,
+        quantity: qty,
+        totalPrice
+      });
+    }
+
+    const taxPercentage = 18;
+    const finalClientAmount = totalClientAmount * 1.18;
+    const totalSellerCost = parseFloat(data.quoteAmount) || 0;
+    const averageMarginPercent = totalSellerCost > 0 ? ((totalClientAmount - totalSellerCost) / totalSellerCost) * 100 : 0;
+
+    const quotation = await tx.clientQuotation.create({
+      data: {
+        inquiryId: id,
+        quotationNumber,
+        marginPercentage: parseFloat(averageMarginPercent.toFixed(2)),
+        discountPercentage: 0,
+        taxPercentage,
+        totalAmount: totalClientAmount,
+        finalAmount: finalClientAmount,
+        status: 'DRAFT',
+        createdById: userId
+      }
+    });
+
+    await tx.clientQuotationItem.createMany({
+      data: clientItems.map(ci => ({
+        clientQuotationId: quotation.id,
+        ...ci
+      }))
+    });
+
+    // Update status to TL_REVIEW directly
     const updated = await tx.inquiry.update({
       where: { id },
-      data: { currentStatus: 'CLIENT_QUOTING', updatedById: userId }
+      data: { currentStatus: 'TL_REVIEW', updatedById: userId }
     });
 
     // History
@@ -304,9 +409,9 @@ const submitSupplierQuote = async (id, data, userId) => {
       data: {
         inquiryId: id,
         fromStatus: 'RFQ_SENT',
-        toStatus: 'CLIENT_QUOTING',
+        toStatus: 'TL_REVIEW',
         changedById: userId,
-        remarks: `Received supplier quote from supplier ID: ${data.supplierId}`
+        remarks: `Received supplier quote from supplier ID: ${data.supplierId}. Bypassed Client Quoting, sent to TL review.`
       }
     });
 

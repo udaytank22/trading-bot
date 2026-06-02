@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from "react";
-import { mockSuppliers } from '@data/mockSuppliers';
 import { DataTable, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
+import { useData } from '@context';
 
 const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
+  const { suppliersData } = useData();
   const [selectedSupplierId, setSelectedSupplierId] = useState("");
   const [selectedProductNames, setSelectedProductNames] = useState([]);
   const [stagedRFQs, setStagedRFQs] = useState([]);
@@ -14,7 +15,7 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
         supplierId: s.id,
         supplierName: s.name,
         products: deal.products.filter(p => 
-          s.products.some(sp => sp.toLowerCase() === p.product_name.toLowerCase())
+          (s.products || []).some(sp => sp.toLowerCase() === p.product_name.toLowerCase())
         ).map(p => p.product_name)
       })).filter(rfq => rfq.products.length > 0); // Only stage if there are matches
       
@@ -26,10 +27,10 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
     if (!deal || !deal.products) return [];
     const inquiryProducts = deal.products.map((p) => p.product_name.toLowerCase());
 
-    return mockSuppliers.filter((supplier) =>
-      supplier.products.some((sp) => inquiryProducts.includes(sp.toLowerCase()))
+    return suppliersData.filter((supplier) =>
+      (supplier.products || []).some((sp) => inquiryProducts.includes(sp.toLowerCase()))
     );
-  }, [deal]);
+  }, [deal, suppliersData]);
 
   const filteredProducts = useMemo(() => {
     if (!deal?.products) return [];
@@ -49,10 +50,10 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
   const handleSaveToList = () => {
     if (!selectedSupplierId || selectedProductNames.length === 0) return;
 
-    const supplier = mockSuppliers.find((s) => s.id === selectedSupplierId);
+    const supplier = suppliersData.find((s) => s.id === selectedSupplierId);
     const newStaged = {
       supplierId: selectedSupplierId,
-      supplierName: supplier.name,
+      supplierName: supplier ? supplier.name : '',
       products: selectedProductNames,
     };
 

@@ -10,8 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { fetchInquiries } from '@services/n8nService';
-import { fetchProfitData } from '@services/sheetsService';
+import { api } from '@services/api';
 import { formatINR, formatDateString } from '@services/marginEngine';
 import StatusBadge from '@components/ui/statusBadge';
 import { DataTable, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
@@ -56,8 +55,7 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const { setInquiriesData } = useData();
 
-  const [inquiries, setInquiries] = useState([]);
-  const [profitData, setProfitData] = useState(null);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState("");
@@ -67,15 +65,17 @@ export default function DashboardPage() {
     isRefresh ? setIsRefreshing(true) : setLoading(true);
     setError(null);
     try {
-      const [inqRes, profRes] = await Promise.all([
-        fetchInquiries(),
-        fetchProfitData(),
-      ]);
-      const inq = inqRes || [];
-      setInquiries(inq);
-      setInquiriesData(inq);
-      setProfitData(profRes || { closedDeals: [], weeklyTrend: [] });
-    } catch {
+      const res = await api.reports.getDashboardStats();
+      if (res.success) {
+        setStats(res.data);
+        if (res.data.recentInquiries) {
+          setInquiriesData(res.data.recentInquiries);
+        }
+      } else {
+        setError("Error loading data.");
+      }
+    } catch (e) {
+      console.error(e);
       setError("Error loading data.");
     } finally {
       setLastUpdated(
@@ -93,38 +93,11 @@ export default function DashboardPage() {
     loadData();
   }, []);
 
-  const { todayCount, pendingCount, quotesSentCount, profitToday } =
-    useMemo(() => {
-      const todayStr = new Date().toISOString().split("T")[0];
-      let today = 0,
-        pending = 0,
-        quotes = 0,
-        pToday = 0;
-      inquiries.forEach((inq) => {
-        if (inq.date_received?.startsWith(todayStr)) today++;
-        if (["PENDING", "RFQ_SENT"].includes(inq.status)) pending++;
-        if (["QUOTE_SENT", "CLOSED"].includes(inq.status)) quotes++;
-      });
-      if (profitData?.closedDeals) {
-        pToday = profitData.closedDeals
-          .filter((d) => d.date_closed?.startsWith(todayStr))
-          .reduce((sum, d) => sum + d.profit, 0);
-      }
-      return {
-        todayCount: today,
-        pendingCount: pending,
-        quotesSentCount: quotes,
-        profitToday: pToday,
-      };
-    }, [inquiries, profitData]);
-
-  const latestInquiries = useMemo(
-    () =>
-      [...inquiries]
-        .sort((a, b) => new Date(b.date_received) - new Date(a.date_received))
-        .slice(0, 5),
-    [inquiries],
-  );
+  const todayCount = stats?.inquiriesToday ?? 0;
+  const quotesSentCount = stats?.quotesSent ?? 0;
+  const pendingCount = stats?.pendingReplies ?? 0;
+  const profitToday = stats?.profitToday ?? 0;
+  const latestInquiries = stats?.recentInquiries ?? [];
 
   if (loading) return <DashboardSkeleton />;
 

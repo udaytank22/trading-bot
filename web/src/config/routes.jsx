@@ -2,21 +2,22 @@
 import React from 'react';
 
 // Lazy-load all page components from their feature folders
-const LoginPage          = React.lazy(() => import('@features/auth/LoginPage'));
-const DashboardPage      = React.lazy(() => import('@features/dashboard/DashboardPage'));
-const InquiriesPage      = React.lazy(() => import('@features/inquiries/InquiriesPage'));
-const SupplyPage         = React.lazy(() => import('@features/supply/SupplyPage'));
+const LoginPage = React.lazy(() => import('@features/auth/LoginPage'));
+const DashboardPage = React.lazy(() => import('@features/dashboard/DashboardPage'));
+const InquiriesPage = React.lazy(() => import('@features/inquiries/InquiriesPage'));
+const SupplyPage = React.lazy(() => import('@features/supply/SupplyPage'));
 const PurchaseOrdersPage = React.lazy(() => import('@features/purchase-orders/PurchaseOrdersPage'));
-const InvoicesPage       = React.lazy(() => import('@features/invoices/InvoicesPage'));
-const EmployeesPage      = React.lazy(() => import('@features/employees/EmployeesPage'));
-const AccountPage        = React.lazy(() => import('@features/accounts/AccountPage'));
-const InventoryPage      = React.lazy(() => import('@features/inventory/InventoryPage'));
-const ProfitPage         = React.lazy(() => import('@features/profit/ProfitPage'));
-const DocumentsPage      = React.lazy(() => import('@features/documents/DocumentsPage'));
-const NotificationsPage  = React.lazy(() => import('@features/notifications/NotificationsPage'));
-const TodoPage           = React.lazy(() => import('@features/todo/TodoPage'));
-const SettingsPage       = React.lazy(() => import('@features/settings/SettingsPage'));
-const ProfilePage        = React.lazy(() => import('@features/profile/ProfilePage'));
+const InvoicesPage = React.lazy(() => import('@features/invoices/InvoicesPage'));
+const EmployeesPage = React.lazy(() => import('@features/employees/EmployeesPage'));
+const AccountPage = React.lazy(() => import('@features/accounts/AccountPage'));
+const InventoryPage = React.lazy(() => import('@features/inventory/InventoryPage'));
+const ProfitPage = React.lazy(() => import('@features/profit/ProfitPage'));
+const DocumentsPage = React.lazy(() => import('@features/documents/DocumentsPage'));
+const NotificationsPage = React.lazy(() => import('@features/notifications/NotificationsPage'));
+const TodoPage = React.lazy(() => import('@features/todo/TodoPage'));
+const SettingsPage = React.lazy(() => import('@features/settings/SettingsPage'));
+const ProfilePage = React.lazy(() => import('@features/profile/ProfilePage'));
+const ClientRFQsPage = React.lazy(() => import('@features/client-portal/ClientRFQsPage'));
 
 /** Public routes (no auth required) */
 export const PUBLIC_ROUTES = [
@@ -25,18 +26,19 @@ export const PUBLIC_ROUTES = [
 
 /** Protected routes (auth required, rendered inside AppShell) */
 export const PROTECTED_ROUTES = [
-  { path: '/',                element: <DashboardPage /> },
-  { path: '/inquiries',       element: <InquiriesPage /> },
-  { path: '/supply',          element: <SupplyPage /> },
+  { path: '/', element: <DashboardPage /> },
+  { path: '/inquiries', element: <InquiriesPage /> },
+  { path: '/client-rfqs', element: <ClientRFQsPage /> },
+  { path: '/supply', element: <SupplyPage /> },
   { path: '/purchase-orders', element: <PurchaseOrdersPage /> },
-  { path: '/invoices',        element: <InvoicesPage /> },
-  { path: '/employees',       element: <EmployeesPage /> },
-  { path: '/accounts',        element: <AccountPage /> },
-  { path: '/inventory',       element: <InventoryPage /> },
-  { path: '/profit',          element: <ProfitPage /> },
-  { path: '/documents',       element: <DocumentsPage /> },
-  { path: '/notifications',   element: <NotificationsPage /> },
-  { path: '/todo',            element: <TodoPage /> },
-  { path: '/settings',        element: <SettingsPage /> },
-  { path: '/profile',         element: <ProfilePage /> },
+  { path: '/invoices', element: <InvoicesPage /> },
+  { path: '/employees', element: <EmployeesPage /> },
+  { path: '/accounts', element: <AccountPage /> },
+  { path: '/inventory', element: <InventoryPage /> },
+  { path: '/profit', element: <ProfitPage /> },
+  { path: '/documents', element: <DocumentsPage /> },
+  { path: '/notifications', element: <NotificationsPage /> },
+  { path: '/todo', element: <TodoPage /> },
+  { path: '/settings', element: <SettingsPage /> },
+  { path: '/profile', element: <ProfilePage /> },
 ];

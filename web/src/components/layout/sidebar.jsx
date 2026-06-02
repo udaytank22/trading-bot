@@ -7,13 +7,13 @@ import logo from "../../../public/memories/logo.png";
 const NAV_LINKS = [
   { name: "Dashboard", path: "/", icon: <DashboardIcon /> },
   { name: "Inquiries", path: "/inquiries", icon: <InquiriesIcon /> },
+  { name: "Client RFQs", path: "/client-rfqs", icon: <InquiriesIcon /> },
   { name: "Purchase Orders", path: "/purchase-orders", icon: <POIcon /> },
   { name: "Supply", path: "/supply", icon: <InquiriesIcon /> },
   { name: "Invoices", path: "/invoices", icon: <InvoicesIcon /> },
   { name: "Inventory", path: "/inventory", icon: <InventoryIcon /> },
   { name: "Employees", path: "/employees", icon: <UsersIcon /> },
   { name: "To-Do", path: "/todo", icon: <TodoIcon /> },
-  // { name: "Notifications", path: "/notifications", icon: <BellIcon /> },
 ];
 
 export default function Sidebar({ isOpen }) {
@@ -28,11 +28,15 @@ export default function Sidebar({ isOpen }) {
   };
 
   const filteredLinks = NAV_LINKS.filter(link => {
-    if (currentUser?.role?.toLowerCase() === 'employee') {
-      const employeeTabs = ["Dashboard", "Inquiries", "Purchase Orders", "Supply", "Documents", "Notifications", "To-Do"];
-      return employeeTabs.includes(link.name);
+    const roleLower = currentUser?.role?.toLowerCase();
+    if (roleLower === 'client') {
+      return link.name === "Client RFQs";
     }
-    return true; // Admin or others see all links
+    if (roleLower === 'employee' || roleLower === 'user') {
+      const employeeTabs = ["Dashboard", "Inquiries", "Purchase Orders", "Supply", "Documents", "Notifications", "To-Do"];
+      return employeeTabs.includes(link.name) && link.name !== "Client RFQs";
+    }
+    return true; // Admin sees everything
   });
 
   return (

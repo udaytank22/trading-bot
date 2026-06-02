@@ -27,7 +27,7 @@ import Swal from "sweetalert2";
 
 import DealDrawer from './drawers/DealDrawer';
 import EmailPreviewModal from './modals/EmailPreviewModal';
-import { fetchInquiries, triggerRFQ } from '@services/n8nService';
+import { api } from '@services/api';
 import { formatDateString } from '@services/marginEngine';
 import { useToast } from '@hooks/useToast';
 import InquiryTable from './components/InquiryTable';
@@ -99,8 +99,10 @@ export default function InquiriesPage() {
     async (silent = false) => {
       if (!silent) setLoading(true);
       try {
-        const data = await fetchInquiries();
-        setInquiriesData(data ?? []);
+        const res = await api.inquiries.getInquiries();
+        setInquiriesData(res.data ?? []);
+      } catch (e) {
+        console.error(e);
       } finally {
         const t = new Date();
         setLastSynced(t);
@@ -154,7 +156,7 @@ export default function InquiriesPage() {
         return false;
       if (
         filter === "PENDING_REPLIES" &&
-        !["PENDING", "RFQ_SENT", "CLIENT_QUOTING"].includes(inq.status)
+        !["PENDING", "RFQ_SENT", "TL_REVIEW"].includes(inq.status)
       )
         return false;
       if (
@@ -232,39 +234,55 @@ export default function InquiriesPage() {
     [setInquiriesData],
   );
 
-  const handleStockConfirm = (selectedSuppliers) => {
+  const handleStockConfirm = async (selectedSuppliers) => {
     if (activeStepDeal) {
-      updateDealStatus(activeStepDeal.inquiry_id, "RFQ_READY", {
-        selected_suppliers: selectedSuppliers,
-      });
-      setActiveStepView(null);
-      showToast(
-        `Selected ${selectedSuppliers.length} suppliers for RFQ.`,
-        "success",
-      );
+      try {
+        const supplierIds = selectedSuppliers.map(s => s.id);
+        const res = await api.inquiries.stockCheck(activeStepDeal.id, supplierIds);
+        if (res.success) {
+          loadData(true);
+          setActiveStepView(null);
+          showToast(`Selected ${selectedSuppliers.length} suppliers for RFQ.`, "success");
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Failed to record stock check", "error");
+      }
     }
   };
 
-  const handleVerifyConfirm = () => {
+  const handleVerifyConfirm = async () => {
     if (activeStepDeal) {
-      updateDealStatus(activeStepDeal.inquiry_id, "CLIENT_FINAL_APPROVAL");
-      setActiveStepView(null);
-      showToast("Quotation verified and sent to client.", "success");
+      try {
+        const res = await api.inquiries.finalVerify(activeStepDeal.id);
+        if (res.success) {
+          loadData(true);
+          setActiveStepView(null);
+          showToast("Quotation verified and sent to client.", "success");
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Failed to verify quotation.", "error");
+      }
     }
   };
 
-  const handleAdminConfirm = (adjustedData) => {
+  const handleAdminConfirm = async (adjustedData) => {
     if (activeStepDeal) {
-      updateDealStatus(activeStepDeal.inquiry_id, "EMPLOYEE_VERIFY", {
-        admin_approved: true,
-        margin_percent: adjustedData.margin_percent,
-        discount_percent: adjustedData.discount_percent,
-        my_quote: {
-          products: adjustedData.products,
-        },
-      });
-      setActiveStepView(null);
-      showToast("Quotation approved by Admin.", "success");
+      try {
+        const res = await api.inquiries.adminApprove(activeStepDeal.id, {
+          approved: true,
+          remarks: "Approved by Admin"
+        });
+        if (res.success) {
+          loadData(true);
+          setActiveStepView(null);
+          showToast("Quotation approved by Admin.", "success");
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Failed to record Admin approval", "error");
+      }
     }
   };
 
@@ -300,99 +318,107 @@ export default function InquiriesPage() {
           cancelButtonText: "Reject Quote",
           background: "#1a1d23",
           color: "#fff",
-        }).then((result) => {
+        }).then(async (result) => {
           if (result.isConfirmed) {
-            updateDealStatus(deal.inquiry_id, "QUOTE_SENT");
-            showToast("Client accepted the quote!", "success");
-            Swal.fire({
-              title: "Accepted!",
-              text: "The deal has been moved to Supply.",
-              icon: "success",
-              background: "#1a1d23",
-              color: "#fff",
-            });
+            try {
+              const res = await api.inquiries.clientDecision(deal.id, true);
+              if (res.success) {
+                loadData(true);
+                showToast("Client accepted the quote!", "success");
+                Swal.fire({
+                  title: "Accepted!",
+                  text: "The deal has been moved to Supply.",
+                  icon: "success",
+                  background: "#1a1d23",
+                  color: "#fff",
+                });
+              }
+            } catch (err) {
+              console.error(err);
+              showToast("Failed to record client acceptance", "error");
+            }
           } else if (result.dismiss === Swal.DismissReason.cancel) {
-            updateDealStatus(deal.inquiry_id, "CLOSED");
-            showToast("Client rejected the quote.", "error");
-            Swal.fire({
-              title: "Rejected",
-              text: "The inquiry has been closed.",
-              icon: "error",
-              background: "#1a1d23",
-              color: "#fff",
-            });
+            try {
+              const res = await api.inquiries.clientDecision(deal.id, false);
+              if (res.success) {
+                loadData(true);
+                showToast("Client rejected the quote.", "error");
+                Swal.fire({
+                  title: "Rejected",
+                  text: "The inquiry has been closed.",
+                  icon: "error",
+                  background: "#1a1d23",
+                  color: "#fff",
+                });
+              }
+            } catch (err) {
+              console.error(err);
+              showToast("Failed to record client rejection", "error");
+            }
           }
         });
         break;
       case "QUOTE_SENT":
-        const newCargo = {
-          inquiry_id: deal.inquiry_id,
-          supplier: deal.seller_quote?.seller_name || "Assigned Supplier",
-          buyer_name: deal.buyer_name,
-          buyer_email: deal.buyer_email,
-          cargo: deal.products[0]?.product_name || "Unknown Cargo",
-          quantity: "See Details",
-          destination: "TBD",
-          status: "PENDING",
-          products: deal.products,
-        };
-        setSupplyData((prev) => [...prev, newCargo]);
-        updateDealStatus(deal.inquiry_id, "CONFIRMED");
-        showToast("Deal confirmed and moved to Supply", "success");
+        (async () => {
+          try {
+            const res = await api.inquiries.confirmDeal(deal.id);
+            if (res.success) {
+              loadData(true);
+              showToast("Deal confirmed and moved to Supply", "success");
+            }
+          } catch (err) {
+            console.error(err);
+            showToast("Failed to confirm deal", "error");
+          }
+        })();
         break;
       default:
         break;
     }
   };
 
-  const handleQuoteSubmit = (quoteData) => {
+  const handleQuoteSubmit = async (quoteData) => {
     if (!activeStepDeal) return;
 
-    if (activeStepDeal.status === "CLIENT_QUOTING") {
-      updateDealStatus(activeStepDeal.inquiry_id, "TL_REVIEW", {
-        seller_quote: {
-          ...activeStepDeal.seller_quote,
-          date_received: new Date().toISOString(),
-          products: quoteData.products.map((p) => ({
-            ...p,
-            seller_unit_price: p.my_unit_price,
-          })),
-        },
-      });
-      setActiveStepView(null);
-      showToast("Prices quoted. Sent to Team Lead for review.", "success");
-    } else if (activeStepDeal.status === "TL_REVIEW") {
-      const margin_percent = parseFloat(quoteData.margin) || 0;
-      const discount_percent = parseFloat(quoteData.discount) || 0;
+    try {
+      if (activeStepDeal.status === "CLIENT_QUOTING") {
+        const items = quoteData.products.map(p => {
+          const origItem = activeStepDeal.items?.find(item => item.description === p.product_name) || {};
+          const unitPrice = parseFloat(p.my_unit_price) || 0;
+          const qty = parseInt(p.quantity, 10) || 1;
+          return {
+            inquiryItemId: origItem.id,
+            sellingPrice: unitPrice,
+            quantity: qty,
+            totalPrice: unitPrice * qty
+          };
+        });
+        const totalAmount = items.reduce((sum, item) => sum + item.totalPrice, 0);
 
-      const finalProducts = activeStepDeal.seller_quote.products.map((p) => {
-        const cost = p.seller_unit_price || 0;
-        let my_unit_price = cost;
-        if (margin_percent > 0 || discount_percent > 0) {
-          my_unit_price =
-            cost * (1 + margin_percent / 100) * (1 - discount_percent / 100);
+        const res = await api.inquiries.clientQuote(activeStepDeal.id, {
+          marginPercentage: 0,
+          taxPercentage: 18,
+          totalAmount,
+          finalAmount: totalAmount * 1.18,
+          items
+        });
+
+        if (res.success) {
+          loadData(true);
+          setActiveStepView(null);
+          showToast("Prices quoted. Sent to Team Lead for review.", "success");
         }
-        return {
-          ...p,
-          my_unit_price,
-          margin_percent,
-          discount_percent,
-          total_price: my_unit_price * (p.quantity || 1),
-        };
-      });
-
-      const extraData = {
-        margin_percent,
-        discount_percent,
-        tl_approved: true,
-        my_quote: {
-          products: finalProducts,
-        },
-      };
-
-      updateDealStatus(activeStepDeal.inquiry_id, "ADMIN_APPROVAL", extraData);
-      setActiveStepView(null);
-      showToast("Margin set. Sent for Admin approval.", "success");
+      } else if (activeStepDeal.status === "TL_REVIEW") {
+        const res = await api.inquiries.teamLeadApprove(activeStepDeal.id, true);
+        if (res.success) {
+          loadData(true);
+          setActiveStepView(null);
+          showToast("Margin approved. Sent for Admin approval.", "success");
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to submit quote", "error");
     }
   };
 
@@ -408,22 +434,45 @@ export default function InquiriesPage() {
     setActiveStepView(null);
   };
 
-  const handleAddInquiry = (newInquiry) => {
-    const tempInquiry = {
-      ...newInquiry,
-      inquiry_id: `INQ-${Date.now()}`,
-      status: "PENDING",
-      date_received: new Date().toISOString(),
-      buyer_name: newInquiry.customer,
-      buyer_email: "pending@example.com",
-      products: newInquiry.products.map((p) => ({
-        product_name: p.description,
-        quantity: p.quantity,
-        unit: p.unit,
-      })),
-    };
-    setInquiriesData((prev) => [tempInquiry, ...prev]);
-    showToast("New inquiry created successfully", "success");
+  const handleAddInquiry = async (newInquiry) => {
+    try {
+      const clientsRes = await api.clients.getClients();
+      const client = clientsRes.data?.find(c => c.name === newInquiry.customer);
+      const clientId = client ? client.id : clientsRes.data?.[0]?.id;
+      if (!clientId) {
+        showToast("Please create a client in settings first.", "error");
+        return;
+      }
+
+      const items = (newInquiry.products && newInquiry.products.length > 0)
+        ? newInquiry.products.map((p) => ({
+            description: p.product_name || p.description,
+            quantity: parseInt(p.quantity, 10) || 1,
+            unit: p.unit || "pcs"
+          }))
+        : [
+            {
+              description: "Flange Bolts (High Strength)",
+              quantity: 5,
+              unit: "Box"
+            }
+          ];
+
+      const res = await api.inquiries.createInquiry({
+        clientId,
+        vesselName: newInquiry.vessel,
+        referenceNumber: newInquiry.vesselReference || `REF-${Date.now().toString().slice(-6)}`,
+        items
+      });
+
+      if (res.success) {
+        loadData(true);
+        showToast("New inquiry created successfully", "success");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to create inquiry", "error");
+    }
   };
 
   if (loading) {

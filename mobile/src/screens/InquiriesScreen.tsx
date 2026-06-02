@@ -72,7 +72,7 @@ export const InquiriesScreen = () => {
     let result = inquiriesData.filter(inq => {
       // 1. Tab segment filter
       if (activeTab === 'PENDING_SOURCING') {
-        if (!['PENDING', 'RFQ_SENT', 'CLIENT_QUOTING'].includes(inq.status))
+        if (!['PENDING', 'RFQ_SENT', 'TL_REVIEW'].includes(inq.status))
           return false;
       } else if (activeTab === 'UNDER_REVIEW') {
         if (

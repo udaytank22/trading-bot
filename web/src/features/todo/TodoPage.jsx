@@ -9,7 +9,6 @@ import { Plus, MapPin, ShieldAlert, Users, Camera, ChevronLeft, ChevronRight } f
 import MemoryDetailsModal from "./MemoryDetailsModal";
 
 // ─── MOCK DATA ───────────────────────────────────────────────────────────────
-
 const MOCK_AGENDA = [
   {
     id: 1,
@@ -90,7 +89,6 @@ const MEMORIES = [
 ];
 
 // ─── HELPER COMPONENTS ────────────────────────────────────────────────────────
-
 const CalendarWidget = () => {
   const days = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
   // Mock October 2023 Layout
@@ -127,12 +125,12 @@ const CalendarWidget = () => {
             {week.map((date, dIdx) => {
               const isSelected = wIdx === 2 && date === 25;
               const isFaded = wIdx === 0 && date > 20; // Previous month dates
-              
+
               return (
                 <div key={`${wIdx}-${dIdx}`} className="flex justify-center">
                   <div className={`
                     flex items-center justify-center w-7 h-7 text-xs font-medium rounded-full cursor-pointer transition-all
-                    ${isSelected ? "bg-[#00e5ff] text-[#121623] shadow-[0_0_12px_rgba(0,229,255,0.4)]" : 
+                    ${isSelected ? "bg-[#00e5ff] text-[#121623] shadow-[0_0_12px_rgba(0,229,255,0.4)]" :
                       isFaded ? "text-gray-400 dark:text-gray-600" : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10"}
                   `}>
                     {date}
@@ -148,23 +146,22 @@ const CalendarWidget = () => {
 };
 
 // ─── MAIN COMPONENT ────────────────────────────────────────────────────────────
-
 export default function TodoPage() {
   const [selectedMemory, setSelectedMemory] = useState(null);
 
   return (
     // Background adapting between gray-50 in light mode and dark navy in dark mode
     <div className="w-full h-full bg-gray-50 dark:bg-[#121623] text-gray-900 dark:text-white p-8 overflow-y-auto custom-scrollbar font-sans rounded-xl border border-gray-200 dark:border-white/5 transition-colors">
-      <MemoryDetailsModal 
-        isOpen={!!selectedMemory} 
-        onClose={() => setSelectedMemory(null)} 
-        memory={selectedMemory} 
+      <MemoryDetailsModal
+        isOpen={!!selectedMemory}
+        onClose={() => setSelectedMemory(null)}
+        memory={selectedMemory}
       />
       <div className="max-w-7xl mx-auto flex flex-col xl:flex-row gap-8">
-        
+
         {/* ── LEFT COLUMN: Daily Agenda ── */}
         <div className="flex-1 max-w-3xl flex flex-col gap-6">
-          
+
           {/* Header */}
           <div className="flex items-center justify-between mb-2">
             <div>
@@ -179,8 +176,8 @@ export default function TodoPage() {
           {/* Agenda List */}
           <div className="flex flex-col gap-4">
             {MOCK_AGENDA.map((item) => (
-              <div 
-                key={item.id} 
+              <div
+                key={item.id}
                 className={`bg-white dark:bg-[#171a27] rounded-xl border border-gray-200 dark:border-white/5 border-l-4 ${item.borderColor} ${item.glowCls} p-5 flex flex-col md:flex-row gap-6 transition-all hover:-translate-y-[2px] shadow-sm`}
               >
                 {/* Time section */}
@@ -230,12 +227,12 @@ export default function TodoPage() {
 
         {/* ── RIGHT COLUMN: Widgets ── */}
         <div className="w-full xl:w-[400px] flex flex-col gap-6">
-          
+
           <CalendarWidget />
 
           {/* Team Memories Section */}
           <div className="bg-white dark:bg-[#1a1d2d] rounded-2xl p-6 border border-gray-200 dark:border-white/5 shadow-lg flex-1 flex flex-col transition-colors">
-            
+
             <div className="flex items-start justify-between mb-6">
               <div>
                 <h3 className="text-gray-900 dark:text-white font-bold text-sm tracking-wide mb-1 transition-colors">Team Memories</h3>
@@ -249,15 +246,15 @@ export default function TodoPage() {
             {/* Photo Grid */}
             <div className="grid grid-cols-2 gap-3 mb-6">
               {MEMORIES.map((memory, i) => (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
                   onClick={() => setSelectedMemory(memory)}
                   className="aspect-square rounded-xl overflow-hidden border border-gray-200 dark:border-white/5 relative group cursor-pointer bg-gray-100 dark:bg-[#121623] transition-colors"
                 >
-                  <img 
-                    src={memory.image} 
-                    alt="Memory" 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                  <img
+                    src={memory.image}
+                    alt="Memory"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
                 </div>

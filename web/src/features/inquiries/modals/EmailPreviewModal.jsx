@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { triggerRFQ, triggerBuyerQuote } from '@services/n8nService';
-import { logQuoteSent } from '@services/sheetsService';
+import { api } from '@services/api';
 import { calculateMargin, formatINR } from '@services/marginEngine';
 import { CONFIG } from '@/config.js';
 
@@ -22,22 +21,11 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
     setSendState('sending');
     const sendPromise = (async () => {
       if (activeTab === 'RFQ') {
-        await triggerRFQ(deal);
+        await api.inquiries.sendRFQ(deal.id);
         if (onStatusUpdate) onStatusUpdate(deal.inquiry_id, 'RFQ_SENT');
       } else {
-        const settings = { default_margin_percent: CONFIG.defaultMargin || 50 };
-        const calculatedQuote = calculateMargin(deal.seller_quote.products, settings);
-
-        const dealWithMargins = { ...deal, calculated_my_quote: calculatedQuote };
-        await triggerBuyerQuote(dealWithMargins);
-
-        try {
-          await logQuoteSent(dealWithMargins);
-        } catch (sheetErr) {
-          console.error("Sheet logging failed, but quote sent:", sheetErr);
-        }
-
-        if (onStatusUpdate) onStatusUpdate(deal.inquiry_id, 'QUOTE_SENT');
+        await api.inquiries.finalVerify(deal.id);
+        if (onStatusUpdate) onStatusUpdate(deal.inquiry_id, 'CLIENT_FINAL_APPROVAL');
       }
     })();
 

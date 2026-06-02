@@ -62,21 +62,22 @@ function getActionBtn(inq, onAction, currentUser) {
   const role = currentUser?.role || "Admin";
   const status = inq.status;
 
-  // Admin has full rights
-  const isAdmin = role === "Admin" || role === "Administrator";
+  const rLower = role.toLowerCase();
+  const isAdmin = rLower === "admin" || rLower === "administrator" || rLower === "super admin";
+  const isEmployee = rLower === "employee";
 
   const map = {
     PENDING: {
       label: "Check Stock",
       variant: "secondary",
       color: "amber",
-      allowedRoles: ["Sales Executive", "Sourcing Manager", "Admin"],
+      allowedRoles: ["Sales Executive", "User", "Sourcing Manager", "Team Leader", "Admin"],
     },
     RFQ_READY: {
       label: "Create RFQ",
       variant: "secondary",
       color: "blue",
-      allowedRoles: ["Sales Executive", "Sourcing Manager", "Admin"],
+      allowedRoles: ["Sales Executive", "User", "Sourcing Manager", "Team Leader", "Admin"],
     },
     CLIENT_QUOTING: {
       label: "Quote Prices",
@@ -88,7 +89,7 @@ function getActionBtn(inq, onAction, currentUser) {
       label: "Set Margin",
       variant: "secondary",
       color: "rose",
-      allowedRoles: ["Sourcing Manager", "Admin"], // Assuming Sourcing Manager as TL
+      allowedRoles: ["Sourcing Manager", "Team Leader", "Admin"], // Assuming Sourcing Manager as TL
     },
     ADMIN_APPROVAL: {
       label: "Approve",
@@ -100,7 +101,7 @@ function getActionBtn(inq, onAction, currentUser) {
       label: "Verify & Quote",
       variant: "secondary",
       color: "sky",
-      allowedRoles: ["Sales Executive", "Sourcing Manager", "Admin"],
+      allowedRoles: ["Sales Executive", "User", "Sourcing Manager", "Team Leader", "Admin"],
     },
     CLIENT_FINAL_APPROVAL: {
       label: "Final Decision",
@@ -112,14 +113,14 @@ function getActionBtn(inq, onAction, currentUser) {
       label: "Confirm Deal",
       variant: "secondary",
       color: "emerald",
-      allowedRoles: ["Admin", "Sales Executive"],
+      allowedRoles: ["Admin", "Sales Executive", "User"],
     },
   };
 
   const cfg = map[status];
   if (!cfg) return null;
 
-  const isAllowed = isAdmin || cfg.allowedRoles.includes(role);
+  const isAllowed = isAdmin || isEmployee;
   if (!isAllowed) return null;
 
   const btnClass = COLOR_CLASSES[cfg.color] || "";
