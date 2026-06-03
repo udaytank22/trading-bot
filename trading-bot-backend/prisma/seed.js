@@ -129,11 +129,12 @@ async function main() {
     }
   });
 
-  // Client: inquiries read/approve, suppliers read
+  // Client: inquiries read/approve, suppliers read, shipments read
   permissions.forEach((perm) => {
     if (
       (perm.module === 'inquiries' && ['read', 'approve'].includes(perm.action)) ||
-      (perm.module === 'suppliers' && perm.action === 'read')
+      (perm.module === 'suppliers' && perm.action === 'read') ||
+      (perm.module === 'shipments' && perm.action === 'read')
     ) {
       rolePermissions.push({ roleId: roles.client.id, permissionId: perm.id });
     }

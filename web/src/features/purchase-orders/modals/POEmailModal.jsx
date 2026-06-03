@@ -19,7 +19,7 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
   const handleSend = () => {
     setSendState("sending");
     setTimeout(() => {
-      if (onStatusUpdate) onStatusUpdate(po.id, "SHIPPED");
+      if (onStatusUpdate) onStatusUpdate(po.id, "ORDERED");
       setSendState("success");
       setTimeout(onClose, 2500);
     }, 1500);
@@ -61,7 +61,7 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
               Email Sent Successfully!
             </h2>
             <p className="text-gray-400">
-              Status updated to Shipped for {po.po_id}
+              Status updated to Ordered for {po.po_id}
             </p>
           </div>
         ) : /* ── PDF VIEWER PANEL ── */

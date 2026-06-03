@@ -106,7 +106,7 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
       {/* ── Actions: Dynamic based on Status ───────────────────────────── */}
       <td className="px-4 md:px-6 py-4 text-right">
         <div className="flex flex-col md:flex-row justify-end gap-2">
-          {item.status === "PENDING" && (
+          {(item.status === "PENDING" || item.status === "ORDER_PLACED") && (
             <Button
               variant="secondary"
               size="sm"

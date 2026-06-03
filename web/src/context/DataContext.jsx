@@ -1,10 +1,12 @@
 // src/context/DataContext.jsx
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api } from '@services/api';
+import { useAuth } from './AuthContext';
 
 const DataContext = createContext(null);
 
 export function DataProvider({ children }) {
+  const { currentUser } = useAuth();
   const [inquiriesData, setInquiriesData] = useState([]);
   const [supplyData, setSupplyData] = useState([]);
   const [purchaseOrdersData, setPurchaseOrdersData] = useState([]);
@@ -18,7 +20,10 @@ export function DataProvider({ children }) {
   const [loading, setLoading] = useState(false);
 
   const loadAllData = useCallback(async () => {
+    if (!currentUser) return;
     setLoading(true);
+
+    const isClient = currentUser?.role?.toLowerCase() === 'client';
 
     const safeFetch = async (apiCall, fallback = { success: false, data: [] }) => {
       try {
@@ -45,13 +50,13 @@ export function DataProvider({ children }) {
       ] = await Promise.all([
         safeFetch(api.inquiries.getInquiries()),
         safeFetch(api.shipments.getShipments()),
-        safeFetch(api.purchaseOrders.getPurchaseOrders()),
-        safeFetch(api.employees.getEmployees()),
-        safeFetch(api.documents.getDocuments()),
-        safeFetch(api.bankAccounts.getBankAccounts()),
-        safeFetch(api.invoices.getInvoices()),
-        safeFetch(api.products.getProducts()),
-        safeFetch(api.clients.getClients()),
+        isClient ? { success: true, data: [] } : safeFetch(api.purchaseOrders.getPurchaseOrders()),
+        isClient ? { success: true, data: [] } : safeFetch(api.employees.getEmployees()),
+        isClient ? { success: true, data: [] } : safeFetch(api.documents.getDocuments()),
+        isClient ? { success: true, data: [] } : safeFetch(api.bankAccounts.getBankAccounts()),
+        isClient ? { success: true, data: [] } : safeFetch(api.invoices.getInvoices()),
+        isClient ? { success: true, data: [] } : safeFetch(api.products.getProducts()),
+        isClient ? { success: true, data: [] } : safeFetch(api.clients.getClients()),
         safeFetch(api.suppliers.getSuppliers()),
       ]);
 
@@ -144,7 +149,7 @@ export function DataProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentUser]);
 
   useEffect(() => {
     loadAllData();

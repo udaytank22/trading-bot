@@ -35,6 +35,7 @@ import { PageToolbar, Pagination } from '@components/ui';
 const FILTER_OPTIONS = [
   { value: "All", label: "All Status" },
   { value: "PENDING", label: "Pending" },
+  { value: "ORDER_PLACED", label: "Order Placed" },
   { value: "LOADING", label: "Loading" },
   { value: "IN_TRANSIT", label: "In Transit" },
   { value: "DELIVERED", label: "Delivered" },

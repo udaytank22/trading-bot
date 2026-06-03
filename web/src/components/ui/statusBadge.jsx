@@ -65,10 +65,14 @@ const STATUS_STYLES = {
   // PENDING already defined above
   SHIPPED:
     "bg-indigo-50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/25",
+  ORDERED:
+    "bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/25",
   // CONFIRMED already defined above
   // CLOSED already defined above
 
   // ── Supply / Cargo statuses ────────────────────────────────────────────────
+  ORDER_PLACED:
+    "bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-500/25",
   LOADING:
     "bg-purple-50 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-500/25",
   IN_TRANSIT:
@@ -107,6 +111,8 @@ const STATUS_LABELS = {
   EMPLOYEE_VERIFY: "Employee Verify",
   CLIENT_FINAL_APPROVAL: "Client Final Approval",
   IN_TRANSIT:   "In Transit",
+  ORDERED:      "Ordered",
+  ORDER_PLACED: "Order Placed",
 };
 
 // ─── Fallback style for unknown statuses ───────────────────────────────────────

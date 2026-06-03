@@ -12,9 +12,14 @@ export default function ClientRFQsPage() {
   const [suppliers, setSuppliers] = useState([]);
   const [selectedSupplierId, setSelectedSupplierId] = useState("");
   const [inquiries, setInquiries] = useState([]);
+  const [shipments, setShipments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [viewingQuoteInquiry, setViewingQuoteInquiry] = useState(null);
+  
+  // Tab and Confirmed Order State
+  const [activeTab, setActiveTab] = useState("rfqs"); // "rfqs" | "orders"
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   // Active Quote Panel State
   const [selectedInquiry, setSelectedInquiry] = useState(null);
@@ -27,12 +32,14 @@ export default function ClientRFQsPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [suppliersRes, inquiriesRes] = await Promise.all([
+      const [suppliersRes, inquiriesRes, shipmentsRes] = await Promise.all([
         api.suppliers.getSuppliers(),
         api.inquiries.getInquiries(),
+        api.shipments.getShipments(),
       ]);
       setSuppliers(suppliersRes.data || []);
       setInquiries(inquiriesRes.data || []);
+      setShipments(shipmentsRes.data || []);
       
       // Auto-select first supplier if available
       if (suppliersRes.data && suppliersRes.data.length > 0) {
@@ -59,13 +66,23 @@ export default function ClientRFQsPage() {
   // Filter inquiries that are in RFQ_SENT status or any status after it, containing the selected supplier
   const activeRFQs = useMemo(() => {
     if (!selectedSupplierId) return [];
-    const nonPortalStatuses = ["PENDING", "RFQ_READY"];
+    const nonPortalStatuses = ["PENDING", "RFQ_READY", "CONFIRMED", "CLOSED"];
     return inquiries.filter(
       (inq) =>
         !nonPortalStatuses.includes(inq.status) &&
         inq.suppliers?.some((s) => s.supplierId === selectedSupplierId)
     );
   }, [inquiries, selectedSupplierId]);
+
+  // Filter shipments with ORDER_PLACED status for the selected supplier
+  const activeOrders = useMemo(() => {
+    if (!selectedSupplierId) return [];
+    return shipments.filter(
+      (ship) =>
+        ship.currentStatus === "ORDER_PLACED" &&
+        ship.supplierId === selectedSupplierId
+    );
+  }, [shipments, selectedSupplierId]);
 
   // Handle selected inquiry change to reset prices
   const handleSelectInquiry = (inq) => {
@@ -188,209 +205,371 @@ export default function ClientRFQsPage() {
         </div>
       </div>
 
+      {/* Tab Switcher */}
+      <div className="flex items-center gap-6 border-b border-gray-200 dark:border-[#2a2d33] pb-1">
+        <button
+          onClick={() => {
+            setActiveTab("rfqs");
+            setSelectedInquiry(null);
+            setSelectedOrder(null);
+          }}
+          className={`pb-3 text-sm font-bold tracking-wide transition-colors relative ${
+            activeTab === "rfqs"
+              ? "text-purple-600 dark:text-white"
+              : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+          }`}
+        >
+          RFQs & Quotations ({activeRFQs.length})
+          {activeTab === "rfqs" && (
+            <div className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-purple-500 rounded-t" />
+          )}
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab("orders");
+            setSelectedInquiry(null);
+            setSelectedOrder(null);
+          }}
+          className={`pb-3 text-sm font-bold tracking-wide transition-colors relative ${
+            activeTab === "orders"
+              ? "text-purple-600 dark:text-white"
+              : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+          }`}
+        >
+          Confirmed Orders ({activeOrders.length})
+          {activeTab === "orders" && (
+            <div className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-purple-500 rounded-t" />
+          )}
+        </button>
+      </div>
+
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0">
-        {/* Left Column: RFQ List */}
-        <div className={`flex flex-col bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden ${selectedInquiry ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
-          <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center">
-            <h2 className="text-sm font-bold text-gray-800 dark:text-white uppercase tracking-wider">
-              My RFQs & Quotations ({activeRFQs.length})
-            </h2>
-          </div>
-
-          <div className="flex-1 overflow-auto custom-scrollbar">
-            <DataTable
-              columns={[
-                { key: "inquiry_id", label: "Inquiry Ref" },
-                { key: "buyer", label: "Client" },
-                { key: "vessel", label: "Vessel" },
-                { key: "itemsCount", label: "Items" },
-                { key: "date", label: "Received Date" },
-                { key: "status", label: "Status" },
-                { key: "action", label: "", className: "text-right" }
-              ]}
-              data={activeRFQs}
-              emptyMessage="No pending RFQs found for this supplier profile."
-              renderRow={(inq, idx) => (
-                <tr
-                  key={inq.inquiry_id}
-                  className={`border-b border-gray-100 dark:border-[#2a2d33] transition-colors ${
-                    inq.status === "RFQ_SENT"
-                      ? "hover:bg-gray-55/40 dark:hover:bg-white/[0.01] cursor-pointer"
-                      : "opacity-85"
-                  } ${selectedInquiry?.id === inq.id ? "bg-purple-500/5" : ""}`}
-                  onClick={() => inq.status === "RFQ_SENT" && handleSelectInquiry(inq)}
-                >
-                  <td className="px-6 py-4 font-mono font-bold text-sm text-gray-900 dark:text-white">
-                    {inq.inquiry_id}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col">
-                      <span className="font-bold text-gray-800 dark:text-white text-sm">{inq.buyer_name}</span>
-                      <span className="text-[10px] text-gray-400">{inq.buyer_email}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                    {inq.vessel_name || "—"}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                    {inq.products?.length || 0}
-                  </td>
-                  <td className="px-6 py-4 text-xs text-gray-500">
-                    {inq.date_received ? new Date(inq.date_received).toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric"
-                    }) : "—"}
-                  </td>
-                  <td className="px-6 py-4 text-sm">
-                    <StatusBadge status={inq.status} />
-                  </td>
-                  <td className="px-6 py-4 text-right flex justify-end gap-2">
-                    {inq.status === "RFQ_SENT" ? (
-                      <Button
-                        variant={selectedInquiry?.id === inq.id ? "primary" : "secondary"}
-                        size="sm"
-                      >
-                        {selectedInquiry?.id === inq.id ? "Selected" : "Enter Prices"}
-                      </Button>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex px-2.5 py-1 text-xs font-semibold rounded-lg bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">
-                          Quoted
-                        </span>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setViewingQuoteInquiry(inq);
-                          }}
-                        >
-                          View Quote
-                        </Button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              )}
-            />
-          </div>
-        </div>
-
-        {/* Right Column: Quote Quoting Panel */}
-        {selectedInquiry && (
-          <div className="lg:col-span-5 flex flex-col bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden animate-in slide-in-from-right duration-300">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1f222b]">
-              <div>
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white">Submit Prices for {selectedInquiry.inquiry_id}</h3>
-                <p className="text-[10px] text-gray-500 mt-0.5">{selectedInquiry.buyer_name}</p>
+        {activeTab === "rfqs" ? (
+          <>
+            {/* Left Column: RFQ List */}
+            <div className={`flex flex-col bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden ${selectedInquiry ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center">
+                <h2 className="text-sm font-bold text-gray-800 dark:text-white uppercase tracking-wider">
+                  My RFQs & Quotations ({activeRFQs.length})
+                </h2>
               </div>
-              <button
-                onClick={() => setSelectedInquiry(null)}
-                className="text-gray-400 hover:text-gray-200 text-lg font-bold"
-              >
-                &times;
-              </button>
+
+              <div className="flex-1 overflow-auto custom-scrollbar">
+                <DataTable
+                  columns={[
+                    { key: "inquiry_id", label: "Inquiry Ref" },
+                    { key: "buyer", label: "Client" },
+                    { key: "vessel", label: "Vessel" },
+                    { key: "itemsCount", label: "Items" },
+                    { key: "date", label: "Received Date" },
+                    { key: "status", label: "Status" },
+                    { key: "action", label: "", className: "text-right" }
+                  ]}
+                  data={activeRFQs}
+                  emptyMessage="No pending RFQs found for this supplier profile."
+                  renderRow={(inq, idx) => (
+                    <tr
+                      key={inq.inquiry_id}
+                      className={`border-b border-gray-100 dark:border-[#2a2d33] transition-colors ${
+                        inq.status === "RFQ_SENT"
+                          ? "hover:bg-gray-55/40 dark:hover:bg-white/[0.01] cursor-pointer"
+                          : "opacity-85"
+                      } ${selectedInquiry?.id === inq.id ? "bg-purple-500/5" : ""}`}
+                      onClick={() => inq.status === "RFQ_SENT" && handleSelectInquiry(inq)}
+                    >
+                      <td className="px-6 py-4 font-mono font-bold text-sm text-gray-900 dark:text-white">
+                        {inq.inquiry_id}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-gray-800 dark:text-white text-sm">{inq.buyer_name}</span>
+                          <span className="text-[10px] text-gray-400">{inq.buyer_email}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+                        {inq.vessel_name || "—"}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+                        {inq.products?.length || 0}
+                      </td>
+                      <td className="px-6 py-4 text-xs text-gray-500">
+                        {inq.date_received ? new Date(inq.date_received).toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric"
+                        }) : "—"}
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        <StatusBadge status={inq.status} />
+                      </td>
+                      <td className="px-6 py-4 text-right flex justify-end gap-2">
+                        {inq.status === "RFQ_SENT" ? (
+                          <Button
+                            variant={selectedInquiry?.id === inq.id ? "primary" : "secondary"}
+                            size="sm"
+                          >
+                            {selectedInquiry?.id === inq.id ? "Selected" : "Enter Prices"}
+                          </Button>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex px-2.5 py-1 text-xs font-semibold rounded-lg bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">
+                              Quoted
+                            </span>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setViewingQuoteInquiry(inq);
+                              }}
+                            >
+                              View Quote
+                            </Button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                />
+              </div>
             </div>
 
-            <form onSubmit={handleSubmitQuote} className="flex-1 flex flex-col overflow-y-auto custom-scrollbar p-6 space-y-6">
-              {/* Product Price Inputs */}
-              <div className="space-y-4">
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                  Quote Unit Prices
-                </label>
-                
-                {selectedInquiry.items?.map((item) => (
-                  <div
-                    key={item.id}
-                    className="p-4 bg-gray-50 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-xl space-y-3"
+            {/* Right Column: Quote Quoting Panel */}
+            {selectedInquiry && (
+              <div className="lg:col-span-5 flex flex-col bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden animate-in slide-in-from-right duration-300">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1f222b]">
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Submit Prices for {selectedInquiry.inquiry_id}</h3>
+                    <p className="text-[10px] text-gray-500 mt-0.5">{selectedInquiry.buyer_name}</p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedInquiry(null)}
+                    className="text-gray-400 hover:text-gray-200 text-lg font-bold"
                   >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="text-xs font-bold text-gray-900 dark:text-white">{item.description}</h4>
-                        <span className="text-[10px] text-gray-500">
-                          Quantity: {item.quantity} {item.unit || "pcs"}
+                    &times;
+                  </button>
+                </div>
+
+                <form onSubmit={handleSubmitQuote} className="flex-1 flex flex-col overflow-y-auto custom-scrollbar p-6 space-y-6">
+                  {/* Product Price Inputs */}
+                  <div className="space-y-4">
+                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                      Quote Unit Prices
+                    </label>
+                    
+                    {selectedInquiry.items?.map((item) => (
+                      <div
+                        key={item.id}
+                        className="p-4 bg-gray-55/35 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-xl space-y-3"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="text-xs font-bold text-gray-900 dark:text-white">{item.description}</h4>
+                            <span className="text-[10px] text-gray-500">
+                              Quantity: {item.quantity} {item.unit || "pcs"}
+                            </span>
+                          </div>
+                          
+                          {prices[item.id] && (
+                            <span className="text-xs font-mono font-bold text-purple-600 dark:text-purple-400">
+                              Total: ₹{((parseFloat(prices[item.id]) || 0) * item.quantity).toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-semibold">
+                            ₹
+                          </span>
+                          <input
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            required
+                            placeholder="0.00"
+                            value={prices[item.id]}
+                            onChange={(e) => handlePriceChange(item.id, e.target.value)}
+                            className="w-full h-9 pl-7 pr-3 rounded-lg text-xs bg-white dark:bg-[#1a1d23] border border-gray-300 dark:border-[#2f3441] text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-all font-mono"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Validity and Totals */}
+                  <div className="border-t border-gray-200 dark:border-[#2a2d33] pt-6 space-y-5">
+                    <DatePicker
+                      label="Quote Validity Date"
+                      name="validityDate"
+                      value={validityDate}
+                      onChange={(e) => setValidityDate(e.target.value)}
+                    />
+
+                    <div className="bg-gray-50 dark:bg-[#0f111a] p-5 rounded-2xl border border-gray-200 dark:border-[#2a2d33] space-y-3.5 shadow-inner">
+                      <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wide">
+                        <span>Subtotal:</span>
+                        <span className="font-mono text-gray-900 dark:text-gray-100 text-sm">₹{totals.subtotal.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wide">
+                        <span>GST (18%):</span>
+                        <span className="font-mono text-gray-900 dark:text-gray-100 text-sm">₹{totals.tax.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm font-black text-gray-900 dark:text-white border-t border-dashed border-gray-200 dark:border-[#2a2d33] pt-3.5 mt-2">
+                        <span className="uppercase tracking-wider text-[11px] text-gray-600 dark:text-gray-400 font-bold">Final Quote Amount</span>
+                        <span className="font-mono text-lg font-extrabold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-3.5 py-1.5 rounded-xl border border-purple-500/20 shadow-sm">
+                          ₹{totals.total.toLocaleString()}
                         </span>
                       </div>
-                      
-                      {prices[item.id] && (
-                        <span className="text-xs font-mono font-bold text-purple-600 dark:text-purple-400">
-                          Total: ₹{((parseFloat(prices[item.id]) || 0) * item.quantity).toLocaleString()}
-                        </span>
-                      )}
                     </div>
 
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-semibold">
-                        ₹
-                      </span>
-                      <input
-                        type="number"
-                        min="0.01"
-                        step="0.01"
-                        required
-                        placeholder="0.00"
-                        value={prices[item.id]}
-                        onChange={(e) => handlePriceChange(item.id, e.target.value)}
-                        className="w-full h-9 pl-7 pr-3 rounded-lg text-xs bg-white dark:bg-[#1a1d23] border border-gray-300 dark:border-[#2f3441] text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-all font-mono"
-                      />
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedInquiry(null)}
+                        className="w-1/3 py-2.5 rounded-lg border border-gray-300 dark:border-[#2a2d33] text-gray-700 dark:text-gray-300 text-xs font-bold hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={!isFormValid || submitting}
+                        className="flex-1 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-lg shadow-purple-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {submitting ? (
+                          <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                        ) : (
+                          "Submit Quote"
+                        )}
+                      </button>
                     </div>
                   </div>
-                ))}
+                </form>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {/* Left Column: Confirmed Orders List */}
+            <div className={`flex flex-col bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden ${selectedOrder ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center">
+                <h2 className="text-sm font-bold text-gray-800 dark:text-white uppercase tracking-wider">
+                  Confirmed Orders ({activeOrders.length})
+                </h2>
               </div>
 
-              {/* Validity and Totals */}
-              <div className="border-t border-gray-200 dark:border-[#2a2d33] pt-6 space-y-5">
-                <DatePicker
-                  label="Quote Validity Date"
-                  name="validityDate"
-                  value={validityDate}
-                  onChange={(e) => setValidityDate(e.target.value)}
+              <div className="flex-1 overflow-auto custom-scrollbar">
+                <DataTable
+                  columns={[
+                    { key: "shipment_number", label: "Order Ref" },
+                    { key: "buyer", label: "Customer" },
+                    { key: "cargo", label: "Cargo Details" },
+                    { key: "date", label: "Ordered Date" },
+                    { key: "status", label: "Status" },
+                    { key: "action", label: "", className: "text-right" }
+                  ]}
+                  data={activeOrders}
+                  emptyMessage="No confirmed orders found for this supplier profile."
+                  renderRow={(ship, idx) => (
+                    <tr
+                      key={ship.id}
+                      className={`border-b border-gray-100 dark:border-[#2a2d33] transition-colors hover:bg-gray-55/40 dark:hover:bg-white/[0.01] cursor-pointer ${
+                        selectedOrder?.id === ship.id ? "bg-purple-500/5" : ""
+                      }`}
+                      onClick={() => setSelectedOrder(ship)}
+                    >
+                      <td className="px-6 py-4 font-mono font-bold text-sm text-gray-900 dark:text-white">
+                        {ship.shipmentNumber}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-gray-800 dark:text-white text-sm">{ship.client?.name || "Unknown"}</span>
+                          <span className="text-[10px] text-gray-400">{ship.client?.email}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300 truncate max-w-[200px]" title={ship.cargoDetails}>
+                        {ship.cargoDetails || "General Cargo"}
+                      </td>
+                      <td className="px-6 py-4 text-xs text-gray-500">
+                        {ship.createdAt ? new Date(ship.createdAt).toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric"
+                        }) : "—"}
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        <StatusBadge status={ship.currentStatus} />
+                      </td>
+                      <td className="px-6 py-4 text-right flex justify-end gap-2">
+                        <Button
+                          variant={selectedOrder?.id === ship.id ? "primary" : "secondary"}
+                          size="sm"
+                        >
+                          {selectedOrder?.id === ship.id ? "Selected" : "View Details"}
+                        </Button>
+                      </td>
+                    </tr>
+                  )}
                 />
+              </div>
+            </div>
 
-                <div className="bg-gray-50 dark:bg-[#0f111a] p-5 rounded-2xl border border-gray-200 dark:border-[#2a2d33] space-y-3.5 shadow-inner">
-                  <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wide">
-                    <span>Subtotal:</span>
-                    <span className="font-mono text-gray-900 dark:text-gray-100 text-sm">₹{totals.subtotal.toLocaleString()}</span>
+            {/* Right Column: Confirmed Order Details Panel */}
+            {selectedOrder && (
+              <div className="lg:col-span-5 flex flex-col bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden animate-in slide-in-from-right duration-300">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1f222b]">
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Order Details — {selectedOrder.shipmentNumber}</h3>
+                    <p className="text-[10px] text-gray-500 mt-0.5">{selectedOrder.client?.name}</p>
                   </div>
-                  <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wide">
-                    <span>GST (18%):</span>
-                    <span className="font-mono text-gray-900 dark:text-gray-100 text-sm">₹{totals.tax.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm font-black text-gray-900 dark:text-white border-t border-dashed border-gray-200 dark:border-[#2a2d33] pt-3.5 mt-2">
-                    <span className="uppercase tracking-wider text-[11px] text-gray-600 dark:text-gray-400 font-bold">Final Quote Amount</span>
-                    <span className="font-mono text-lg font-extrabold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-3.5 py-1.5 rounded-xl border border-purple-500/20 shadow-sm">
-                      ₹{totals.total.toLocaleString()}
-                    </span>
-                  </div>
+                  <button
+                    onClick={() => setSelectedOrder(null)}
+                    className="text-gray-400 hover:text-gray-200 text-lg font-bold"
+                  >
+                    &times;
+                  </button>
                 </div>
 
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedInquiry(null)}
-                    className="w-1/3 py-2.5 rounded-lg border border-gray-300 dark:border-[#2a2d33] text-gray-700 dark:text-gray-300 text-xs font-bold hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={!isFormValid || submitting}
-                    className="flex-1 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-lg shadow-purple-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {submitting ? (
-                      <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
-                    ) : (
-                      "Submit Quote"
-                    )}
-                  </button>
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+                  <div className="p-5 bg-gray-50 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-xl space-y-4">
+                    <div>
+                      <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block">Cargo Details</span>
+                      <span className="text-sm font-bold text-gray-800 dark:text-white mt-1 block">{selectedOrder.cargoDetails || "N/A"}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block">Client Email</span>
+                      <span className="text-sm font-semibold text-gray-600 dark:text-gray-300 mt-1 block">{selectedOrder.client?.email || "N/A"}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block">Destination</span>
+                      <span className="text-sm font-semibold text-gray-600 dark:text-gray-300 mt-1 block">{selectedOrder.client?.address || "N/A"}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block">Order Status</span>
+                      <div className="mt-1.5">
+                        <StatusBadge status={selectedOrder.currentStatus} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Purchase Order details if available */}
+                  {(selectedOrder.purchaseOrder?.poNumber || selectedOrder.purchaseOrderId) && (
+                    <div className="p-5 bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl space-y-3 shadow-sm mt-4">
+                      <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Linked Purchase Order</h4>
+                      <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-gray-400">
+                        <span>PO ID:</span>
+                        <span className="font-mono text-gray-900 dark:text-gray-100 font-bold">
+                          {selectedOrder.purchaseOrder?.poNumber || selectedOrder.purchaseOrderId}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            </form>
-          </div>
+            )}
+          </>
         )}
       </div>
 

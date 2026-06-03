@@ -105,6 +105,30 @@ const updatePurchaseOrder = async (id, data, updaterId) => {
       data: updateData
     });
 
+    if (data.status === 'ORDERED') {
+      if (po.inquiryId) {
+        await tx.inquiry.update({
+          where: { id: po.inquiryId },
+          data: { currentStatus: 'CONFIRMED' }
+        });
+
+        await tx.inquiryStatusHistory.create({
+          data: {
+            inquiryId: po.inquiryId,
+            fromStatus: 'QUOTE_SENT',
+            toStatus: 'CONFIRMED',
+            changedById: updaterId,
+            remarks: 'Order placed on Purchase Order'
+          }
+        });
+      }
+
+      await tx.shipment.updateMany({
+        where: { purchaseOrderId: id },
+        data: { currentStatus: 'ORDER_PLACED' }
+      });
+    }
+
     if (data.items && data.items.length > 0) {
       // Clear existing
       await tx.purchaseOrderItem.deleteMany({

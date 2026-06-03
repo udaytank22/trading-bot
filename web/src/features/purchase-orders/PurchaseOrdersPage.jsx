@@ -150,6 +150,7 @@ export default function PurchaseOrdersPage() {
           { value: "All", label: "All Status" },
           { value: "PENDING", label: "Pending" },
           { value: "CONFIRMED", label: "Confirmed" },
+          { value: "ORDERED", label: "Ordered" },
           { value: "SHIPPED", label: "Shipped" },
           { value: "CLOSED", label: "Closed" },
         ]}

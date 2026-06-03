@@ -401,10 +401,15 @@ export default function InquiriesPage() {
           );
           if (!confirmed) return;
           try {
-            // Clear old supply data to refresh supply tab
-            setSupplyData([]);
-            loadData(true);
-            showToast("Deal confirmed and moved to Supply", "success");
+            const res = await api.inquiries.confirmDeal(deal.id);
+            if (res.success) {
+              // Clear old supply data to refresh supply tab
+              setSupplyData([]);
+              loadData(true);
+              showToast("Deal confirmed and moved to Supply", "success");
+            } else {
+              showToast(res.message || "Failed to confirm deal", "error");
+            }
           } catch (err) {
             console.error(err);
             showToast("Failed to confirm deal", "error");
