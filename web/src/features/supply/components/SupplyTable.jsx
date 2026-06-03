@@ -164,14 +164,14 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
             View
           </Button>
 
-          {item.status !== "PENDING" && (
+          {item.status === "SHIPPED" && (
             <Button
               variant="secondary"
               size="sm"
-              className="border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
-              onClick={() => onContact(item)}
+              className="border-green-500/40 text-green-400 hover:bg-green-500/10"
+              onClick={() => onStatusUpdate(item.inquiry_id, "SUPPLY")}
             >
-              Contact
+              Move to Supply
             </Button>
           )}
         </div>

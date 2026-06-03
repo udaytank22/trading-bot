@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { api } from '@services/api';
 import { formatINR } from '@services/marginEngine';
+import Swal from 'sweetalert2';
 
 const EmailDraftCard = ({ rfq, inquiryId, buyerName, allProducts }) => {
   const products = allProducts.filter(p => rfq.products.includes(p.product_name));
@@ -60,6 +61,20 @@ export default function MultiEmailPreviewModal({ isOpen, onClose, stagedRFQs, in
   if (!isOpen || !inquiryDeal) return null;
 
   const handleSendAll = async () => {
+    const result = await Swal.fire({
+      title: "Send All RFQs?",
+      text: "This process cannot be reverted.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#10b981",
+      cancelButtonColor: "#ef4444",
+      confirmButtonText: "Yes, send all",
+      cancelButtonText: "Cancel",
+      background: "#1a1d23",
+      color: "#fff"
+    });
+    if (!result.isConfirmed) return;
+
     setSendState('sending');
     try {
       // Dispatch RFQs via backend API

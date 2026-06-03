@@ -1,5 +1,5 @@
 const prisma = require('../../prisma/client');
-
+const bcrypt = require('bcryptjs');
 /**
  * Get all employees
  */
@@ -91,7 +91,7 @@ const deleteEmployee = async (id, updaterId) => {
  */
 const logAttendance = async (employeeId, data) => {
   const dateVal = data.date ? new Date(data.date) : new Date();
-  
+
   // Extract UTC Date without time parts to avoid timezone mismatch
   const y = dateVal.getFullYear();
   const m = dateVal.getMonth();

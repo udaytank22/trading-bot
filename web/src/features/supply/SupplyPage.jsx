@@ -44,7 +44,7 @@ const ITEMS_PER_PAGE = 5;
 
 // ─── Main Page Component ───────────────────────────────────────────────────────
 export default function SupplyPage() {
-  const { supplyData, refreshAll } = useData();
+  const { supplyData, setSupplyData, refreshAll } = useData();
 
   // ── Local UI state ────────────────────────────────────────────────────────
   const [search, setSearch] = useState("");
@@ -99,6 +99,15 @@ export default function SupplyPage() {
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   const handleStatusUpdate = async (id, newStatus) => {
+    if (newStatus === "SUPPLY") { // Transition to SUPPLY status
+      const res = await api.shipments.updateShipment(id, { currentStatus: "SUPPLY" });
+      if (res.success) {
+        // Clear old supply data and refresh to show only updated entry
+        setSupplyData([]);
+        refreshAll();
+      }
+      return;
+    }
     if (newStatus === "SEND_INVOICE") {
       const deal = supplyData.find((d) => d.inquiry_id === id);
       if (deal) {
@@ -210,7 +219,7 @@ export default function SupplyPage() {
         deal={selectedDeal}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onStatusUpdate={(id, status) => console.log("Status update:", id, status)} // TODO: wire to context
+        onStatusUpdate={handleStatusUpdate}
       />
 
       {/* Contact supplier modal */}

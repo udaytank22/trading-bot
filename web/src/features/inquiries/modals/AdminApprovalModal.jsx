@@ -9,23 +9,39 @@ const AdminApprovalModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) =>
 
   useEffect(() => {
     if (deal) {
-      setMargin(deal.margin_percent || "");
-      setDiscount(deal.discount_percent || "");
+      setMargin(deal.margin_percent !== undefined && deal.margin_percent !== null ? deal.margin_percent.toString() : "");
+      setDiscount(deal.discount_percent !== undefined && deal.discount_percent !== null ? deal.discount_percent.toString() : "");
     }
   }, [deal]);
 
   if (!isOpen || !deal) return null;
 
   const quote = deal.my_quote;
-  const products = quote?.products || [];
+  const products = quote?.products && quote.products.length > 0
+    ? quote.products
+    : (deal.seller_quote?.products || []).map((sqp, idx) => {
+        const dp = deal.products?.[idx] || {};
+        return {
+          product_name: sqp.product_name,
+          quantity: dp.quantity || 1,
+          unit: dp.unit || "pcs",
+          seller_unit_price: sqp.seller_unit_price || 0,
+          my_unit_price: sqp.seller_unit_price || 0,
+          total_price: (sqp.seller_unit_price || 0) * (dp.quantity || 1)
+        };
+      });
 
   const marginVal = parseFloat(margin) || 0;
   const discountVal = parseFloat(discount) || 0;
 
+  const dealMargin = parseFloat(deal.margin_percent) || 0;
+  const dealDiscount = parseFloat(deal.discount_percent) || 0;
+  const isOverrideApplied = marginVal !== dealMargin || discountVal !== dealDiscount;
+
   const updatedProducts = products.map(p => {
     const cost = p.seller_unit_price || 0;
-    let my_unit_price = cost;
-    if (marginVal > 0 || discountVal > 0) {
+    let my_unit_price = p.my_unit_price || cost;
+    if (isOverrideApplied) {
       my_unit_price = cost * (1 + marginVal / 100) * (1 - discountVal / 100);
     }
     return {
@@ -46,7 +62,7 @@ const AdminApprovalModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) =>
   const totalProfit = totalFinalPrice - totalSellerCost;
 
   const content = (
-    <div className={`${isPageMode ? 'w-full bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm' : 'bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden'} animate-in zoom-in-95 duration-200`}>
+    <div className={`${isPageMode ? 'w-full bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden' : 'bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden'} animate-in zoom-in-95 duration-200`}>
       <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
         <div className="flex items-center gap-4">
           {isPageMode && (

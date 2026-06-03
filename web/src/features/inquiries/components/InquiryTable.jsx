@@ -62,65 +62,76 @@ function getActionBtn(inq, onAction, currentUser) {
   const role = currentUser?.role || "Admin";
   const status = inq.status;
 
-  const rLower = role.toLowerCase();
-  const isAdmin = rLower === "admin" || rLower === "administrator" || rLower === "super admin";
-  const isEmployee = rLower === "employee";
-
   const map = {
     PENDING: {
       label: "Check Stock",
       variant: "secondary",
       color: "amber",
-      allowedRoles: ["Sales Executive", "User", "Sourcing Manager", "Team Leader", "Admin"],
     },
     RFQ_READY: {
       label: "Create RFQ",
       variant: "secondary",
       color: "blue",
-      allowedRoles: ["Sales Executive", "User", "Sourcing Manager", "Team Leader", "Admin"],
     },
     CLIENT_QUOTING: {
       label: "Quote Prices",
       variant: "secondary",
       color: "cyan",
-      allowedRoles: ["Client", "Admin"],
     },
     TL_REVIEW: {
       label: "Set Margin",
       variant: "secondary",
       color: "rose",
-      allowedRoles: ["Sourcing Manager", "Team Leader", "Admin"], // Assuming Sourcing Manager as TL
     },
     ADMIN_APPROVAL: {
       label: "Approve",
       variant: "secondary",
       color: "orange",
-      allowedRoles: ["Admin"],
     },
     EMPLOYEE_VERIFY: {
       label: "Verify & Quote",
       variant: "secondary",
       color: "sky",
-      allowedRoles: ["Sales Executive", "User", "Sourcing Manager", "Team Leader", "Admin"],
     },
     CLIENT_FINAL_APPROVAL: {
       label: "Final Decision",
       variant: "secondary",
       color: "violet",
-      allowedRoles: ["Client", "Admin"],
     },
     QUOTE_SENT: {
       label: "Confirm Deal",
       variant: "secondary",
       color: "emerald",
-      allowedRoles: ["Admin", "Sales Executive", "User"],
     },
   };
 
   const cfg = map[status];
   if (!cfg) return null;
 
-  const isAllowed = isAdmin || isEmployee;
+  const isRoleAllowed = (status, roleName) => {
+    const rNameLower = roleName?.toLowerCase();
+    if (rNameLower === "admin" || rNameLower === "super admin" || rNameLower === "administrator") return true;
+    if (rNameLower === "viewer") return false;
+
+    switch (status) {
+      case "PENDING":
+      case "RFQ_READY":
+      case "EMPLOYEE_VERIFY":
+      case "QUOTE_SENT":
+        return rNameLower === "employee" || rNameLower === "team lead";
+      case "TL_REVIEW":
+        return rNameLower === "team lead";
+      case "CLIENT_QUOTING":
+      case "CLIENT_FINAL_APPROVAL":
+        return rNameLower === "client";
+      case "ADMIN_APPROVAL":
+        return false;
+      default:
+        return false;
+    }
+  };
+
+  const isAllowed = isRoleAllowed(status, role);
   if (!isAllowed) return null;
 
   const btnClass = COLOR_CLASSES[cfg.color] || "";

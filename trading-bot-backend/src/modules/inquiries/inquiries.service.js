@@ -15,11 +15,11 @@ const generateInquiryNumber = async () => {
  */
 const getAllInquiries = async (query = {}) => {
   const where = { deletedAt: null };
-  
+
   if (query.status) {
     where.currentStatus = query.status;
   }
-  
+
   if (query.clientId) {
     where.clientId = query.clientId;
   }
@@ -52,6 +52,11 @@ const getAllInquiries = async (query = {}) => {
       },
       statusHistory: {
         orderBy: { createdAt: 'desc' }
+      },
+      clientQuotations: {
+        include: {
+          items: true
+        }
       }
     },
     orderBy: { createdAt: 'desc' }
@@ -114,7 +119,7 @@ const getInquiryById = async (id) => {
  */
 const createInquiry = async (data, creatorId) => {
   const inquiryNumber = await generateInquiryNumber();
-  
+
   return await prisma.$transaction(async (tx) => {
     const inquiry = await tx.inquiry.create({
       data: {
@@ -317,7 +322,7 @@ const submitSupplierQuote = async (id, data, userId) => {
     const getMargin = (productName, unitPrice) => {
       const name = (productName || "").toLowerCase();
       let margin = defaultMarginEnv;
-      
+
       const keywords12 = ["pipe", "rod", "bar", "sheet", "plate"];
       const keywords18 = ["bolt", "nut", "screw", "fastener", "washer"];
 
@@ -326,7 +331,7 @@ const submitSupplierQuote = async (id, data, userId) => {
       } else if (keywords12.some(kw => name.includes(kw))) {
         margin = 12;
       }
-      
+
       let rule2Margin = 0;
       if (unitPrice < 100) {
         rule2Margin = 25;
@@ -337,7 +342,7 @@ const submitSupplierQuote = async (id, data, userId) => {
       } else if (unitPrice > 2000) {
         rule2Margin = 12;
       }
-      
+
       return Math.max(margin, rule2Margin);
     };
 
@@ -353,7 +358,7 @@ const submitSupplierQuote = async (id, data, userId) => {
       const description = dbItem ? dbItem.description : '';
       const unitPrice = parseFloat(item.unitPrice);
       const qty = parseInt(item.quantity, 10);
-      
+
       const margin = getMargin(description, unitPrice);
       let finalMargin = margin;
       if (qty > 5000) finalMargin -= 4;
@@ -511,6 +516,39 @@ const teamLeadApprove = async (id, data, userId) => {
       data: { currentStatus: nextStatus, updatedById: userId }
     });
 
+    // Update margins if override specified
+    if (isApproved && data.overrideQuote) {
+      const quotation = await tx.clientQuotation.findFirst({
+        where: { inquiryId: id }
+      });
+      if (quotation) {
+        await tx.clientQuotation.update({
+          where: { id: quotation.id },
+          data: {
+            marginPercentage: data.overrideQuote.marginPercentage,
+            discountPercentage: data.overrideQuote.discountPercentage,
+            totalAmount: data.overrideQuote.totalAmount,
+            finalAmount: data.overrideQuote.finalAmount
+          }
+        });
+
+        if (data.overrideQuote.items && data.overrideQuote.items.length > 0) {
+          for (const item of data.overrideQuote.items) {
+            await tx.clientQuotationItem.updateMany({
+              where: {
+                clientQuotationId: quotation.id,
+                inquiryItemId: item.inquiryItemId
+              },
+              data: {
+                sellingPrice: parseFloat(item.sellingPrice),
+                totalPrice: parseFloat(item.totalPrice)
+              }
+            });
+          }
+        }
+      }
+    }
+
     // History
     await tx.inquiryStatusHistory.create({
       data: {
@@ -552,15 +590,35 @@ const adminApprove = async (id, data, userId) => {
 
     // Update margins if override specified
     if (isApproved && data.overrideQuote) {
-      await tx.clientQuotation.updateMany({
-        where: { inquiryId: id },
-        data: {
-          marginPercentage: data.overrideQuote.marginPercentage,
-          discountPercentage: data.overrideQuote.discountPercentage,
-          totalAmount: data.overrideQuote.totalAmount,
-          finalAmount: data.overrideQuote.finalAmount
-        }
+      const quotation = await tx.clientQuotation.findFirst({
+        where: { inquiryId: id }
       });
+      if (quotation) {
+        await tx.clientQuotation.update({
+          where: { id: quotation.id },
+          data: {
+            marginPercentage: data.overrideQuote.marginPercentage,
+            discountPercentage: data.overrideQuote.discountPercentage,
+            totalAmount: data.overrideQuote.totalAmount,
+            finalAmount: data.overrideQuote.finalAmount
+          }
+        });
+
+        if (data.overrideQuote.items && data.overrideQuote.items.length > 0) {
+          for (const item of data.overrideQuote.items) {
+            await tx.clientQuotationItem.updateMany({
+              where: {
+                clientQuotationId: quotation.id,
+                inquiryItemId: item.inquiryItemId
+              },
+              data: {
+                sellingPrice: parseFloat(item.sellingPrice),
+                totalPrice: parseFloat(item.totalPrice)
+              }
+            });
+          }
+        }
+      }
     }
 
     // Update status
@@ -673,6 +731,9 @@ const confirmDeal = async (id, data, userId) => {
         client: true,
         items: true,
         supplierQuotes: {
+          include: {
+            items: true
+          },
           orderBy: { createdAt: 'desc' },
           take: 1
         },
@@ -690,7 +751,7 @@ const confirmDeal = async (id, data, userId) => {
     // Get matched supplier
     const matchedSupplierQuote = inquiry.supplierQuotes[0];
     const clientQuote = inquiry.clientQuotations[0];
-    
+
     if (!matchedSupplierQuote) {
       throw new Error('No supplier quotes found for this inquiry. Deal cannot be confirmed.');
     }
@@ -714,23 +775,48 @@ const confirmDeal = async (id, data, userId) => {
     });
 
     // Link items to PO
-    const inquiryItemsWithProducts = await tx.inquiryItem.findMany({
-      where: { inquiryId: id }
-    });
+    const inquiryItems = inquiry.items || [];
 
-    for (const item of inquiryItemsWithProducts) {
-      if (item.productId) {
-        await tx.purchaseOrderItem.create({
-          data: {
-            purchaseOrderId: po.id,
-            productId: item.productId,
-            description: item.description,
-            quantity: item.quantity,
-            unitPrice: item.quantity > 0 ? (matchedSupplierQuote.quoteAmount.toNumber() / item.quantity) : 0, // estimate
-            totalPrice: matchedSupplierQuote.quoteAmount.toNumber() / inquiryItemsWithProducts.length // split estimate
-          }
+    for (const item of inquiryItems) {
+      let productId = item.productId;
+      if (!productId) {
+        // Try to find product by description (matching the name)
+        let product = await tx.product.findFirst({
+          where: { name: item.description, deletedAt: null }
         });
+        if (!product) {
+          // Create product on the fly
+          const skuCount = await tx.product.count();
+          const sku = `SKU-${1000 + skuCount + 1}`;
+          product = await tx.product.create({
+            data: {
+              name: item.description,
+              sku,
+              category: "General",
+              unit: item.unit || "PCS",
+              sellingPrice: matchedSupplierQuote.quoteAmount.toNumber() / inquiryItems.length, // estimate
+              purchasePrice: matchedSupplierQuote.quoteAmount.toNumber() / inquiryItems.length, // estimate
+            }
+          });
+        }
+        productId = product.id;
       }
+
+      // Find matching supplier quote item to get actual unit price
+      const sqItem = matchedSupplierQuote.items?.find(sqi => sqi.inquiryItemId === item.id);
+      const unitPrice = sqItem ? parseFloat(sqItem.unitPrice) : (item.quantity > 0 ? (matchedSupplierQuote.quoteAmount.toNumber() / item.quantity) : 0);
+      const totalPrice = sqItem ? (unitPrice * item.quantity) : (matchedSupplierQuote.quoteAmount.toNumber() / inquiryItems.length);
+
+      await tx.purchaseOrderItem.create({
+        data: {
+          purchaseOrderId: po.id,
+          productId,
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice,
+          totalPrice
+        }
+      });
     }
 
     // 2. Create Supply Shipment
@@ -744,7 +830,7 @@ const confirmDeal = async (id, data, userId) => {
         purchaseOrderId: po.id,
         supplierId: matchedSupplierQuote.supplierId,
         clientId: inquiry.clientId,
-        cargoDetails: inquiryItemsWithProducts.map(i => `${i.description} (x${i.quantity})`).join(', '),
+        cargoDetails: inquiryItems.map(i => `${i.description} (x${i.quantity})`).join(', '),
         currentStatus: 'PENDING',
         createdById: userId
       }
@@ -808,7 +894,7 @@ module.exports = {
   createInquiry,
   updateInquiry,
   deleteInquiry,
-  
+
   // Pipeline Actions
   stockCheck,
   sendRFQ,

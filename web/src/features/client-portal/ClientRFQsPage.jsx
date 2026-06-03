@@ -3,6 +3,7 @@ import { useAuth } from "@context";
 import { api } from "@services/api";
 import { Select, Field, DataTable, DatePicker, StatusBadge, Button } from "@components/ui";
 import Swal from "sweetalert2";
+import { RightDrawer } from "../settings/components/shared";
 
 export default function ClientRFQsPage() {
   const { currentUser } = useAuth();
@@ -13,6 +14,7 @@ export default function ClientRFQsPage() {
   const [inquiries, setInquiries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [viewingQuoteInquiry, setViewingQuoteInquiry] = useState(null);
 
   // Active Quote Panel State
   const [selectedInquiry, setSelectedInquiry] = useState(null);
@@ -54,12 +56,13 @@ export default function ClientRFQsPage() {
     loadData();
   }, []);
 
-  // Filter inquiries in RFQ_SENT status containing the selected supplier
+  // Filter inquiries that are in RFQ_SENT status or any status after it, containing the selected supplier
   const activeRFQs = useMemo(() => {
     if (!selectedSupplierId) return [];
+    const nonPortalStatuses = ["PENDING", "RFQ_READY"];
     return inquiries.filter(
       (inq) =>
-        inq.status === "RFQ_SENT" &&
+        !nonPortalStatuses.includes(inq.status) &&
         inq.suppliers?.some((s) => s.supplierId === selectedSupplierId)
     );
   }, [inquiries, selectedSupplierId]);
@@ -133,16 +136,6 @@ export default function ClientRFQsPage() {
 
       const res = await api.inquiries.supplierQuote(selectedInquiry.id, payload);
       if (res.success) {
-        Swal.fire({
-          icon: "success",
-          title: "Quote Submitted Successfully",
-          text: `Your quote for inquiry ${selectedInquiry.inquiry_id} has been submitted.`,
-          timer: 2000,
-          showConfirmButton: false,
-          background: "#1a1d23",
-          color: "#fff",
-        });
-        
         // Refresh local lists and close quoting panel
         setSelectedInquiry(null);
         const inquiriesRes = await api.inquiries.getInquiries();
@@ -150,13 +143,6 @@ export default function ClientRFQsPage() {
       }
     } catch (err) {
       console.error("Quote submission error:", err);
-      Swal.fire({
-        icon: "error",
-        title: "Submission Failed",
-        text: err.response?.data?.message || "Failed to submit quote. Please try again.",
-        background: "#1a1d23",
-        color: "#fff",
-      });
     } finally {
       setSubmitting(false);
     }
@@ -207,7 +193,7 @@ export default function ClientRFQsPage() {
         <div className={`flex flex-col bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden ${selectedInquiry ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
           <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center">
             <h2 className="text-sm font-bold text-gray-800 dark:text-white uppercase tracking-wider">
-              Pending RFQs ({activeRFQs.length})
+              My RFQs & Quotations ({activeRFQs.length})
             </h2>
           </div>
 
@@ -219,6 +205,7 @@ export default function ClientRFQsPage() {
                 { key: "vessel", label: "Vessel" },
                 { key: "itemsCount", label: "Items" },
                 { key: "date", label: "Received Date" },
+                { key: "status", label: "Status" },
                 { key: "action", label: "", className: "text-right" }
               ]}
               data={activeRFQs}
@@ -226,10 +213,12 @@ export default function ClientRFQsPage() {
               renderRow={(inq, idx) => (
                 <tr
                   key={inq.inquiry_id}
-                  className={`border-b border-gray-100 dark:border-[#2a2d33] hover:bg-gray-55/40 dark:hover:bg-white/[0.01] transition-colors cursor-pointer ${
-                    selectedInquiry?.id === inq.id ? "bg-purple-500/5" : ""
-                  }`}
-                  onClick={() => handleSelectInquiry(inq)}
+                  className={`border-b border-gray-100 dark:border-[#2a2d33] transition-colors ${
+                    inq.status === "RFQ_SENT"
+                      ? "hover:bg-gray-55/40 dark:hover:bg-white/[0.01] cursor-pointer"
+                      : "opacity-85"
+                  } ${selectedInquiry?.id === inq.id ? "bg-purple-500/5" : ""}`}
+                  onClick={() => inq.status === "RFQ_SENT" && handleSelectInquiry(inq)}
                 >
                   <td className="px-6 py-4 font-mono font-bold text-sm text-gray-900 dark:text-white">
                     {inq.inquiry_id}
@@ -253,13 +242,34 @@ export default function ClientRFQsPage() {
                       year: "numeric"
                     }) : "—"}
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <Button
-                      variant={selectedInquiry?.id === inq.id ? "primary" : "secondary"}
-                      size="sm"
-                    >
-                      {selectedInquiry?.id === inq.id ? "Selected" : "Enter Prices"}
-                    </Button>
+                  <td className="px-6 py-4 text-sm">
+                    <StatusBadge status={inq.status} />
+                  </td>
+                  <td className="px-6 py-4 text-right flex justify-end gap-2">
+                    {inq.status === "RFQ_SENT" ? (
+                      <Button
+                        variant={selectedInquiry?.id === inq.id ? "primary" : "secondary"}
+                        size="sm"
+                      >
+                        {selectedInquiry?.id === inq.id ? "Selected" : "Enter Prices"}
+                      </Button>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex px-2.5 py-1 text-xs font-semibold rounded-lg bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">
+                          Quoted
+                        </span>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setViewingQuoteInquiry(inq);
+                          }}
+                        >
+                          View Quote
+                        </Button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               )}
@@ -338,18 +348,20 @@ export default function ClientRFQsPage() {
                   onChange={(e) => setValidityDate(e.target.value)}
                 />
 
-                <div className="bg-gray-55/30 dark:bg-[#0c0e12] p-4.5 rounded-xl border border-gray-200 dark:border-[#2a2d33] space-y-2">
-                  <div className="flex justify-between text-xs font-medium text-gray-500">
+                <div className="bg-gray-50 dark:bg-[#0f111a] p-5 rounded-2xl border border-gray-200 dark:border-[#2a2d33] space-y-3.5 shadow-inner">
+                  <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wide">
                     <span>Subtotal:</span>
-                    <span className="font-mono text-gray-700 dark:text-gray-300">₹{totals.subtotal.toLocaleString()}</span>
+                    <span className="font-mono text-gray-900 dark:text-gray-100 text-sm">₹{totals.subtotal.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between text-xs font-medium text-gray-500">
+                  <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wide">
                     <span>GST (18%):</span>
-                    <span className="font-mono text-gray-700 dark:text-gray-300">₹{totals.tax.toLocaleString()}</span>
+                    <span className="font-mono text-gray-900 dark:text-gray-100 text-sm">₹{totals.tax.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between text-sm font-bold text-gray-900 dark:text-white border-t border-dashed border-gray-200 dark:border-[#2a2d33] pt-2 mt-1">
-                    <span>Final Quote Amount:</span>
-                    <span className="font-mono text-purple-600 dark:text-purple-400">₹{totals.total.toLocaleString()}</span>
+                  <div className="flex justify-between items-center text-sm font-black text-gray-900 dark:text-white border-t border-dashed border-gray-200 dark:border-[#2a2d33] pt-3.5 mt-2">
+                    <span className="uppercase tracking-wider text-[11px] text-gray-600 dark:text-gray-400 font-bold">Final Quote Amount</span>
+                    <span className="font-mono text-lg font-extrabold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-3.5 py-1.5 rounded-xl border border-purple-500/20 shadow-sm">
+                      ₹{totals.total.toLocaleString()}
+                    </span>
                   </div>
                 </div>
 
@@ -381,6 +393,110 @@ export default function ClientRFQsPage() {
           </div>
         )}
       </div>
+
+      {/* View Quote Drawer */}
+      {viewingQuoteInquiry && (() => {
+        const myQuote = viewingQuoteInquiry.supplierQuotes?.find(
+          (q) => q.supplierId === selectedSupplierId
+        );
+        
+        return (
+          <RightDrawer
+            isOpen={!!viewingQuoteInquiry}
+            title={`Quotation Details — ${viewingQuoteInquiry.inquiry_id}`}
+            onClose={() => setViewingQuoteInquiry(null)}
+          >
+            {myQuote ? (
+              <div className="space-y-6">
+                {/* Meta details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 dark:bg-[#0c0e12] p-5 rounded-2xl border border-gray-200 dark:border-[#2a2d33]">
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block">Client Name</span>
+                    <span className="text-sm font-bold text-gray-800 dark:text-white mt-1 block">{viewingQuoteInquiry.buyer_name}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block">Vessel / Reference</span>
+                    <span className="text-sm font-bold text-gray-800 dark:text-white mt-1 block">{viewingQuoteInquiry.vessel_name || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block">Quote Validity</span>
+                    <span className="text-sm font-bold text-gray-800 dark:text-white mt-1 block">
+                      {myQuote.validityDate ? new Date(myQuote.validityDate).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric"
+                      }) : "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block">Quoted Date</span>
+                    <span className="text-sm font-bold text-gray-800 dark:text-white mt-1 block">
+                      {new Date(myQuote.createdAt).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric"
+                      })}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Quoted Items */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Quoted Items & Prices</h4>
+                  <div className="space-y-3">
+                    {myQuote.items?.map((item) => {
+                      const origItem = viewingQuoteInquiry.items?.find((i) => i.id === item.inquiryItemId) || {};
+                      
+                      return (
+                        <div key={item.id} className="p-4 bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl flex justify-between items-center shadow-sm">
+                          <div>
+                            <span className="text-sm font-bold text-gray-800 dark:text-white block">{origItem.description || item.inquiryItem?.description || "Product Item"}</span>
+                            <span className="text-[10px] text-gray-500 mt-0.5 block">Quantity: {item.quantity} {origItem.unit || item.inquiryItem?.unit || "pcs"}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 block">Unit: ₹{Number(item.unitPrice).toLocaleString()}</span>
+                            <span className="text-sm font-mono font-bold text-purple-600 dark:text-purple-400 block mt-0.5">Total: ₹{Number(item.totalPrice).toLocaleString()}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Quote Summary */}
+                <div className="bg-gray-55/30 dark:bg-[#0f111a] p-5 rounded-2xl border border-gray-200 dark:border-[#2a2d33] space-y-3 shadow-inner mt-4">
+                  <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wide">
+                    <span>Subtotal Quoted:</span>
+                    <span className="font-mono text-gray-900 dark:text-gray-100 text-sm">₹{Number(myQuote.quoteAmount).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wide">
+                    <span>GST (18%):</span>
+                    <span className="font-mono text-gray-900 dark:text-gray-100 text-sm">₹{Number(myQuote.taxAmount).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm font-black text-gray-900 dark:text-white border-t border-dashed border-gray-200 dark:border-[#2a2d33] pt-3.5 mt-2">
+                    <span className="uppercase tracking-wider text-[11px] text-gray-600 dark:text-gray-400 font-bold">Final Quoted Amount</span>
+                    <span className="font-mono text-lg font-extrabold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-3.5 py-1.5 rounded-xl border border-purple-500/20">
+                      ₹{Number(myQuote.finalAmount).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-4 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setViewingQuoteInquiry(null)}
+                    className="px-6 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-xs transition-all outline-none border-none"
+                  >
+                    Close Details
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500 italic">No quote found.</div>
+            )}
+          </RightDrawer>
+        );
+      })()}
     </div>
   );
 }

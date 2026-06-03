@@ -211,11 +211,32 @@ function KanbanCard({
   currentUser,
 }) {
   const role = currentUser?.role || "Admin";
-  const rLower = role.toLowerCase();
-  const isAdmin = rLower === "admin" || rLower === "administrator" || rLower === "super admin";
-  const isEmployee = rLower === "employee";
   const actionCfg = ACTION_MAP[inq.status];
-  const canAct = actionCfg && (isAdmin || isEmployee);
+
+  const isRoleAllowed = (status, roleName) => {
+    const rNameLower = roleName?.toLowerCase();
+    if (rNameLower === "admin" || rNameLower === "super admin" || rNameLower === "administrator") return true;
+    if (rNameLower === "viewer") return false;
+
+    switch (status) {
+      case "PENDING":
+      case "RFQ_READY":
+      case "EMPLOYEE_VERIFY":
+      case "QUOTE_SENT":
+        return rNameLower === "employee" || rNameLower === "team lead";
+      case "TL_REVIEW":
+        return rNameLower === "team lead";
+      case "CLIENT_QUOTING":
+      case "CLIENT_FINAL_APPROVAL":
+        return rNameLower === "client";
+      case "ADMIN_APPROVAL":
+        return false;
+      default:
+        return false;
+    }
+  };
+
+  const canAct = actionCfg && isRoleAllowed(inq.status, role);
 
   const route = getRoute(inq.inquiry_id, inq.buyer_name);
   const weight = getWeight(inq.products, inq.inquiry_id);

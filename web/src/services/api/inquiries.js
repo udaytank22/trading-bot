@@ -22,6 +22,30 @@ const normalizeInquiry = (inq) => {
     }) : []
   } : null;
 
+  const latestClientQuote = inq.clientQuotations && inq.clientQuotations.length > 0
+    ? inq.clientQuotations[0]
+    : null;
+
+  const my_quote = latestClientQuote ? {
+    id: latestClientQuote.id,
+    margin_percent: parseFloat(latestClientQuote.marginPercentage) || 0,
+    discount_percent: parseFloat(latestClientQuote.discountPercentage) || 0,
+    products: latestClientQuote.items ? latestClientQuote.items.map(item => {
+      const inquiryItem = inq.items?.find(ii => ii.id === item.inquiryItemId);
+      const quoteItem = latestQuote?.items?.find(qi => qi.inquiryItemId === item.inquiryItemId);
+      return {
+        product_name: inquiryItem ? inquiryItem.description : 'Unknown Product',
+        quantity: item.quantity,
+        unit: inquiryItem?.unit || 'MT',
+        seller_unit_price: quoteItem ? parseFloat(quoteItem.unitPrice) : 0,
+        my_unit_price: parseFloat(item.sellingPrice) || 0,
+        total_price: parseFloat(item.totalPrice) || 0,
+        margin_percent: parseFloat(latestClientQuote.marginPercentage) || 0,
+        discount_percent: parseFloat(latestClientQuote.discountPercentage) || 0
+      };
+    }) : []
+  } : null;
+
   return {
     ...inq,
     inquiry_id: inq.inquiryNumber || inq.id,
@@ -30,6 +54,9 @@ const normalizeInquiry = (inq) => {
     status: inq.currentStatus || inq.status,
     date_received: inq.createdAt || inq.date_received,
     seller_quote,
+    my_quote,
+    margin_percent: my_quote ? my_quote.margin_percent : (inq.margin_percent || 0),
+    discount_percent: my_quote ? my_quote.discount_percent : (inq.discount_percent || 0),
     products: inq.items ? inq.items.map(item => {
       const quoteItem = latestQuote?.items?.find(qi => qi.inquiryItemId === item.id);
       return {
@@ -112,16 +139,17 @@ export const clientQuote = async (id, data) => {
   return response.data;
 };
 
-export const teamLeadApprove = async (id, approved) => {
-  const response = await apiClient.post(`/inquiries/${id}/team-lead-approve`, { approved });
+export const teamLeadApprove = async (id, data) => {
+  const payload = typeof data === 'object' ? data : { approved: data };
+  const response = await apiClient.post(`/inquiries/${id}/team-lead-approve`, payload);
   if (response.data && response.data.success && response.data.data) {
     response.data.data = normalizeInquiry(response.data.data);
   }
   return response.data;
 };
 
-export const adminApprove = async (id, approved) => {
-  const response = await apiClient.post(`/inquiries/${id}/admin-approve`, { approved });
+export const adminApprove = async (id, data) => {
+  const response = await apiClient.post(`/inquiries/${id}/admin-approve`, data);
   if (response.data && response.data.success && response.data.data) {
     response.data.data = normalizeInquiry(response.data.data);
   }

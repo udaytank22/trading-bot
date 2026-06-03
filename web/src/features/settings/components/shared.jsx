@@ -68,19 +68,27 @@ export function CenterModal({ isOpen, title, onClose, children }) {
 }
 
 export function ViewDetails({ item, onClose }) {
+  const skipFields = ['id', 'updatedAt', 'deletedAt', 'createdById', 'updatedById'];
+
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 flex flex-col gap-4">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
         {Object.entries(item).map(([key, value]) => {
           // Skip internal or complex relation fields
           if (typeof value === 'object' && value !== null && !Array.isArray(value)) return null;
-          
+
+          // Skip system/audit fields requested by user
+          if (skipFields.includes(key)) return null;
+
+          // Change createdAt label to Joined Date
+          const label = key === 'createdAt' ? 'Joined Date' : key;
+
           return (
-            <div key={key} className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4 border-b border-gray-50 dark:border-[#2a2d33]/50 pb-3 last:border-0 last:pb-0">
-              <span className="text-[12px] font-semibold text-gray-500 uppercase tracking-wider w-1/3 pt-0.5">
-                {key}
+            <div key={key} className="flex flex-col gap-1 border-b border-gray-50 dark:border-[#2a2d33]/50 pb-2.5">
+              <span className="text-[12px] font-semibold text-gray-500 uppercase tracking-wider pt-0.5">
+                {label}
               </span>
-              <div className="text-[14px] text-gray-900 dark:text-white font-medium flex-1 flex flex-wrap gap-1.5">
+              <div className="text-[14px] text-gray-900 dark:text-white font-medium flex flex-wrap gap-1.5">
                 {Array.isArray(value) ? (
                   value.length > 0 ? (
                     value.map((v, i) => (

@@ -15,6 +15,12 @@ function ProtectedApp() {
     return <Navigate to="/client-rfqs" replace />;
   }
 
+  const roleLower = currentUser?.role?.toLowerCase();
+  const isAdmin = roleLower === 'admin' || roleLower === 'super admin';
+  if (location.pathname === '/settings' && !isAdmin) {
+    return <Navigate to="/" replace />;
+  }
+
   return (
     <AppShell>
       <Routes>

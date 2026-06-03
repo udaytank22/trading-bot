@@ -112,8 +112,8 @@ async function main() {
   permissions.forEach((perm) => {
     if (['settings', 'reports'].includes(perm.module)) return;
     if (
-      perm.action === 'read' || 
-      perm.action === 'create' || 
+      perm.action === 'read' ||
+      perm.action === 'create' ||
       perm.action === 'update' ||
       (perm.module === 'inquiries' && perm.action === 'approve')
     ) {
@@ -196,108 +196,7 @@ async function main() {
 
   console.log('Seeded default users with password: admin123');
 
-  // 6. Seed Clients
-  const client1 = await prisma.client.create({
-    data: {
-      name: 'Marine Shipping Corp',
-      email: 'logistics@marineshipping.com',
-      phone: '+1 415 555 2671',
-      company: 'Marine Shipping International',
-      address: 'Pier 39, San Francisco, CA',
-      createdById: superAdminUser.id
-    }
-  });
-
-  const client2 = await prisma.client.create({
-    data: {
-      name: 'Apex Cargo Logistics',
-      email: 'purchasing@apexcargo.in',
-      phone: '+91 22 5556 1234',
-      company: 'Apex Cargo Logistics Private Ltd',
-      address: 'Nariman Point, Mumbai, India',
-      createdById: superAdminUser.id
-    }
-  });
-
-  console.log('Seeded sample clients.');
-
-  // 7. Seed Suppliers
-  const supplier1 = await prisma.supplier.create({
-    data: {
-      name: 'Ocean Parts Supply Co',
-      email: 'orders@oceanparts.com',
-      phone: '+44 20 7946 0192',
-      company: 'Ocean Parts Ltd',
-      address: 'East India Docks, London, UK',
-      createdById: superAdminUser.id
-    }
-  });
-
-  await prisma.supplier.create({
-    data: {
-      name: 'Gaskets & Valves Ltd',
-      email: 'sales@gasketsvalves.co.kr',
-      phone: '+82 2 555 9876',
-      company: 'Gaskets & Valves Manufacturing Inc',
-      address: 'Gangnam-gu, Seoul, South Korea',
-      createdById: superAdminUser.id
-    }
-  });
-
-  console.log('Seeded sample suppliers.');
-
-  // 8. Seed Products
-  const prod1 = await prisma.product.create({
-    data: {
-      name: 'Flange Bolts (High Strength)',
-      sku: 'FLG-BLT-001',
-      category: 'Fasteners',
-      unit: 'Box (100pcs)',
-      sellingPrice: 1500.00,
-      purchasePrice: 1000.00,
-      createdById: superAdminUser.id
-    }
-  });
-
-  const prod2 = await prisma.product.create({
-    data: {
-      name: 'Steel Gate Valve 2-inch',
-      sku: 'STL-VLV-002',
-      category: 'Valves',
-      unit: 'Pcs',
-      sellingPrice: 45000.00,
-      purchasePrice: 30000.00,
-      createdById: superAdminUser.id
-    }
-  });
-
-  const inv1 = await prisma.inventoryItem.create({
-    data: {
-      itemName: 'Flange Bolts (High Strength)',
-      sku: 'FLG-BLT-001',
-      category: 'Fasteners',
-      unit: 'Box (100pcs)',
-      sellingPrice: 1500.00,
-      purchasePrice: 1000.00,
-      createdById: superAdminUser.id
-    }
-  });
-
-  const inv2 = await prisma.inventoryItem.create({
-    data: {
-      itemName: 'Steel Gate Valve 2-inch',
-      sku: 'STL-VLV-002',
-      category: 'Valves',
-      unit: 'Pcs',
-      sellingPrice: 45000.00,
-      purchasePrice: 30000.00,
-      createdById: superAdminUser.id
-    }
-  });
-
-  console.log('Seeded sample products and inventory items.');
-
-  // 9. Seed Bank Accounts
+  // 6. Seed Bank Accounts
   await prisma.bankAccount.create({
     data: {
       bankName: 'HDFC Bank',
@@ -326,8 +225,8 @@ async function main() {
 
   console.log('Seeded bank accounts.');
 
-  // 10. Seed Warehouses
-  const warehouse = await prisma.warehouse.create({
+  // 7. Seed Warehouses
+  await prisma.warehouse.create({
     data: {
       name: 'Port Warehouse Alpha',
       location: 'JNPT Port Area, Nhava Sheva, Navi Mumbai',
@@ -344,47 +243,6 @@ async function main() {
   });
 
   console.log('Seeded warehouses.');
-
-  // 11. Initial Warehouse Stock balances & movement ledger entries
-  await prisma.stockMovement.create({
-    data: {
-      inventoryItemId: inv1.id,
-      warehouseId: warehouse.id,
-      type: 'IN',
-      quantity: 100,
-      remarks: 'Initial stock intake',
-      createdById: superAdminUser.id
-    }
-  });
-
-  await prisma.warehouseStock.create({
-    data: {
-      warehouseId: warehouse.id,
-      inventoryItemId: inv1.id,
-      quantity: 100
-    }
-  });
-
-  await prisma.stockMovement.create({
-    data: {
-      inventoryItemId: inv2.id,
-      warehouseId: warehouse.id,
-      type: 'IN',
-      quantity: 50,
-      remarks: 'Initial stock intake',
-      createdById: superAdminUser.id
-    }
-  });
-
-  await prisma.warehouseStock.create({
-    data: {
-      warehouseId: warehouse.id,
-      inventoryItemId: inv2.id,
-      quantity: 50
-    }
-  });
-
-  console.log('Seeded initial warehouse stocks and movements.');
 
   console.log('Seeding completed successfully!');
 }

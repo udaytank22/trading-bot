@@ -51,14 +51,14 @@ function PlusIcon() {
 
 function EmptyState() {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-12 bg-[#1a1d23] min-h-[400px]">
+    <div className="flex-1 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl flex flex-col items-center justify-center p-12 dark:bg-[#1a1d23] min-h-[400px]">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"
         strokeWidth={1.5}
         stroke="currentColor"
-        className="w-14 h-14 text-white/10 mb-5"
+        className="w-14 h-14 dark:text-white/10 mb-5"
       >
         <path
           strokeLinecap="round"
@@ -66,7 +66,7 @@ function EmptyState() {
           d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"
         />
       </svg>
-      <h3 className="text-white text-lg font-bold mb-1.5">
+      <h3 className="dark:text-white text-lg font-bold mb-1.5">
         No inquiries found
       </h3>
       <p className="text-gray-500 text-sm font-medium">
@@ -80,7 +80,7 @@ function EmptyState() {
 export default function InquiriesPage() {
   const location = useLocation();
   const { currentUser } = useAuth();
-  const { inquiriesData, setInquiriesData, setSupplyData } = useData();
+  const { inquiriesData, setInquiriesData, setSupplyData, refreshAll } = useData();
   const { toast, showToast } = useToast();
 
   // Filters & pagination
@@ -234,8 +234,29 @@ export default function InquiriesPage() {
     [setInquiriesData],
   );
 
+  const confirmAction = async (title, text = "This process cannot be reverted.") => {
+    const result = await Swal.fire({
+      title,
+      text,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#8b5cf6",
+      cancelButtonColor: "#ef4444",
+      confirmButtonText: "Yes, proceed",
+      cancelButtonText: "Cancel",
+      background: "#1a1d23",
+      color: "#fff"
+    });
+    return result.isConfirmed;
+  };
+
   const handleStockConfirm = async (selectedSuppliers) => {
     if (activeStepDeal) {
+      const confirmed = await confirmAction(
+        "Confirm Stock Check",
+        "Are you sure you want to proceed with this stock check? This process cannot be reverted."
+      );
+      if (!confirmed) return;
       try {
         const supplierIds = selectedSuppliers.map(s => s.id);
         const res = await api.inquiries.stockCheck(activeStepDeal.id, supplierIds);
@@ -253,6 +274,11 @@ export default function InquiriesPage() {
 
   const handleVerifyConfirm = async () => {
     if (activeStepDeal) {
+      const confirmed = await confirmAction(
+        "Confirm Verification",
+        "Are you sure you want to verify and dispatch the quotation to the client? This process cannot be reverted."
+      );
+      if (!confirmed) return;
       try {
         const res = await api.inquiries.finalVerify(activeStepDeal.id);
         if (res.success) {
@@ -269,10 +295,37 @@ export default function InquiriesPage() {
 
   const handleAdminConfirm = async (adjustedData) => {
     if (activeStepDeal) {
+      const confirmed = await confirmAction(
+        "Confirm Admin Approval",
+        "Are you sure you want to approve this pricing layout? This process cannot be reverted."
+      );
+      if (!confirmed) return;
       try {
+        const marginVal = parseFloat(adjustedData.margin_percent) || 0;
+        const discountVal = parseFloat(adjustedData.discount_percent) || 0;
+        const totalAmount = adjustedData.products.reduce((sum, p) => sum + (p.total_price || 0), 0);
+        const finalAmount = totalAmount * 1.18; // 18% tax
+
+        const items = adjustedData.products.map(p => {
+          const origItem = activeStepDeal.items?.find(item => item.description === p.product_name) || {};
+          return {
+            inquiryItemId: origItem.id || p.inquiryItemId,
+            sellingPrice: p.my_unit_price,
+            quantity: p.quantity,
+            totalPrice: p.total_price
+          };
+        });
+
         const res = await api.inquiries.adminApprove(activeStepDeal.id, {
           approved: true,
-          remarks: "Approved by Admin"
+          remarks: "Approved by Admin",
+          overrideQuote: {
+            marginPercentage: marginVal,
+            discountPercentage: discountVal,
+            totalAmount,
+            finalAmount,
+            items
+          }
         });
         if (res.success) {
           loadData(true);
@@ -324,48 +377,34 @@ export default function InquiriesPage() {
               const res = await api.inquiries.clientDecision(deal.id, true);
               if (res.success) {
                 loadData(true);
-                showToast("Client accepted the quote!", "success");
-                Swal.fire({
-                  title: "Accepted!",
-                  text: "The deal has been moved to Supply.",
-                  icon: "success",
-                  background: "#1a1d23",
-                  color: "#fff",
-                });
               }
             } catch (err) {
               console.error(err);
-              showToast("Failed to record client acceptance", "error");
             }
           } else if (result.dismiss === Swal.DismissReason.cancel) {
             try {
               const res = await api.inquiries.clientDecision(deal.id, false);
               if (res.success) {
                 loadData(true);
-                showToast("Client rejected the quote.", "error");
-                Swal.fire({
-                  title: "Rejected",
-                  text: "The inquiry has been closed.",
-                  icon: "error",
-                  background: "#1a1d23",
-                  color: "#fff",
-                });
               }
             } catch (err) {
               console.error(err);
-              showToast("Failed to record client rejection", "error");
             }
           }
         });
         break;
       case "QUOTE_SENT":
         (async () => {
+          const confirmed = await confirmAction(
+            "Confirm Deal",
+            "Are you sure you want to confirm this deal and move it to Supply? This process cannot be reverted."
+          );
+          if (!confirmed) return;
           try {
-            const res = await api.inquiries.confirmDeal(deal.id);
-            if (res.success) {
-              loadData(true);
-              showToast("Deal confirmed and moved to Supply", "success");
-            }
+            // Clear old supply data to refresh supply tab
+            setSupplyData([]);
+            loadData(true);
+            showToast("Deal confirmed and moved to Supply", "success");
           } catch (err) {
             console.error(err);
             showToast("Failed to confirm deal", "error");
@@ -382,6 +421,12 @@ export default function InquiriesPage() {
 
     try {
       if (activeStepDeal.status === "CLIENT_QUOTING") {
+        const confirmed = await confirmAction(
+          "Submit Client Quote",
+          "Are you sure you want to submit these prices? This process cannot be reverted."
+        );
+        if (!confirmed) return;
+
         const items = quoteData.products.map(p => {
           const origItem = activeStepDeal.items?.find(item => item.description === p.product_name) || {};
           const unitPrice = parseFloat(p.my_unit_price) || 0;
@@ -409,7 +454,47 @@ export default function InquiriesPage() {
           showToast("Prices quoted. Sent to Team Lead for review.", "success");
         }
       } else if (activeStepDeal.status === "TL_REVIEW") {
-        const res = await api.inquiries.teamLeadApprove(activeStepDeal.id, true);
+        const confirmed = await confirmAction(
+          "Submit Team Lead Review",
+          "Are you sure you want to approve this margin structure? This process cannot be reverted."
+        );
+        if (!confirmed) return;
+
+        const marginVal = parseFloat(quoteData.margin) || 0;
+        const discountVal = parseFloat(quoteData.discount) || 0;
+
+        let totalAmount = 0;
+        const items = activeStepDeal.products.map((p, idx) => {
+          const sqp = activeStepDeal.seller_quote?.products?.[idx];
+          const cost = sqp?.seller_unit_price || 0;
+          const qty = p.quantity || 1;
+          const my_unit_price = cost * (1 + marginVal / 100) * (1 - discountVal / 100);
+          const totalPrice = my_unit_price * qty;
+          totalAmount += totalPrice;
+
+          const origItem = activeStepDeal.items?.find(item => item.description === p.product_name) || {};
+
+          return {
+            inquiryItemId: origItem.id,
+            sellingPrice: my_unit_price,
+            quantity: qty,
+            totalPrice
+          };
+        });
+
+        const finalAmount = totalAmount * 1.18; // 18% tax
+
+        const res = await api.inquiries.teamLeadApprove(activeStepDeal.id, {
+          approved: true,
+          remarks: quoteData.narrative || "Approved by Team Lead",
+          overrideQuote: {
+            marginPercentage: marginVal,
+            discountPercentage: discountVal,
+            totalAmount,
+            finalAmount,
+            items
+          }
+        });
         if (res.success) {
           loadData(true);
           setActiveStepView(null);
@@ -446,17 +531,17 @@ export default function InquiriesPage() {
 
       const items = (newInquiry.products && newInquiry.products.length > 0)
         ? newInquiry.products.map((p) => ({
-            description: p.product_name || p.description,
-            quantity: parseInt(p.quantity, 10) || 1,
-            unit: p.unit || "pcs"
-          }))
+          description: p.product_name || p.description,
+          quantity: parseInt(p.quantity, 10) || 1,
+          unit: p.unit || "pcs"
+        }))
         : [
-            {
-              description: "Flange Bolts (High Strength)",
-              quantity: 5,
-              unit: "Box"
-            }
-          ];
+          {
+            description: "Flange Bolts (High Strength)",
+            quantity: 5,
+            unit: "Box"
+          }
+        ];
 
       const res = await api.inquiries.createInquiry({
         clientId,
@@ -585,11 +670,10 @@ export default function InquiriesPage() {
               <button
                 onClick={() => setViewMode("kanban")}
                 title="Kanban view"
-                className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all duration-200 shadow-sm ${
-                  viewMode === "kanban"
-                    ? "bg-white dark:bg-[#1a1d23] border-purple-500 text-purple-600 dark:text-purple-400 ring-1 ring-purple-500/20"
-                    : "bg-white dark:bg-[#1a1d23] border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                }`}
+                className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all duration-200 shadow-sm ${viewMode === "kanban"
+                  ? "bg-white dark:bg-[#1a1d23] border-purple-500 text-purple-600 dark:text-purple-400 ring-1 ring-purple-500/20"
+                  : "bg-white dark:bg-[#1a1d23] border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                  }`}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -607,11 +691,10 @@ export default function InquiriesPage() {
               <button
                 onClick={() => setViewMode("table")}
                 title="Table view"
-                className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all duration-200 shadow-sm ${
-                  viewMode === "table"
-                    ? "bg-white dark:bg-[#1a1d23] border-purple-500 text-purple-600 dark:text-purple-400 ring-1 ring-purple-500/20"
-                    : "bg-white dark:bg-[#1a1d23] border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                }`}
+                className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all duration-200 shadow-sm ${viewMode === "table"
+                  ? "bg-white dark:bg-[#1a1d23] border-purple-500 text-purple-600 dark:text-purple-400 ring-1 ring-purple-500/20"
+                  : "bg-white dark:bg-[#1a1d23] border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                  }`}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

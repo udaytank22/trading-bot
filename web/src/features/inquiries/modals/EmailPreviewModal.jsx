@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { api } from '@services/api';
 import { calculateMargin, formatINR } from '@services/marginEngine';
 import { CONFIG } from '@/config.js';
+import Swal from 'sweetalert2';
 
 export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOpen, onClose, onStatusUpdate }) {
   const [activeTab, setActiveTab] = useState(initialEmailType);
@@ -18,6 +19,20 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
   }, [isOpen, initialEmailType]);
 
   const handleSend = async () => {
+    const result = await Swal.fire({
+      title: "Send Email?",
+      text: "This process cannot be reverted.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#10b981",
+      cancelButtonColor: "#ef4444",
+      confirmButtonText: "Yes, send now",
+      cancelButtonText: "Cancel",
+      background: "#1a1d23",
+      color: "#fff"
+    });
+    if (!result.isConfirmed) return;
+
     setSendState('sending');
     const sendPromise = (async () => {
       if (activeTab === 'RFQ') {

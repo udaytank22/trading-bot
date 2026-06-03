@@ -19,7 +19,7 @@ const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => 
   const totalProfit = totalFinalPrice - totalSellerCost;
 
   const content = (
-    <div className={`${isPageMode ? 'w-full bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm' : 'bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden'} animate-in zoom-in-95 duration-200`}>
+    <div className={`${isPageMode ? 'w-full bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden' : 'bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden'} animate-in zoom-in-95 duration-200`}>
       <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
         <div className="flex items-center gap-4">
           {isPageMode && (

@@ -1,5 +1,6 @@
 // src/context/AuthContext.jsx
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import axios from 'axios';
 import { STORAGE_KEYS } from '@config/constants';
 import apiClient from '../services/apiClient';
 
@@ -7,11 +8,11 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(
-    () => localStorage.getItem(STORAGE_KEYS.IS_AUTH) === 'true'
+    () => sessionStorage.getItem(STORAGE_KEYS.IS_AUTH) === 'true'
   );
   const [currentUser, setCurrentUser] = useState(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEYS.USER_PROFILE);
+      const stored = sessionStorage.getItem(STORAGE_KEYS.USER_PROFILE);
       return stored ? JSON.parse(stored) : null;
     } catch { return null; }
   });
@@ -20,10 +21,10 @@ export function AuthProvider({ children }) {
     const profile = user || { name: 'Admin', role: 'admin', email: 'admin@trademind.com' };
     setIsAuthenticated(true);
     setCurrentUser(profile);
-    localStorage.setItem(STORAGE_KEYS.IS_AUTH, 'true');
-    localStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(profile));
+    sessionStorage.setItem(STORAGE_KEYS.IS_AUTH, 'true');
+    sessionStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(profile));
     if (token) {
-      localStorage.setItem('token', token);
+      sessionStorage.setItem('token', token);
       // Update Axios default Authorization header immediately
       try {
         apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -32,17 +33,17 @@ export function AuthProvider({ children }) {
       }
     }
     if (refreshToken) {
-      localStorage.setItem('refreshToken', refreshToken);
+      sessionStorage.setItem('refreshToken', refreshToken);
     }
   }, []);
 
   const logout = useCallback(() => {
     setIsAuthenticated(false);
     setCurrentUser(null);
-    localStorage.removeItem(STORAGE_KEYS.IS_AUTH);
-    localStorage.removeItem(STORAGE_KEYS.USER_PROFILE);
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
+    sessionStorage.removeItem(STORAGE_KEYS.IS_AUTH);
+    sessionStorage.removeItem(STORAGE_KEYS.USER_PROFILE);
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('refreshToken');
     try {
       delete apiClient.defaults.headers.common['Authorization'];
     } catch (e) {
@@ -59,6 +60,39 @@ export function AuthProvider({ children }) {
       window.removeEventListener('auth-logout', handleAuthLogout);
     };
   }, [logout]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Proactively refresh access token every 10 minutes (since access token expires in 15m)
+    const refreshInterval = setInterval(async () => {
+      const refreshToken = sessionStorage.getItem('refreshToken');
+      if (!refreshToken) return;
+
+      try {
+        const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+        const response = await axios.post(`${BASE_URL}/api/auth/refresh`, {
+          refreshToken,
+        });
+
+        if (response.data && response.data.success) {
+          const newToken = response.data.data.accessToken || response.data.data.token;
+          const newRefreshToken = response.data.data.refreshToken;
+
+          sessionStorage.setItem('token', newToken);
+          if (newRefreshToken) {
+            sessionStorage.setItem('refreshToken', newRefreshToken);
+          }
+          apiClient.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+        }
+      } catch (err) {
+        console.error('Proactive token refresh failed:', err);
+        logout();
+      }
+    }, 10 * 60 * 1000); // 10 minutes
+
+    return () => clearInterval(refreshInterval);
+  }, [isAuthenticated, logout]);
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, currentUser, setCurrentUser, login, logout }}>

@@ -19,6 +19,17 @@ export function DataProvider({ children }) {
 
   const loadAllData = useCallback(async () => {
     setLoading(true);
+
+    const safeFetch = async (apiCall, fallback = { success: false, data: [] }) => {
+      try {
+        const res = await apiCall;
+        return res || fallback;
+      } catch (err) {
+        console.warn('API call failed:', err);
+        return fallback;
+      }
+    };
+
     try {
       const [
         inqRes,
@@ -32,16 +43,16 @@ export function DataProvider({ children }) {
         cliRes,
         supplierRes,
       ] = await Promise.all([
-        api.inquiries.getInquiries(),
-        api.shipments.getShipments(),
-        api.purchaseOrders.getPurchaseOrders(),
-        api.employees.getEmployees(),
-        api.documents.getDocuments(),
-        api.bankAccounts.getBankAccounts(),
-        api.invoices.getInvoices(),
-        api.products.getProducts(),
-        api.clients.getClients(),
-        api.suppliers.getSuppliers(),
+        safeFetch(api.inquiries.getInquiries()),
+        safeFetch(api.shipments.getShipments()),
+        safeFetch(api.purchaseOrders.getPurchaseOrders()),
+        safeFetch(api.employees.getEmployees()),
+        safeFetch(api.documents.getDocuments()),
+        safeFetch(api.bankAccounts.getBankAccounts()),
+        safeFetch(api.invoices.getInvoices()),
+        safeFetch(api.products.getProducts()),
+        safeFetch(api.clients.getClients()),
+        safeFetch(api.suppliers.getSuppliers()),
       ]);
 
       if (inqRes.success) setInquiriesData(inqRes.data ?? []);
@@ -62,15 +73,16 @@ export function DataProvider({ children }) {
       if (poRes.success) {
         const mappedPOs = (poRes.data ?? []).map(po => ({
           ...po,
-          po_id: po.id,
+          po_id: po.poNumber,
+          total_amount: parseFloat(po.amount || 0),
           customer: po.client?.name || 'Unknown',
           vessel: po.inquiry?.vesselName || 'N/A',
           date: po.createdAt,
           products: po.items?.map(item => ({
             product_name: item.description,
             quantity: item.quantity,
-            unit_price: item.unitPrice,
-            total_price: item.totalPrice
+            unit_price: parseFloat(item.unitPrice || 0),
+            total_price: parseFloat(item.totalPrice || 0)
           })) || []
         }));
         setPurchaseOrdersData(mappedPOs);
