@@ -763,6 +763,7 @@ export default function InquiriesPage() {
             onPrev={() => setCurrentPage((p) => p - 1)}
             onNext={() => setCurrentPage((p) => p + 1)}
             onPageChange={(p) => setCurrentPage(p)}
+            onItemsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
             itemLabel="records"
           />
         </div>

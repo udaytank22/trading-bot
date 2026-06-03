@@ -41,7 +41,7 @@ const FILTER_OPTIONS = [
   { value: "DELIVERED", label: "Delivered" },
 ];
 
-const ITEMS_PER_PAGE = 5;
+
 
 // ─── Main Page Component ───────────────────────────────────────────────────────
 export default function SupplyPage() {
@@ -51,6 +51,7 @@ export default function SupplyPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // View modal state (SupplyViewModal)
   const [selectedDeal, setSelectedDeal] = useState(null);
@@ -92,11 +93,11 @@ export default function SupplyPage() {
   }, [search, filter, supplyData]);
 
   // ── Derived: paginate ─────────────────────────────────────────────────────
-  const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const currentItems = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredData.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredData, currentPage]);
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredData.slice(start, start + itemsPerPage);
+  }, [filteredData, currentPage, itemsPerPage]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   const handleStatusUpdate = async (id, newStatus) => {
@@ -205,10 +206,11 @@ export default function SupplyPage() {
           currentPage={currentPage}
           totalPages={totalPages}
           totalItems={filteredData.length}
-          itemsPerPage={ITEMS_PER_PAGE}
+          itemsPerPage={itemsPerPage}
           onPrev={() => setCurrentPage((p) => p - 1)}
           onNext={() => setCurrentPage((p) => p + 1)}
-            onPageChange={(p) => setCurrentPage(p)}
+          onPageChange={(p) => setCurrentPage(p)}
+          onItemsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
           itemLabel="cargo supplies"
         />
       </div>

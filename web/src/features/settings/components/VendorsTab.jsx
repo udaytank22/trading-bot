@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Select, DataTable, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
+import { Select, DataTable, rowStripeClass, ROW_HOVER_CLS, Pagination } from '@components/ui';
 import { confirmAction } from '@utils/swal';
 import { useData } from '@context';
 import { api } from '@services/api';
@@ -11,6 +11,8 @@ export default function VendorsTab() {
   const [viewItem, setViewItem] = useState(null);
   const [editItem, setEditItem] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const filteredVendors = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -21,6 +23,11 @@ export default function VendorsTab() {
       (v.company && v.company.toLowerCase().includes(q))
     );
   }, [suppliersData, search]);
+
+  const totalPages = Math.max(1, Math.ceil((filteredVendors?.length || 0) / itemsPerPage));
+  const currentItems = useMemo(() => {
+    return filteredVendors.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  }, [filteredVendors, currentPage, itemsPerPage]);
 
   const handleDelete = async (id) => {
     const isConfirmed = await confirmAction({
@@ -98,7 +105,7 @@ export default function VendorsTab() {
             type="text"
             placeholder="Search vendors..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
             className="w-full sm:w-64 bg-gray-50 dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-9 px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors"
           />
 
@@ -121,7 +128,7 @@ export default function VendorsTab() {
             { key: "status", label: "Status" },
             { key: "actions", label: "Actions", className: "text-right" },
           ]}
-          data={filteredVendors}
+          data={currentItems}
           emptyMessage="No vendors found."
           renderRow={(vendor, i) => (
             <tr key={vendor.id} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
@@ -144,6 +151,20 @@ export default function VendorsTab() {
               </td>
             </tr>
           )}
+        />
+      </div>
+
+      <div className="p-4 border-t border-gray-200 dark:border-[#2a2d33]">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredVendors?.length || 0}
+          itemsPerPage={itemsPerPage}
+          onPrev={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+          onPageChange={(p) => setCurrentPage(p)}
+          onItemsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
+          itemLabel="vendors"
         />
       </div>
     </div>

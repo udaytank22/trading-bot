@@ -62,7 +62,7 @@ export default function PurchaseOrdersPage() {
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [selectedPO, setSelectedPO] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 8;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const filteredPOs = useMemo(() => {
     let result = (purchaseOrdersData || []).filter((po) => {
@@ -82,11 +82,11 @@ export default function PurchaseOrdersPage() {
     return result.sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [purchaseOrdersData, search, filter]);
 
-  const totalPages = Math.ceil(filteredPOs.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredPOs.length / itemsPerPage);
   const currentItems = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredPOs.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredPOs, currentPage]);
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredPOs.slice(start, start + itemsPerPage);
+  }, [filteredPOs, currentPage, itemsPerPage]);
 
   const handleAddPO = async (newPO) => {
     try {
@@ -130,8 +130,8 @@ export default function PurchaseOrdersPage() {
     }
   }, [refreshAll]);
 
-  const startShowing = filteredPOs.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1;
-  const endShowing = Math.min(currentPage * ITEMS_PER_PAGE, filteredPOs.length);
+  const startShowing = filteredPOs.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+  const endShowing = Math.min(currentPage * itemsPerPage, filteredPOs.length);
 
 
   // ─── Render ─────────────────────────────────────────────────────────────────
@@ -181,10 +181,11 @@ export default function PurchaseOrdersPage() {
           currentPage={currentPage}
           totalPages={totalPages}
           totalItems={filteredPOs.length}
-          itemsPerPage={ITEMS_PER_PAGE}
+          itemsPerPage={itemsPerPage}
           onPrev={() => setCurrentPage((p) => p - 1)}
           onNext={() => setCurrentPage((p) => p + 1)}
-            onPageChange={(p) => setCurrentPage(p)}
+          onPageChange={(p) => setCurrentPage(p)}
+          onItemsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
           itemLabel="orders"
         />
       </div>

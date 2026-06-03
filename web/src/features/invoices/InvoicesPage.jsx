@@ -11,7 +11,7 @@ export default function InvoicesPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [paymentModalInvoice, setPaymentModalInvoice] = useState(null);
     const [paymentForm, setPaymentForm] = useState({ amount: "", date: "", reference: "", bankAccountId: "", paymentMode: "Bank Transfer" });
-    const ITEMS_PER_PAGE = 10;
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     const filtered = useMemo(() => {
         const q = search.toLowerCase().trim();
@@ -24,8 +24,8 @@ export default function InvoicesPage() {
         );
     }, [invoicesData, search]);
 
-    const totalPages = Math.max(1, Math.ceil((filtered?.length || 0) / ITEMS_PER_PAGE));
-    const currentItems = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+    const totalPages = Math.max(1, Math.ceil((filtered?.length || 0) / itemsPerPage));
+    const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     const handleSend = async (id) => {
         try {
@@ -153,10 +153,11 @@ export default function InvoicesPage() {
                         currentPage={currentPage}
                         totalPages={totalPages}
                         totalItems={filtered?.length || 0}
-                        itemsPerPage={ITEMS_PER_PAGE}
+                        itemsPerPage={itemsPerPage}
                         onPrev={() => setCurrentPage((p) => Math.max(1, p - 1))}
                         onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            onPageChange={(p) => setCurrentPage(p)}
+                        onPageChange={(p) => setCurrentPage(p)}
+                        onItemsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
                         itemLabel="invoices"
                     />
                 </div>

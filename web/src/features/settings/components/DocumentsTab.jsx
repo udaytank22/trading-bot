@@ -1,40 +1,32 @@
-import React, { useState } from 'react';
-import { DataTable, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
+import React, { useState, useMemo } from 'react';
+import { DataTable, rowStripeClass, ROW_HOVER_CLS, Pagination } from '@components/ui';
 import { confirmAction } from '@utils/swal';
-import { RightDrawer, ViewDetails, EyeIcon, EditIcon, TrashIcon } from './shared';
+import { useData } from '@context';
+import { api } from '@services/api';
+import { RightDrawer, ViewDetails, EyeIcon, TrashIcon } from './shared';
 
 export default function DocumentsTab() {
-  const [documents, setDocuments] = useState([
-    {
-      id: 'DOC-001',
-      name: 'Invoice.pdf',
-      category: 'Invoice',
-      type: 'PDF',
-      uploadedBy: 'Admin',
-      uploadedDate: '23/05/2026',
-      status: 'Active'
-    },
-    {
-      id: 'DOC-002',
-      name: 'Quotation.xlsx',
-      category: 'Quotation',
-      type: 'Excel',
-      uploadedBy: 'John Doe',
-      uploadedDate: '22/05/2026',
-      status: 'Active'
-    },
-    {
-      id: 'DOC-003',
-      name: 'Purchase Order.docx',
-      category: 'PO',
-      type: 'Word',
-      uploadedBy: 'Sarah Connor',
-      uploadedDate: '21/05/2026',
-      status: 'Inactive'
-    }
-  ]);
-
+  const { documentsData, refreshAll } = useData();
+  const [search, setSearch] = useState('');
   const [viewItem, setViewItem] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const filteredDocuments = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    if (!q) return documentsData || [];
+    return (documentsData || []).filter(doc =>
+      (doc.title && doc.title.toLowerCase().includes(q)) ||
+      (doc.category && doc.category.toLowerCase().includes(q)) ||
+      (doc.entityType && doc.entityType.toLowerCase().includes(q)) ||
+      (doc.entityName && doc.entityName.toLowerCase().includes(q))
+    );
+  }, [documentsData, search]);
+
+  const totalPages = Math.max(1, Math.ceil((filteredDocuments?.length || 0) / itemsPerPage));
+  const currentItems = useMemo(() => {
+    return filteredDocuments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  }, [filteredDocuments, currentPage, itemsPerPage]);
 
   const handleDelete = async (id) => {
     const isConfirmed = await confirmAction({
@@ -44,7 +36,14 @@ export default function DocumentsTab() {
     });
 
     if (isConfirmed) {
-      setDocuments(documents.filter(doc => doc.id !== id));
+      try {
+        const res = await api.documents.deleteDocument(id);
+        if (res.success) {
+          refreshAll();
+        }
+      } catch (e) {
+        console.error('Failed to delete document:', e);
+      }
     }
   };
 
@@ -67,6 +66,8 @@ export default function DocumentsTab() {
           <input
             type="text"
             placeholder="Search documents..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
             className="w-full sm:w-64 bg-gray-50 dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-9 px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors"
           />
 
@@ -82,38 +83,41 @@ export default function DocumentsTab() {
             { key: "id", label: "Document ID" },
             { key: "name", label: "Document Name" },
             { key: "category", label: "Category" },
-            { key: "type", label: "Type" },
-            { key: "uploadedBy", label: "Uploaded By" },
+            { key: "type", label: "Entity Type" },
+            { key: "entityName", label: "Linked Entity" },
             { key: "uploadedDate", label: "Uploaded Date" },
             { key: "status", label: "Status" },
             { key: "actions", label: "Actions", className: "text-right" },
           ]}
-          data={documents}
+          data={currentItems}
           emptyMessage="No documents found."
           renderRow={(doc, i) => (
             <tr key={doc.id} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
-              <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400">
-                {doc.id}
+              <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">
+                {doc.id.slice(-8)}
               </td>
               <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">
-                {doc.name}
+                {doc.title}
               </td>
               <td className="px-5 py-3">
                 <span className="px-2 py-1 bg-gray-100 dark:bg-[#2a2d36] rounded text-[11px] font-bold text-gray-600 dark:text-gray-400">
                   {doc.category}
                 </span>
               </td>
-              <td className="px-5 py-3">{doc.type}</td>
-              <td className="px-5 py-3">{doc.uploadedBy}</td>
-              <td className="px-5 py-3">{doc.uploadedDate}</td>
+              <td className="px-5 py-3 text-xs uppercase tracking-wider font-semibold text-gray-500">{doc.entityType}</td>
+              <td className="px-5 py-3 font-medium text-gray-700 dark:text-gray-300">{doc.entityName || '-'}</td>
+              <td className="px-5 py-3">{doc.createdAt ? new Date(doc.createdAt).toLocaleDateString() : '-'}</td>
               <td className="px-5 py-3">
                 <span
-                  className={`px-2 py-1 rounded text-[11px] font-bold ${doc.status === 'Active'
-                    ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
-                    : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                    }`}
+                  className={`px-2 py-1 rounded text-[11px] font-bold ${
+                    doc.status === 'Valid'
+                      ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                      : doc.status === 'Expiring Soon'
+                      ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
+                      : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                  }`}
                 >
-                  {doc.status}
+                  {doc.status || 'Valid'}
                 </span>
               </td>
               <td className="px-5 py-3 text-right space-x-3">
@@ -125,12 +129,6 @@ export default function DocumentsTab() {
                   <EyeIcon />
                 </button>
                 <button
-                  className="text-blue-500 hover:text-blue-600 transition-colors"
-                  title="Edit"
-                >
-                  <EditIcon />
-                </button>
-                <button
                   onClick={() => handleDelete(doc.id)}
                   className="text-red-500 hover:text-red-600 transition-colors"
                   title="Delete"
@@ -140,6 +138,20 @@ export default function DocumentsTab() {
               </td>
             </tr>
           )}
+        />
+      </div>
+
+      <div className="p-4 border-t border-gray-200 dark:border-[#2a2d33]">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredDocuments?.length || 0}
+          itemsPerPage={itemsPerPage}
+          onPrev={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+          onPageChange={(p) => setCurrentPage(p)}
+          onItemsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
+          itemLabel="documents"
         />
       </div>
     </div>

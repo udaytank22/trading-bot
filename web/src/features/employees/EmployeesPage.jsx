@@ -34,8 +34,7 @@ const FILTER_OPTIONS = [
   { value: "Inactive", label: "Inactive" },
 ];
 
-// ─── Items per page constant ───────────────────────────────────────────────────
-const ITEMS_PER_PAGE = 8;
+
 
 // ─── Main Page Component ───────────────────────────────────────────────────────
 export default function EmployeesPage() {
@@ -49,6 +48,7 @@ export default function EmployeesPage() {
   const [employeeToEdit, setEmployeeToEdit] = useState(null);     // Employee being edited (null = create mode)
   const [employeeToView, setEmployeeToView] = useState(null);     // Employee whose attendance is being viewed
   const [currentPage, setCurrentPage]     = useState(1);          // Current pagination page
+  const [itemsPerPage, setItemsPerPage]   = useState(10);
 
   const { toast, showToast } = useToast();
 
@@ -71,11 +71,11 @@ export default function EmployeesPage() {
   }, [employeesData, search, filter]);
 
   // ── Derived: paginate the filtered results ────────────────────────────────
-  const totalPages = Math.ceil(filteredEmployees.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage);
   const currentItems = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredEmployees.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredEmployees, currentPage]);
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredEmployees.slice(start, start + itemsPerPage);
+  }, [filteredEmployees, currentPage, itemsPerPage]);
 
   // ── Handler: add new or update existing employee ──────────────────────────
   const handleAddOrEdit = async (formData) => {
@@ -209,10 +209,11 @@ export default function EmployeesPage() {
             currentPage={currentPage}
             totalPages={totalPages}
             totalItems={filteredEmployees.length}
-            itemsPerPage={ITEMS_PER_PAGE}
+            itemsPerPage={itemsPerPage}
             onPrev={() => setCurrentPage((p) => p - 1)}
             onNext={() => setCurrentPage((p) => p + 1)}
             onPageChange={(p) => setCurrentPage(p)}
+            onItemsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
             itemLabel="employees"
           />
         </div>

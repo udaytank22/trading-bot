@@ -31,7 +31,7 @@ const FILTER_OPTIONS = [
   { value: "Inactive", label: "Inactive" },
 ];
 
-const ITEMS_PER_PAGE = 5;
+
 
 // ─── Main Page Component ───────────────────────────────────────────────────────
 export default function AccountPage() {
@@ -42,6 +42,7 @@ export default function AccountPage() {
   const [search, setSearch]             = useState("");
   const [filter, setFilter]             = useState("All");
   const [currentPage, setCurrentPage]   = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [accountToEdit, setAccountToEdit] = useState(null); // null = create mode
   const [isModalOpen, setIsModalOpen]   = useState(false);
   const { toast, showToast } = useToast();
@@ -66,10 +67,10 @@ export default function AccountPage() {
   }, [accountsData, search, filter]);
 
   // ── Derived: paginate filtered results ────────────────────────────────────
-  const totalPages   = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+  const totalPages   = Math.ceil(filteredData.length / itemsPerPage);
   const currentData  = filteredData.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   // ── Handler: open edit modal ──────────────────────────────────────────────
@@ -178,10 +179,11 @@ export default function AccountPage() {
           currentPage={currentPage}
           totalPages={totalPages}
           totalItems={filteredData.length}
-          itemsPerPage={ITEMS_PER_PAGE}
+          itemsPerPage={itemsPerPage}
           onPrev={() => setCurrentPage((p) => Math.max(1, p - 1))}
           onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            onPageChange={(p) => setCurrentPage(p)}
+          onPageChange={(p) => setCurrentPage(p)}
+          onItemsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
           itemLabel="accounts"
         />
       </div>
