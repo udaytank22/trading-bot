@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth, useUI, useData } from '@context';
 import { api } from '@services/api';
 import ContactModal from '@features/accounts/modals/ContactModal';
-import SupplyViewModal from './modals/SupplyViewModal';
 import AddSupplyModal from './modals/AddSupplyModal';
 import AllotVehicleModal from '@features/employees/modals/AllotVehicleModal';
 import InvoiceEmailModal from '@features/invoices/modals/InvoiceEmailModal';
@@ -36,6 +36,7 @@ const FILTER_OPTIONS = [
   { value: "All", label: "All Status" },
   { value: "PENDING", label: "Pending" },
   { value: "ORDER_PLACED", label: "Order Placed" },
+  { value: "DISPATCHED", label: "Dispatched" },
   { value: "LOADING", label: "Loading" },
   { value: "IN_TRANSIT", label: "In Transit" },
   { value: "DELIVERED", label: "Delivered" },
@@ -46,16 +47,13 @@ const FILTER_OPTIONS = [
 // ─── Main Page Component ───────────────────────────────────────────────────────
 export default function SupplyPage() {
   const { supplyData, setSupplyData, refreshAll } = useData();
+  const navigate = useNavigate();
 
   // ── Local UI state ────────────────────────────────────────────────────────
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-
-  // View modal state (SupplyViewModal)
-  const [selectedDeal, setSelectedDeal] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Contact modal state (ContactModal)
   const [contactModalDeal, setContactModalDeal] = useState(null);
@@ -187,8 +185,7 @@ export default function SupplyPage() {
         <SupplyTable
           items={currentItems}
           onView={(item) => {
-            setSelectedDeal(item);
-            setIsModalOpen(true);
+            navigate(`/supply/${item.inquiry_id}`);
           }}
           onContact={(item) => {
             setContactModalDeal(item);
@@ -217,13 +214,7 @@ export default function SupplyPage() {
 
       {/* ── Modals ─────────────────────────────────────────────────────────── */}
 
-      {/* Detail view modal for a cargo record */}
-      <SupplyViewModal
-        deal={selectedDeal}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onStatusUpdate={handleStatusUpdate}
-      />
+
 
       {/* Contact supplier modal */}
       <ContactModal
@@ -242,7 +233,7 @@ export default function SupplyPage() {
             const res = await api.shipments.updateShipment(id, {
               currentStatus: "LOADING",
               vehicleDetails: vehicle.vehicle_no,
-              driverDetails: `${vehicle.owner_name} (${vehicle.owner_phone})`
+              driverDetails: `${vehicle.driver_name || vehicle.owner_name} (${vehicle.phone || vehicle.owner_phone})`
             });
             if (res.success) {
               refreshAll();

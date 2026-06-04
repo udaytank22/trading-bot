@@ -25,19 +25,12 @@ import React, {
 import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
-import DealDrawer from './drawers/DealDrawer';
 import EmailPreviewModal from './modals/EmailPreviewModal';
 import { api } from '@services/api';
 import { formatDateString } from '@services/marginEngine';
 import { useToast } from '@hooks/useToast';
 import InquiryTable from './components/InquiryTable';
 import InquiryKanban from './components/InquiryKanban';
-import QuoteModal from './modals/QuoteModal';
-import RFQModal from './modals/RFQModal';
-import StockCheckModal from './modals/StockCheckModal';
-import MultiEmailPreviewModal from './modals/MultiEmailPreviewModal';
-import VerificationModal from './modals/VerificationModal';
-import AdminApprovalModal from './modals/AdminApprovalModal';
 import AddInquiryModal from './modals/AddInquiryModal';
 import { Toast, PageToolbar, Pagination, Button } from '@components/ui';
 
@@ -130,16 +123,10 @@ export default function InquiriesPage() {
     if (idToOpen && inquiriesData && inquiriesData.length > 0) {
       const found = inquiriesData.find((i) => i.inquiry_id === idToOpen);
       if (found) {
-        setSelectedDeal(found);
-        setIsDrawerOpen(true);
-        // remove the openInquiryId from history state
-        navigate(location.pathname, {
-          replace: true,
-          state: { filter: location.state?.filter },
-        });
+        navigate(`/inquiries/${found.id}`, { replace: true });
       }
     }
-  }, [location.state, inquiriesData]);
+  }, [location.state, inquiriesData, navigate]);
 
   const syncLabel = useMemo(() => {
     const mins = Math.floor((now - lastSynced) / 60_000);
@@ -195,26 +182,10 @@ export default function InquiriesPage() {
   }, [totalPages, currentPage]);
 
   // Drawer / modal state
-  const [selectedDeal, setSelectedDeal] = useState(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [emailModalDeal, setEmailModalDeal] = useState(null);
   const [emailModalType, setEmailModalType] = useState("RFQ");
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
-
-  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
-  const [quoteModalDeal, setQuoteModalDeal] = useState(null);
-
-  // Step-by-step workflow state (null = show table, otherwise show full-page step view)
-  const [activeStepView, setActiveStepView] = useState(null); // 'STOCK_CHECK', 'RFQ', 'QUOTE', 'VERIFY', 'ADMIN_APPROVAL'
-  const [activeStepDeal, setActiveStepDeal] = useState(null);
-
-  const [pendingRFQs, setPendingRFQs] = useState([]);
-  const [isMultiEmailModalOpen, setIsMultiEmailModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
-  // Inline action state
-  const [inlineActionRow, setInlineActionRow] = useState(null);
-  const [rowActionLoading, setRowActionLoading] = useState(false);
 
   const updateDealStatus = useCallback(
     (id, newStatus, extraData = {}) => {
@@ -225,303 +196,16 @@ export default function InquiriesPage() {
             : inq,
         ),
       );
-      setSelectedDeal((prev) =>
-        prev?.inquiry_id === id
-          ? { ...prev, status: newStatus, ...extraData }
-          : prev,
-      );
     },
     [setInquiriesData],
   );
 
-  const confirmAction = async (title, text = "This process cannot be reverted.") => {
-    const result = await Swal.fire({
-      title,
-      text,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#8b5cf6",
-      cancelButtonColor: "#ef4444",
-      confirmButtonText: "Yes, proceed",
-      cancelButtonText: "Cancel",
-      background: "#1a1d23",
-      color: "#fff"
-    });
-    return result.isConfirmed;
+  const onView = (inq) => {
+    navigate(`/inquiries/${inq.id}`);
   };
 
-  const handleStockConfirm = async (selectedSuppliers) => {
-    if (activeStepDeal) {
-      const confirmed = await confirmAction(
-        "Confirm Stock Check",
-        "Are you sure you want to proceed with this stock check? This process cannot be reverted."
-      );
-      if (!confirmed) return;
-      try {
-        const supplierIds = selectedSuppliers.map(s => s.id);
-        const res = await api.inquiries.stockCheck(activeStepDeal.id, supplierIds);
-        if (res.success) {
-          loadData(true);
-          setActiveStepView(null);
-          showToast(`Selected ${selectedSuppliers.length} suppliers for RFQ.`, "success");
-        }
-      } catch (err) {
-        console.error(err);
-        showToast("Failed to record stock check", "error");
-      }
-    }
-  };
-
-  const handleVerifyConfirm = async () => {
-    if (activeStepDeal) {
-      const confirmed = await confirmAction(
-        "Confirm Verification",
-        "Are you sure you want to verify and dispatch the quotation to the client? This process cannot be reverted."
-      );
-      if (!confirmed) return;
-      try {
-        const res = await api.inquiries.finalVerify(activeStepDeal.id);
-        if (res.success) {
-          loadData(true);
-          setActiveStepView(null);
-          showToast("Quotation verified and sent to client.", "success");
-        }
-      } catch (err) {
-        console.error(err);
-        showToast("Failed to verify quotation.", "error");
-      }
-    }
-  };
-
-  const handleAdminConfirm = async (adjustedData) => {
-    if (activeStepDeal) {
-      const confirmed = await confirmAction(
-        "Confirm Admin Approval",
-        "Are you sure you want to approve this pricing layout? This process cannot be reverted."
-      );
-      if (!confirmed) return;
-      try {
-        const marginVal = parseFloat(adjustedData.margin_percent) || 0;
-        const discountVal = parseFloat(adjustedData.discount_percent) || 0;
-        const totalAmount = adjustedData.products.reduce((sum, p) => sum + (p.total_price || 0), 0);
-        const finalAmount = totalAmount * 1.18; // 18% tax
-
-        const items = adjustedData.products.map(p => {
-          const origItem = activeStepDeal.items?.find(item => item.description === p.product_name) || {};
-          return {
-            inquiryItemId: origItem.id || p.inquiryItemId,
-            sellingPrice: p.my_unit_price,
-            quantity: p.quantity,
-            totalPrice: p.total_price
-          };
-        });
-
-        const res = await api.inquiries.adminApprove(activeStepDeal.id, {
-          approved: true,
-          remarks: "Approved by Admin",
-          overrideQuote: {
-            marginPercentage: marginVal,
-            discountPercentage: discountVal,
-            totalAmount,
-            finalAmount,
-            items
-          }
-        });
-        if (res.success) {
-          loadData(true);
-          setActiveStepView(null);
-          showToast("Quotation approved by Admin.", "success");
-        }
-      } catch (err) {
-        console.error(err);
-        showToast("Failed to record Admin approval", "error");
-      }
-    }
-  };
-
-  const handleAction = (deal, currentStatus) => {
-    setActiveStepDeal(deal);
-    switch (currentStatus) {
-      case "PENDING":
-        setActiveStepView("STOCK_CHECK");
-        break;
-      case "RFQ_READY":
-        setActiveStepView("RFQ");
-        break;
-      case "CLIENT_QUOTING":
-      case "TL_REVIEW":
-        setActiveStepView("QUOTE");
-        break;
-      case "ADMIN_APPROVAL":
-        setActiveStepView("ADMIN_APPROVAL");
-        break;
-      case "EMPLOYEE_VERIFY":
-        setActiveStepView("VERIFY");
-        break;
-      case "CLIENT_FINAL_APPROVAL":
-        // Simulated client decision using SweetAlert2
-        Swal.fire({
-          title: "Final Quotation Decision",
-          text: `Do you want to accept the quotation for ${deal.inquiry_id}?`,
-          icon: "question",
-          showCancelButton: true,
-          confirmButtonColor: "#8b5cf6",
-          cancelButtonColor: "#ef4444",
-          confirmButtonText: "Accept Quote",
-          cancelButtonText: "Reject Quote",
-          background: "#1a1d23",
-          color: "#fff",
-        }).then(async (result) => {
-          if (result.isConfirmed) {
-            try {
-              const res = await api.inquiries.clientDecision(deal.id, true);
-              if (res.success) {
-                loadData(true);
-              }
-            } catch (err) {
-              console.error(err);
-            }
-          } else if (result.dismiss === Swal.DismissReason.cancel) {
-            try {
-              const res = await api.inquiries.clientDecision(deal.id, false);
-              if (res.success) {
-                loadData(true);
-              }
-            } catch (err) {
-              console.error(err);
-            }
-          }
-        });
-        break;
-      case "QUOTE_SENT":
-        (async () => {
-          const confirmed = await confirmAction(
-            "Confirm Deal",
-            "Are you sure you want to confirm this deal and move it to Supply? This process cannot be reverted."
-          );
-          if (!confirmed) return;
-          try {
-            const res = await api.inquiries.confirmDeal(deal.id);
-            if (res.success) {
-              // Clear old supply data to refresh supply tab
-              setSupplyData([]);
-              loadData(true);
-              showToast("Deal confirmed and moved to Supply", "success");
-            } else {
-              showToast(res.message || "Failed to confirm deal", "error");
-            }
-          } catch (err) {
-            console.error(err);
-            showToast("Failed to confirm deal", "error");
-          }
-        })();
-        break;
-      default:
-        break;
-    }
-  };
-
-  const handleQuoteSubmit = async (quoteData) => {
-    if (!activeStepDeal) return;
-
-    try {
-      if (activeStepDeal.status === "CLIENT_QUOTING") {
-        const confirmed = await confirmAction(
-          "Submit Client Quote",
-          "Are you sure you want to submit these prices? This process cannot be reverted."
-        );
-        if (!confirmed) return;
-
-        const items = quoteData.products.map(p => {
-          const origItem = activeStepDeal.items?.find(item => item.description === p.product_name) || {};
-          const unitPrice = parseFloat(p.my_unit_price) || 0;
-          const qty = parseInt(p.quantity, 10) || 1;
-          return {
-            inquiryItemId: origItem.id,
-            sellingPrice: unitPrice,
-            quantity: qty,
-            totalPrice: unitPrice * qty
-          };
-        });
-        const totalAmount = items.reduce((sum, item) => sum + item.totalPrice, 0);
-
-        const res = await api.inquiries.clientQuote(activeStepDeal.id, {
-          marginPercentage: 0,
-          taxPercentage: 18,
-          totalAmount,
-          finalAmount: totalAmount * 1.18,
-          items
-        });
-
-        if (res.success) {
-          loadData(true);
-          setActiveStepView(null);
-          showToast("Prices quoted. Sent to Team Lead for review.", "success");
-        }
-      } else if (activeStepDeal.status === "TL_REVIEW") {
-        const confirmed = await confirmAction(
-          "Submit Team Lead Review",
-          "Are you sure you want to approve this margin structure? This process cannot be reverted."
-        );
-        if (!confirmed) return;
-
-        const marginVal = parseFloat(quoteData.margin) || 0;
-        const discountVal = parseFloat(quoteData.discount) || 0;
-
-        let totalAmount = 0;
-        const items = activeStepDeal.products.map((p, idx) => {
-          const sqp = activeStepDeal.seller_quote?.products?.[idx];
-          const cost = sqp?.seller_unit_price || 0;
-          const qty = p.quantity || 1;
-          const my_unit_price = cost * (1 + marginVal / 100) * (1 - discountVal / 100);
-          const totalPrice = my_unit_price * qty;
-          totalAmount += totalPrice;
-
-          const origItem = activeStepDeal.items?.find(item => item.description === p.product_name) || {};
-
-          return {
-            inquiryItemId: origItem.id,
-            sellingPrice: my_unit_price,
-            quantity: qty,
-            totalPrice
-          };
-        });
-
-        const finalAmount = totalAmount * 1.18; // 18% tax
-
-        const res = await api.inquiries.teamLeadApprove(activeStepDeal.id, {
-          approved: true,
-          remarks: quoteData.narrative || "Approved by Team Lead",
-          overrideQuote: {
-            marginPercentage: marginVal,
-            discountPercentage: discountVal,
-            totalAmount,
-            finalAmount,
-            items
-          }
-        });
-        if (res.success) {
-          loadData(true);
-          setActiveStepView(null);
-          showToast("Margin approved. Sent for Admin approval.", "success");
-        }
-      }
-    } catch (err) {
-      console.error(err);
-      showToast("Failed to submit quote", "error");
-    }
-  };
-
-  const handleRFQSubmit = (stagedRFQs) => {
-    if (stagedRFQs.length > 0) {
-      setPendingRFQs(stagedRFQs);
-      setIsMultiEmailModalOpen(true);
-    }
-  };
-
-  const handleMultiEmailClose = () => {
-    setIsMultiEmailModalOpen(false);
-    setActiveStepView(null);
+  const handleAction = (inq, status) => {
+    navigate(`/inquiries/${inq.id}`, { state: { activeTab: 'action' } });
   };
 
   const handleAddInquiry = async (newInquiry) => {
@@ -573,69 +257,6 @@ export default function InquiriesPage() {
           <div className="w-32 bg-[#242830] rounded-lg h-full opacity-40" />
         </div>
         <div className="flex-1 w-full bg-[#1a1d23] border border-[#2a2d33] rounded-xl opacity-40" />
-      </div>
-    );
-  }
-
-  // --- Step Views Rendering ---
-  if (activeStepView) {
-    return (
-      <div className="w-full h-full bg-white dark:bg-[#0c0e12] animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-y-auto pb-10">
-        <div className="max-w-6xl mx-auto py-8 px-4">
-          {activeStepView === "STOCK_CHECK" && (
-            <StockCheckModal
-              isOpen={true}
-              isPageMode={true}
-              onClose={() => setActiveStepView(null)}
-              onConfirm={handleStockConfirm}
-              deal={activeStepDeal}
-            />
-          )}
-          {activeStepView === "RFQ" && (
-            <RFQModal
-              isOpen={true}
-              isPageMode={true}
-              onClose={() => setActiveStepView(null)}
-              onSubmit={handleRFQSubmit}
-              deal={activeStepDeal}
-            />
-          )}
-          {activeStepView === "QUOTE" && (
-            <QuoteModal
-              isOpen={true}
-              isPageMode={true}
-              onClose={() => setActiveStepView(null)}
-              onSubmit={handleQuoteSubmit}
-              deal={activeStepDeal}
-            />
-          )}
-          {activeStepView === "VERIFY" && (
-            <VerificationModal
-              isOpen={true}
-              isPageMode={true}
-              onClose={() => setActiveStepView(null)}
-              onConfirm={handleVerifyConfirm}
-              deal={activeStepDeal}
-            />
-          )}
-          {activeStepView === "ADMIN_APPROVAL" && (
-            <AdminApprovalModal
-              isOpen={true}
-              isPageMode={true}
-              onClose={() => setActiveStepView(null)}
-              onConfirm={handleAdminConfirm}
-              deal={activeStepDeal}
-            />
-          )}
-        </div>
-
-        <MultiEmailPreviewModal
-          isOpen={isMultiEmailModalOpen}
-          onClose={handleMultiEmailClose}
-          stagedRFQs={pendingRFQs}
-          inquiryDeal={activeStepDeal}
-          onStatusUpdate={updateDealStatus}
-        />
       </div>
     );
   }
@@ -727,10 +348,7 @@ export default function InquiriesPage() {
           <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
             <InquiryKanban
               items={filteredInquiries}
-              onView={(inq) => {
-                setSelectedDeal(inq);
-                setIsDrawerOpen(true);
-              }}
+              onView={onView}
               onAction={handleAction}
               onStatusChange={(id, newStatus) => updateDealStatus(id, newStatus)}
               currentUser={currentUser}
@@ -745,10 +363,7 @@ export default function InquiriesPage() {
           {filteredInquiries.length > 0 ? (
             <InquiryTable
               items={currentItems}
-              onView={(inq) => {
-                setSelectedDeal(inq);
-                setIsDrawerOpen(true);
-              }}
+              onView={onView}
               onAction={handleAction}
               currentUser={currentUser}
             />
@@ -769,12 +384,6 @@ export default function InquiriesPage() {
         </div>
       )}
 
-      <DealDrawer
-        deal={selectedDeal}
-        isOpen={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
-        onStatusUpdate={updateDealStatus}
-      />
       <EmailPreviewModal
         deal={emailModalDeal}
         initialEmailType={emailModalType}

@@ -99,34 +99,27 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
 
   const content = (
     <div className={`${isPageMode ? 'w-full bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden' : 'bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden'} animate-in zoom-in-95 duration-200`}>
-      <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
-        <div className="flex items-center gap-4">
-          {isPageMode && (
-            <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-lg text-gray-400 transition-colors">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </button>
-          )}
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-            {isClientQuoting ? "Coat Item Prices" : isTLReview ? "Set Margin & Discount" : "Send Quote"}
-          </h2>
-        </div>
-        <div className="flex items-center gap-3">
-          {!isTLReview && (
-            <label className="flex items-center gap-2 px-2 py-1 bg-green-600/10 border border-green-500/20 rounded-lg text-green-500 text-[9px] font-bold uppercase tracking-wider cursor-pointer hover:bg-green-600/20 transition-all">
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-              </svg>
-              Excel
-              <input type="file" className="hidden" accept=".xlsx, .xls, .csv" onChange={handleExcelUpload} />
-            </label>
-          )}
-          {!isPageMode && (
+      {!isPageMode && (
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
+          <div className="flex items-center gap-4">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+              {isClientQuoting ? "Coat Item Prices" : isTLReview ? "Set Margin & Discount" : "Send Quote"}
+            </h2>
+          </div>
+          <div className="flex items-center gap-3">
+            {!isTLReview && (
+              <label className="flex items-center gap-2 px-2 py-1 bg-green-600/10 border border-green-500/20 rounded-lg text-green-500 text-[9px] font-bold uppercase tracking-wider cursor-pointer hover:bg-green-600/20 transition-all">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Excel
+                <input type="file" className="hidden" accept=".xlsx, .xls, .csv" onChange={handleExcelUpload} />
+              </label>
+            )}
             <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl leading-none">&times;</button>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       <form
         onSubmit={(e) => {
@@ -138,7 +131,7 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
         {isTLReview && (
           <div className="space-y-4">
             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Base Quoted Prices (Supplier)</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[300px] overflow-y-auto custom-scrollbar p-1">
+            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-1 ${isPageMode ? "" : "max-h-[300px] overflow-y-auto custom-scrollbar"}`}>
               {deal?.seller_quote?.products?.map((p, idx) => {
                 const quantity = deal.products?.[idx]?.quantity || 0;
                 const unit = deal.products?.[idx]?.unit || "pcs";
@@ -160,15 +153,26 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Product Pricing ({productPrices.length})</h3>
-              <input 
-                type="text" 
-                placeholder="Search products..."
-                value={productSearch}
-                onChange={(e) => setProductSearch(e.target.value)}
-                className="bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-3 py-1.5 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 w-48"
-              />
+              <div className="flex items-center gap-2">
+                {isPageMode && (
+                  <label className="flex items-center gap-2 px-2.5 py-1.5 bg-green-600/10 border border-green-500/20 rounded-lg text-green-500 text-[10px] font-bold uppercase tracking-wider cursor-pointer hover:bg-green-600/20 transition-all">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    Excel Import
+                    <input type="file" className="hidden" accept=".xlsx, .xls, .csv" onChange={handleExcelUpload} />
+                  </label>
+                )}
+                <input 
+                  type="text" 
+                  placeholder="Search products..."
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  className="bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-3 py-1.5 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 w-48"
+                />
+              </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto custom-scrollbar p-1">
+            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 p-1 ${isPageMode ? "" : "max-h-[400px] overflow-y-auto custom-scrollbar"}`}>
               {filteredProductPrices.map((p) => {
                 const originalIndex = productPrices.findIndex(orig => orig.product_name === p.product_name);
                 return (

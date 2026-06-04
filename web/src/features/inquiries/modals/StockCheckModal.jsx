@@ -2,30 +2,37 @@ import React, { useState, useMemo } from "react";
 import { useData } from '@context';
 
 const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
-  const { suppliersData } = useData();
+  const { suppliersData, productsData } = useData();
   const [selectedSuppliers, setSelectedSuppliers] = useState([]);
 
   const [supplierSearch, setSupplierSearch] = useState("");
+
+  const getProductCategory = (productName) => {
+    const prod = (productsData || []).find(p => p.name.toLowerCase() === productName.toLowerCase());
+    return prod ? prod.category : 'General';
+  };
 
   const productsAvailability = useMemo(() => {
     if (!deal || !deal.products) return [];
     
     return deal.products.map(product => {
+      const productCategory = getProductCategory(product.product_name);
       const availableSuppliers = suppliersData.filter(s => 
-        (s.products || []).some(p => p.toLowerCase() === product.product_name.toLowerCase())
+        (s.categories || []).some(cat => cat.toLowerCase() === (productCategory || "").toLowerCase())
       );
       return {
         ...product,
         availableSuppliers
       };
     });
-  }, [deal, suppliersData]);
+  }, [deal, suppliersData, productsData]);
 
   const suppliersWithMatchInfo = useMemo(() => {
     return suppliersData.map(s => {
-      const matchingProducts = deal?.products?.filter(p => 
-        (s.products || []).some(sp => sp.toLowerCase() === p.product_name.toLowerCase())
-      ) || [];
+      const matchingProducts = deal?.products?.filter(p => {
+        const productCategory = getProductCategory(p.product_name);
+        return (s.categories || []).some(cat => cat.toLowerCase() === (productCategory || "").toLowerCase());
+      }) || [];
       return {
         ...s,
         location: s.address || s.location || '',
@@ -33,7 +40,7 @@ const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
         matchingCount: matchingProducts.length
       };
     }).sort((a, b) => b.isMatch - a.isMatch); // Matches first
-  }, [deal, suppliersData]);
+  }, [deal, suppliersData, productsData]);
 
   const filteredSuppliers = suppliersWithMatchInfo.filter(s => 
     s.name.toLowerCase().includes(supplierSearch.toLowerCase()) ||
@@ -52,26 +59,19 @@ const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
 
   const content = (
     <div className={`${isPageMode ? 'w-full bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden' : 'bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden'} animate-in zoom-in-95 duration-200`}>
-      <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
-        <div className="flex items-center gap-4">
-          {isPageMode && (
-            <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-lg text-gray-400 transition-colors">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </button>
-          )}
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Stock Availability Check</h2>
-        </div>
-        {!isPageMode && (
+      {!isPageMode && (
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
+          <div className="flex items-center gap-4">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Stock Availability Check</h2>
+          </div>
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl leading-none">&times;</button>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="p-6 space-y-8">
         <div className="space-y-4">
           <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Inquiry Products ({deal?.products?.length})</h3>
-          <div className="grid gap-3 max-h-[300px] overflow-y-auto custom-scrollbar p-1">
+          <div className={`grid gap-3 p-1 ${isPageMode ? "" : "max-h-[300px] overflow-y-auto custom-scrollbar"}`}>
             {productsAvailability.map((p, idx) => (
               <div key={idx} className="bg-gray-100 dark:bg-[#0c0e12] p-4 rounded-xl border border-gray-200 dark:border-[#2a2d33] flex items-center justify-between">
                 <div>
@@ -108,7 +108,7 @@ const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
               className="bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-3 py-1.5 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 w-48"
             />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto custom-scrollbar p-1">
+          <div className={`grid grid-cols-1 md:grid-cols-2 gap-3 p-1 ${isPageMode ? "" : "max-h-[400px] overflow-y-auto custom-scrollbar"}`}>
             {filteredSuppliers.map((supplier) => (
               <button
                 key={supplier.id}

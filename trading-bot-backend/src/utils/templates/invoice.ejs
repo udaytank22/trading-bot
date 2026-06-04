@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Invoice</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #333;
+      background-color: #fff;
+    }
+    .invoice-container {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
+    .header {
+      background-color: #2b3a55;
+      color: #fff;
+      padding: 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header-logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .header-logo h1 {
+      margin: 10px 0 0 0;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .header-info {
+      text-align: right;
+    }
+    .header-info h2 {
+      margin: 0 0 15px 0;
+      font-size: 42px;
+      letter-spacing: 2px;
+      font-weight: 700;
+    }
+    .header-info p {
+      margin: 5px 0;
+      font-size: 14px;
+    }
+    
+    .addresses {
+      display: flex;
+      justify-content: space-between;
+      padding: 40px;
+      background-color: #f4f5f7;
+    }
+    .address-block {
+      width: 45%;
+    }
+    .address-row {
+      display: flex;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .address-label {
+      width: 80px;
+      font-weight: 600;
+      color: #4a5568;
+    }
+    .address-value {
+      flex: 1;
+      color: #2d3748;
+    }
+
+    .table-container {
+      padding: 40px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th {
+      background-color: #2b3a55;
+      color: #fff;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 14px;
+      border: 1px solid #2b3a55;
+    }
+    td {
+      padding: 12px;
+      border: 1px solid #e2e8f0;
+      font-size: 14px;
+    }
+    tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+    
+    .totals-container {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 10px;
+    }
+    .totals-table {
+      width: 300px;
+      border-collapse: collapse;
+    }
+    .totals-table td {
+      padding: 10px 15px;
+      border: 1px solid #fff;
+      font-size: 14px;
+    }
+    .totals-table tr {
+      background-color: #2b3a55;
+      color: #fff;
+    }
+    .totals-label {
+      font-weight: 600;
+    }
+    .totals-value {
+      text-align: right;
+    }
+
+    .notes {
+      padding: 40px;
+    }
+    .notes hr {
+      border: none;
+      border-top: 2px dashed #cbd5e1;
+      margin-bottom: 30px;
+    }
+    .notes h3 {
+      margin: 0 0 15px 0;
+      font-size: 16px;
+      color: #2d3748;
+    }
+    .notes p {
+      margin: 5px 0;
+      font-size: 14px;
+      color: #4a5568;
+    }
+    .bank-details {
+      margin-top: 20px;
+      margin-left: 20px;
+    }
+    .bank-row {
+      display: flex;
+      margin-bottom: 5px;
+      font-size: 14px;
+    }
+    .bank-label {
+      width: 120px;
+      color: #4a5568;
+    }
+    .bank-value {
+      color: #2d3748;
+      font-weight: 600;
+    }
+    
+    .footer {
+      text-align: center;
+      padding: 40px;
+      background-color: #2b3a55;
+      color: #fff;
+      font-weight: 600;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="invoice-container">
+    <div class="header">
+      <div class="header-logo">
+        <svg width="60" height="40" viewBox="0 0 100 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 50L40 10H60L90 50M10 10L40 50H60L90 10" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <h1>TRADEMIND</h1>
+      </div>
+      <div class="header-info">
+        <h2>INVOICE</h2>
+        <p>Invoice No : &nbsp;&nbsp;&nbsp;<%= invoice.invoiceNumber %></p>
+        <p>Invoice Date : &nbsp;&nbsp;&nbsp;<%= invoice.invoiceDate %></p>
+        <% if (invoice.poNumber) { %>
+        <p>PO Number : &nbsp;&nbsp;&nbsp;&nbsp;<%= invoice.poNumber %></p>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="addresses">
+      <div class="address-block">
+        <div class="address-row">
+          <div class="address-label">Seller</div>
+          <div class="address-value">: TradeMind ERP</div>
+        </div>
+        <div class="address-row">
+          <div class="address-label">Address</div>
+          <div class="address-value">: 123 Business Avenue, Tech Hub</div>
+        </div>
+        <div class="address-row">
+          <div class="address-label">Mail</div>
+          <div class="address-value">: billing@trademind.com</div>
+        </div>
+        <div class="address-row">
+          <div class="address-label">Phone</div>
+          <div class="address-value">: +1 555-0198</div>
+        </div>
+      </div>
+      
+      <div class="address-block">
+        <div class="address-row">
+          <div class="address-label">Bill To</div>
+          <div class="address-value">: <%= client.name %></div>
+        </div>
+        <div class="address-row">
+          <div class="address-label">Address</div>
+          <div class="address-value">: <%= client.address || 'N/A' %></div>
+        </div>
+        <div class="address-row">
+          <div class="address-label">Mail</div>
+          <div class="address-value">: <%= client.email || 'N/A' %></div>
+        </div>
+        <div class="address-row">
+          <div class="address-label">Phone</div>
+          <div class="address-value">: <%= client.phone || 'N/A' %></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th width="10%">No.</th>
+            <th width="45%">Description</th>
+            <th width="15%">Quantity</th>
+            <th width="15%">Item Price</th>
+            <th width="15%">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% items.forEach((item, index) => { %>
+          <tr>
+            <td style="text-align: center;"><%= index + 1 %></td>
+            <td><%= item.description %></td>
+            <td><%= item.quantity %></td>
+            <td>₹<%= item.unitPrice.toLocaleString() %></td>
+            <td>₹<%= item.totalPrice.toLocaleString() %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+
+      <div class="totals-container">
+        <table class="totals-table">
+          <tr>
+            <td class="totals-label">Subtotal</td>
+            <td class="totals-value">₹<%= invoice.subtotal.toLocaleString() %></td>
+          </tr>
+          <tr>
+            <td class="totals-label">Tax (18%)</td>
+            <td class="totals-value">₹<%= invoice.tax.toLocaleString() %></td>
+          </tr>
+          <tr>
+            <td class="totals-label">Grand Total</td>
+            <td class="totals-value">₹<%= invoice.total.toLocaleString() %></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="notes">
+      <hr />
+      <h3>Notes :</h3>
+      <p>1. Payment is due within 30 days from the date of the invoice.</p>
+      <p>2. Please make payment to the following bank account:</p>
+      
+      <div class="bank-details">
+        <div class="bank-row">
+          <div class="bank-label">Bank Name</div>
+          <div class="bank-value">: Global Business Bank</div>
+        </div>
+        <div class="bank-row">
+          <div class="bank-label">Account Number</div>
+          <div class="bank-value">: 123-456-7890-12</div>
+        </div>
+        <div class="bank-row">
+          <div class="bank-label">Account Holder</div>
+          <div class="bank-value">: TradeMind ERP Solutions</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      Thank You for Your Business
+    </div>
+  </div>
+</body>
+</html>

@@ -18,6 +18,7 @@ import * as documents from './documents';
 import * as notifications from './notifications';
 import * as reports from './reports';
 import * as auditLogs from './auditLogs';
+import * as vehicles from './vehicles';
 
 export const api = {
   auth,
@@ -40,6 +41,7 @@ export const api = {
   notifications,
   reports,
   auditLogs,
+  vehicles,
 };
 
 export default api;

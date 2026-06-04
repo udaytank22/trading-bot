@@ -56,7 +56,7 @@ export default function VendorsTab() {
         phone: formData.phone || '',
         company: formData.company || '',
         address: formData.address || '',
-        products: formData.products || [],
+        categories: formData.categories || [],
         isActive: formData.status === 'Active'
       };
       if (editItem) {
@@ -173,30 +173,39 @@ export default function VendorsTab() {
 
 function VendorForm({ initialData, onSave, onClose }) {
   const { productsData } = useData();
-  const [prodSearch, setProdSearch] = useState('');
+  const [catSearch, setCatSearch] = useState('');
   const [formData, setFormData] = useState(
     initialData ? {
       ...initialData,
       status: initialData.isActive ? 'Active' : 'Inactive',
-      products: initialData.products || []
-    } : { name: '', company: '', email: '', phone: '', address: '', status: 'Active', products: [] }
+      categories: initialData.categories || []
+    } : { name: '', company: '', email: '', phone: '', address: '', status: 'Active', categories: [] }
   );
 
   const set = (key) => (e) => setFormData(prev => ({ ...prev, [key]: e.target.value }));
 
-  const filteredProds = useMemo(() => {
-    const q = prodSearch.toLowerCase().trim();
-    if (!q) return productsData || [];
-    return (productsData || []).filter(p => p.name.toLowerCase().includes(q));
-  }, [productsData, prodSearch]);
+  const availableCategories = useMemo(() => {
+    const cats = (productsData || [])
+      .map(p => p.category)
+      .filter(Boolean);
+    const defaults = ['Mechanical', 'Electrical', 'Chemical', 'Machinery', 'Parts', 'Electronics', 'Consumables', 'General'];
+    const merged = [...new Set([...cats, ...defaults])];
+    return merged.sort();
+  }, [productsData]);
 
-  const toggleProduct = (prodName) => {
+  const filteredCats = useMemo(() => {
+    const q = catSearch.toLowerCase().trim();
+    if (!q) return availableCategories;
+    return availableCategories.filter(cat => cat.toLowerCase().includes(q));
+  }, [availableCategories, catSearch]);
+
+  const toggleCategory = (catName) => {
     setFormData(prev => {
-      const current = prev.products || [];
-      const updated = current.includes(prodName)
-        ? current.filter(p => p !== prodName)
-        : [...current, prodName];
-      return { ...prev, products: updated };
+      const current = prev.categories || [];
+      const updated = current.includes(catName)
+        ? current.filter(c => c !== catName)
+        : [...current, catName];
+      return { ...prev, categories: updated };
     });
   };
 
@@ -237,22 +246,22 @@ function VendorForm({ initialData, onSave, onClose }) {
         </Field>
 
         <div className="sm:col-span-2 flex flex-col gap-2 mt-2">
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Supplied Products</label>
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Supplied Categories</label>
           <input 
             type="text" 
-            placeholder="Search products to link..." 
-            value={prodSearch} 
-            onChange={(e) => setProdSearch(e.target.value)} 
+            placeholder="Search categories to link..." 
+            value={catSearch} 
+            onChange={(e) => setCatSearch(e.target.value)} 
             className="w-full bg-gray-50 dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-9 px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors mb-2 animate-all"
           />
           <div className="border border-gray-200 dark:border-[#2a2d36] rounded-xl p-3 max-h-48 overflow-y-auto custom-scrollbar grid grid-cols-1 sm:grid-cols-2 gap-2 bg-gray-50/50 dark:bg-[#0f1117]/30">
-            {filteredProds.map(prod => {
-              const isSelected = (formData.products || []).includes(prod.name);
+            {filteredCats.map(cat => {
+              const isSelected = (formData.categories || []).includes(cat);
               return (
                 <button
-                  key={prod.id}
+                  key={cat}
                   type="button"
-                  onClick={() => toggleProduct(prod.name)}
+                  onClick={() => toggleCategory(cat)}
                   className={`flex items-center gap-2.5 p-2 rounded-lg border transition-all text-left ${
                     isSelected 
                       ? "bg-purple-600/10 border-purple-500 text-purple-700 dark:text-white"
@@ -268,12 +277,12 @@ function VendorForm({ initialData, onSave, onClose }) {
                       </svg>
                     )}
                   </div>
-                  <span className="text-xs font-semibold truncate">{prod.name}</span>
+                  <span className="text-xs font-semibold truncate">{cat}</span>
                 </button>
               );
             })}
-            {filteredProds.length === 0 && (
-              <div className="sm:col-span-2 text-center py-4 text-xs text-gray-500 italic">No products found.</div>
+            {filteredCats.length === 0 && (
+              <div className="sm:col-span-2 text-center py-4 text-xs text-gray-500 italic">No categories found.</div>
             )}
           </div>
         </div>

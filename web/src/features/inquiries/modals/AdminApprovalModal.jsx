@@ -63,24 +63,17 @@ const AdminApprovalModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) =>
 
   const content = (
     <div className={`${isPageMode ? 'w-full bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden' : 'bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden'} animate-in zoom-in-95 duration-200`}>
-      <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
-        <div className="flex items-center gap-4">
-          {isPageMode && (
-            <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-lg text-gray-400 transition-colors">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </button>
-          )}
-          <div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Admin Approval & Final Review</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Review and adjust margins for {deal.inquiry_id}</p>
+      {!isPageMode && (
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
+          <div className="flex items-center gap-4">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Admin Approval & Final Review</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Review and adjust margins for {deal.inquiry_id}</p>
+            </div>
           </div>
-        </div>
-        {!isPageMode && (
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl leading-none">&times;</button>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="p-6 space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -140,7 +133,7 @@ const AdminApprovalModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) =>
             />
           </div>
           <div className="border border-gray-200 dark:border-[#2a2d33] rounded-2xl overflow-hidden bg-gray-100 dark:bg-[#0c0e12]">
-            <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+            <div className={isPageMode ? "" : "max-h-[400px] overflow-y-auto custom-scrollbar"}>
               <DataTable
                 columns={[
                   { key: "product", label: "Product" },

@@ -36,6 +36,23 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
     products: []
   });
 
+  const selectedClientObj = useMemo(() => {
+    return clientsData.find(c => c.name === formData.customer);
+  }, [clientsData, formData.customer]);
+
+  const clientVessels = selectedClientObj?.vessels || [];
+
+  const handleVesselChange = (val) => {
+    setFormData(prev => {
+      const updated = { ...prev, vessel: val };
+      const selectedVesselObj = clientVessels.find(v => v.name === val);
+      if (selectedVesselObj && selectedVesselObj.imoNumber) {
+        updated.imoNumber = selectedVesselObj.imoNumber;
+      }
+      return updated;
+    });
+  };
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape" && isOpen) onClose();
@@ -220,13 +237,22 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
           />
         </div>
 
-        <Field
-          label="Vessel"
-          name="vessel"
-          value={formData.vessel}
-          onChange={handleChange}
-          placeholder="Enter vessel name"
-        />
+        <div>
+          <label className={labelClass}>Vessel</label>
+          <Select
+            variant="form"
+            value={formData.vessel}
+            onChange={handleVesselChange}
+            options={[
+              ...clientVessels.map((v) => ({
+                value: v.name,
+                label: v.name,
+              }))
+            ]}
+            className="w-full"
+            placeholder="Select vessel"
+          />
+        </div>
 
         <Field
           label="Vessel Reference"

@@ -30,7 +30,7 @@ const createSupplier = async (data, creatorId) => {
       phone: data.phone || null,
       company: data.company || null,
       address: data.address || null,
-      products: data.products || [],
+      categories: data.categories || [],
       createdById: creatorId,
       isActive: data.isActive !== undefined ? data.isActive : true
     }
@@ -49,7 +49,7 @@ const updateSupplier = async (id, data, updaterId) => {
       phone: data.phone,
       company: data.company,
       address: data.address,
-      products: data.products !== undefined ? data.products : undefined,
+      categories: data.categories !== undefined ? data.categories : undefined,
       isActive: data.isActive,
       updatedById: updaterId
     }

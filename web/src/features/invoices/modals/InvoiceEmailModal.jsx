@@ -1,31 +1,102 @@
 import React, { useState, useEffect, useRef } from 'react';
-
-const DUMMY_PDF_URL = '/memories/file-sample_150kB.pdf';
+import { api } from '../../../services/api';
 
 export default function InvoiceEmailModal({ deal, isOpen, onClose, onStatusUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
   const [sendState, setSendState] = useState('idle'); // 'idle' | 'sending' | 'success'
   const [showPdf, setShowPdf]     = useState(false);
+  const [pdfUrl, setPdfUrl] = useState('');
+  const [pdfSize, setPdfSize] = useState('Generating...');
+  const [subject, setSubject] = useState('');
+  const [body, setBody] = useState('');
+  const [invoiceId, setInvoiceId] = useState(null);
   const bodyRef = useRef(null);
 
   useEffect(() => {
-    if (isOpen) {
+    let blobUrl = '';
+    if (isOpen && deal) {
       setSendState('idle');
       setIsEditing(false);
       setShowPdf(false);
-    }
-  }, [isOpen]);
+      
+      // Default subject if API hasn't loaded yet
+      setSubject(`Invoice for Order No: ${deal.shipmentNumber || deal.inquiry_id}`);
 
-  const handleSend = () => {
+      // Fetch the real PDF and preview data
+      api.invoices.generateInvoiceFromShipment(deal.id)
+        .then(res => {
+          if (res.success && res.data) {
+            const previewData = res.data;
+            setInvoiceId(previewData.invoice.id);
+            setSubject(`Invoice for Order No: ${deal.shipmentNumber || deal.inquiry_id}`);
+            
+            // Set body from API or fallback
+            if (previewData.defaultEmailBody) {
+              setBody(previewData.defaultEmailBody);
+              if (bodyRef.current && !isEditing) {
+                bodyRef.current.innerHTML = previewData.defaultEmailBody.replace(/\n/g, '<br/>');
+              }
+            }
+            
+            try {
+              const byteCharacters = atob(previewData.pdfBase64);
+              const byteNumbers = new Array(byteCharacters.length);
+              for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              const blob = new Blob([byteArray], { type: 'application/pdf' });
+              blobUrl = URL.createObjectURL(blob);
+              setPdfUrl(blobUrl);
+
+              const sizeInBytes = previewData.pdfBase64.length * 0.75;
+              const sizeInKB = Math.round(sizeInBytes / 1024);
+              setPdfSize(`${sizeInKB} KB`);
+            } catch (err) {
+              console.error("Failed to load PDF:", err);
+              setPdfSize("Error loading PDF");
+            }
+          }
+        })
+        .catch(err => {
+          console.error("Failed to generate invoice preview:", err);
+        });
+    }
+
+    return () => {
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl);
+      }
+    };
+  }, [isOpen, deal]);
+
+  const handleSend = async () => {
     setSendState('sending');
-    // Simulate API call / Verification
-    setTimeout(() => {
-      setSendState('success');
-      if (onStatusUpdate) onStatusUpdate(deal.inquiry_id, 'INVOICE_SENT');
-      setTimeout(() => {
-        onClose();
-      }, 2500);
-    }, 2000);
+    if (!invoiceId) {
+       // If it hasn't loaded, just fallback
+       setTimeout(() => {
+         setSendState('success');
+         if (onStatusUpdate) onStatusUpdate(deal.inquiry_id, 'INVOICE_SENT');
+         setTimeout(() => onClose(), 2500);
+       }, 2000);
+       return;
+    }
+
+    try {
+      // Actually send the email through the real endpoint
+      const currentBody = bodyRef.current ? bodyRef.current.innerText : body;
+      const res = await api.invoices.sendInvoiceEmail(invoiceId, { subject, body: currentBody });
+      if (res.success) {
+        setSendState('success');
+        if (onStatusUpdate) onStatusUpdate(deal.inquiry_id, 'INVOICE_SENT');
+        setTimeout(() => onClose(), 2500);
+      } else {
+        setSendState('idle');
+      }
+    } catch (e) {
+      console.error("Failed to send invoice:", e);
+      setSendState('idle');
+    }
   };
 
   if (!isOpen || !deal) return null;
@@ -41,8 +112,8 @@ export default function InvoiceEmailModal({ deal, isOpen, onClose, onStatusUpdat
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
             </svg>
             <h2 className="text-gray-900 dark:text-white text-3xl font-bold mb-3 tracking-wide">Invoice Sent Successfully!</h2>
-            <p className="text-gray-800 dark:text-gray-300 font-bold text-lg">{deal.buyer_name}</p>
-            <p className="text-gray-500 text-sm mb-6 pb-6 border-b border-gray-200 dark:border-[#2a2d36] w-full max-w-[300px] mx-auto">{deal.buyer_email}</p>
+            <p className="text-gray-800 dark:text-gray-300 font-bold text-lg">{deal.buyer_name || deal.client?.name}</p>
+            <p className="text-gray-500 text-sm mb-6 pb-6 border-b border-gray-200 dark:border-[#2a2d36] w-full max-w-[300px] mx-auto">{deal.buyer_email || deal.client?.email}</p>
             <p className="text-blue-400 text-sm font-bold tracking-wide uppercase bg-blue-500/10 px-4 py-2 rounded-lg">Status updated to Invoice Sent</p>
           </div>
 
@@ -68,7 +139,7 @@ export default function InvoiceEmailModal({ deal, isOpen, onClose, onStatusUpdat
                   PDF Preview
                 </div>
                 <a
-                  href={DUMMY_PDF_URL}
+                  href={pdfUrl}
                   download={`Invoice_${deal.inquiry_id}.pdf`}
                   className="flex items-center gap-1.5 text-xs font-bold text-purple-500 bg-purple-500/10 px-2.5 py-1 rounded-full border border-purple-500/20 hover:bg-purple-500/20 transition-colors"
                 >
@@ -79,14 +150,27 @@ export default function InvoiceEmailModal({ deal, isOpen, onClose, onStatusUpdat
                 </a>
               </div>
             </div>
-            {/* Iframe */}
+            {/* Object tag for PDF */}
             <div className="flex-1 overflow-hidden bg-gray-200 dark:bg-[#0c0e12]">
-              <iframe
-                src={DUMMY_PDF_URL}
-                title="Invoice PDF Preview"
-                className="w-full h-full border-0"
-                style={{ minHeight: '500px' }}
-              />
+              {pdfUrl ? (
+                <object
+                  data={pdfUrl}
+                  type="application/pdf"
+                  className="w-full h-full border-0"
+                  style={{ minHeight: "500px" }}
+                >
+                  <div className="flex flex-col items-center justify-center h-full text-gray-500 gap-3">
+                    <p>Your browser doesn't support built-in PDF viewing.</p>
+                    <a href={pdfUrl} download={`Invoice_${deal.inquiry_id}.pdf`} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold">
+                      Download PDF
+                    </a>
+                  </div>
+                </object>
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  Loading preview...
+                </div>
+              )}
             </div>
           </div>
 
@@ -117,11 +201,20 @@ export default function InvoiceEmailModal({ deal, isOpen, onClose, onStatusUpdat
                 </div>
                 <div className="flex items-center py-3 border-b border-gray-100">
                   <span className="w-20 text-gray-400 font-bold font-sans text-[12px] uppercase tracking-wider">To:</span>
-                  <span className="text-black font-semibold">{deal.buyer_email}</span>
+                  <span className="text-black font-semibold">{deal.buyer_email || deal.client?.email}</span>
                 </div>
                 <div className="flex items-center py-3 border-b border-gray-300">
                   <span className="w-20 text-gray-400 font-bold font-sans text-[12px] uppercase tracking-wider">Subject:</span>
-                  <span className="text-black font-bold text-[16px]">Tax Invoice - Ref: {deal.inquiry_id} | {deal.cargo}</span>
+                  {isEditing ? (
+                    <input 
+                      type="text" 
+                      value={subject} 
+                      onChange={e => setSubject(e.target.value)}
+                      className="flex-1 border-b border-gray-200 focus:border-blue-500 outline-none px-1 py-1 font-bold text-gray-800"
+                    />
+                  ) : (
+                    <span className="text-black font-bold text-[16px]">{subject}</span>
+                  )}
                 </div>
 
                 {/* Main Body */}
@@ -146,11 +239,11 @@ export default function InvoiceEmailModal({ deal, isOpen, onClose, onStatusUpdat
                       </tr>
                     </thead>
                     <tbody>
-                      {deal.products.map((p, i) => (
+                      {(deal.products || deal.purchaseOrder?.items || []).map((p, i) => (
                         <tr key={i} className="hover:bg-gray-50/50">
-                          <td className="p-3 border border-gray-300 font-medium">{p.product_name}</td>
-                          <td className="p-3 border border-gray-300 text-center font-mono font-medium">{deal.quantity}</td>
-                          <td className="p-3 border border-gray-300 text-right font-mono font-bold">₹{p.total_price || '---'}</td>
+                          <td className="p-3 border border-gray-300 font-medium">{p.product_name || p.description || p.product?.name}</td>
+                          <td className="p-3 border border-gray-300 text-center font-mono font-medium">{p.quantity || deal.quantity}</td>
+                          <td className="p-3 border border-gray-300 text-right font-mono font-bold">₹{p.total_price || p.totalPrice || '---'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -171,7 +264,7 @@ export default function InvoiceEmailModal({ deal, isOpen, onClose, onStatusUpdat
                     {/* File info */}
                     <div className="flex-1 min-w-0 pr-2">
                       <p className="text-sm font-bold text-gray-900 group-hover:text-purple-600 transition-colors">Invoice_{deal.inquiry_id}.pdf</p>
-                      <p className="text-[10px] font-medium text-gray-500 uppercase tracking-widest">PDF Document • 150 KB</p>
+                      <p className="text-[10px] font-medium text-gray-500 uppercase tracking-widest">PDF Document • {pdfSize}</p>
                     </div>
                     {/* Action icons */}
                     <div className="flex items-center gap-1">
@@ -184,7 +277,7 @@ export default function InvoiceEmailModal({ deal, isOpen, onClose, onStatusUpdat
                       </div>
                       {/* Download icon */}
                       <a
-                        href={DUMMY_PDF_URL}
+                        href={pdfUrl}
                         download={`Invoice_${deal.inquiry_id}.pdf`}
                         onClick={(e) => e.stopPropagation()}
                         title="Download PDF"

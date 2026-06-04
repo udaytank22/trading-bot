@@ -1,25 +1,29 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@context";
 import { api } from "@services/api";
-import { Select, Field, DataTable, DatePicker, StatusBadge, Button } from "@components/ui";
+import { Select, Field, DataTable, rowStripeClass, ROW_HOVER_CLS, DatePicker, StatusBadge, Button } from "@components/ui";
 import Swal from "sweetalert2";
+import InvoiceReviewModal from './modals/InvoiceReviewModal';
 import { RightDrawer } from "../settings/components/shared";
 
 export default function ClientRFQsPage() {
   const { currentUser } = useAuth();
-  
+
   // State
   const [suppliers, setSuppliers] = useState([]);
   const [selectedSupplierId, setSelectedSupplierId] = useState("");
   const [inquiries, setInquiries] = useState([]);
   const [shipments, setShipments] = useState([]);
+  const [invoicesData, setInvoicesData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [generatingInvoice, setGeneratingInvoice] = useState(false);
+  const [previewData, setPreviewData] = useState(null);
   const [viewingQuoteInquiry, setViewingQuoteInquiry] = useState(null);
-  
-  // Tab and Confirmed Order State
-  const [activeTab, setActiveTab] = useState("rfqs"); // "rfqs" | "orders"
+
+  const [activeTab, setActiveTab] = useState("rfqs"); // "rfqs" | "orders" | "invoices"
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showPOModal, setShowPOModal] = useState(false);
 
   // Active Quote Panel State
   const [selectedInquiry, setSelectedInquiry] = useState(null);
@@ -32,15 +36,34 @@ export default function ClientRFQsPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [suppliersRes, inquiriesRes, shipmentsRes] = await Promise.all([
+      const [suppliersRes, inquiriesRes, shipmentsRes, invoicesRes] = await Promise.all([
         api.suppliers.getSuppliers(),
         api.inquiries.getInquiries(),
         api.shipments.getShipments(),
+        api.invoices.getInvoices(),
       ]);
       setSuppliers(suppliersRes.data || []);
       setInquiries(inquiriesRes.data || []);
       setShipments(shipmentsRes.data || []);
-      
+
+      if (invoicesRes.data) {
+        const mappedInvoices = invoicesRes.data.map(inv => ({
+          ...inv,
+          inquiry_id: inv.id,
+          buyer_name: inv.client?.name || 'Unknown Buyer',
+          buyer_email: inv.client?.email || '',
+          cargo: inv.shipment?.cargoDetails || 'General Cargo',
+          invoice_date: inv.invoiceDate,
+          invoice_status: inv.status,
+          products: inv.items?.map(item => ({
+            product_name: item.description,
+            quantity: item.quantity,
+            total_price: item.totalPrice
+          })) || []
+        }));
+        setInvoicesData(mappedInvoices);
+      }
+
       // Auto-select first supplier if available
       if (suppliersRes.data && suppliersRes.data.length > 0) {
         setSelectedSupplierId(suppliersRes.data[0].id);
@@ -74,12 +97,12 @@ export default function ClientRFQsPage() {
     );
   }, [inquiries, selectedSupplierId]);
 
-  // Filter shipments with ORDER_PLACED status for the selected supplier
+  // Filter shipments with ORDER_PLACED or DISPATCHED status for the selected supplier
   const activeOrders = useMemo(() => {
     if (!selectedSupplierId) return [];
     return shipments.filter(
       (ship) =>
-        ship.currentStatus === "ORDER_PLACED" &&
+        (ship.currentStatus === "ORDER_PLACED" || ship.currentStatus === "DISPATCHED") &&
         ship.supplierId === selectedSupplierId
     );
   }, [shipments, selectedSupplierId]);
@@ -165,12 +188,593 @@ export default function ClientRFQsPage() {
     }
   };
 
+  const handleDispatchOrder = async () => {
+    if (!selectedOrder) return;
+    try {
+      const res = await api.shipments.updateShipment(selectedOrder.id, { currentStatus: "DISPATCHED" });
+      if (res.success) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Order Dispatched',
+          text: 'The shipment status has been updated to Dispatched.',
+          background: '#1a1d23',
+          color: '#fff',
+          showConfirmButton: false,
+          timer: 1500
+        });
+
+        await loadData();
+        setSelectedOrder(prev => prev ? { ...prev, currentStatus: "DISPATCHED" } : null);
+      }
+    } catch (e) {
+      console.error("Failed to dispatch order:", e);
+      Swal.fire({
+        icon: 'error',
+        title: 'Update Failed',
+        text: 'An error occurred while updating shipment status.',
+        background: '#1a1d23',
+        color: '#fff',
+        confirmButtonColor: '#8b5cf6'
+      });
+    }
+  };
+
+  const handleGenerateInvoice = async () => {
+    if (!selectedOrder) return;
+    setGeneratingInvoice(true);
+    try {
+      const res = await api.invoices.generateInvoiceFromShipment(selectedOrder.id);
+      if (res.success) {
+        setPreviewData(res.data);
+      }
+    } catch (e) {
+      console.error("Failed to generate invoice draft:", e);
+      Swal.fire({
+        icon: 'error',
+        title: 'Generation Failed',
+        text: e?.response?.data?.message || 'An error occurred while generating the invoice.',
+        background: '#1a1d23',
+        color: '#fff',
+        confirmButtonColor: '#8b5cf6'
+      });
+    } finally {
+      setGeneratingInvoice(false);
+    }
+  };
+
+  const handleInvoiceSent = () => {
+    setPreviewData(null);
+    loadData();
+  };
+
+  const handleDownloadPdf = async (invoiceId, invoiceNumber) => {
+    try {
+      const blob = await api.invoices.downloadPdf(invoiceId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Invoice_${invoiceNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to download PDF:", err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Download Failed',
+        text: 'Could not download the invoice PDF.',
+        background: '#1a1d23',
+        color: '#fff',
+        confirmButtonColor: '#8b5cf6'
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col w-full h-full pb-8 animate-pulse gap-6">
         <div className="flex items-center justify-between h-12 bg-gray-100 dark:bg-[#1a1d23] rounded-xl opacity-40" />
         <div className="w-1/3 h-10 bg-gray-100 dark:bg-[#1a1d23] rounded-xl opacity-40" />
         <div className="flex-1 w-full bg-gray-100 dark:bg-[#1a1d23] rounded-2xl opacity-30 border border-gray-200 dark:border-[#2a2d33]" />
+      </div>
+    );
+  }
+
+  if (selectedInquiry) {
+    return (
+      <div className="w-full h-full flex flex-col space-y-6 animate-in fade-in duration-200">
+        {/* Header Bar */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#1a1d23] p-6 rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSelectedInquiry(null)}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-gray-55 dark:bg-[#1e2028] dark:hover:bg-[#242830] text-gray-700 dark:text-gray-300 font-bold text-xs uppercase tracking-wider border border-gray-200 dark:border-[#2a2d36] transition-all duration-200 shadow-sm"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to RFQs
+            </button>
+            <span className="text-gray-305 dark:text-[#2a2d36] font-light">|</span>
+            <span className="font-mono text-gray-950 dark:text-white text-base font-bold tracking-wide">
+              Submit Prices for {selectedInquiry.inquiry_id}
+            </span>
+          </div>
+          <div className="text-right">
+            <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider block">Client</span>
+            <span className="text-gray-950 dark:text-white font-bold text-sm">{selectedInquiry.buyer_name}</span>
+          </div>
+        </div>
+
+        {/* Form Content */}
+        <form onSubmit={handleSubmitQuote} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left: Product Price Inputs */}
+          <div className="lg:col-span-7 space-y-4">
+            <div className="bg-white dark:bg-[#1a1d23] rounded-2xl p-6 border border-gray-200 dark:border-[#2a2d33] shadow-sm">
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Quote Unit Prices</h3>
+              <div className="space-y-4">
+                {selectedInquiry.items?.map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-5 bg-gray-55/35 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-2xl space-y-3"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="text-sm font-bold text-gray-900 dark:text-white">{item.description}</h4>
+                        <span className="text-xs text-gray-450 mt-1 block">
+                          Quantity: <span className="font-bold text-gray-800 dark:text-gray-200">{item.quantity} {item.unit || "pcs"}</span>
+                        </span>
+                      </div>
+                      {prices[item.id] && (
+                        <span className="text-sm font-mono font-bold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded-lg">
+                          Total: ₹{((parseFloat(prices[item.id]) || 0) * item.quantity).toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="relative mt-2">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold">
+                        ₹
+                      </span>
+                      <input
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        required
+                        placeholder="0.00"
+                        value={prices[item.id]}
+                        onChange={(e) => handlePriceChange(item.id, e.target.value)}
+                        className="w-full h-11 pl-8 pr-4 rounded-xl text-sm bg-white dark:bg-[#1a1d23] border border-gray-300 dark:border-[#2a2d36] text-gray-900 dark:text-white placeholder-gray-450 focus:outline-none focus:border-purple-500 transition-all font-mono"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Validity & Totals */}
+          <div className="lg:col-span-5 space-y-6">
+            {/* Validity Date */}
+            <div className="bg-white dark:bg-[#1a1d23] rounded-2xl p-6 border border-gray-200 dark:border-[#2a2d33] shadow-sm">
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Quote Validity</h3>
+              <DatePicker
+                label="Quote Validity Date"
+                name="validityDate"
+                value={validityDate}
+                onChange={(e) => setValidityDate(e.target.value)}
+              />
+            </div>
+
+            {/* Totals Summary */}
+            <div className="bg-white dark:bg-[#1a1d23] rounded-2xl p-6 border border-gray-200 dark:border-[#2a2d33] shadow-sm">
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Quote Summary</h3>
+              <div className="space-y-4">
+                <div className="flex justify-between text-sm font-semibold text-gray-500 dark:text-gray-455 tracking-wide">
+                  <span>Subtotal:</span>
+                  <span className="font-mono text-gray-900 dark:text-white text-base">₹{totals.subtotal.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm font-semibold text-gray-500 dark:text-gray-455 tracking-wide">
+                  <span>GST (18%):</span>
+                  <span className="font-mono text-gray-900 dark:text-white text-base">₹{totals.tax.toLocaleString()}</span>
+                </div>
+                <div className="border-t border-gray-100 dark:border-[#2a2d36] pt-4 mt-2">
+                  <div className="flex justify-between items-center text-sm font-black text-gray-900 dark:text-white">
+                    <span className="uppercase tracking-wider text-[10px] text-gray-400 font-bold">Final Quote Amount</span>
+                    <span className="font-mono text-xl font-extrabold text-purple-650 dark:text-purple-400 bg-purple-500/10 px-4 py-2 rounded-xl border border-purple-500/20 shadow-sm">
+                      ₹{totals.total.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedInquiry(null)}
+                    className="w-1/3 py-3 rounded-xl border border-gray-300 dark:border-[#2a2d36] text-gray-700 dark:text-gray-300 text-xs font-bold hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!isFormValid || submitting}
+                    className="flex-1 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-lg shadow-purple-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {submitting ? (
+                      <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                    ) : (
+                      "Submit Quote"
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  if (viewingQuoteInquiry) {
+    const myQuote = viewingQuoteInquiry.supplierQuotes?.find(
+      (q) => q.supplierId === selectedSupplierId
+    );
+
+    return (
+      <div className="w-full h-full flex flex-col space-y-6 animate-in fade-in duration-200">
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 dark:border-[#2a2d36] pb-4 gap-4 bg-white dark:bg-[#1a1d23] p-6 rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setViewingQuoteInquiry(null)}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-gray-55 dark:bg-[#1e2028] dark:hover:bg-[#242830] text-gray-700 dark:text-gray-300 font-bold text-xs uppercase tracking-wider border border-gray-200 dark:border-[#2a2d36] transition-all duration-200 shadow-sm"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to RFQs
+            </button>
+            <span className="text-gray-300 dark:text-[#2a2d36] font-light">|</span>
+            <span className="font-mono text-gray-950 dark:text-white text-lg font-bold tracking-wide">
+              Quote Details — {viewingQuoteInquiry.inquiry_id}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <StatusBadge status={viewingQuoteInquiry.status} />
+          </div>
+        </div>
+
+        {/* Content Grid */}
+        {myQuote ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            {/* Left Column: Quoted Items */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white dark:bg-[#1a1d23] rounded-2xl p-6 border border-gray-200 dark:border-[#2a2d33] shadow-sm">
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Quoted Items & Prices</h3>
+                <div className="space-y-4">
+                  {myQuote.items?.map((item) => {
+                    const origItem = viewingQuoteInquiry.items?.find((i) => i.id === item.inquiryItemId) || {};
+                    return (
+                      <div
+                        key={item.id}
+                        className="p-5 bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl flex justify-between items-center shadow-sm"
+                      >
+                        <div>
+                          <span className="text-sm font-bold text-gray-900 dark:text-white block">
+                            {origItem.description || item.inquiryItem?.description || "Product Item"}
+                          </span>
+                          <span className="text-xs text-gray-455 mt-1 block">
+                            Quantity: {item.quantity} {origItem.unit || item.inquiryItem?.unit || "pcs"}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 block">
+                            Unit Price: ₹{Number(item.unitPrice).toLocaleString()}
+                          </span>
+                          <span className="text-sm font-mono font-bold text-purple-600 dark:text-purple-400 block mt-0.5">
+                            Total: ₹{Number(item.totalPrice).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Context & Summary */}
+            <div className="space-y-6">
+              {/* Meta details */}
+              <div className="bg-white dark:bg-[#1a1d23] rounded-2xl p-6 border border-gray-200 dark:border-[#2a2d33] shadow-sm space-y-4">
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Quote Context</h3>
+
+                <div>
+                  <span className="text-[10px] font-bold text-gray-400 dark:text-gray-550 uppercase tracking-widest block">Client Name</span>
+                  <span className="text-sm font-bold text-gray-800 dark:text-white mt-1 block">{viewingQuoteInquiry.buyer_name}</span>
+                </div>
+                <div className="border-t border-gray-100 dark:border-[#2a2d33]/80 pt-3">
+                  <span className="text-[10px] font-bold text-gray-400 dark:text-gray-550 uppercase tracking-widest block">Vessel / Reference</span>
+                  <span className="text-sm font-bold text-gray-805 dark:text-gray-205 mt-1 block">{viewingQuoteInquiry.vessel_name || "—"}</span>
+                </div>
+                <div className="border-t border-gray-100 dark:border-[#2a2d33]/80 pt-3">
+                  <span className="text-[10px] font-bold text-gray-400 dark:text-gray-550 uppercase tracking-widest block">Quote Validity</span>
+                  <span className="text-sm font-semibold text-gray-705 dark:text-gray-305 mt-1 block">
+                    {myQuote.validityDate ? new Date(myQuote.validityDate).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric"
+                    }) : "—"}
+                  </span>
+                </div>
+                <div className="border-t border-gray-100 dark:border-[#2a2d33]/80 pt-3">
+                  <span className="text-[10px] font-bold text-gray-400 dark:text-gray-550 uppercase tracking-widest block">Quoted Date</span>
+                  <span className="text-sm font-semibold text-gray-705 dark:text-gray-305 mt-1 block">
+                    {new Date(myQuote.createdAt).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric"
+                    })}
+                  </span>
+                </div>
+              </div>
+
+              {/* Quote Summary */}
+              <div className="bg-white dark:bg-[#1a1d23] rounded-2xl p-6 border border-gray-200 dark:border-[#2a2d33] shadow-sm space-y-4">
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Quote Summary</h3>
+                <div className="space-y-3.5">
+                  <div className="flex justify-between text-xs font-semibold text-gray-555 dark:text-gray-455 tracking-wide">
+                    <span>Subtotal Quoted:</span>
+                    <span className="font-mono text-gray-900 dark:text-gray-105 text-sm">₹{Number(myQuote.quoteAmount).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-xs font-semibold text-gray-555 dark:text-gray-455 tracking-wide">
+                    <span>GST (18%):</span>
+                    <span className="font-mono text-gray-900 dark:text-gray-105 text-sm">₹{Number(myQuote.taxAmount).toLocaleString()}</span>
+                  </div>
+                  <div className="border-t border-dashed border-gray-200 dark:border-[#2a2d33] pt-3.5 mt-2">
+                    <div className="flex justify-between items-center text-sm font-black text-gray-900 dark:text-white">
+                      <span className="uppercase tracking-wider text-[10px] text-gray-400 font-bold">Final Quoted Amount</span>
+                      <span className="font-mono text-lg font-extrabold text-purple-650 dark:text-purple-400 bg-purple-500/10 px-3.5 py-1.5 rounded-xl border border-purple-500/20">
+                        ₹{Number(myQuote.finalAmount).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500 italic bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] p-12">
+            No quote found.
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (selectedOrder) {
+    return (
+      <div className="w-full h-full flex flex-col space-y-6 animate-in fade-in duration-200">
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 dark:border-[#2a2d36] pb-4 gap-4 bg-white dark:bg-[#1a1d23] p-6 rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSelectedOrder(null)}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-gray-55 dark:bg-[#1e2028] dark:hover:bg-[#242830] text-gray-700 dark:text-gray-300 font-bold text-xs uppercase tracking-wider border border-gray-200 dark:border-[#2a2d36] transition-all duration-200 shadow-sm"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Back to Confirmed Orders
+            </button>
+            <span className="text-gray-300 dark:text-[#2a2d36] font-light">|</span>
+            <span className="font-mono text-gray-950 dark:text-white text-lg font-bold tracking-wide">
+              Order Details — {selectedOrder.shipmentNumber}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <StatusBadge status={selectedOrder.currentStatus} />
+            {selectedOrder.currentStatus === "ORDER_PLACED" && (
+              <button
+                onClick={handleDispatchOrder}
+                className="px-4 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-purple-600 hover:bg-purple-550 text-white shadow-purple-600/10"
+              >
+                Mark Dispatched
+              </button>
+            )}
+            {selectedOrder.currentStatus === "DISPATCHED" && (
+              <button
+                onClick={handleGenerateInvoice}
+                disabled={generatingInvoice}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/10 disabled:opacity-50"
+              >
+                {generatingInvoice ? (
+                  <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                )}
+                Create & Send Invoice
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          {/* Left Column: Cargo Details */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-white dark:bg-[#1a1d23] rounded-2xl p-6 border border-gray-200 dark:border-[#2a2d33] shadow-sm">
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
+                {selectedOrder.purchaseOrder?.items?.length > 0 ? "Order Items" : "Cargo Details"}
+              </h3>
+              {selectedOrder.purchaseOrder?.items?.length > 0 ? (
+                <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-[#2a2d36] bg-gray-50/50 dark:bg-[#242830]/30 shadow-inner">
+                  <DataTable
+                    columns={[
+                      { key: "description", label: "Product" },
+                      { key: "quantity", label: "Quantity" },
+                      { key: "unitPrice", label: "Quoted Price" },
+                      { key: "totalPrice", label: "Total Price", className: "text-right" },
+                    ]}
+                    data={selectedOrder.purchaseOrder.items}
+                    emptyMessage="No items found."
+                    renderRow={(item, idx) => (
+                      <tr key={item.id || idx} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}>
+                        <td className="px-6 py-4 text-gray-900 dark:text-white font-bold">
+                          {item.description || item.product?.name || "Product Item"}
+                        </td>
+                        <td className="px-6 py-4 font-mono text-gray-900 dark:text-white font-medium">
+                          {item.quantity} {item.product?.unit || "PCS"}
+                        </td>
+                        <td className="px-6 py-4 font-mono text-gray-400">
+                          ₹{Number(item.unitPrice).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 text-right font-mono font-bold text-purple-600 dark:text-purple-400 text-base">
+                          ₹{Number(item.totalPrice).toLocaleString()}
+                        </td>
+                      </tr>
+                    )}
+                  />
+                </div>
+              ) : (
+                <div className="p-6 bg-gray-50 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-inner">
+                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 whitespace-pre-line leading-relaxed">
+                    {selectedOrder.cargoDetails || "No cargo details provided."}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Column: Order Context & Associated Info */}
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-[#1a1d23] rounded-2xl p-6 border border-gray-200 dark:border-[#2a2d33] shadow-sm space-y-4">
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Order Context</h3>
+
+              <div>
+                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-550 uppercase tracking-widest block">Customer</span>
+                <span className="text-sm font-bold text-gray-850 dark:text-white mt-1 block">{selectedOrder.client?.name || "Unknown"}</span>
+              </div>
+              <div className="border-t border-gray-100 dark:border-[#2a2d33]/80 pt-3">
+                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-550 uppercase tracking-widest block">Client Email</span>
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-1 block">{selectedOrder.client?.email || "—"}</span>
+              </div>
+              <div className="border-t border-gray-100 dark:border-[#2a2d33]/80 pt-3">
+                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-550 uppercase tracking-widest block">Destination</span>
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-1 block">{selectedOrder.client?.address || "—"}</span>
+              </div>
+              <div className="border-t border-gray-100 dark:border-[#2a2d33]/80 pt-3">
+                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-550 uppercase tracking-widest block">Ordered Date</span>
+                <span className="text-sm font-semibold text-gray-750 dark:text-gray-350 mt-1 block">
+                  {selectedOrder.createdAt ? new Date(selectedOrder.createdAt).toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true
+                  }) : "—"}
+                </span>
+              </div>
+            </div>
+
+            {/* Linked Purchase Order if available */}
+            {(selectedOrder.purchaseOrder?.poNumber || selectedOrder.purchaseOrderId) && (
+              <div className="bg-white dark:bg-[#1a1d23] rounded-2xl p-6 border border-gray-200 dark:border-[#2a2d33] shadow-sm space-y-4">
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Linked Purchase Order</h3>
+                <div className="flex justify-between items-center text-xs font-semibold text-gray-500 dark:text-gray-400">
+                  <span>PO Reference:</span>
+                  <span className="font-mono text-gray-900 dark:text-gray-100 font-bold text-sm bg-gray-50 dark:bg-[#0c0e12] px-2.5 py-1 rounded-lg border border-gray-200 dark:border-[#2a2d36]">
+                    {selectedOrder.purchaseOrder?.poNumber || selectedOrder.purchaseOrderId}
+                  </span>
+                </div>
+                {selectedOrder.purchaseOrder?.attachment && (
+                  <div className="pt-2">
+                    <button
+                      onClick={() => setShowPOModal(true)}
+                      className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-550 text-white text-xs font-bold transition-all shadow-md shadow-purple-650/10 flex items-center justify-center gap-2"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      View PO PDF
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* PO Document Viewer Modal */}
+        {showPOModal && selectedOrder.purchaseOrder?.attachment && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/70 animate-in fade-in duration-300"
+              onClick={() => setShowPOModal(false)}
+            />
+
+            {/* Modal Container */}
+            <div className="relative w-full max-w-5xl h-[85vh] bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl shadow-2xl flex flex-col z-10 animate-in zoom-in-95 duration-200 overflow-hidden">
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] bg-white dark:bg-[#1a1d23] flex items-center justify-between flex-shrink-0">
+                <div className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="font-mono text-gray-950 dark:text-white text-base font-bold">
+                    PO Document — {selectedOrder.purchaseOrder?.poNumber || selectedOrder.purchaseOrderId}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={selectedOrder.purchaseOrder.attachment}
+                    download={`PO_${selectedOrder.purchaseOrder?.poNumber || 'document'}.pdf`}
+                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-550 text-white text-xs font-bold transition-all shadow-sm"
+                  >
+                    Download
+                  </a>
+                  <button
+                    onClick={() => setShowPOModal(false)}
+                    className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* PDF Iframe */}
+              <div className="flex-1 bg-gray-100 dark:bg-[#1f2028] p-4 flex items-center justify-center overflow-hidden">
+                <iframe
+                  src={selectedOrder.purchaseOrder.attachment}
+                  title="PO Document PDF"
+                  className="w-full h-full border border-gray-300 dark:border-[#2a2d36] rounded-xl shadow-lg"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        <InvoiceReviewModal 
+          isOpen={!!previewData}
+          previewData={previewData}
+          onClose={() => setPreviewData(null)}
+          onSent={handleInvoiceSent}
+        />
       </div>
     );
   }
@@ -183,7 +787,7 @@ export default function ClientRFQsPage() {
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">Supplier Quotation Portal</h1>
           <p className="text-xs text-gray-500 mt-1">Submit product unit prices for requested inquiries.</p>
         </div>
-        
+
         {/* Supplier Profile Selector */}
         <div className="flex items-center gap-3">
           <label className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
@@ -213,11 +817,10 @@ export default function ClientRFQsPage() {
             setSelectedInquiry(null);
             setSelectedOrder(null);
           }}
-          className={`pb-3 text-sm font-bold tracking-wide transition-colors relative ${
-            activeTab === "rfqs"
+          className={`pb-3 text-sm font-bold tracking-wide transition-colors relative ${activeTab === "rfqs"
               ? "text-purple-600 dark:text-white"
               : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-          }`}
+            }`}
         >
           RFQs & Quotations ({activeRFQs.length})
           {activeTab === "rfqs" && (
@@ -230,24 +833,39 @@ export default function ClientRFQsPage() {
             setSelectedInquiry(null);
             setSelectedOrder(null);
           }}
-          className={`pb-3 text-sm font-bold tracking-wide transition-colors relative ${
-            activeTab === "orders"
+          className={`pb-3 text-sm font-bold tracking-wide transition-colors relative ${activeTab === "orders"
               ? "text-purple-600 dark:text-white"
               : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-          }`}
+            }`}
         >
           Confirmed Orders ({activeOrders.length})
           {activeTab === "orders" && (
             <div className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-purple-500 rounded-t" />
           )}
         </button>
+        <button
+          onClick={() => {
+            setActiveTab("invoices");
+            setSelectedInquiry(null);
+            setSelectedOrder(null);
+          }}
+          className={`pb-3 text-sm font-bold tracking-wide transition-colors relative ${activeTab === "invoices"
+              ? "text-purple-600 dark:text-white"
+              : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            }`}
+        >
+          Invoices
+          {activeTab === "invoices" && (
+            <div className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-purple-500 rounded-t" />
+          )}
+        </button>
       </div>
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0">
-        {activeTab === "rfqs" ? (
+        {activeTab === "rfqs" && (
           <>
             {/* Left Column: RFQ List */}
-            <div className={`flex flex-col bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden ${selectedInquiry ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
+            <div className="flex flex-col bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden lg:col-span-12">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center">
                 <h2 className="text-sm font-bold text-gray-800 dark:text-white uppercase tracking-wider">
                   My RFQs & Quotations ({activeRFQs.length})
@@ -270,11 +888,10 @@ export default function ClientRFQsPage() {
                   renderRow={(inq, idx) => (
                     <tr
                       key={inq.inquiry_id}
-                      className={`border-b border-gray-100 dark:border-[#2a2d33] transition-colors ${
-                        inq.status === "RFQ_SENT"
+                      className={`border-b border-gray-100 dark:border-[#2a2d33] transition-colors ${inq.status === "RFQ_SENT"
                           ? "hover:bg-gray-55/40 dark:hover:bg-white/[0.01] cursor-pointer"
                           : "opacity-85"
-                      } ${selectedInquiry?.id === inq.id ? "bg-purple-500/5" : ""}`}
+                        }`}
                       onClick={() => inq.status === "RFQ_SENT" && handleSelectInquiry(inq)}
                     >
                       <td className="px-6 py-4 font-mono font-bold text-sm text-gray-900 dark:text-white">
@@ -305,10 +922,10 @@ export default function ClientRFQsPage() {
                       <td className="px-6 py-4 text-right flex justify-end gap-2">
                         {inq.status === "RFQ_SENT" ? (
                           <Button
-                            variant={selectedInquiry?.id === inq.id ? "primary" : "secondary"}
+                            variant="secondary"
                             size="sm"
                           >
-                            {selectedInquiry?.id === inq.id ? "Selected" : "Enter Prices"}
+                            Enter Prices
                           </Button>
                         ) : (
                           <div className="flex items-center gap-2">
@@ -333,127 +950,13 @@ export default function ClientRFQsPage() {
                 />
               </div>
             </div>
-
-            {/* Right Column: Quote Quoting Panel */}
-            {selectedInquiry && (
-              <div className="lg:col-span-5 flex flex-col bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden animate-in slide-in-from-right duration-300">
-                <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1f222b]">
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Submit Prices for {selectedInquiry.inquiry_id}</h3>
-                    <p className="text-[10px] text-gray-500 mt-0.5">{selectedInquiry.buyer_name}</p>
-                  </div>
-                  <button
-                    onClick={() => setSelectedInquiry(null)}
-                    className="text-gray-400 hover:text-gray-200 text-lg font-bold"
-                  >
-                    &times;
-                  </button>
-                </div>
-
-                <form onSubmit={handleSubmitQuote} className="flex-1 flex flex-col overflow-y-auto custom-scrollbar p-6 space-y-6">
-                  {/* Product Price Inputs */}
-                  <div className="space-y-4">
-                    <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                      Quote Unit Prices
-                    </label>
-                    
-                    {selectedInquiry.items?.map((item) => (
-                      <div
-                        key={item.id}
-                        className="p-4 bg-gray-55/35 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-xl space-y-3"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="text-xs font-bold text-gray-900 dark:text-white">{item.description}</h4>
-                            <span className="text-[10px] text-gray-500">
-                              Quantity: {item.quantity} {item.unit || "pcs"}
-                            </span>
-                          </div>
-                          
-                          {prices[item.id] && (
-                            <span className="text-xs font-mono font-bold text-purple-600 dark:text-purple-400">
-                              Total: ₹{((parseFloat(prices[item.id]) || 0) * item.quantity).toLocaleString()}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-semibold">
-                            ₹
-                          </span>
-                          <input
-                            type="number"
-                            min="0.01"
-                            step="0.01"
-                            required
-                            placeholder="0.00"
-                            value={prices[item.id]}
-                            onChange={(e) => handlePriceChange(item.id, e.target.value)}
-                            className="w-full h-9 pl-7 pr-3 rounded-lg text-xs bg-white dark:bg-[#1a1d23] border border-gray-300 dark:border-[#2f3441] text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-all font-mono"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Validity and Totals */}
-                  <div className="border-t border-gray-200 dark:border-[#2a2d33] pt-6 space-y-5">
-                    <DatePicker
-                      label="Quote Validity Date"
-                      name="validityDate"
-                      value={validityDate}
-                      onChange={(e) => setValidityDate(e.target.value)}
-                    />
-
-                    <div className="bg-gray-50 dark:bg-[#0f111a] p-5 rounded-2xl border border-gray-200 dark:border-[#2a2d33] space-y-3.5 shadow-inner">
-                      <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wide">
-                        <span>Subtotal:</span>
-                        <span className="font-mono text-gray-900 dark:text-gray-100 text-sm">₹{totals.subtotal.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wide">
-                        <span>GST (18%):</span>
-                        <span className="font-mono text-gray-900 dark:text-gray-100 text-sm">₹{totals.tax.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm font-black text-gray-900 dark:text-white border-t border-dashed border-gray-200 dark:border-[#2a2d33] pt-3.5 mt-2">
-                        <span className="uppercase tracking-wider text-[11px] text-gray-600 dark:text-gray-400 font-bold">Final Quote Amount</span>
-                        <span className="font-mono text-lg font-extrabold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-3.5 py-1.5 rounded-xl border border-purple-500/20 shadow-sm">
-                          ₹{totals.total.toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedInquiry(null)}
-                        className="w-1/3 py-2.5 rounded-lg border border-gray-300 dark:border-[#2a2d33] text-gray-700 dark:text-gray-300 text-xs font-bold hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={!isFormValid || submitting}
-                        className="flex-1 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-lg shadow-purple-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
-                      >
-                        {submitting ? (
-                          <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
-                        ) : (
-                          "Submit Quote"
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </form>
-              </div>
-            )}
           </>
-        ) : (
+        )}
+
+        {activeTab === "orders" && (
           <>
             {/* Left Column: Confirmed Orders List */}
-            <div className={`flex flex-col bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden ${selectedOrder ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
+            <div className="flex flex-col bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden lg:col-span-12">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center">
                 <h2 className="text-sm font-bold text-gray-800 dark:text-white uppercase tracking-wider">
                   Confirmed Orders ({activeOrders.length})
@@ -475,9 +978,7 @@ export default function ClientRFQsPage() {
                   renderRow={(ship, idx) => (
                     <tr
                       key={ship.id}
-                      className={`border-b border-gray-100 dark:border-[#2a2d33] transition-colors hover:bg-gray-55/40 dark:hover:bg-white/[0.01] cursor-pointer ${
-                        selectedOrder?.id === ship.id ? "bg-purple-500/5" : ""
-                      }`}
+                      className="border-b border-gray-100 dark:border-[#2a2d33] transition-colors hover:bg-gray-55/40 dark:hover:bg-white/[0.01] cursor-pointer"
                       onClick={() => setSelectedOrder(ship)}
                     >
                       <td className="px-6 py-4 font-mono font-bold text-sm text-gray-900 dark:text-white">
@@ -504,10 +1005,10 @@ export default function ClientRFQsPage() {
                       </td>
                       <td className="px-6 py-4 text-right flex justify-end gap-2">
                         <Button
-                          variant={selectedOrder?.id === ship.id ? "primary" : "secondary"}
+                          variant="secondary"
                           size="sm"
                         >
-                          {selectedOrder?.id === ship.id ? "Selected" : "View Details"}
+                          View Details
                         </Button>
                       </td>
                     </tr>
@@ -515,167 +1016,102 @@ export default function ClientRFQsPage() {
                 />
               </div>
             </div>
-
-            {/* Right Column: Confirmed Order Details Panel */}
-            {selectedOrder && (
-              <div className="lg:col-span-5 flex flex-col bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden animate-in slide-in-from-right duration-300">
-                <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1f222b]">
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Order Details — {selectedOrder.shipmentNumber}</h3>
-                    <p className="text-[10px] text-gray-500 mt-0.5">{selectedOrder.client?.name}</p>
-                  </div>
-                  <button
-                    onClick={() => setSelectedOrder(null)}
-                    className="text-gray-400 hover:text-gray-200 text-lg font-bold"
-                  >
-                    &times;
-                  </button>
-                </div>
-
-                <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
-                  <div className="p-5 bg-gray-50 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-xl space-y-4">
-                    <div>
-                      <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block">Cargo Details</span>
-                      <span className="text-sm font-bold text-gray-800 dark:text-white mt-1 block">{selectedOrder.cargoDetails || "N/A"}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block">Client Email</span>
-                      <span className="text-sm font-semibold text-gray-600 dark:text-gray-300 mt-1 block">{selectedOrder.client?.email || "N/A"}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block">Destination</span>
-                      <span className="text-sm font-semibold text-gray-600 dark:text-gray-300 mt-1 block">{selectedOrder.client?.address || "N/A"}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block">Order Status</span>
-                      <div className="mt-1.5">
-                        <StatusBadge status={selectedOrder.currentStatus} />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Purchase Order details if available */}
-                  {(selectedOrder.purchaseOrder?.poNumber || selectedOrder.purchaseOrderId) && (
-                    <div className="p-5 bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl space-y-3 shadow-sm mt-4">
-                      <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Linked Purchase Order</h4>
-                      <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-gray-400">
-                        <span>PO ID:</span>
-                        <span className="font-mono text-gray-900 dark:text-gray-100 font-bold">
-                          {selectedOrder.purchaseOrder?.poNumber || selectedOrder.purchaseOrderId}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </>
         )}
-      </div>
 
-      {/* View Quote Drawer */}
-      {viewingQuoteInquiry && (() => {
-        const myQuote = viewingQuoteInquiry.supplierQuotes?.find(
-          (q) => q.supplierId === selectedSupplierId
-        );
-        
-        return (
-          <RightDrawer
-            isOpen={!!viewingQuoteInquiry}
-            title={`Quotation Details — ${viewingQuoteInquiry.inquiry_id}`}
-            onClose={() => setViewingQuoteInquiry(null)}
-          >
-            {myQuote ? (
-              <div className="space-y-6">
-                {/* Meta details */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 dark:bg-[#0c0e12] p-5 rounded-2xl border border-gray-200 dark:border-[#2a2d33]">
-                  <div>
-                    <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block">Client Name</span>
-                    <span className="text-sm font-bold text-gray-800 dark:text-white mt-1 block">{viewingQuoteInquiry.buyer_name}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block">Vessel / Reference</span>
-                    <span className="text-sm font-bold text-gray-800 dark:text-white mt-1 block">{viewingQuoteInquiry.vessel_name || "—"}</span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block">Quote Validity</span>
-                    <span className="text-sm font-bold text-gray-800 dark:text-white mt-1 block">
-                      {myQuote.validityDate ? new Date(myQuote.validityDate).toLocaleDateString("en-GB", {
+        {activeTab === "invoices" && (
+          <div className="lg:col-span-12 bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] overflow-hidden shadow-lg animate-in fade-in duration-300 flex flex-col h-full min-h-[400px]">
+            <div className="overflow-x-auto flex-1">
+              <DataTable
+                columns={[
+                  { key: "invoice_id", label: "Invoice ID" },
+                  { key: "order", label: "Order Ref" },
+                  { key: "cargo", label: "Cargo Details" },
+                  { key: "date", label: "Date" },
+                  { key: "status", label: "Status" },
+                  { key: "actions", label: "Actions", className: "text-right" },
+                ]}
+                data={invoicesData}
+                emptyMessage="No invoices found."
+                renderRow={(inv, idx) => (
+                  <tr key={inv.id} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}>
+                    <td className="px-6 py-4 font-mono font-bold text-gray-900 dark:text-white whitespace-nowrap">
+                      {inv.invoiceNumber}
+                    </td>
+                    <td className="px-6 py-4 font-mono text-gray-600 dark:text-gray-300 whitespace-nowrap">
+                      {inv.shipment?.purchaseOrder?.poNumber || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-medium text-gray-800 dark:text-gray-200" title={inv.cargo}>
+                      <div className="max-w-[200px] overflow-hidden whitespace-nowrap overflow-ellipsis">
+                        {inv.cargo}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm font-mono text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                      {inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString("en-GB", {
                         day: "2-digit",
                         month: "short",
                         year: "numeric"
                       }) : "—"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block">Quoted Date</span>
-                    <span className="text-sm font-bold text-gray-800 dark:text-white mt-1 block">
-                      {new Date(myQuote.createdAt).toLocaleDateString("en-GB", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric"
-                      })}
-                    </span>
-                  </div>
-                </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm whitespace-nowrap">
+                      <StatusBadge status={inv.invoice_status} />
+                    </td>
+                    <td className="px-6 py-4 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-2">
+                        {inv.invoice_status?.toUpperCase() === 'DRAFT' ? (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10"
+                            onClick={async () => {
+                              try {
+                                setGeneratingInvoice(true);
+                                const res = await api.invoices.previewInvoice(inv.id);
+                                if (res?.success && res?.data) {
+                                  setPreviewData(res.data);
+                                }
+                              } catch (e) {
+                                console.error("Failed to preview invoice:", e);
+                                Swal.fire({
+                                  icon: 'error',
+                                  title: 'Preview Failed',
+                                  text: 'Could not load invoice preview.',
+                                  background: '#1a1d23',
+                                  color: '#fff',
+                                  confirmButtonColor: '#8b5cf6'
+                                });
+                              } finally {
+                                setGeneratingInvoice(false);
+                              }
+                            }}
+                          >
+                            Send Invoice
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => handleDownloadPdf(inv.id, inv.invoiceNumber)}
+                          >
+                            Download
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              />
+            </div>
+          </div>
+        )}
+      </div>
 
-                {/* Quoted Items */}
-                <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Quoted Items & Prices</h4>
-                  <div className="space-y-3">
-                    {myQuote.items?.map((item) => {
-                      const origItem = viewingQuoteInquiry.items?.find((i) => i.id === item.inquiryItemId) || {};
-                      
-                      return (
-                        <div key={item.id} className="p-4 bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl flex justify-between items-center shadow-sm">
-                          <div>
-                            <span className="text-sm font-bold text-gray-800 dark:text-white block">{origItem.description || item.inquiryItem?.description || "Product Item"}</span>
-                            <span className="text-[10px] text-gray-500 mt-0.5 block">Quantity: {item.quantity} {origItem.unit || item.inquiryItem?.unit || "pcs"}</span>
-                          </div>
-                          <div className="text-right">
-                            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 block">Unit: ₹{Number(item.unitPrice).toLocaleString()}</span>
-                            <span className="text-sm font-mono font-bold text-purple-600 dark:text-purple-400 block mt-0.5">Total: ₹{Number(item.totalPrice).toLocaleString()}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Quote Summary */}
-                <div className="bg-gray-55/30 dark:bg-[#0f111a] p-5 rounded-2xl border border-gray-200 dark:border-[#2a2d33] space-y-3 shadow-inner mt-4">
-                  <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wide">
-                    <span>Subtotal Quoted:</span>
-                    <span className="font-mono text-gray-900 dark:text-gray-100 text-sm">₹{Number(myQuote.quoteAmount).toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-gray-400 tracking-wide">
-                    <span>GST (18%):</span>
-                    <span className="font-mono text-gray-900 dark:text-gray-100 text-sm">₹{Number(myQuote.taxAmount).toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm font-black text-gray-900 dark:text-white border-t border-dashed border-gray-200 dark:border-[#2a2d33] pt-3.5 mt-2">
-                    <span className="uppercase tracking-wider text-[11px] text-gray-600 dark:text-gray-400 font-bold">Final Quoted Amount</span>
-                    <span className="font-mono text-lg font-extrabold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-3.5 py-1.5 rounded-xl border border-purple-500/20">
-                      ₹{Number(myQuote.finalAmount).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="pt-4 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setViewingQuoteInquiry(null)}
-                    className="px-6 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-xs transition-all outline-none border-none"
-                  >
-                    Close Details
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500 italic">No quote found.</div>
-            )}
-          </RightDrawer>
-        );
-      })()}
+      <InvoiceReviewModal 
+        isOpen={!!previewData}
+        previewData={previewData}
+        onClose={() => setPreviewData(null)}
+        onSent={handleInvoiceSent}
+      />
     </div>
   );
 }

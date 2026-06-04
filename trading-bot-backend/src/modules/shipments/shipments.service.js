@@ -8,7 +8,15 @@ const getAllShipments = async () => {
     where: { deletedAt: null },
     include: {
       inquiry: true,
-      purchaseOrder: true,
+      purchaseOrder: {
+        include: {
+          items: {
+            include: {
+              product: true
+            }
+          }
+        }
+      },
       supplier: true,
       client: true
     },
@@ -24,7 +32,15 @@ const getShipmentById = async (id) => {
     where: { id, deletedAt: null },
     include: {
       inquiry: true,
-      purchaseOrder: true,
+      purchaseOrder: {
+        include: {
+          items: {
+            include: {
+              product: true
+            }
+          }
+        }
+      },
       supplier: true,
       client: true
     }

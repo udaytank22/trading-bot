@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
+import { api } from '../../../services/api';
 import { formatINR } from '@services/marginEngine';
-import { generatePOPDF } from "../utils/poPdfGenerator";
 
-export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
+export default function InvoiceReviewModal({ isOpen, onClose, previewData, onSent }) {
   const [isEditing, setIsEditing] = useState(false);
   const [sendState, setSendState] = useState("idle"); // 'idle' | 'sending' | 'success'
   const [showPdf, setShowPdf] = useState(false);
   const [pdfUrl, setPdfUrl] = useState("");
   const [pdfSize, setPdfSize] = useState("150 KB");
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
 
   useEffect(() => {
     if (isOpen) {
@@ -18,45 +20,64 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
   }, [isOpen]);
 
   useEffect(() => {
-    if (isOpen && po) {
+    let blobUrl = "";
+    if (isOpen && previewData) {
+      setSubject(previewData.defaultEmailSubject || '');
+      setBody(previewData.defaultEmailBody || '');
+      
       try {
-        const doc = generatePOPDF(po);
-        const blob = doc.output('blob');
-        const url = URL.createObjectURL(blob);
-        setPdfUrl(url);
+        const byteCharacters = atob(previewData.pdfBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        blobUrl = URL.createObjectURL(blob);
+        setPdfUrl(blobUrl);
 
-        const sizeInKB = Math.round(blob.size / 1024);
+        // Calculate approximate size from base64 string length
+        const sizeInBytes = previewData.pdfBase64.length * 0.75;
+        const sizeInKB = Math.round(sizeInBytes / 1024);
         setPdfSize(`${sizeInKB} KB`);
-
-        return () => {
-          URL.revokeObjectURL(url);
-          setPdfUrl("");
-        };
       } catch (err) {
-        console.error("Failed to generate PO PDF:", err);
+        console.error("Failed to load PDF:", err);
       }
     }
-  }, [isOpen, po]);
-
-  const handleSend = () => {
-    setSendState("sending");
     
-    let pdfBase64 = null;
-    try {
-      const doc = generatePOPDF(po);
-      pdfBase64 = doc.output('datauristring');
-    } catch (err) {
-      console.error("Failed to generate base64 PDF for saving:", err);
-    }
+    return () => {
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl);
+      }
+    };
+  }, [isOpen, previewData]);
 
-    setTimeout(() => {
-      if (onStatusUpdate) onStatusUpdate(po.id, "ORDERED", pdfBase64);
-      setSendState("success");
-      setTimeout(onClose, 2500);
-    }, 1500);
+  const handleSend = async () => {
+    setSendState("sending");
+    try {
+      const res = await api.invoices.sendInvoiceEmail(previewData.invoice.id, { subject, body });
+      if (res.success) {
+        if (res.data?.emailPreviewUrl) {
+          console.log("Email Preview URL:", res.data.emailPreviewUrl);
+        }
+        setSendState("success");
+        setTimeout(() => {
+          onSent();
+          onClose();
+        }, 2500);
+      } else {
+        setSendState("idle");
+      }
+    } catch (e) {
+      console.error("Failed to send invoice:", e);
+      setSendState("idle");
+    }
   };
 
-  if (!isOpen || !po) return null;
+  if (!isOpen || !previewData) return null;
+
+  const invoice = previewData.invoice;
+  const client = previewData.client || invoice.client || {};
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
@@ -70,7 +91,6 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
 
       {/* Modal Container */}
       <div className="relative w-full max-w-5xl h-full bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl shadow-2xl flex flex-col z-10 animate-in zoom-in-95 duration-200 overflow-hidden">
-        {/* ── SUCCESS STATE ── */}
         {sendState === "success" ? (
           <div className="flex flex-col items-center justify-center p-16 h-full text-center">
             <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mb-6">
@@ -92,7 +112,7 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
               Email Sent Successfully!
             </h2>
             <p className="text-gray-400">
-              Status updated to Ordered for {po.po_id}
+              Invoice {invoice.invoiceNumber} has been sent to {client.name}
             </p>
           </div>
         ) : /* ── PDF VIEWER PANEL ── */
@@ -141,7 +161,7 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
                 </div>
                 <a
                   href={pdfUrl}
-                  download={`${po.po_id}_Document.pdf`}
+                  download={`Invoice_${invoice.invoiceNumber}.pdf`}
                   className="flex items-center gap-1.5 text-xs font-bold text-purple-500 bg-purple-500/10 px-2.5 py-1 rounded-full border border-purple-500/20 hover:bg-purple-500/20 transition-colors"
                 >
                   <svg
@@ -161,14 +181,31 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
                 </a>
               </div>
             </div>
-            {/* Iframe */}
+            {/* PDF Viewer */}
             <div className="flex-1 overflow-hidden bg-gray-200 dark:bg-[#0c0e12]">
-              <iframe
-                src={pdfUrl}
-                title="PO PDF Preview"
-                className="w-full h-full border-0"
-                style={{ minHeight: "500px" }}
-              />
+              {pdfUrl ? (
+                <object
+                  data={pdfUrl}
+                  type="application/pdf"
+                  className="w-full h-full border-0"
+                  style={{ minHeight: "500px" }}
+                >
+                  <div className="flex flex-col items-center justify-center h-full text-gray-500 gap-3">
+                    <p>Your browser doesn't support built-in PDF viewing.</p>
+                    <a
+                      href={pdfUrl}
+                      download={`Invoice_${invoice.invoiceNumber}.pdf`}
+                      className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-bold"
+                    >
+                      Download PDF
+                    </a>
+                  </div>
+                </object>
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  Loading preview...
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -178,10 +215,10 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
             <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
               <div>
                 <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
-                  Send Purchase Order by Email
+                  Send Invoice by Email
                 </h2>
                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">
-                  The PO will be attached as a PDF document
+                  The Invoice will be attached as a PDF document
                 </p>
               </div>
               <button
@@ -200,82 +237,77 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
               >
                 {/* To / Subject */}
                 <div className="space-y-2 mb-6 pb-4 border-b border-gray-100">
-                  <div className="flex text-sm">
-                    <span className="w-20 text-gray-400 font-bold uppercase text-[10px] py-1">
+                  <div className="flex items-center text-sm">
+                        <span className="w-20 text-gray-400 font-bold uppercase text-[10px] py-1">
                       To:
                     </span>
-                    <span className="font-bold">
-                      {po.customer} &lt;
-                      {po.customer.toLowerCase().replace(/\s/g, ".")}
-                      @trademind.com&gt;
-                    </span>
+                    {isEditing ? (
+                      <span className="font-bold">
+                        {client.name} &lt;{client.email}&gt;
+                      </span>
+                    ) : (
+                      <span className="font-bold">
+                        {client.name} &lt;{client.email || 'No email provided'}&gt;
+                      </span>
+                    )}
                   </div>
-                  <div className="flex text-sm">
-                    <span className="w-20 text-gray-400 font-bold uppercase text-[10px] py-1">
+                  <div className="flex items-center text-sm">
+                        <span className="w-20 text-gray-400 font-bold uppercase text-[10px] py-1">
                       Subject:
                     </span>
-                    <span className="font-bold">
-                      Official Purchase Order - {po.po_id}
-                    </span>
+                    {isEditing ? (
+                      <input 
+                        type="text" 
+                        value={subject} 
+                        onChange={e => setSubject(e.target.value)}
+                        className="flex-1 border-b border-gray-200 focus:border-purple-500 outline-none px-1 py-1 font-bold text-gray-800"
+                      />
+                    ) : (
+                      <span className="font-bold">{subject}</span>
+                    )}
                   </div>
                 </div>
 
                 {/* Body */}
-                <div
-                  className="text-[14px] leading-relaxed space-y-4"
-                  contentEditable={isEditing}
-                  suppressContentEditableWarning
-                >
-                  <p>Dear {po.customer},</p>
-                  <p>
-                    We are pleased to place the following Purchase Order for the
-                    upcoming requirements on vessel <strong>{po.vessel}</strong>
-                    .
-                  </p>
-                  <p>
-                    <strong>
-                      Please find the official Purchase Order document attached
-                      to this email as a PDF.
-                    </strong>
-                  </p>
-                  <div className="py-3">
-                    <p className="mb-3 font-semibold text-gray-700">Summary of items included in this order:</p>
-                    <div className="overflow-hidden border border-gray-200 rounded-xl bg-gray-50/20 shadow-inner">
-                      <table className="w-full text-left border-collapse text-[12px]">
-                        <thead>
-                          <tr className="bg-gray-50 border-b border-gray-200 text-gray-500 font-bold uppercase tracking-wider text-[9px]">
-                            <th className="px-4 py-2">Product Description</th>
-                            <th className="px-4 py-2 text-center w-24">Quantity</th>
-                            <th className="px-4 py-2 text-right w-28">Unit Price</th>
-                            <th className="px-4 py-2 text-right w-28">Total Price</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-150 bg-white">
-                          {po.products.map((p, i) => (
-                            <tr key={i} className="hover:bg-gray-50/40 transition-colors">
-                              <td className="px-4 py-2 font-medium text-gray-900">{p.product_name}</td>
-                              <td className="px-4 py-2 text-center text-gray-600 font-mono">{p.quantity} PCS</td>
-                              <td className="px-4 py-2 text-right text-gray-600 font-mono">{formatINR(p.unit_price || p.my_unit_price || 0)}</td>
-                              <td className="px-4 py-2 text-right font-semibold text-purple-600 font-mono">{formatINR(p.total_price || 0)}</td>
+                {isEditing ? (
+                  <textarea 
+                    value={body} 
+                    onChange={e => setBody(e.target.value)}
+                    className="w-full h-48 border border-gray-200 focus:border-purple-500 rounded-lg outline-none p-3 text-sm text-gray-800 resize-none"
+                  ></textarea>
+                ) : (
+                  <div className="text-[14px] leading-relaxed space-y-4">
+                    {body.split('\n').map((paragraph, idx) => (
+                      <p key={idx}>{paragraph}</p>
+                    ))}
+                    
+                    <div className="py-3">
+                      <p className="mb-3 font-semibold text-gray-700">Summary of items included in this invoice:</p>
+                      <div className="overflow-hidden border border-gray-200 rounded-xl bg-gray-50/20 shadow-inner">
+                        <table className="w-full text-left border-collapse text-[12px]">
+                          <thead>
+                            <tr className="bg-gray-50 border-b border-gray-200 text-gray-500 font-bold uppercase tracking-wider text-[9px]">
+                              <th className="px-4 py-2">Product Description</th>
+                              <th className="px-4 py-2 text-center w-24">Quantity</th>
+                              <th className="px-4 py-2 text-right w-28">Unit Price</th>
+                              <th className="px-4 py-2 text-right w-28">Total Price</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody className="divide-y divide-gray-150 bg-white">
+                            {invoice.items && invoice.items.map((p, i) => (
+                              <tr key={i} className="hover:bg-gray-50/40 transition-colors">
+                                <td className="px-4 py-2 font-medium text-gray-900">{p.description}</td>
+                                <td className="px-4 py-2 text-center text-gray-600 font-mono">{p.quantity}</td>
+                                <td className="px-4 py-2 text-right text-gray-600 font-mono">{formatINR(p.unitPrice || 0)}</td>
+                                <td className="px-4 py-2 text-right font-semibold text-purple-600 font-mono">{formatINR(p.totalPrice || 0)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   </div>
-                  <p>
-                    Please acknowledge the receipt of this order and confirm the
-                    estimated delivery timeline.
-                  </p>
-                  <div className="pt-6">
-                    <p className="font-bold text-gray-900">
-                      TradeMind Purchasing Team
-                    </p>
-                    <p className="text-gray-500 text-xs">
-                      contact@trademind.com | +91 98765 43210
-                    </p>
-                  </div>
-                </div>
+                )}
 
                 {/* ── PDF Attachment Card ── */}
                 <div className="mt-8 pt-6 border-t border-gray-100">
@@ -308,7 +340,7 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
                     {/* File info */}
                     <div className="flex-1 min-w-0 pr-2">
                       <p className="text-[12px] font-bold text-gray-700 group-hover:text-purple-600 transition-colors">
-                        {po.po_id}_Document.pdf
+                        Invoice_{invoice.invoiceNumber}.pdf
                       </p>
                       <p className="text-[10px] text-gray-500 uppercase tracking-widest">
                         {pdfSize} • PDF Document
@@ -344,7 +376,7 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
                       {/* Download button — stops propagation so card click isn't fired */}
                       <a
                         href={pdfUrl}
-                        download={`${po.po_id}_Document.pdf`}
+                        download={`Invoice_${invoice.invoiceNumber}.pdf`}
                         onClick={(e) => e.stopPropagation()}
                         title="Download PDF"
                         className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors"
@@ -387,7 +419,7 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
                       d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                     />
                   </svg>
-                  {isEditing ? "Save Draft" : "Edit Email Body"}
+                  {isEditing ? "Save Draft" : "Edit Email"}
                 </button>
               </div>
             </div>
@@ -429,7 +461,7 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       />
                     </svg>
-                    Sending PDF PO...
+                    Sending Invoice...
                   </>
                 ) : (
                   <>

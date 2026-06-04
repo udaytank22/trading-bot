@@ -3,34 +3,42 @@ import { DataTable, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
 import { useData } from '@context';
 
 const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
-  const { suppliersData } = useData();
+  const { suppliersData, productsData } = useData();
   const [selectedSupplierId, setSelectedSupplierId] = useState("");
   const [selectedProductNames, setSelectedProductNames] = useState([]);
   const [stagedRFQs, setStagedRFQs] = useState([]);
   const [productSearch, setProductSearch] = useState("");
+
+  const getProductCategory = (productName) => {
+    const prod = (productsData || []).find(p => p.name.toLowerCase() === productName.toLowerCase());
+    return prod ? prod.category : 'General';
+  };
 
   React.useEffect(() => {
     if (deal?.selected_suppliers) {
       const initialStaged = deal.selected_suppliers.map(s => ({
         supplierId: s.id,
         supplierName: s.name,
-        products: deal.products.filter(p => 
-          (s.products || []).some(sp => sp.toLowerCase() === p.product_name.toLowerCase())
-        ).map(p => p.product_name)
+        products: deal.products.filter(p => {
+          const productCategory = getProductCategory(p.product_name);
+          return (s.categories || []).some(cat => cat.toLowerCase() === (productCategory || "").toLowerCase());
+        }).map(p => p.product_name)
       })).filter(rfq => rfq.products.length > 0); // Only stage if there are matches
       
       setStagedRFQs(initialStaged);
     }
-  }, [deal?.selected_suppliers]);
+  }, [deal?.selected_suppliers, productsData]);
 
   const filteredSuppliers = useMemo(() => {
     if (!deal || !deal.products) return [];
-    const inquiryProducts = deal.products.map((p) => p.product_name.toLowerCase());
+    const inquiryCategories = deal.products.map((p) => getProductCategory(p.product_name).toLowerCase());
+    const stagedIds = stagedRFQs.map((r) => r.supplierId);
 
     return suppliersData.filter((supplier) =>
-      (supplier.products || []).some((sp) => inquiryProducts.includes(sp.toLowerCase()))
+      !stagedIds.includes(supplier.id) &&
+      (supplier.categories || []).some((cat) => inquiryCategories.includes(cat.toLowerCase()))
     );
-  }, [deal, suppliersData]);
+  }, [deal, suppliersData, productsData, stagedRFQs]);
 
   const filteredProducts = useMemo(() => {
     if (!deal?.products) return [];
@@ -76,21 +84,14 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
 
   const content = (
     <div className={`${isPageMode ? 'w-full bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden' : 'bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden'} animate-in zoom-in-95 duration-200`}>
-      <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
-        <div className="flex items-center gap-4">
-          {isPageMode && (
-            <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-lg text-gray-400 transition-colors">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </button>
-          )}
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Prepare RFQs</h2>
-        </div>
-        {!isPageMode && (
+      {!isPageMode && (
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
+          <div className="flex items-center gap-4">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Prepare RFQs</h2>
+          </div>
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl leading-none">&times;</button>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="p-6 space-y-8">
         <div className="p-6 bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-2xl space-y-6">
@@ -100,7 +101,7 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
               <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">
                 1. Select Party (Supplier)
               </label>
-              <div className="grid grid-cols-1 gap-2 max-h-[300px] overflow-y-auto custom-scrollbar p-1">
+              <div className={`grid grid-cols-1 gap-2 p-1 ${isPageMode ? "" : "max-h-[300px] overflow-y-auto custom-scrollbar"}`}>
                 {filteredSuppliers.map((s) => (
                   <button
                     key={s.id}
@@ -131,7 +132,7 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
                   className="bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-3 py-1 text-[10px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 w-32"
                 />
               </div>
-              <div className="flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl max-h-[300px] overflow-y-auto custom-scrollbar">
+              <div className={`flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl ${isPageMode ? "" : "max-h-[300px] overflow-y-auto custom-scrollbar"}`}>
                 {filteredProducts.map((p) => (
                   <button
                     key={p.product_name}

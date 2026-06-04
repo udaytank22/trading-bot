@@ -6,6 +6,7 @@ const prisma = require('../../prisma/client');
 const getAllClients = async () => {
   return await prisma.client.findMany({
     where: { deletedAt: null },
+    include: { vessels: true },
     orderBy: { name: 'asc' }
   });
 };
@@ -15,7 +16,8 @@ const getAllClients = async () => {
  */
 const getClientById = async (id) => {
   return await prisma.client.findFirst({
-    where: { id, deletedAt: null }
+    where: { id, deletedAt: null },
+    include: { vessels: true }
   });
 };
 
@@ -31,8 +33,17 @@ const createClient = async (data, creatorId) => {
       company: data.company || null,
       address: data.address || null,
       createdById: creatorId,
-      isActive: data.isActive !== undefined ? data.isActive : true
-    }
+      isActive: data.isActive !== undefined ? data.isActive : true,
+      ...(data.vessels && data.vessels.length > 0 && {
+        vessels: {
+          create: data.vessels.map(v => ({
+            name: v.name,
+            imoNumber: v.imoNumber || null
+          }))
+        }
+      })
+    },
+    include: { vessels: true }
   });
 };
 
@@ -40,17 +51,34 @@ const createClient = async (data, creatorId) => {
  * Update client
  */
 const updateClient = async (id, data, updaterId) => {
-  return await prisma.client.update({
-    where: { id },
-    data: {
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      company: data.company,
-      address: data.address,
-      isActive: data.isActive,
-      updatedById: updaterId
+  return await prisma.$transaction(async (tx) => {
+    if (data.vessels) {
+      await tx.clientVessel.deleteMany({
+        where: { clientId: id }
+      });
     }
+
+    return await tx.client.update({
+      where: { id },
+      data: {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        company: data.company,
+        address: data.address,
+        isActive: data.isActive,
+        updatedById: updaterId,
+        ...(data.vessels && data.vessels.length > 0 && {
+          vessels: {
+            create: data.vessels.map(v => ({
+              name: v.name,
+              imoNumber: v.imoNumber || null
+            }))
+          }
+        })
+      },
+      include: { vessels: true }
+    });
   });
 };
 

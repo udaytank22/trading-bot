@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export function Field({ label, children }) {
   return (
@@ -11,17 +11,21 @@ export function Field({ label, children }) {
 
 export const inputCls = 'w-full bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-[36px] px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-all shadow-sm focus:ring-1 focus:ring-purple-500/50';
 
-export function RightDrawer({ isOpen, title, onClose, children }) {
+export function RightDrawer({ isOpen, title, onClose, children, isFullScreen }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className={`fixed inset-0 z-[100] flex items-center justify-center ${isFullScreen ? "" : "p-4"}`}>
       <div
         className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-3xl max-h-[85vh] bg-white dark:bg-[#1a1d23] shadow-2xl flex flex-col rounded-2xl overflow-hidden border border-gray-200 dark:border-[#2a2d33] animate-fade-in">
+      <div className={`relative w-full bg-white dark:bg-[#1a1d23] shadow-2xl flex flex-col overflow-hidden border border-gray-200 dark:border-[#2a2d33] animate-fade-in ${
+        isFullScreen 
+          ? "h-full max-w-full" 
+          : "max-w-3xl max-h-[85vh] rounded-2xl"
+      }`}>
         <div className="px-6 py-4 border-b border-gray-100 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
           <h3 className="font-bold text-gray-900 dark:text-white text-lg">
             {title}
@@ -69,6 +73,7 @@ export function CenterModal({ isOpen, title, onClose, children }) {
 
 export function ViewDetails({ item, onClose }) {
   const skipFields = ['id', 'updatedAt', 'deletedAt', 'createdById', 'updatedById'];
+  const [previewFile, setPreviewFile] = useState(null);
 
   return (
     <div className="flex flex-col h-full">
@@ -92,8 +97,21 @@ export function ViewDetails({ item, onClose }) {
                 {Array.isArray(value) ? (
                   value.length > 0 ? (
                     value.map((v, i) => (
-                      <span key={i} className="px-2 py-0.5 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded text-xs font-semibold border border-purple-500/10">
-                        {v}
+                      <span key={i} className="px-2 py-0.5 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded text-xs font-semibold border border-purple-500/10 flex items-center gap-1">
+                        {typeof v === 'object' && v !== null ? (
+                          v.file ? (
+                            <button type="button" onClick={() => setPreviewFile(v.file)} className="hover:underline flex items-center gap-1 text-purple-700 dark:text-purple-300">
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                              {v.name || 'Document'}
+                            </button>
+                          ) : (
+                            v.name || 'Object Item'
+                          )
+                        ) : (
+                          v
+                        )}
                       </span>
                     ))
                   ) : (
@@ -107,6 +125,19 @@ export function ViewDetails({ item, onClose }) {
           );
         })}
       </div>
+      <CenterModal isOpen={!!previewFile} title="Document Preview" onClose={() => setPreviewFile(null)}>
+        {previewFile && (
+          <div className="flex justify-center items-center w-full bg-gray-50 dark:bg-[#0f1117] rounded-lg p-2 min-h-[50vh]">
+            {previewFile.startsWith('data:image/') ? (
+              <img src={previewFile} alt="Preview" className="max-w-full max-h-[75vh] object-contain rounded" />
+            ) : previewFile.startsWith('data:application/pdf') ? (
+              <iframe src={previewFile} className="w-full h-[75vh] rounded border-0" title="PDF Preview" />
+            ) : (
+              <iframe src={previewFile} className="w-full h-[75vh] rounded border-0 bg-white" title="Document Preview" />
+            )}
+          </div>
+        )}
+      </CenterModal>
     </div>
   );
 }

@@ -16,11 +16,11 @@ import { api } from '@services/api';
  */
 
 import React, { useState, useMemo, useContext, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { useToast } from '@hooks/useToast';
 import AddPurchaseOrderModal from './modals/AddPurchaseOrderModal';
 import POTable from './components/POTable';
-import PODrawer from './drawers/PODrawer';
 import POEmailModal from './modals/POEmailModal';
 import { Toast, PageToolbar, Pagination } from '@components/ui';
 
@@ -54,11 +54,11 @@ function EmptyState() {
 export default function PurchaseOrdersPage() {
   const { purchaseOrdersData, refreshAll } = useData();
   const { toast, showToast } = useToast();
+  const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isViewDrawerOpen, setIsViewDrawerOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [selectedPO, setSelectedPO] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -118,12 +118,16 @@ export default function PurchaseOrdersPage() {
     }
   };
 
-  const updatePOStatus = useCallback(async (id, status) => {
+  const updatePOStatus = useCallback(async (id, status, attachment) => {
     try {
-      const res = await api.purchaseOrders.updatePurchaseOrder(id, { status });
+      const payload = { status };
+      if (attachment) {
+        payload.attachment = attachment;
+      }
+      const res = await api.purchaseOrders.updatePurchaseOrder(id, payload);
       if (res.success) {
         refreshAll();
-        setSelectedPO(prev => prev?.id === id ? { ...prev, status } : prev);
+        setSelectedPO(prev => prev?.id === id ? { ...prev, status, ...(attachment ? { attachment } : {}) } : prev);
       }
     } catch (e) {
       console.error("Failed to update PO status:", e);
@@ -163,8 +167,7 @@ export default function PurchaseOrdersPage() {
           <POTable
             items={currentItems}
             onView={(po) => {
-              setSelectedPO(po);
-              setIsViewDrawerOpen(true);
+              navigate(`/purchase-orders/${po.id}`);
             }}
             onOrder={(po) => {
               setSelectedPO(po);
@@ -196,11 +199,7 @@ export default function PurchaseOrdersPage() {
         onSubmit={handleAddPO}
       />
 
-      <PODrawer
-        po={selectedPO}
-        isOpen={isViewDrawerOpen}
-        onClose={() => setIsViewDrawerOpen(false)}
-      />
+
 
       <POEmailModal
         po={selectedPO}

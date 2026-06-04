@@ -18,6 +18,9 @@ const TodoPage = React.lazy(() => import('@features/todo/TodoPage'));
 const SettingsPage = React.lazy(() => import('@features/settings/SettingsPage'));
 const ProfilePage = React.lazy(() => import('@features/profile/ProfilePage'));
 const ClientRFQsPage = React.lazy(() => import('@features/client-portal/ClientRFQsPage'));
+const InquiryDetailsPage = React.lazy(() => import('@features/inquiries/InquiryDetailsPage'));
+const PODetailsPage = React.lazy(() => import('@features/purchase-orders/PODetailsPage'));
+const SupplyDetailsPage = React.lazy(() => import('@features/supply/SupplyDetailsPage'));
 
 /** Public routes (no auth required) */
 export const PUBLIC_ROUTES = [
@@ -28,9 +31,12 @@ export const PUBLIC_ROUTES = [
 export const PROTECTED_ROUTES = [
   { path: '/', element: <DashboardPage /> },
   { path: '/inquiries', element: <InquiriesPage /> },
+  { path: '/inquiries/:id', element: <InquiryDetailsPage /> },
   { path: '/client-rfqs', element: <ClientRFQsPage /> },
   { path: '/supply', element: <SupplyPage /> },
+  { path: '/supply/:id', element: <SupplyDetailsPage /> },
   { path: '/purchase-orders', element: <PurchaseOrdersPage /> },
+  { path: '/purchase-orders/:id', element: <PODetailsPage /> },
   { path: '/invoices', element: <InvoicesPage /> },
   { path: '/employees', element: <EmployeesPage /> },
   { path: '/accounts', element: <AccountPage /> },

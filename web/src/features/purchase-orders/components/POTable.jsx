@@ -115,14 +115,16 @@ const POTable = ({ items, onView, onOrder }) => {
           >
             View
           </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            className="border-purple-500/40 text-purple-400 hover:bg-purple-500/10"
-            onClick={() => onOrder(po)}
-          >
-            Order
-          </Button>
+          {po.status !== "ORDERED" && (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="border-purple-500/40 text-purple-400 hover:bg-purple-500/10"
+              onClick={() => onOrder(po)}
+            >
+              Order
+            </Button>
+          )}
         </div>
       </td>
     </tr>

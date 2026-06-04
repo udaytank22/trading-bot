@@ -20,7 +20,27 @@ export const updateInvoice = async (id, data) => {
   return response.data;
 };
 
+export const downloadPdf = async (id) => {
+  const response = await apiClient.get(`/invoices/${id}/pdf`, { responseType: 'blob' });
+  return response.data;
+};
+
+export const previewInvoice = async (id) => {
+  const response = await apiClient.get(`/invoices/${id}/preview`);
+  return response.data;
+};
+
 export const deleteInvoice = async (id) => {
   const response = await apiClient.delete(`/invoices/${id}`);
+  return response.data;
+};
+
+export const generateInvoiceFromShipment = async (shipmentId) => {
+  const response = await apiClient.post(`/invoices/generate/shipment/${shipmentId}`);
+  return response.data;
+};
+
+export const sendInvoiceEmail = async (id, data) => {
+  const response = await apiClient.post(`/invoices/${id}/send`, data);
   return response.data;
 };

@@ -64,7 +64,8 @@ const normalizeInquiry = (inq) => {
         quantity: item.quantity,
         unit: item.unit || 'MT',
         specs: item.specs || '',
-        seller_unit_price: quoteItem ? parseFloat(quoteItem.unitPrice) : 0
+        seller_unit_price: quoteItem ? parseFloat(quoteItem.unitPrice) : 0,
+        category: item.product ? item.product.category : null
       };
     }) : []
   };

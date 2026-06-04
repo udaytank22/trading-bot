@@ -4,6 +4,7 @@ import AccountPage from '@features/accounts/AccountPage';
 import ProductsTab from './components/ProductsTab';
 import ClientsTab from './components/ClientsTab';
 import VendorsTab from './components/VendorsTab';
+import VehiclesTab from './components/VehiclesTab';
 import DocumentsTab from './components/DocumentsTab';
 import ReportingTab from './components/ReportingTab';
 import RolePermissionsTab from './components/RolePermissionsTab';
@@ -16,6 +17,7 @@ export default function SettingsPage() {
     { id: 'products', label: 'Products' },
     { id: 'clients', label: 'Clients' },
     { id: 'vendors', label: 'Vendors' },
+    { id: 'vehicles', label: 'Vehicles' },
     { id: 'documents', label: 'Documents' },
     { id: 'reporting', label: 'Reporting' },
     { id: 'accounts', label: 'Accounts' },
@@ -51,6 +53,7 @@ export default function SettingsPage() {
         {activeTab === 'products' && <ProductsTab />}
         {activeTab === 'clients' && <ClientsTab />}
         {activeTab === 'vendors' && <VendorsTab />}
+        {activeTab === 'vehicles' && <VehiclesTab />}
         {activeTab === 'documents' && <DocumentsTab />}
         {activeTab === 'reporting' && <ReportingTab />}
         {activeTab === 'accounts' && <AccountPage />}

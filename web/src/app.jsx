@@ -1,8 +1,8 @@
 import React, { Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, UIProvider, DataProvider, useAuth } from '@context';
-import AppShell                from '@components/layout/AppShell';
-import PageLoader              from '@components/common/PageLoader';
+import AppShell from '@components/layout/AppShell';
+import PageLoader from '@components/common/PageLoader';
 import { PUBLIC_ROUTES, PROTECTED_ROUTES } from '@config/routes';
 
 function ProtectedApp() {

@@ -5,11 +5,93 @@ import { calculateMargin, formatINR } from '@services/marginEngine';
 import { CONFIG } from '@/config.js';
 import { StatusBadge, DataTable, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
 
-export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
+export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate, onAction, currentUser }) {
   const [activeTab, setActiveTab] = useState("RFQ");
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [localMyQuote, setLocalMyQuote] = useState(null); // Used to store calculated quote before sending
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  const renderActionButton = () => {
+    if (!onAction || !currentUser) return null;
+    const role = currentUser.role || "Admin";
+    const status = deal.status;
+
+    const map = {
+      PENDING: {
+        label: "Check Stock",
+        color: "bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20 dark:shadow-amber-500/10",
+      },
+      RFQ_READY: {
+        label: "Create RFQ",
+        color: "bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/20 dark:shadow-blue-500/10",
+      },
+      CLIENT_QUOTING: {
+        label: "Quote Prices",
+        color: "bg-cyan-500 hover:bg-cyan-600 text-white shadow-lg shadow-cyan-500/20 dark:shadow-cyan-500/10",
+      },
+      TL_REVIEW: {
+        label: "Set Margin",
+        color: "bg-rose-500 hover:bg-rose-600 text-white shadow-lg shadow-rose-500/20 dark:shadow-rose-500/10",
+      },
+      ADMIN_APPROVAL: {
+        label: "Approve",
+        color: "bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20 dark:shadow-orange-500/10",
+      },
+      EMPLOYEE_VERIFY: {
+        label: "Verify & Quote",
+        color: "bg-sky-500 hover:bg-sky-600 text-white shadow-lg shadow-sky-500/20 dark:shadow-sky-500/10",
+      },
+      CLIENT_FINAL_APPROVAL: {
+        label: "Final Decision",
+        color: "bg-violet-500 hover:bg-violet-600 text-white shadow-lg shadow-violet-500/20 dark:shadow-violet-500/10",
+      },
+      QUOTE_SENT: {
+        label: "Confirm Deal",
+        color: "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 dark:shadow-emerald-500/10",
+      },
+    };
+
+    const cfg = map[status];
+    if (!cfg) return null;
+
+    const isRoleAllowed = (status, roleName) => {
+      const rNameLower = roleName?.toLowerCase();
+      if (rNameLower === "admin" || rNameLower === "super admin" || rNameLower === "administrator") return true;
+      if (rNameLower === "viewer") return false;
+
+      switch (status) {
+        case "PENDING":
+        case "RFQ_READY":
+        case "EMPLOYEE_VERIFY":
+        case "QUOTE_SENT":
+          return rNameLower === "employee" || rNameLower === "team lead";
+        case "TL_REVIEW":
+          return rNameLower === "team lead";
+        case "CLIENT_QUOTING":
+        case "CLIENT_FINAL_APPROVAL":
+          return rNameLower === "client";
+        case "ADMIN_APPROVAL":
+          return false;
+        default:
+          return false;
+      }
+    };
+
+    const isAllowed = isRoleAllowed(status, role);
+    if (!isAllowed) return null;
+
+    return (
+      <button
+        onClick={() => {
+          onAction(deal, status);
+          onClose();
+        }}
+        className={`px-4 py-2 rounded-xl text-xs uppercase tracking-wider font-bold transition-all duration-200 active:scale-[0.98] ${cfg.color}`}
+      >
+        {cfg.label}
+      </button>
+    );
+  };
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -198,393 +280,317 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate }) {
   return (
     <>
       <div
-        className={`fixed inset-0 bg-black/60 z-40 transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-        onClick={handleBackdropClick}
-      />
-
-      <div
-        className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isOpen ? "pointer-events-auto" : "pointer-events-none"}`}
+        className={`fixed inset-0 z-50 bg-[#f9fafb] dark:bg-[#0c0e12] transform transition-all duration-300 ease-in-out overflow-y-auto ${isOpen ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-4 pointer-events-none"}`}
       >
-        <div
-          className={`relative w-full max-w-5xl h-full max-h-[90vh] bg-white dark:bg-[#1e2028] border border-gray-200 dark:border-[#2a2d36] z-50 transform transition-all duration-300 ease-in-out overflow-y-auto shadow-2xl rounded-xl ${isOpen ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}
-        >
+        <div className="w-full min-h-screen">
           {deal && (
-            <div className="flex flex-col flex-1 h-fit">
-              {/* SECTION 1: Deal Header */}
-              <div className="p-6 relative">
-                <button
-                  onClick={onClose}
-                  className="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+            <div className="flex flex-col max-w-7xl mx-auto w-full py-8 px-4 sm:px-6 lg:px-8">
+              
+              {/* TOP HEADER NAVIGATION BAR */}
+              <div className="flex items-center justify-between border-b border-gray-200 dark:border-[#2a2d36] pb-4 mb-6">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={onClose}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white hover:bg-gray-50 dark:bg-[#1e2028] dark:hover:bg-[#242830] text-gray-700 dark:text-gray-300 font-bold text-xs uppercase tracking-wider border border-gray-200 dark:border-[#2a2d36] transition-all duration-200 shadow-sm"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-
-                <div className="flex items-center justify-between mt-1 mb-3.5 pr-8">
-                  <div className="font-mono text-gray-400 text-lg tracking-wide">
-                    {deal.inquiry_id}
-                  </div>
-                  <StatusBadge status={deal.status} />
-                </div>
-                <div className="text-gray-900 dark:text-white text-[20px] font-bold leading-tight tracking-wide">
-                  {deal.buyer_name}
-                </div>
-                <div className="text-gray-400 text-[14px] mt-1 tracking-wide">
-                  {deal.buyer_email}
-                </div>
-
-                {/* Workflow Visualization */}
-                {getWorkflowSteps(deal.status)}
-
-                <div className="text-gray-500 text-[13px] mt-1.5 font-medium">
-                  {new Date(deal.date_received).toLocaleString("en-US", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}
-                </div>
-              </div>
-
-              <div className="h-[1px] bg-gray-200 dark:bg-[#2a2d36] w-full" />
-
-              {/* SECTION 2: Products Requested */}
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">
-                    Products Requested ({deal.products.length})
-                  </div>
-                  {deal.products.length > 4 && (
-                    <button
-                      onClick={() => setIsExpanded(!isExpanded)}
-                      className="text-[10px] font-bold text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1"
-                    >
-                      {isExpanded ? (
-                        <>
-                          <svg
-                            className="w-3 h-3"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={3}
-                              d="M5 15l7-7 7 7"
-                            />
-                          </svg>
-                          Show Less
-                        </>
-                      ) : (
-                        <>
-                          <svg
-                            className="w-3 h-3"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={3}
-                              d="M19 9l-7 7-7-7"
-                            />
-                          </svg>
-                          Show All
-                        </>
-                      )}
-                    </button>
-                  )}
-                </div>
-                <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-[#2a2d36] bg-gray-100 dark:bg-[#242830]/50 shadow-sm">
-                  <DataTable
-                    columns={[
-                      { key: "product", label: "Product" },
-                      { key: "qty", label: "Qty" },
-                      { key: "unit", label: "Unit" },
-                      { key: "specs", label: "Specs" },
-                    ]}
-                    data={isExpanded ? deal.products : deal.products.slice(0, 4)}
-                    emptyMessage="No products requested."
-                    renderRow={(p, i) => (
-                      <tr
-                        key={i}
-                        className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}
-                      >
-                        <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">
-                          {p.product_name}
-                        </td>
-                        <td className="px-4 py-3 font-mono font-medium">
-                          {p.quantity}
-                        </td>
-                        <td className="px-4 py-3 text-gray-400">{p.unit}</td>
-                        <td
-                          className="px-4 py-3 truncate max-w-[120px] text-gray-400 text-xs"
-                          title={p.specs}
-                        >
-                          {p.specs}
-                        </td>
-                      </tr>
-                    )}
-                  />
-                </div>
-              </div>
-
-              <div className="h-[1px] bg-gray-200 dark:bg-[#2a2d36] w-full" />
-
-              {/* SECTION 3: Seller Quote */}
-              <div className="p-6">
-                <div className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-4">
-                  Seller Quotation
-                </div>
-                {!deal.seller_quote ? (
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4.5 flex items-start gap-3.5">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={2}
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                      />
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
-                    <div className="flex flex-col">
-                      <span className="text-amber-500 font-bold text-[14px]">
-                        Waiting for seller response
-                      </span>
-                      <span className="text-amber-500/70 text-xs mt-1 font-medium">
-                        RFQ was sent on{" "}
-                        {new Date(deal.date_received).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="flex flex-col mb-4">
-                      <span className="text-gray-800 dark:text-gray-200 font-bold text-[14px]">
-                        {deal.seller_quote.seller_name}
-                      </span>
-                      <span className="text-gray-500 text-xs mt-0.5">
-                        {deal.seller_quote.seller_email}
-                      </span>
-                    </div>
-                    <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-[#2a2d36] bg-gray-100 dark:bg-[#242830]/50 shadow-sm">
-                      <DataTable
-                        columns={[
-                          { key: "product", label: "Product" },
-                          { key: "unitPrice", label: "Unit Price" },
-                          { key: "moq", label: "MOQ" },
-                          { key: "lead", label: "Lead" },
-                        ]}
-                        data={deal.seller_quote.products || []}
-                        emptyMessage="No products quoted."
-                        renderRow={(p, i) => (
-                          <tr
-                            key={i}
-                            className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}
-                          >
-                            <td className="px-4 py-3 truncate max-w-[120px] font-medium">
-                              {p.product_name}
-                            </td>
-                            <td className="px-4 py-3 font-mono text-black dark:text-gray-200 font-medium">
-                              {formatCurrency(p.seller_unit_price)}
-                            </td>
-                            <td className="px-4 py-3 font-mono font-medium">
-                              {p.moq}
-                            </td>
-                            <td className="px-4 py-3 text-[12px] font-medium text-gray-400">
-                              {p.lead_time}
-                            </td>
-                          </tr>
-                        )}
-                      />
-                    </div>
-                  </div>
-                )}
+                    Back to Inquiries
+                  </button>
+                  <span className="text-gray-300 dark:text-[#2a2d36] font-light">|</span>
+                  <span className="font-mono text-gray-500 dark:text-gray-400 text-lg font-bold tracking-wide">{deal.inquiry_id}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  {renderActionButton()}
+                  <StatusBadge status={deal.status} />
+                  <button
+                    onClick={onClose}
+                    className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 dark:text-red-400 transition-all duration-200 border border-red-500/20"
+                    title="Close"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
 
-              <div className="h-[1px] bg-gray-200 dark:bg-[#2a2d36] w-full flex-shrink-0" />
-
-              {/* SECTION 4: My Quotation */}
-              <div className="p-6">
-                <div className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-4">
-                  My Quote to Buyer
+              {/* PROGRESS BAR TIMELINE */}
+              <div className="bg-white dark:bg-[#1e2028] rounded-xl p-5 mb-8 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+                <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2 px-1">
+                  Sourcing Milestone
                 </div>
+                {getWorkflowSteps(deal.status)}
+              </div>
 
-                {!displayQuote && deal.seller_quote && (
-                  <div className="mb-4">
-                    <button
-                      onClick={handleCalculateQuote}
-                      className="w-full py-3 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 font-bold border border-purple-500/50 rounded-lg transition-colors"
-                    >
-                      Calculate My Quote
-                    </button>
-                  </div>
-                )}
-
-                {!displayQuote && !deal.seller_quote && (
-                  <div className="bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d36] border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center shadow-inner">
-                    <span className="text-gray-400 text-[14px] font-semibold tracking-wide">
-                      Quote not prepared yet
-                    </span>
-                  </div>
-                )}
-
-                {displayQuote && (
-                  <div className="animate-fade-in">
-                    <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-[#2a2d36] bg-gray-100 dark:bg-[#242830]/50 shadow-sm flex flex-col">
+              {/* TWO COLUMN GRID LAYOUT */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                {/* LEFT SIDE: Products and Quotations */}
+                <div className="lg:col-span-2 space-y-8">
+                  
+                  {/* Products Requested */}
+                  <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+                    <div className="flex justify-between items-center mb-4">
+                      <div className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                        Products Requested ({deal.products.length})
+                      </div>
+                      {deal.products.length > 4 && (
+                        <button
+                          onClick={() => setIsExpanded(!isExpanded)}
+                          className="text-[10px] font-bold text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1"
+                        >
+                          {isExpanded ? (
+                            <>
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" />
+                              </svg>
+                              Show Less
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                              </svg>
+                              Show All
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                    <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-[#2a2d36] bg-gray-50 dark:bg-[#242830]/30 shadow-inner">
                       <DataTable
                         columns={[
                           { key: "product", label: "Product" },
-                          { key: "myPrice", label: "My Price" },
-                          { key: "margin", label: "Margin" },
-                          { key: "total", label: "Total", className: "text-right" },
+                          { key: "qty", label: "Qty" },
+                          { key: "unit", label: "Unit" },
+                          { key: "specs", label: "Specs" },
                         ]}
-                        data={displayQuote.products || []}
-                        emptyMessage="No quote prepared."
+                        data={isExpanded ? deal.products : deal.products.slice(0, 4)}
+                        emptyMessage="No products requested."
                         renderRow={(p, i) => (
-                          <tr
-                            key={i}
-                            className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}
-                          >
-                            <td className="px-4 py-3.5 truncate max-w-[120px] font-medium">
+                          <tr key={i} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
+                            <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">
                               {p.product_name}
                             </td>
-                            <td className="px-4 py-3.5 font-mono text-purple-300 font-bold">
-                              {formatCurrency(p.my_unit_price)}
-                            </td>
-                            <td className="px-4 py-3.5 font-mono text-emerald-400 font-bold">
-                              {p.margin_percent || p.applied_margin_percent}%
-                            </td>
-                            <td className="px-4 py-3.5 font-mono text-gray-900 dark:text-white text-right font-bold">
-                              {formatCurrency(
-                                p.total_price || p.total_my_price,
-                              )}
+                            <td className="px-4 py-3 font-mono font-medium">{p.quantity}</td>
+                            <td className="px-4 py-3 text-gray-400">{p.unit}</td>
+                            <td className="px-4 py-3 truncate max-w-[120px] text-gray-400 text-xs" title={p.specs}>
+                              {p.specs}
                             </td>
                           </tr>
                         )}
                       />
-                      <div className="bg-gray-50 dark:bg-[#1a1d23] p-4.5 border-t border-gray-200 dark:border-[#2a2d36] flex flex-col gap-1.5 items-end">
-                        <div className="text-[14px] text-gray-900 dark:text-white">
-                          <span className="text-gray-400 mr-3 text-[13px] font-medium">
-                            Total Deal Value:
-                          </span>
-                          <span className="font-bold font-mono tracking-wide">
-                            {formatCurrency(totalDealValue)}
+                    </div>
+                  </div>
+
+                  {/* Seller Quote */}
+                  <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+                    <div className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
+                      Seller Quotation
+                    </div>
+                    {!deal.seller_quote ? (
+                      <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4.5 flex items-start gap-3.5">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={2}
+                          stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <div className="flex flex-col">
+                          <span className="text-amber-500 font-bold text-[14px]">Waiting for seller response</span>
+                          <span className="text-amber-500/70 text-xs mt-1 font-medium">
+                            RFQ was sent on {new Date(deal.date_received).toLocaleDateString()}
                           </span>
                         </div>
-                        <div className="text-[14px] text-emerald-400">
-                          <span className="text-emerald-500/70 mr-3 text-[13px] font-bold">
-                            Total Profit:
-                          </span>
-                          <span className="font-bold font-mono tracking-wide">
-                            {formatCurrency(totalDealValue - totalCostValue)}
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="flex flex-col mb-4 bg-gray-50 dark:bg-[#242830]/30 p-3 rounded-lg border border-gray-150 dark:border-[#2a2d36]">
+                          <span className="text-gray-800 dark:text-gray-200 font-bold text-[14px]">{deal.seller_quote.seller_name}</span>
+                          <span className="text-gray-500 text-xs mt-0.5">{deal.seller_quote.seller_email}</span>
+                        </div>
+                        <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-[#2a2d36] bg-gray-50 dark:bg-[#242830]/30 shadow-inner">
+                          <DataTable
+                            columns={[
+                              { key: "product", label: "Product" },
+                              { key: "unitPrice", label: "Unit Price" },
+                              { key: "moq", label: "MOQ" },
+                              { key: "lead", label: "Lead" },
+                            ]}
+                            data={deal.seller_quote.products || []}
+                            emptyMessage="No products quoted."
+                            renderRow={(p, i) => (
+                              <tr key={i} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
+                                <td className="px-4 py-3 truncate max-w-[120px] font-medium">{p.product_name}</td>
+                                <td className="px-4 py-3 font-mono text-black dark:text-gray-200 font-medium">
+                                  {formatCurrency(p.seller_unit_price)}
+                                </td>
+                                <td className="px-4 py-3 font-mono font-medium">{p.moq}</td>
+                                <td className="px-4 py-3 text-[12px] font-medium text-gray-400">{p.lead_time}</td>
+                              </tr>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* My Quotation */}
+                  <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+                    <div className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
+                      My Quote to Buyer
+                    </div>
+
+                    {!displayQuote && deal.seller_quote && (
+                      <div className="mb-4">
+                        <button
+                          onClick={handleCalculateQuote}
+                          className="w-full py-3 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 font-bold border border-purple-500/50 rounded-lg transition-colors"
+                        >
+                          Calculate My Quote
+                        </button>
+                      </div>
+                    )}
+
+                    {!displayQuote && !deal.seller_quote && (
+                      <div className="bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d36] border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center shadow-inner">
+                        <span className="text-gray-400 text-[14px] font-semibold tracking-wide">Quote not prepared yet</span>
+                      </div>
+                    )}
+
+                    {displayQuote && (
+                      <div className="animate-fade-in">
+                        <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-[#2a2d36] bg-gray-50 dark:bg-[#242830]/30 shadow-inner flex flex-col">
+                          <DataTable
+                            columns={[
+                              { key: "product", label: "Product" },
+                              { key: "myPrice", label: "My Price" },
+                              { key: "margin", label: "Margin" },
+                              { key: "total", label: "Total", className: "text-right" },
+                            ]}
+                            data={displayQuote.products || []}
+                            emptyMessage="No quote prepared."
+                            renderRow={(p, i) => (
+                              <tr key={i} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
+                                <td className="px-4 py-3.5 truncate max-w-[120px] font-medium">{p.product_name}</td>
+                                <td className="px-4 py-3.5 font-mono text-purple-300 font-bold">{formatCurrency(p.my_unit_price)}</td>
+                                <td className="px-4 py-3.5 font-mono text-emerald-400 font-bold">{p.margin_percent || p.applied_margin_percent}%</td>
+                                <td className="px-4 py-3.5 font-mono text-gray-900 dark:text-white text-right font-bold">
+                                  {formatCurrency(p.total_price || p.total_my_price)}
+                                </td>
+                              </tr>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+
+                {/* RIGHT SIDE: Sourcing Details & Financial Summary */}
+                <div className="space-y-8">
+                  
+                  {/* Sourcing Context Card */}
+                  <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+                    <div className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
+                      Sourcing Context
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <div className="text-xs text-gray-400 font-medium">Customer / Client</div>
+                        <div className="text-gray-900 dark:text-white text-base font-bold leading-tight mt-0.5">{deal.buyer_name}</div>
+                        <div className="text-gray-400 text-xs mt-0.5">{deal.buyer_email}</div>
+                      </div>
+
+                      <div className="h-[1px] bg-gray-150 dark:bg-[#2a2d36] w-full" />
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <div className="text-xs text-gray-400 font-medium">Vessel Name</div>
+                          <div className="text-gray-800 dark:text-gray-200 text-sm font-semibold mt-0.5">{deal.vessel_name || "N/A"}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-400 font-medium">Ref Number</div>
+                          <div className="text-gray-800 dark:text-gray-200 text-sm font-mono mt-0.5">{deal.vessel_ref || "N/A"}</div>
+                        </div>
+                      </div>
+
+                      <div className="h-[1px] bg-gray-150 dark:bg-[#2a2d36] w-full" />
+
+                      <div>
+                        <div className="text-xs text-gray-400 font-medium">Inquiry Date</div>
+                        <div className="text-gray-800 dark:text-gray-200 text-sm font-medium mt-0.5">
+                          {new Date(deal.date_received).toLocaleString("en-US", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit",
+                          })}
+                        </div>
+                      </div>
+
+                      {deal.remarks && (
+                        <>
+                          <div className="h-[1px] bg-gray-150 dark:bg-[#2a2d36] w-full" />
+                          <div>
+                            <div className="text-xs text-gray-400 font-medium">Remarks</div>
+                            <p className="text-gray-600 dark:text-gray-400 text-xs mt-1 leading-relaxed bg-gray-50 dark:bg-[#242830]/20 p-2.5 rounded-lg border border-gray-100 dark:border-[#2a2d36]">
+                              {deal.remarks}
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Financial Summary Card */}
+                  {displayQuote && (
+                    <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm animate-fade-in">
+                      <div className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">
+                        Financial Summary
+                      </div>
+                      
+                      <div className="space-y-3.5">
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-400 font-medium">Total Cost Value:</span>
+                          <span className="font-mono text-gray-800 dark:text-gray-200 font-semibold">{formatCurrency(totalCostValue)}</span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-400 font-medium">Total Deal Value:</span>
+                          <span className="font-mono text-gray-900 dark:text-white font-bold">{formatCurrency(totalDealValue)}</span>
+                        </div>
+
+                        <div className="h-[1px] bg-gray-150 dark:bg-[#2a2d36] w-full" />
+                        
+                        <div className="flex justify-between items-center">
+                          <span className="text-emerald-500/80 font-bold text-sm">Estimated Profit:</span>
+                          <span className="font-mono text-emerald-400 font-extrabold text-base">{formatCurrency(totalDealValue - totalCostValue)}</span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-gray-400 font-medium">Net Profit Margin:</span>
+                          <span className="font-mono text-emerald-400 font-bold">
+                            {((totalDealValue - totalCostValue) / totalDealValue * 100).toFixed(1)}%
                           </span>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="h-[1px] bg-gray-200 dark:bg-[#2a2d36] w-full flex-shrink-0" />
-
-              {/* SECTION 5: Email Preview */}
-              {/*
-            <div className="p-6 mb-8 flex-shrink-0">
-              <div className="flex items-center gap-6 border-b border-gray-200 dark:border-[#2a2d36] mb-5">
-                <button
-                  className={`pb-2.5 text-sm font-bold tracking-wide transition-colors relative ${activeTab === "RFQ" ? "text-gray-900 dark:text-white" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}
-                  onClick={() => setActiveTab("RFQ")}
-                >
-                  RFQ Email
-                  {activeTab === "RFQ" && (
-                    <div className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-purple-500 rounded-t" />
                   )}
-                </button>
-                <button
-                  className={`pb-2.5 text-sm font-bold tracking-wide transition-colors relative ${activeTab === "QUOTE" ? "text-gray-900 dark:text-white" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}
-                  onClick={() => setActiveTab("QUOTE")}
-                >
-                  Buyer Quote
-                  {activeTab === "QUOTE" && (
-                    <div className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-purple-500 rounded-t" />
-                  )}
-                </button>
+
+                </div>
+
               </div>
 
-              <div className="bg-white rounded-[10px] p-5 border border-gray-200 text-gray-800 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-blue-500/80"></div>
-
-                <div className="flex items-center border-b border-gray-100 pb-3 mb-3 text-[13px]">
-                  <span className="w-16 font-bold text-gray-400 uppercase tracking-wider text-[11px]">
-                    To:
-                  </span>
-                  <span className="font-semibold text-gray-700">
-                    {activeTab === "RFQ"
-                      ? "supplier@tbd.com"
-                      : deal.buyer_email}
-                  </span>
-                </div>
-                <div className="flex items-center border-b border-gray-100 pb-3 mb-4 text-[13px]">
-                  <span className="w-16 font-bold text-gray-400 uppercase tracking-wider text-[11px]">
-                    Subject:
-                  </span>
-                  <span className="font-semibold text-gray-800">
-                    {activeTab === "RFQ"
-                      ? `Request for Quotation - ${deal.inquiry_id}`
-                      : `Quotation Details - ${deal.inquiry_id}`}
-                  </span>
-                </div>
-                <div className="text-[13px] text-gray-600 whitespace-pre-line leading-[1.7] font-medium">
-                  Dear{" "}
-                  {activeTab === "RFQ"
-                    ? "Supplier"
-                    : deal.buyer_name.split(" ")[0]}
-                  ,{"\n\n"}I hope this email finds you well.{"\n\n"}
-                  Please find attached our{" "}
-                  {activeTab === "RFQ"
-                    ? "request for quotation"
-                    : "quotation proposal"}{" "}
-                  regarding the referenced products. We look forward to your
-                  speedy response.{"\n\n"}
-                  Best Regards,{"\n"}TradeMind Team
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 mt-6">
-                <button
-                  id="approve-send-btn"
-                  onClick={() => setIsEmailModalOpen(true)}
-                  className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold tracking-wide py-3 rounded-lg transition-colors shadow-lg shadow-emerald-500/20 active:scale-[0.98]"
-                >
-                  {displayQuote ? "Approve & Send Quote" : "Approve & Send"}
-                </button>
-                <button className="px-6 py-3 text-blue-400 font-bold border-2 border-blue-500/50 hover:bg-blue-500/10 hover:border-blue-400 rounded-lg transition-all active:scale-[0.98]">
-                  Edit
-                </button>
-              </div>
-            </div>
-            */}
             </div>
           )}
         </div>

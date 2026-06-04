@@ -30,6 +30,7 @@
  */
 
 import React from "react";
+import { useAuth } from "@context";
 
 // ─── Style map ─────────────────────────────────────────────────────────────────
 /**
@@ -73,6 +74,8 @@ const STATUS_STYLES = {
   // ── Supply / Cargo statuses ────────────────────────────────────────────────
   ORDER_PLACED:
     "bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-500/25",
+  DISPATCHED:
+    "bg-indigo-50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/25",
   LOADING:
     "bg-purple-50 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-500/25",
   IN_TRANSIT:
@@ -113,6 +116,7 @@ const STATUS_LABELS = {
   IN_TRANSIT:   "In Transit",
   ORDERED:      "Ordered",
   ORDER_PLACED: "Order Placed",
+  DISPATCHED:   "Dispatched"
 };
 
 // ─── Fallback style for unknown statuses ───────────────────────────────────────
@@ -126,11 +130,17 @@ const FALLBACK_STYLE =
  * @param {string} props.status - Any status string from any module
  */
 export default function StatusBadge({ status }) {
+  const { user } = useAuth();
+  
   // Look up styles — fall back to gray if status is unknown
   const styleCls = STATUS_STYLES[status] ?? FALLBACK_STYLE;
 
   // Look up label — fall back to status string with underscores as spaces
-  const label = STATUS_LABELS[status] ?? status?.replace(/_/g, " ") ?? "—";
+  let label = STATUS_LABELS[status] ?? status?.replace(/_/g, " ") ?? "—";
+  
+  if (status === 'SENT') {
+    label = user?.role === 'Client' ? 'Received' : 'Sent';
+  }
 
   return (
     <span

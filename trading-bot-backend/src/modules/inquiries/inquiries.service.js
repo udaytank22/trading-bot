@@ -126,6 +126,7 @@ const createInquiry = async (data, creatorId) => {
         inquiryNumber,
         clientId: data.clientId,
         vesselName: data.vesselName || null,
+        imoNumber: data.imoNumber || null,
         referenceNumber: data.referenceNumber || null,
         currentStatus: 'PENDING',
         assignedEmployeeId: data.assignedEmployeeId || null,
@@ -138,14 +139,27 @@ const createInquiry = async (data, creatorId) => {
 
     // Create inquiry items
     if (data.items && data.items.length > 0) {
-      await tx.inquiryItem.createMany({
-        data: data.items.map((item) => ({
+      const itemsToCreate = [];
+      for (const item of data.items) {
+        let pId = item.productId || null;
+        if (!pId && item.description) {
+          const matchedProd = await tx.product.findFirst({
+            where: { name: item.description, deletedAt: null }
+          });
+          if (matchedProd) {
+            pId = matchedProd.id;
+          }
+        }
+        itemsToCreate.push({
           inquiryId: inquiry.id,
-          productId: item.productId || null,
+          productId: pId,
           description: item.description,
           quantity: parseInt(item.quantity, 10),
           unit: item.unit || null
-        }))
+        });
+      }
+      await tx.inquiryItem.createMany({
+        data: itemsToCreate
       });
     }
 
@@ -172,6 +186,7 @@ const updateInquiry = async (id, data, updaterId) => {
     where: { id },
     data: {
       vesselName: data.vesselName,
+      imoNumber: data.imoNumber,
       referenceNumber: data.referenceNumber,
       assignedEmployeeId: data.assignedEmployeeId,
       assignedTeamLeadId: data.assignedTeamLeadId,

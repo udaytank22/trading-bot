@@ -78,9 +78,9 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
       </td>
 
       {/* ── Cargo description ─────────────────────────────────────────── */}
-      <td className="px-4 md:px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+      <td className="px-4 md:px-6 py-4 text-sm text-gray-600 dark:text-gray-300 max-w-[250px]">
         <Tooltip content={item.cargo}>
-          <span className="cursor-default">{item.cargo}</span>
+          <span className="cursor-default truncate block">{item.cargo}</span>
         </Tooltip>
       </td>
 
@@ -106,7 +106,7 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
       {/* ── Actions: Dynamic based on Status ───────────────────────────── */}
       <td className="px-4 md:px-6 py-4 text-right">
         <div className="flex flex-col md:flex-row justify-end gap-2">
-          {(item.status === "PENDING" || item.status === "ORDER_PLACED") && (
+          {item.status === "DISPATCHED" && (
             <Button
               variant="secondary"
               size="sm"
@@ -133,7 +133,7 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
             </Button>
           )}
 
-          {item.status === "IN_TRANSIT" && (
+          {(item.status === "IN_TRANSIT" || item.status === "DISPATCHED") && (
             <Button
               variant="secondary"
               size="sm"

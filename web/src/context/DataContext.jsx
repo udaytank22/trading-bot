@@ -54,7 +54,7 @@ export function DataProvider({ children }) {
         isClient ? { success: true, data: [] } : safeFetch(api.employees.getEmployees()),
         isClient ? { success: true, data: [] } : safeFetch(api.documents.getDocuments()),
         isClient ? { success: true, data: [] } : safeFetch(api.bankAccounts.getBankAccounts()),
-        isClient ? { success: true, data: [] } : safeFetch(api.invoices.getInvoices()),
+        safeFetch(api.invoices.getInvoices()), // Both clients and admins need invoices
         isClient ? { success: true, data: [] } : safeFetch(api.products.getProducts()),
         isClient ? { success: true, data: [] } : safeFetch(api.clients.getClients()),
         safeFetch(api.suppliers.getSuppliers()),

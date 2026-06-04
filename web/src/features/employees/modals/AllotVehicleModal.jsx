@@ -1,47 +1,103 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Select } from '@components/ui';
 import { Button } from '@components/ui';
+import { api } from '@services/api';
 
-const MOCK_VEHICLES = [
-  {
-    id: "V-001",
-    vehicle_no: "MH-12-AB-1234",
-    type: "Container Truck",
-    owner_name: "Rajesh Kumar",
-    owner_phone: "+91 98765 43210",
-    capacity: "20 Tons",
-    rc_expiry: "2028-12-15",
-    insurance_expiry: "2026-05-20",
-    fitness_expiry: "2027-08-10"
-  },
-  {
-    id: "V-002",
-    vehicle_no: "DL-01-XY-5678",
-    type: "Flatbed Trailer",
-    owner_name: "Amit Sharma",
-    owner_phone: "+91 87654 32109",
-    capacity: "25 Tons",
-    rc_expiry: "2030-01-10",
-    insurance_expiry: "2026-11-05",
-    fitness_expiry: "2028-03-22"
-  },
-  {
-    id: "V-003",
-    vehicle_no: "KA-05-MN-9012",
-    type: "Refrigerated Van",
-    owner_name: "Suresh Prabhu",
-    owner_phone: "+91 76543 21098",
-    capacity: "10 Tons",
-    rc_expiry: "2027-06-30",
-    insurance_expiry: "2026-08-12",
-    fitness_expiry: "2026-12-25"
-  }
-];
 
 export default function AllotVehicleModal({ deal, isOpen, onClose, onAllot }) {
   const [selectedVehicleId, setSelectedVehicleId] = useState("");
+  const [vehicles, setVehicles] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const selectedVehicle = MOCK_VEHICLES.find(v => v.id === selectedVehicleId);
+  useEffect(() => {
+    if (isOpen) {
+      setLoading(true);
+      // Fetch vehicles from the API
+      api.vehicles.getVehicles().then(res => {
+        if(res.success && res.data) {
+           setVehicles(res.data)
+        } else {
+           setVehicles([
+        {
+          id: "V-001",
+          vehicle_no: "MH-12-AB-1234",
+          type: "Container Truck",
+          owner_name: "Rajesh Kumar",
+          owner_phone: "+91 98765 43210",
+          capacity: "20 Tons",
+          rc_expiry: "2028-12-15",
+          insurance_expiry: "2026-05-20",
+          fitness_expiry: "2027-08-10"
+        },
+        {
+          id: "V-002",
+          vehicle_no: "DL-01-XY-5678",
+          type: "Flatbed Trailer",
+          owner_name: "Amit Sharma",
+          owner_phone: "+91 87654 32109",
+          capacity: "25 Tons",
+          rc_expiry: "2030-01-10",
+          insurance_expiry: "2026-11-05",
+          fitness_expiry: "2028-03-22"
+        },
+        {
+          id: "V-003",
+          vehicle_no: "KA-05-MN-9012",
+          type: "Refrigerated Van",
+          owner_name: "Suresh Prabhu",
+          owner_phone: "+91 76543 21098",
+          capacity: "10 Tons",
+          rc_expiry: "2027-06-30",
+          insurance_expiry: "2026-08-12",
+          fitness_expiry: "2026-12-25"
+        }
+      ]);
+        }
+      }).catch(e => {
+        console.error(e);
+        // Fallback to mock data for now
+      setVehicles([
+        {
+          id: "V-001",
+          vehicle_no: "MH-12-AB-1234",
+          type: "Container Truck",
+          owner_name: "Rajesh Kumar",
+          owner_phone: "+91 98765 43210",
+          capacity: "20 Tons",
+          rc_expiry: "2028-12-15",
+          insurance_expiry: "2026-05-20",
+          fitness_expiry: "2027-08-10"
+        },
+        {
+          id: "V-002",
+          vehicle_no: "DL-01-XY-5678",
+          type: "Flatbed Trailer",
+          owner_name: "Amit Sharma",
+          owner_phone: "+91 87654 32109",
+          capacity: "25 Tons",
+          rc_expiry: "2030-01-10",
+          insurance_expiry: "2026-11-05",
+          fitness_expiry: "2028-03-22"
+        },
+        {
+          id: "V-003",
+          vehicle_no: "KA-05-MN-9012",
+          type: "Refrigerated Van",
+          owner_name: "Suresh Prabhu",
+          owner_phone: "+91 76543 21098",
+          capacity: "10 Tons",
+          rc_expiry: "2027-06-30",
+          insurance_expiry: "2026-08-12",
+          fitness_expiry: "2026-12-25"
+        }
+      ]);
+      }).finally(() => {
+        setLoading(false);
+      });
+    }
+  }, [isOpen]);
+
+  const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId);
 
   const handleAllot = () => {
     if (!selectedVehicle) return;
@@ -75,7 +131,7 @@ export default function AllotVehicleModal({ deal, isOpen, onClose, onAllot }) {
               Allot the Vehicle
             </h2>
             <p className="text-gray-500 dark:text-gray-400 text-[11px] mt-0.5 uppercase tracking-widest font-semibold">
-              {deal.inquiry_id} • {deal.cargo}
+              Shipment: {deal.shipmentNumber || deal.inquiry_id}
             </p>
           </div>
           <button
@@ -112,7 +168,7 @@ export default function AllotVehicleModal({ deal, isOpen, onClose, onAllot }) {
               onChange={(val) => setSelectedVehicleId(val)}
               options={[
                 { value: "", label: "-- Choose a Vehicle --" },
-                ...MOCK_VEHICLES.map((v) => ({
+                ...vehicles.map((v) => ({
                   value: v.id,
                   label: `${v.vehicle_no} (${v.type})`
                 }))
@@ -159,23 +215,23 @@ export default function AllotVehicleModal({ deal, isOpen, onClose, onAllot }) {
 
               <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-5">
                 <div className="flex justify-between items-center mb-4">
-                  <h4 className="text-emerald-400 font-semibold text-xs uppercase tracking-widest">Owner Information</h4>
+                  <h4 className="text-emerald-400 font-semibold text-xs uppercase tracking-widest">Driver Information</h4>
                 </div>
                 <div className="flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]/50 p-3 rounded-lg border border-gray-200 dark:border-[#2a2d36]">
                   <div>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">Owner Name</p>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedVehicle.owner_name}</p>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-0.5">Driver Name</p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedVehicle.driver_name || selectedVehicle.owner_name}</p>
                   </div>
                   <Button
                     variant="secondary"
                     size="sm"
                     className="flex items-center gap-2 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
-                    onClick={() => window.location.href = `tel:${selectedVehicle.owner_phone}`}
+                    onClick={() => window.location.href = `tel:${selectedVehicle.phone || selectedVehicle.owner_phone}`}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
-                    {selectedVehicle.owner_phone}
+                    {selectedVehicle.phone || selectedVehicle.owner_phone}
                   </Button>
                 </div>
               </div>

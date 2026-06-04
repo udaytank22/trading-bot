@@ -14,10 +14,11 @@ export default function InvoicesPage() {
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
     const filtered = useMemo(() => {
+        const nonDraft = (invoicesData || []).filter(inv => inv.invoice_status !== 'DRAFT');
         const q = search.toLowerCase().trim();
-        if (!q) return invoicesData;
-        return invoicesData.filter((inv) =>
-            inv.inquiry_id.toLowerCase().includes(q) ||
+        if (!q) return nonDraft;
+        return nonDraft.filter((inv) =>
+            (inv.inquiry_id && inv.inquiry_id.toLowerCase().includes(q)) ||
             (inv.buyer_name && inv.buyer_name.toLowerCase().includes(q)) ||
             (inv.buyer_email && inv.buyer_email.toLowerCase().includes(q)) ||
             (inv.cargo && inv.cargo.toLowerCase().includes(q))
@@ -76,6 +77,23 @@ export default function InvoicesPage() {
         }
     };
 
+    const handleDownloadPdf = async (invoiceId, invoiceNumber) => {
+        try {
+            const blob = await api.invoices.downloadPdf(invoiceId);
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Invoice_${invoiceNumber}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error("Failed to download PDF:", err);
+            // Ignore error or show alert
+        }
+    };
+
     return (
         <div className="flex flex-col w-full h-full pb-4">
             <PageToolbar
@@ -97,23 +115,22 @@ export default function InvoicesPage() {
                     data={currentItems}
                     emptyMessage="No invoices found"
                     renderRow={(inv, idx) => (
-                        <tr key={inv.inquiry_id} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}>
-                            <td className="px-4 py-3 font-mono text-gray-500">{inv.inquiry_id}</td>
+                        <tr key={inv.id} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}>
+                            <td className="px-4 py-3 font-mono text-gray-500">{inv.invoiceNumber || inv.id}</td>
                             <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{inv.buyer_name}</td>
-                            <td className="px-4 py-3">{inv.cargo}</td>
+                            <td className="px-4 py-3 text-sm truncate max-w-[250px]" title={inv.cargo}>{inv.cargo}</td>
                             <td className="px-4 py-3">{inv.invoice_date ? new Date(inv.invoice_date).toLocaleString() : '-'}</td>
                             <td className="px-4 py-3">
                                 <StatusBadge status={inv.invoice_status || 'N/A'} />
                             </td>
                             <td className="px-4 py-3 text-right">
                                 <div className="flex items-center justify-end gap-2">
-                                    <a
-                                        href="/memories/file-sample_150kB.pdf"
-                                        download={`Invoice_${inv.inquiry_id}.pdf`}
+                                    <button
+                                        onClick={() => handleDownloadPdf(inv.id, inv.inquiry_id)}
                                         className="inline-flex items-center justify-center gap-2 rounded-lg border border-purple-500/40 px-3 py-1.5 text-xs font-bold text-purple-400 hover:bg-purple-500/10"
                                     >
                                         Download
-                                    </a>
+                                    </button>
 
                                     {inv.invoice_status !== 'SENT' && inv.invoice_status !== 'PAID' && (
                                         <Button

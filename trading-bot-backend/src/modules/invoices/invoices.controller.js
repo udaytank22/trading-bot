@@ -7,7 +7,7 @@ const { createNotification } = require('../notifications/notifications.service')
  * Get all invoices
  */
 const getInvoices = async (req, res) => {
-  const invoices = await service.getAllInvoices();
+  const invoices = await service.getAllInvoices(req.user);
   return sendSuccess(res, 'Invoices list retrieved successfully', invoices);
 };
 
@@ -102,10 +102,99 @@ const deleteInvoice = async (req, res) => {
   return sendSuccess(res, 'Invoice deleted successfully');
 };
 
+/**
+ * Generate invoice from shipment
+ */
+const generateInvoiceFromShipment = async (req, res) => {
+  try {
+    const result = await service.generateInvoiceFromShipment(req.params.shipmentId, req.user.id);
+
+    await createAuditLog({
+      userId: req.user.id,
+      module: 'invoices',
+      action: 'create',
+      recordId: result.invoice.id,
+      newValue: result.invoice,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent']
+    });
+
+    return sendSuccess(res, 'Invoice draft generated successfully', result, 201);
+  } catch (err) {
+    console.error('Invoice generation error:', err);
+    return sendError(res, err.message || 'Failed to generate invoice', [], 500);
+  }
+};
+/**
+ * Send drafted invoice email
+ */
+const sendInvoiceEmail = async (req, res) => {
+  try {
+    const { subject, body } = req.body;
+    const result = await service.sendInvoiceEmailAPI(req.params.id, subject, body, req.user.id);
+
+    await createAuditLog({
+      userId: req.user.id,
+      module: 'invoices',
+      action: 'send',
+      recordId: result.invoice.id,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent']
+    });
+
+    return sendSuccess(res, 'Invoice emailed successfully', result);
+  } catch (err) {
+    console.error('Invoice send error:', err);
+    return sendError(res, err.message || 'Failed to send invoice', [], 500);
+  }
+};
+
+/**
+ * Preview drafted invoice
+ */
+const previewInvoice = async (req, res) => {
+  try {
+    const { pdfBuffer, invoice } = await service.generateInvoicePdfBuffer(req.params.id);
+    const pdfBase64 = pdfBuffer.toString('base64');
+    const defaultEmailSubject = `Your Invoice ${invoice.invoiceNumber}`;
+    const defaultEmailBody = `Dear Client,\n\nPlease find attached the invoice ${invoice.invoiceNumber} for your recent order.\n\nThank you for your business!`;
+
+    const result = {
+      invoice,
+      pdfBase64,
+      defaultEmailSubject,
+      defaultEmailBody
+    };
+    return sendSuccess(res, 'Invoice preview generated successfully', result);
+  } catch (err) {
+    console.error('Invoice preview error:', err);
+    return sendError(res, err.message || 'Failed to preview invoice', [], 500);
+  }
+};
+
+/**
+ * Download invoice PDF
+ */
+const downloadInvoicePdf = async (req, res) => {
+  try {
+    const { pdfBuffer, invoice } = await service.generateInvoicePdfBuffer(req.params.id);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=Invoice_${invoice.invoiceNumber}.pdf`);
+    res.send(Buffer.from(pdfBuffer));
+  } catch (err) {
+    console.error('Download PDF error:', err);
+    return sendError(res, err.message || 'Failed to download PDF', [], 500);
+  }
+};
+
 module.exports = {
   getInvoices,
   getInvoice,
   createInvoice,
   updateInvoice,
-  deleteInvoice
+  deleteInvoice,
+  generateInvoiceFromShipment,
+  sendInvoiceEmail,
+  downloadInvoicePdf,
+  previewInvoice
 };
