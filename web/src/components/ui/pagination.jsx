@@ -51,7 +51,7 @@ export default function Pagination({
   const pages = getPageNumbers();
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 bg-[#f4efff]/10 dark:bg-[#0c0e12]/10 select-none border-t border-gray-100 dark:border-[#2a2d33]">
+    <div className="flex items-center justify-between px-1 py-1 select-none">
       {/* Page Size Dropdown */}
       <div className="flex items-center gap-2.5 text-xs text-gray-500 font-medium">
         <span>Showing</span>
@@ -105,11 +105,10 @@ export default function Pagination({
             <button
               key={p}
               onClick={() => onPageChange && onPageChange(p)}
-              className={`w-8 h-8 flex items-center justify-center rounded-xl text-xs font-bold transition-all ${
-                isActive
-                  ? "border border-blue-400 dark:border-blue-500 bg-transparent text-blue-500 dark:text-blue-400 shadow-sm"
-                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-              }`}
+              className={`w-8 h-8 flex items-center justify-center rounded-xl text-xs font-bold transition-all ${isActive
+                ? "border border-blue-400 dark:border-blue-500 bg-transparent text-blue-500 dark:text-blue-400 shadow-sm"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                }`}
             >
               {p}
             </button>

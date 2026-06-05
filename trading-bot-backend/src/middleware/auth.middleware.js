@@ -34,7 +34,12 @@ const authMiddleware = async (req, res, next) => {
     }
 
     req.user = user;
-    next();
+    
+    // Store user in async context
+    const { asyncLocalStorage } = require('../utils/context');
+    asyncLocalStorage.run({ user }, () => {
+      next();
+    });
   } catch (error) {
     return sendError(res, 'Authentication middleware error', error.message, 500);
   }

@@ -35,6 +35,20 @@ const getEmployeeById = async (id) => {
  * Create a new employee profile
  */
 const createEmployee = async (data, creatorId) => {
+  // Check for duplicate employee (by email)
+  const existingEmployee = await prisma.employee.findFirst({
+    where: {
+      email: data.email,
+      deletedAt: null
+    }
+  });
+
+  if (existingEmployee) {
+    const err = new Error('An employee with this email already exists.');
+    err.statusCode = 400;
+    throw err;
+  }
+
   return await prisma.employee.create({
     data: {
       fullName: data.fullName,
@@ -55,6 +69,21 @@ const createEmployee = async (data, creatorId) => {
  * Update employee profile
  */
 const updateEmployee = async (id, data, updaterId) => {
+  // Check for duplicate employee (by email) excluding the current employee
+  const existingEmployee = await prisma.employee.findFirst({
+    where: {
+      id: { not: id },
+      email: data.email,
+      deletedAt: null
+    }
+  });
+
+  if (existingEmployee) {
+    const err = new Error('An employee with this email already exists.');
+    err.statusCode = 400;
+    throw err;
+  }
+
   return await prisma.employee.update({
     where: { id },
     data: {

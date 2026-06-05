@@ -1,3 +1,4 @@
+import { InvoicesPageSchema1 } from '@config/tableSchemas';
 import { useAuth, useUI, useData } from '@context';
 import React, { useMemo, useState } from "react";
 import { api } from '@services/api';
@@ -104,19 +105,13 @@ export default function InvoicesPage() {
 
             <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg">
                 <DataTable
-                    columns={[
-                        { key: "id", label: "Invoice ID" },
-                        { key: "buyer", label: "Buyer" },
-                        { key: "cargo", label: "Cargo" },
-                        { key: "date", label: "Invoice Date" },
-                        { key: "status", label: "Status" },
-                        { key: "actions", label: "Actions", className: "text-right" },
-                    ]}
+                    columns={InvoicesPageSchema1}
                     data={currentItems}
                     emptyMessage="No invoices found"
                     renderRow={(inv, idx) => (
                         <tr key={inv.id} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}>
-                            <td className="px-4 py-3 font-mono text-gray-500">{inv.invoiceNumber || inv.id}</td>
+                            <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{((currentPage ? currentPage : 1) - 1) * (itemsPerPage ? itemsPerPage : 10) + idx + 1}</td>
+                        <td className="px-4 py-3 font-mono text-gray-500">{inv.invoiceNumber || inv.id}</td>
                             <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{inv.buyer_name}</td>
                             <td className="px-4 py-3 text-sm truncate max-w-[250px]" title={inv.cargo}>{inv.cargo}</td>
                             <td className="px-4 py-3">{inv.invoice_date ? new Date(inv.invoice_date).toLocaleString() : '-'}</td>

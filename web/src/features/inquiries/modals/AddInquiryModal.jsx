@@ -17,8 +17,8 @@ const inputClass =
 const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
   const { clientsData, employeesData, productsData = [] } = useData();
   const [selectedProduct, setSelectedProduct] = useState("");
-  const [qty, setQty] = useState(1);
-  const [unit, setUnit] = useState("pcs");
+  const [qty, setQty] = useState("");
+  const [unit, setUnit] = useState("");
 
   const [formData, setFormData] = useState({
     customer: "",
@@ -26,10 +26,10 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
     imoNumber: "",
     salesperson: "",
     clientCategory: "",
-    currency: "USD",
+    currency: "",
     vesselReference: "",
     validityDate: new Date().toISOString().split("T")[0],
-    requestType: "Normal",
+    requestType: "",
     category: "",
     subCategory: "",
     attachment: null,
@@ -39,6 +39,7 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
   const selectedClientObj = useMemo(() => {
     return clientsData.find(c => c.name === formData.customer);
   }, [clientsData, formData.customer]);
+
 
   const clientVessels = selectedClientObj?.vessels || [];
 
@@ -61,6 +62,28 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
+
+  // Auto-populate IMO number whenever the vessel changes or is default selected
+  useEffect(() => {
+    if (formData.vessel) {
+      const selectedVesselObj = clientVessels.find(v => v.name === formData.vessel);
+      if (selectedVesselObj) {
+        setFormData(prev => {
+          if (prev.imoNumber !== (selectedVesselObj.imoNumber || "")) {
+            return { ...prev, imoNumber: selectedVesselObj.imoNumber || "" };
+          }
+          return prev;
+        });
+      }
+    } else {
+      setFormData(prev => {
+        if (prev.imoNumber !== "") {
+          return { ...prev, imoNumber: "" };
+        }
+        return prev;
+      });
+    }
+  }, [formData.vessel, clientVessels]);
 
   if (!isOpen) return null;
 
@@ -267,7 +290,9 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
           name="imoNumber"
           value={formData.imoNumber}
           onChange={handleChange}
-          placeholder="Enter IMO number"
+          placeholder="IMO Number will populate automatically"
+          disabled={true}
+          className="bg-gray-100 cursor-not-allowed text-gray-500 dark:bg-[#1a1d24] dark:text-gray-400"
         />
 
         <DatePicker

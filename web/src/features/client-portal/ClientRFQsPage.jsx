@@ -1,3 +1,4 @@
+import { ClientRFQsPageSchema1, ClientRFQsPageSchema2, ClientRFQsPageSchema3, ClientRFQsPageSchema4 } from '@config/tableSchemas';
 import React, { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@context";
 import { api } from "@services/api";
@@ -620,16 +621,12 @@ export default function ClientRFQsPage() {
               {selectedOrder.purchaseOrder?.items?.length > 0 ? (
                 <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-[#2a2d36] bg-gray-50/50 dark:bg-[#242830]/30 shadow-inner">
                   <DataTable
-                    columns={[
-                      { key: "description", label: "Product" },
-                      { key: "quantity", label: "Quantity" },
-                      { key: "unitPrice", label: "Quoted Price" },
-                      { key: "totalPrice", label: "Total Price", className: "text-right" },
-                    ]}
+                    columns={ClientRFQsPageSchema1}
                     data={selectedOrder.purchaseOrder.items}
                     emptyMessage="No items found."
                     renderRow={(item, idx) => (
                       <tr key={item.id || idx} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}>
+                        <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + idx + 1}</td>
                         <td className="px-6 py-4 text-gray-900 dark:text-white font-bold">
                           {item.description || item.product?.name || "Product Item"}
                         </td>
@@ -769,7 +766,7 @@ export default function ClientRFQsPage() {
           </div>
         )}
 
-        <InvoiceReviewModal 
+        <InvoiceReviewModal
           isOpen={!!previewData}
           previewData={previewData}
           onClose={() => setPreviewData(null)}
@@ -818,8 +815,8 @@ export default function ClientRFQsPage() {
             setSelectedOrder(null);
           }}
           className={`pb-3 text-sm font-bold tracking-wide transition-colors relative ${activeTab === "rfqs"
-              ? "text-purple-600 dark:text-white"
-              : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            ? "text-purple-600 dark:text-white"
+            : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
         >
           RFQs & Quotations ({activeRFQs.length})
@@ -834,8 +831,8 @@ export default function ClientRFQsPage() {
             setSelectedOrder(null);
           }}
           className={`pb-3 text-sm font-bold tracking-wide transition-colors relative ${activeTab === "orders"
-              ? "text-purple-600 dark:text-white"
-              : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            ? "text-purple-600 dark:text-white"
+            : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
         >
           Confirmed Orders ({activeOrders.length})
@@ -850,8 +847,8 @@ export default function ClientRFQsPage() {
             setSelectedOrder(null);
           }}
           className={`pb-3 text-sm font-bold tracking-wide transition-colors relative ${activeTab === "invoices"
-              ? "text-purple-600 dark:text-white"
-              : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            ? "text-purple-600 dark:text-white"
+            : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
         >
           Invoices
@@ -874,26 +871,19 @@ export default function ClientRFQsPage() {
 
               <div className="flex-1 overflow-auto custom-scrollbar">
                 <DataTable
-                  columns={[
-                    { key: "inquiry_id", label: "Inquiry Ref" },
-                    { key: "buyer", label: "Client" },
-                    { key: "vessel", label: "Vessel" },
-                    { key: "itemsCount", label: "Items" },
-                    { key: "date", label: "Received Date" },
-                    { key: "status", label: "Status" },
-                    { key: "action", label: "", className: "text-right" }
-                  ]}
+                  columns={ClientRFQsPageSchema2}
                   data={activeRFQs}
                   emptyMessage="No pending RFQs found for this supplier profile."
                   renderRow={(inq, idx) => (
                     <tr
                       key={inq.inquiry_id}
                       className={`border-b border-gray-100 dark:border-[#2a2d33] transition-colors ${inq.status === "RFQ_SENT"
-                          ? "hover:bg-gray-55/40 dark:hover:bg-white/[0.01] cursor-pointer"
-                          : "opacity-85"
+                        ? "hover:bg-gray-55/40 dark:hover:bg-white/[0.01] cursor-pointer"
+                        : "opacity-85"
                         }`}
                       onClick={() => inq.status === "RFQ_SENT" && handleSelectInquiry(inq)}
                     >
+                      <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + idx + 1}</td>
                       <td className="px-6 py-4 font-mono font-bold text-sm text-gray-900 dark:text-white">
                         {inq.inquiry_id}
                       </td>
@@ -965,14 +955,7 @@ export default function ClientRFQsPage() {
 
               <div className="flex-1 overflow-auto custom-scrollbar">
                 <DataTable
-                  columns={[
-                    { key: "shipment_number", label: "Order Ref" },
-                    { key: "buyer", label: "Customer" },
-                    { key: "cargo", label: "Cargo Details" },
-                    { key: "date", label: "Ordered Date" },
-                    { key: "status", label: "Status" },
-                    { key: "action", label: "", className: "text-right" }
-                  ]}
+                  columns={ClientRFQsPageSchema3}
                   data={activeOrders}
                   emptyMessage="No confirmed orders found for this supplier profile."
                   renderRow={(ship, idx) => (
@@ -981,6 +964,7 @@ export default function ClientRFQsPage() {
                       className="border-b border-gray-100 dark:border-[#2a2d33] transition-colors hover:bg-gray-55/40 dark:hover:bg-white/[0.01] cursor-pointer"
                       onClick={() => setSelectedOrder(ship)}
                     >
+                      <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + idx + 1}</td>
                       <td className="px-6 py-4 font-mono font-bold text-sm text-gray-900 dark:text-white">
                         {ship.shipmentNumber}
                       </td>
@@ -1023,18 +1007,12 @@ export default function ClientRFQsPage() {
           <div className="lg:col-span-12 bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] overflow-hidden shadow-lg animate-in fade-in duration-300 flex flex-col h-full min-h-[400px]">
             <div className="overflow-x-auto flex-1">
               <DataTable
-                columns={[
-                  { key: "invoice_id", label: "Invoice ID" },
-                  { key: "order", label: "Order Ref" },
-                  { key: "cargo", label: "Cargo Details" },
-                  { key: "date", label: "Date" },
-                  { key: "status", label: "Status" },
-                  { key: "actions", label: "Actions", className: "text-right" },
-                ]}
+                columns={ClientRFQsPageSchema4}
                 data={invoicesData}
                 emptyMessage="No invoices found."
                 renderRow={(inv, idx) => (
                   <tr key={inv.id} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}>
+                    <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + idx + 1}</td>
                     <td className="px-6 py-4 font-mono font-bold text-gray-900 dark:text-white whitespace-nowrap">
                       {inv.invoiceNumber}
                     </td>
@@ -1106,7 +1084,7 @@ export default function ClientRFQsPage() {
         )}
       </div>
 
-      <InvoiceReviewModal 
+      <InvoiceReviewModal
         isOpen={!!previewData}
         previewData={previewData}
         onClose={() => setPreviewData(null)}

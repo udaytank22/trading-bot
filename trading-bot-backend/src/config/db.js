@@ -30,4 +30,46 @@ prisma.$use(async (params, next) => {
   return next(params);
 });
 
-module.exports = prisma;
+const { asyncLocalStorage } = require('../utils/context');
+
+const prismaExtended = prisma.$extends({
+  query: {
+    $allModels: {
+      async $allOperations({ model, operation, args, query }) {
+        const result = await query(args);
+        
+        if (['create', 'update', 'delete'].includes(operation) && model !== 'Notification' && model !== 'AuditLog') {
+          const store = asyncLocalStorage.getStore();
+          if (store && store.user) {
+            const user = store.user;
+            let action = operation === 'create' ? 'created' : operation === 'update' ? 'updated' : 'deleted';
+            let title = `${model} ${action}`;
+            let message = `A ${model} record was ${action} by ${user.role?.name || 'user'}`;
+            
+            try {
+              const notification = await prisma.notification.create({
+                data: {
+                  userId: user.id,
+                  title,
+                  message,
+                  type: 'SYSTEM',
+                  relatedModule: model,
+                  relatedRecordId: result.id ? Number(result.id) : null,
+                }
+              });
+              
+              if (global.io) {
+                global.io.emit('new_notification', notification);
+              }
+            } catch (err) {
+              console.error('Failed to create automatic notification', err);
+            }
+          }
+        }
+        return result;
+      }
+    }
+  }
+});
+
+module.exports = prismaExtended;

@@ -1,3 +1,4 @@
+import { DealDrawerSchema1, DealDrawerSchema2, DealDrawerSchema3 } from '@config/tableSchemas';
 import React, { useState, useEffect } from "react";
 import EmailPreviewModal from "../modals/EmailPreviewModal";
 import MultiEmailPreviewModal from "../modals/MultiEmailPreviewModal";
@@ -361,17 +362,13 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate, onAc
                     </div>
                     <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-[#2a2d36] bg-gray-50 dark:bg-[#242830]/30 shadow-inner">
                       <DataTable
-                        columns={[
-                          { key: "product", label: "Product" },
-                          { key: "qty", label: "Qty" },
-                          { key: "unit", label: "Unit" },
-                          { key: "specs", label: "Specs" },
-                        ]}
+                        columns={DealDrawerSchema1}
                         data={isExpanded ? deal.products : deal.products.slice(0, 4)}
                         emptyMessage="No products requested."
                         renderRow={(p, i) => (
                           <tr key={i} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
-                            <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">
+                            <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + i + 1}</td>
+                        <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">
                               {p.product_name}
                             </td>
                             <td className="px-4 py-3 font-mono font-medium">{p.quantity}</td>
@@ -417,17 +414,13 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate, onAc
                         </div>
                         <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-[#2a2d36] bg-gray-50 dark:bg-[#242830]/30 shadow-inner">
                           <DataTable
-                            columns={[
-                              { key: "product", label: "Product" },
-                              { key: "unitPrice", label: "Unit Price" },
-                              { key: "moq", label: "MOQ" },
-                              { key: "lead", label: "Lead" },
-                            ]}
+                            columns={DealDrawerSchema2}
                             data={deal.seller_quote.products || []}
                             emptyMessage="No products quoted."
                             renderRow={(p, i) => (
                               <tr key={i} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
-                                <td className="px-4 py-3 truncate max-w-[120px] font-medium">{p.product_name}</td>
+                                <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + i + 1}</td>
+                        <td className="px-4 py-3 truncate max-w-[120px] font-medium">{p.product_name}</td>
                                 <td className="px-4 py-3 font-mono text-black dark:text-gray-200 font-medium">
                                   {formatCurrency(p.seller_unit_price)}
                                 </td>
@@ -468,17 +461,13 @@ export default function DealDrawer({ deal, isOpen, onClose, onStatusUpdate, onAc
                       <div className="animate-fade-in">
                         <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-[#2a2d36] bg-gray-50 dark:bg-[#242830]/30 shadow-inner flex flex-col">
                           <DataTable
-                            columns={[
-                              { key: "product", label: "Product" },
-                              { key: "myPrice", label: "My Price" },
-                              { key: "margin", label: "Margin" },
-                              { key: "total", label: "Total", className: "text-right" },
-                            ]}
+                            columns={DealDrawerSchema3}
                             data={displayQuote.products || []}
                             emptyMessage="No quote prepared."
                             renderRow={(p, i) => (
                               <tr key={i} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
-                                <td className="px-4 py-3.5 truncate max-w-[120px] font-medium">{p.product_name}</td>
+                                <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + i + 1}</td>
+                        <td className="px-4 py-3.5 truncate max-w-[120px] font-medium">{p.product_name}</td>
                                 <td className="px-4 py-3.5 font-mono text-purple-300 font-bold">{formatCurrency(p.my_unit_price)}</td>
                                 <td className="px-4 py-3.5 font-mono text-emerald-400 font-bold">{p.margin_percent || p.applied_margin_percent}%</td>
                                 <td className="px-4 py-3.5 font-mono text-gray-900 dark:text-white text-right font-bold">

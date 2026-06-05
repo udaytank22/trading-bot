@@ -89,10 +89,29 @@ const deleteClient = async (req, res) => {
   return sendSuccess(res, 'Client deleted successfully');
 };
 
+/**
+ * Bulk import clients
+ */
+const bulkImportClients = async (req, res) => {
+  const result = await service.bulkImportClients(req.body.clients, req.user.id);
+  
+  await createAuditLog({
+    userId: req.user.id,
+    module: 'clients',
+    action: 'import',
+    newValue: { count: result.successCount },
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent']
+  });
+
+  return sendSuccess(res, `Successfully imported ${result.successCount} clients`, result);
+};
+
 module.exports = {
   getClients,
   getClient,
   createClient,
   updateClient,
-  deleteClient
+  deleteClient,
+  bulkImportClients
 };

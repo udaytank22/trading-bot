@@ -15,6 +15,11 @@ export const createProduct = async (data) => {
   return response.data;
 };
 
+export const bulkUpsert = async (productsData) => {
+  const response = await apiClient.post('/products/bulk', { products: productsData });
+  return response.data;
+};
+
 export const updateProduct = async (id, data) => {
   const response = await apiClient.put(`/products/${id}`, data);
   return response.data;

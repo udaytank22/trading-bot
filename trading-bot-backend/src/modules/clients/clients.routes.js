@@ -23,6 +23,7 @@ router.get('/:id', (req, res, next) => {
   }
   return checkPermission('clients', 'read')(req, res, next);
 }, asyncWrapper(controller.getClient));
+router.post('/bulk', checkPermission('clients', 'create'), asyncWrapper(controller.bulkImportClients));
 router.post('/', checkPermission('clients', 'create'), validate(validateCreateClient), asyncWrapper(controller.createClient));
 router.put('/:id', checkPermission('clients', 'update'), validate(validateUpdateClient), asyncWrapper(controller.updateClient));
 router.delete('/:id', checkPermission('clients', 'delete'), asyncWrapper(controller.deleteClient));

@@ -23,6 +23,23 @@ const getSupplierById = async (id) => {
  * Create supplier
  */
 const createSupplier = async (data, creatorId) => {
+  // Check for duplicate supplier (by email or name)
+  const existingSupplier = await prisma.supplier.findFirst({
+    where: {
+      OR: [
+        { email: data.email },
+        { name: data.name }
+      ],
+      deletedAt: null
+    }
+  });
+
+  if (existingSupplier) {
+    const err = new Error(`A supplier with this ${existingSupplier.email === data.email ? 'email' : 'name'} already exists.`);
+    err.statusCode = 400;
+    throw err;
+  }
+
   return await prisma.supplier.create({
     data: {
       name: data.name,
@@ -41,6 +58,24 @@ const createSupplier = async (data, creatorId) => {
  * Update supplier
  */
 const updateSupplier = async (id, data, updaterId) => {
+  // Check for duplicate supplier (by email or name) excluding the current supplier
+  const existingSupplier = await prisma.supplier.findFirst({
+    where: {
+      id: { not: id },
+      OR: [
+        { email: data.email },
+        { name: data.name }
+      ],
+      deletedAt: null
+    }
+  });
+
+  if (existingSupplier) {
+    const err = new Error(`A supplier with this ${existingSupplier.email === data.email ? 'email' : 'name'} already exists.`);
+    err.statusCode = 400;
+    throw err;
+  }
+
   return await prisma.supplier.update({
     where: { id },
     data: {
@@ -118,10 +153,52 @@ const deleteSupplier = async (id, updaterId) => {
   });
 };
 
+/**
+ * Bulk import suppliers
+ */
+const bulkImportSuppliers = async (suppliersArray, updaterId) => {
+  return await prisma.$transaction(async (tx) => {
+    let successCount = 0;
+    for (const data of suppliersArray) {
+      if (data.id) {
+        await tx.supplier.update({
+          where: { id: data.id },
+          data: {
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            company: data.company,
+            address: data.address,
+            categories: data.categories !== undefined ? data.categories : undefined,
+            isActive: data.isActive,
+            updatedById: updaterId
+          }
+        });
+      } else {
+        await tx.supplier.create({
+          data: {
+            name: data.name,
+            email: data.email,
+            phone: data.phone || null,
+            company: data.company || null,
+            address: data.address || null,
+            categories: data.categories || [],
+            createdById: updaterId,
+            isActive: data.isActive !== undefined ? data.isActive : true
+          }
+        });
+      }
+      successCount++;
+    }
+    return { successCount };
+  }, { timeout: 60000 });
+};
+
 module.exports = {
   getAllSuppliers,
   getSupplierById,
   createSupplier,
   updateSupplier,
-  deleteSupplier
+  deleteSupplier,
+  bulkImportSuppliers
 };

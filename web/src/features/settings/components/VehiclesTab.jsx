@@ -73,7 +73,7 @@ export default function VehiclesTab() {
         documents: formData.documents,
         status: formData.status
       };
-      
+
       if (editItem) {
         await api.vehicles.updateVehicle(editItem.id, data);
         setVehicles(prev => prev.map(v => v.id === editItem.id ? { ...v, ...data } : v));
@@ -94,7 +94,7 @@ export default function VehiclesTab() {
   };
 
   return (
-    <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-sm animate-fade-in flex-1 overflow-hidden flex flex-col">
+    <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-sm animate-fade-in flex-1 flex flex-col">
       <RightDrawer isOpen={!!viewItem} title="Vehicle Details" onClose={() => setViewItem(null)}>
         <ViewDetails item={viewItem} onClose={() => setViewItem(null)} />
       </RightDrawer>
@@ -138,53 +138,54 @@ export default function VehiclesTab() {
         </div>
       </div>
 
-      <div className="overflow-x-auto flex-1 custom-scrollbar">
-        {isLoading ? (
-           <div className="flex justify-center items-center h-32 text-gray-500">Loading vehicles...</div>
-        ) : (
-          <DataTable
-            columns={[
-              { key: "vehicle_no", label: "Vehicle Number" },
-              { key: "type", label: "Type" },
-              { key: "capacity", label: "Capacity" },
-              { key: "driver_name", label: "Driver Name" },
-              { key: "document", label: "Document" },
-              { key: "status", label: "Status" },
-              { key: "actions", label: "Actions", className: "text-right" },
-            ]}
-            data={currentItems}
-            emptyMessage="No vehicles found."
-            renderRow={(vehicle, i) => (
-              <tr key={vehicle.id} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
-                <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">{vehicle.vehicle_no}</td>
-                <td className="px-5 py-3 text-gray-700 dark:text-gray-300">{vehicle.type || '-'}</td>
-                <td className="px-5 py-3 text-gray-700 dark:text-gray-300">{vehicle.capacity || '-'}</td>
-                <td className="px-5 py-3">{vehicle.driver_name} {vehicle.phone ? `(${vehicle.phone})` : ''}</td>
-                <td className="px-5 py-3">
-                  {vehicle.documents && vehicle.documents.length > 0 ? (
-                    <span className="px-2 py-1 bg-purple-100 text-purple-600 rounded text-xs font-bold whitespace-nowrap">{vehicle.documents.length} Uploaded</span>
-                  ) : (
-                    <span className="text-gray-400 text-xs">-</span>
-                  )}
-                </td>
-                <td className="px-5 py-3">
-                  <span className={`px-2 py-1 rounded text-[11px] font-bold ${vehicle.status === 'Active'
-                    ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
-                    : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                    }`}>
-                    {vehicle.status || 'Active'}
-                  </span>
-                </td>
-                <td className="px-5 py-3 text-right space-x-3">
-                  <button onClick={() => setViewItem(vehicle)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" title="View"><EyeIcon /></button>
-                  <button onClick={() => { setEditItem(vehicle); setIsFormOpen(true); }} className="text-blue-500 hover:text-blue-600 transition-colors" title="Edit"><EditIcon /></button>
-                  <button onClick={() => handleDelete(vehicle.id)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete"><TrashIcon /></button>
-                </td>
-              </tr>
-            )}
-          />
-        )}
-      </div>
+      {isLoading ? (
+        <div className="flex justify-center items-center h-32 text-gray-500">Loading vehicles...</div>
+      ) : (
+        <DataTable
+          maxHeight="max-h-none"
+          columns={[
+            { key: "srno", label: "#" },
+            { key: "vehicle_no", label: "Vehicle Number" },
+            { key: "type", label: "Type" },
+            { key: "capacity", label: "Capacity" },
+            { key: "driver_name", label: "Driver Name" },
+            { key: "document", label: "Document" },
+            { key: "status", label: "Status" },
+            { key: "actions", label: "Actions", className: "text-right" },
+          ]}
+          data={currentItems}
+          emptyMessage="No vehicles found."
+          renderRow={(vehicle, i) => (
+            <tr key={vehicle.id} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
+              <td className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">{(currentPage - 1) * itemsPerPage + i + 1}</td>
+              <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">{vehicle.vehicle_no}</td>
+              <td className="px-5 py-3 text-gray-700 dark:text-gray-300">{vehicle.type || '-'}</td>
+              <td className="px-5 py-3 text-gray-700 dark:text-gray-300">{vehicle.capacity || '-'}</td>
+              <td className="px-5 py-3">{vehicle.driver_name} {vehicle.phone ? `(${vehicle.phone})` : ''}</td>
+              <td className="px-5 py-3">
+                {vehicle.documents && vehicle.documents.length > 0 ? (
+                  <span className="px-2 py-1 bg-purple-100 text-purple-600 rounded text-xs font-bold whitespace-nowrap">{vehicle.documents.length} Uploaded</span>
+                ) : (
+                  <span className="text-gray-400 text-xs">-</span>
+                )}
+              </td>
+              <td className="px-5 py-3">
+                <span className={`px-2 py-1 rounded text-[11px] font-bold ${vehicle.status === 'Active'
+                  ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                  : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                  }`}>
+                  {vehicle.status || 'Active'}
+                </span>
+              </td>
+              <td className="px-5 py-3 text-right space-x-3">
+                <button onClick={() => setViewItem(vehicle)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" title="View"><EyeIcon /></button>
+                <button onClick={() => { setEditItem(vehicle); setIsFormOpen(true); }} className="text-blue-500 hover:text-blue-600 transition-colors" title="Edit"><EditIcon /></button>
+                <button onClick={() => handleDelete(vehicle.id)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete"><TrashIcon /></button>
+              </td>
+            </tr>
+          )}
+        />
+      )}
 
       <div className="p-4 border-t border-gray-200 dark:border-[#2a2d33]">
         <Pagination
@@ -255,7 +256,7 @@ function VehicleForm({ initialData, onSave, onClose }) {
         <Field label="Driver Name">
           <input type="text" className={inputCls} value={formData.driver_name} onChange={set('driver_name')} placeholder="e.g. Rajesh Kumar" />
         </Field>
-        
+
         <Field label="Driver Phone">
           <input type="text" className={inputCls} value={formData.phone} onChange={set('phone')} placeholder="e.g. 9876543210" />
         </Field>
@@ -284,10 +285,10 @@ function VehicleForm({ initialData, onSave, onClose }) {
           </div>
           <div className="sm:col-span-5">
             <Field label="File" labelClassName="text-[11px] font-bold text-gray-500 uppercase block mb-1">
-              <input 
+              <input
                 id="vehicle-doc-upload"
-                type="file" 
-                className="w-full text-xs text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100" 
+                type="file"
+                className="w-full text-xs text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
                 onChange={(e) => {
                   const file = e.target.files[0];
                   if (file) {
@@ -297,13 +298,13 @@ function VehicleForm({ initialData, onSave, onClose }) {
                     };
                     reader.readAsDataURL(file);
                   }
-                }} 
-                accept=".pdf,.jpg,.jpeg,.png" 
+                }}
+                accept=".pdf,.jpg,.jpeg,.png"
               />
             </Field>
           </div>
           <div className="sm:col-span-2 pb-1">
-            <button 
+            <button
               type="button"
               onClick={handleAddDocument}
               disabled={!docName || !docFile}

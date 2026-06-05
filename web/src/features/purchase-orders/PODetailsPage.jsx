@@ -1,3 +1,4 @@
+import { PODetailsPageSchema1 } from '@config/tableSchemas';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '@context';
@@ -180,17 +181,13 @@ export default function PODetailsPage() {
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Order Items ({po.products?.length || 0})</h3>
               <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-[#2a2d36] bg-gray-50/50 dark:bg-[#242830]/30 shadow-inner">
                 <DataTable
-                  columns={[
-                    { key: "description", label: "Product" },
-                    { key: "unitPrice", label: "Unit Price" },
-                    { key: "quantity", label: "Quantity" },
-                    { key: "totalPrice", label: "Total Price", className: "text-right" },
-                  ]}
+                  columns={PODetailsPageSchema1}
                   data={po.products || []}
                   emptyMessage="No items found."
                   renderRow={(item, idx) => (
                     <tr key={idx} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}>
-                      <td className="px-6 py-4 text-gray-900 dark:text-white font-bold">{item.product_name}</td>
+                      <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + idx + 1}</td>
+                        <td className="px-6 py-4 text-gray-900 dark:text-white font-bold">{item.product_name}</td>
                       <td className="px-6 py-4 font-mono text-gray-400">{formatINR(item.unit_price || 0)}</td>
                       <td className="px-6 py-4 font-mono text-gray-900 dark:text-white font-medium">{item.quantity} PCS</td>
                       <td className="px-6 py-4 text-right font-mono font-bold text-purple-600 dark:text-purple-450 text-base">{formatINR(item.total_price || 0)}</td>

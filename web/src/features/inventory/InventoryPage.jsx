@@ -1,3 +1,4 @@
+import { InventoryPageSchema1 } from '@config/tableSchemas';
 import React, { useMemo, useState } from "react";
 import { confirmAction } from '@utils/swal';
 import { PageToolbar, Select, DataTable, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
@@ -370,16 +371,7 @@ export default function InventoryPage() {
 
         <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg transition-colors duration-300">
           <DataTable
-            columns={[
-              { key: "id", label: "Item ID" },
-              { key: "name", label: "Item Name" },
-              { key: "category", label: "Category" },
-              { key: "location", label: "Location" },
-              { key: "quantity", label: "Quantity" },
-              { key: "price", label: "Price" },
-              { key: "status", label: "Status" },
-              { key: "actions", label: "Actions", className: "text-right" },
-            ]}
+            columns={InventoryPageSchema1}
             data={filteredInventory}
             emptyMessage="No inventory items found."
             renderRow={(item, idx) => (
@@ -387,7 +379,8 @@ export default function InventoryPage() {
                 key={item.id}
                 className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}
               >
-                <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400">
+                <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + idx + 1}</td>
+                        <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400">
                   {item.id}
                 </td>
                 <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">

@@ -24,3 +24,8 @@ export const deleteClient = async (id) => {
   const response = await apiClient.delete(`/clients/${id}`);
   return response.data;
 };
+
+export const bulkImportClients = async (clients) => {
+  const response = await apiClient.post('/clients/bulk', { clients });
+  return response.data;
+};

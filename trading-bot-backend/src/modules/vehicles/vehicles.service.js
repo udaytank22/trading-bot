@@ -22,6 +22,20 @@ const getVehicleById = async (id) => {
 };
 
 const createVehicle = async (data) => {
+  // Check for duplicate vehicle (by vehicle_no)
+  const existingVehicle = await prisma.vehicle.findFirst({
+    where: {
+      vehicle_no: data.vehicle_no,
+      deletedAt: null
+    }
+  });
+
+  if (existingVehicle) {
+    const err = new Error('A vehicle with this vehicle number already exists.');
+    err.statusCode = 400;
+    throw err;
+  }
+
   return await prisma.vehicle.create({
     data: {
       vehicle_no: data.vehicle_no,
@@ -36,6 +50,21 @@ const createVehicle = async (data) => {
 };
 
 const updateVehicle = async (id, data) => {
+  // Check for duplicate vehicle (by vehicle_no) excluding the current vehicle
+  const existingVehicle = await prisma.vehicle.findFirst({
+    where: {
+      id: { not: id },
+      vehicle_no: data.vehicle_no,
+      deletedAt: null
+    }
+  });
+
+  if (existingVehicle) {
+    const err = new Error('A vehicle with this vehicle number already exists.');
+    err.statusCode = 400;
+    throw err;
+  }
+
   return await prisma.vehicle.update({
     where: { id },
     data: {

@@ -1,3 +1,4 @@
+import { InquiryDetailsPageSchema1, InquiryDetailsPageSchema2, InquiryDetailsPageSchema3 } from '@config/tableSchemas';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useData, useAuth } from '@context';
@@ -407,7 +408,7 @@ export default function InquiryDetailsPage() {
   return (
     <div className="w-full animate-in fade-in duration-300 pb-6">
       <div className="max-w-7xl mx-auto py-2 px-2 md:px-4 flex flex-col gap-4">
-        
+
         {/* HEADER BAR */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 dark:border-[#2a2d36] pb-4 gap-4">
           <div className="flex items-center gap-3">
@@ -429,11 +430,10 @@ export default function InquiryDetailsPage() {
             {canPerformAction && actionConfig && (
               <button
                 onClick={() => setActiveTab(activeTab === 'action' ? 'overview' : 'action')}
-                className={`px-4 py-2 rounded-xl text-xs uppercase tracking-wider font-bold transition-all duration-205 active:scale-[0.98] shadow-sm ${
-                  activeTab === 'action'
+                className={`px-4 py-2 rounded-xl text-xs uppercase tracking-wider font-bold transition-all duration-205 active:scale-[0.98] shadow-sm ${activeTab === 'action'
                     ? 'bg-gray-200 hover:bg-gray-350 text-gray-800 dark:bg-[#1a1d23] dark:hover:bg-[#242830] dark:text-gray-300 border border-gray-300 dark:border-[#2a2d36]'
                     : 'bg-purple-600 hover:bg-purple-550 text-white shadow-purple-600/10'
-                }`}
+                  }`}
               >
                 {activeTab === 'action' ? 'Show Details' : actionConfig.label}
               </button>
@@ -442,7 +442,7 @@ export default function InquiryDetailsPage() {
         </div>
 
         {/* STEPPER TIMELINE */}
-        <div className="bg-white dark:bg-[#1e2028] rounded-xl p-5 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+        {/* <div className="bg-white dark:bg-[#1e2028] rounded-xl p-5 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
           <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 px-1">
             Sourcing Milestone Progress
           </div>
@@ -476,28 +476,26 @@ export default function InquiryDetailsPage() {
               })}
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* TABS SELECTOR */}
         {canPerformAction && actionConfig && (
           <div className="flex border-b border-gray-200 dark:border-[#2a2d36]">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`px-6 py-2.5 font-bold text-sm border-b-2 transition-all duration-200 ${
-                activeTab === 'overview'
+              className={`px-6 py-2.5 font-bold text-sm border-b-2 transition-all duration-200 ${activeTab === 'overview'
                   ? 'border-purple-500 text-purple-600 dark:text-purple-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
+                }`}
             >
               Overview
             </button>
             <button
               onClick={() => setActiveTab('action')}
-              className={`px-6 py-2.5 font-bold text-sm border-b-2 transition-all duration-200 ${
-                activeTab === 'action'
+              className={`px-6 py-2.5 font-bold text-sm border-b-2 transition-all duration-200 ${activeTab === 'action'
                   ? 'border-purple-500 text-purple-600 dark:text-purple-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-              }`}
+                }`}
             >
               {actionConfig.tabLabel}
             </button>
@@ -509,7 +507,7 @@ export default function InquiryDetailsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* LEFT SIDE: Products & Quotes */}
             <div className="lg:col-span-2 space-y-6">
-              
+
               {/* Products Requested */}
               <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
                 <div className="flex justify-between items-center mb-4">
@@ -525,16 +523,12 @@ export default function InquiryDetailsPage() {
                 </div>
                 <div className="overflow-x-auto rounded-xl border border-gray-250 dark:border-[#2a2d36] bg-gray-50/50 dark:bg-[#242830]/30 shadow-inner">
                   <DataTable
-                    columns={[
-                      { key: "product", label: "Product Name" },
-                      { key: "category", label: "Category" },
-                      { key: "qty", label: "Qty" },
-                      { key: "unit", label: "Unit" },
-                    ]}
+                    columns={InquiryDetailsPageSchema1}
                     data={isExpanded ? deal.products : deal.products.slice(0, 4)}
                     emptyMessage="No products requested."
                     renderRow={(p, i) => (
                       <tr key={i} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
+                        <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + i + 1}</td>
                         <td className="px-4 py-3 text-gray-900 dark:text-white font-bold">{p.product_name}</td>
                         <td className="px-4 py-3">
                           <span className="px-2 py-0.5 bg-gray-200/50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-[10px] font-bold rounded">
@@ -570,16 +564,12 @@ export default function InquiryDetailsPage() {
                     </div>
                     <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-[#2a2d36] bg-gray-50/50 dark:bg-[#242830]/30 shadow-inner">
                       <DataTable
-                        columns={[
-                          { key: "product", label: "Product Name" },
-                          { key: "unitPrice", label: "Supplier Unit Price" },
-                          { key: "moq", label: "MOQ" },
-                          { key: "lead", label: "Lead Time" },
-                        ]}
+                        columns={InquiryDetailsPageSchema2}
                         data={deal.seller_quote.products || []}
                         emptyMessage="No quote details."
                         renderRow={(p, i) => (
                           <tr key={i} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
+                            <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + i + 1}</td>
                             <td className="px-4 py-3 font-semibold">{p.product_name}</td>
                             <td className="px-4 py-3 font-mono text-gray-900 dark:text-white font-bold">{formatINR(p.seller_unit_price)}</td>
                             <td className="px-4 py-3 font-mono font-medium">{p.moq}</td>
@@ -611,16 +601,12 @@ export default function InquiryDetailsPage() {
                 ) : (
                   <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-[#2a2d36] bg-gray-50/50 dark:bg-[#242830]/30 shadow-inner">
                     <DataTable
-                      columns={[
-                        { key: "product", label: "Product Name" },
-                        { key: "myPrice", label: "Selling Unit Price" },
-                        { key: "margin", label: "Applied Margin" },
-                        { key: "total", label: "Total Price", className: "text-right" },
-                      ]}
+                      columns={InquiryDetailsPageSchema3}
                       data={displayQuote.products || []}
                       emptyMessage="No quote prepared."
                       renderRow={(p, i) => (
                         <tr key={i} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
+                          <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + i + 1}</td>
                           <td className="px-4 py-3 font-semibold">{p.product_name}</td>
                           <td className="px-4 py-3 font-mono text-purple-600 dark:text-purple-400 font-bold">{formatINR(p.my_unit_price)}</td>
                           <td className="px-4 py-3 font-mono text-emerald-500 font-semibold">{p.margin_percent || p.applied_margin_percent}%</td>
@@ -636,7 +622,7 @@ export default function InquiryDetailsPage() {
 
             {/* RIGHT SIDE: Context & Financial Summary */}
             <div className="space-y-6">
-              
+
               {/* Context Card */}
               <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Sourcing Context</h3>
@@ -795,7 +781,7 @@ export default function InquiryDetailsPage() {
         onClose={handleMultiEmailClose}
         stagedRFQs={pendingRFQs}
         inquiryDeal={currentDealWithLocalQuote}
-        onStatusUpdate={() => {}}
+        onStatusUpdate={() => { }}
       />
     </div>
   );

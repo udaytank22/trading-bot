@@ -24,3 +24,8 @@ export const deleteSupplier = async (id) => {
   const response = await apiClient.delete(`/suppliers/${id}`);
   return response.data;
 };
+
+export const bulkImportSuppliers = async (suppliers) => {
+  const response = await apiClient.post('/suppliers/bulk', { suppliers });
+  return response.data;
+};

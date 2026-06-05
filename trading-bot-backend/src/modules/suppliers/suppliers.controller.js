@@ -89,10 +89,29 @@ const deleteSupplier = async (req, res) => {
   return sendSuccess(res, 'Supplier deleted successfully');
 };
 
+/**
+ * Bulk import suppliers
+ */
+const bulkImportSuppliers = async (req, res) => {
+  const result = await service.bulkImportSuppliers(req.body.suppliers, req.user.id);
+  
+  await createAuditLog({
+    userId: req.user.id,
+    module: 'suppliers',
+    action: 'import',
+    newValue: { count: result.successCount },
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent']
+  });
+
+  return sendSuccess(res, `Successfully imported ${result.successCount} suppliers`, result);
+};
+
 module.exports = {
   getSuppliers,
   getSupplier,
   createSupplier,
   updateSupplier,
-  deleteSupplier
+  deleteSupplier,
+  bulkImportSuppliers
 };

@@ -12,6 +12,7 @@ router.use(authMiddleware);
 
 router.get('/', checkPermission('products', 'read'), asyncWrapper(controller.getProducts));
 router.get('/:id', checkPermission('products', 'read'), asyncWrapper(controller.getProduct));
+router.post('/bulk', checkPermission('products', 'create'), asyncWrapper(controller.bulkUpsertProducts));
 router.post('/', checkPermission('products', 'create'), validate(validateCreateProduct), asyncWrapper(controller.createProduct));
 router.put('/:id', checkPermission('products', 'update'), validate(validateUpdateProduct), asyncWrapper(controller.updateProduct));
 router.delete('/:id', checkPermission('products', 'delete'), asyncWrapper(controller.deleteProduct));

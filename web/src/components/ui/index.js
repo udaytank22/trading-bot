@@ -20,20 +20,21 @@
  */
 
 // ── Primitive interaction components ───────────────────────────────────────────
-export { default as Button }      from "./button";
-export { default as SearchBar }   from "./searchBar";
-export { default as Tooltip }     from "./tooltip";
-export { default as Select }      from "./select";
-export { default as Field }       from "./field";
-export { default as DatePicker }  from "./datePicker";
+export { default as Button } from "./button";
+export { default as SearchBar } from "./searchBar";
+export { default as Tooltip } from "./tooltip";
+export { default as Select } from "./select";
+export { default as Field } from "./field";
+export { default as DatePicker } from "./datePicker";
 
 // ── Data display components ────────────────────────────────────────────────────
 export { default as StatusBadge } from "./statusBadge";
-export { default as DateCell }    from "./dateCell";
+export { default as DateCell } from "./dateCell";
 export { default as DataTable, rowStripeClass, ROW_HOVER_CLS } from "./dataTable";
 
 // ── Layout / chrome components ─────────────────────────────────────────────────
 export { default as PageToolbar } from "./pageToolbar";
-export { default as Pagination }  from "./pagination";
-export { default as Toast }       from "./toast";
-export { default as Modal }       from "./modal";
+export { default as Pagination } from "./pagination";
+export { default as Toast } from "./toast";
+export { default as Modal } from "./modal";
+export { default as ExcelImportModal } from "./ExcelImportModal";

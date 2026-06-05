@@ -1,83 +1,38 @@
+import { RFQModalSchema1 } from '@config/tableSchemas';
 import React, { useState, useMemo } from "react";
 import { DataTable, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
 import { useData } from '@context';
 
 const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
-  const { suppliersData, productsData } = useData();
-  const [selectedSupplierId, setSelectedSupplierId] = useState("");
-  const [selectedProductNames, setSelectedProductNames] = useState([]);
-  const [stagedRFQs, setStagedRFQs] = useState([]);
-  const [productSearch, setProductSearch] = useState("");
+  const { productsData } = useData();
+  const [expandedIndices, setExpandedIndices] = useState([]);
 
   const getProductCategory = (productName) => {
     const prod = (productsData || []).find(p => p.name.toLowerCase() === productName.toLowerCase());
     return prod ? prod.category : 'General';
   };
 
-  React.useEffect(() => {
-    if (deal?.selected_suppliers) {
-      const initialStaged = deal.selected_suppliers.map(s => ({
-        supplierId: s.id,
-        supplierName: s.name,
-        products: deal.products.filter(p => {
-          const productCategory = getProductCategory(p.product_name);
-          return (s.categories || []).some(cat => cat.toLowerCase() === (productCategory || "").toLowerCase());
-        }).map(p => p.product_name)
-      })).filter(rfq => rfq.products.length > 0); // Only stage if there are matches
-      
-      setStagedRFQs(initialStaged);
+  const stagedRFQs = useMemo(() => {
+    if (deal?.suppliers) {
+      return deal.suppliers.map(s => {
+        const supplierData = s.supplier || s; // Backend returns nested { supplier: { ... } }
+        return {
+          supplierId: supplierData.id,
+          supplierName: supplierData.name,
+          products: deal.products.filter(p => {
+            const productCategory = getProductCategory(p.product_name);
+            return (supplierData.categories || []).some(cat => cat.toLowerCase() === (productCategory || "").toLowerCase());
+          }).map(p => p.product_name)
+        };
+      }).filter(rfq => rfq.products.length > 0);
     }
-  }, [deal?.selected_suppliers, productsData]);
-
-  const filteredSuppliers = useMemo(() => {
-    if (!deal || !deal.products) return [];
-    const inquiryCategories = deal.products.map((p) => getProductCategory(p.product_name).toLowerCase());
-    const stagedIds = stagedRFQs.map((r) => r.supplierId);
-
-    return suppliersData.filter((supplier) =>
-      !stagedIds.includes(supplier.id) &&
-      (supplier.categories || []).some((cat) => inquiryCategories.includes(cat.toLowerCase()))
-    );
-  }, [deal, suppliersData, productsData, stagedRFQs]);
-
-  const filteredProducts = useMemo(() => {
-    if (!deal?.products) return [];
-    return deal.products.filter(p => 
-      p.product_name.toLowerCase().includes(productSearch.toLowerCase())
-    );
-  }, [deal, productSearch]);
+    return [];
+  }, [deal?.suppliers, deal?.products, productsData]);
 
   if (!isOpen) return null;
 
-  const handleProductToggle = (name) => {
-    setSelectedProductNames((prev) =>
-      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]
-    );
-  };
-
-  const handleSaveToList = () => {
-    if (!selectedSupplierId || selectedProductNames.length === 0) return;
-
-    const supplier = suppliersData.find((s) => s.id === selectedSupplierId);
-    const newStaged = {
-      supplierId: selectedSupplierId,
-      supplierName: supplier ? supplier.name : '',
-      products: selectedProductNames,
-    };
-
-    setStagedRFQs((prev) => [...prev, newStaged]);
-    setSelectedSupplierId("");
-    setSelectedProductNames([]);
-  };
-
-  const handleRemoveStaged = (index) => {
-    setStagedRFQs((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const [expandedIndices, setExpandedIndices] = useState([]);
-
   const toggleExpand = (idx) => {
-    setExpandedIndices(prev => 
+    setExpandedIndices(prev =>
       prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]
     );
   };
@@ -87,101 +42,31 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
       {!isPageMode && (
         <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
           <div className="flex items-center gap-4">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Prepare RFQs</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Verify RFQ Assignments</h2>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl leading-none">&times;</button>
         </div>
       )}
 
-      <div className="p-6 space-y-8">
-        <div className="p-6 bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-2xl space-y-6">
-          <h3 className="text-xs font-bold text-purple-400 uppercase tracking-widest">Step 1: Add Party & Products</h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">
-                1. Select Party (Supplier)
-              </label>
-              <div className={`grid grid-cols-1 gap-2 p-1 ${isPageMode ? "" : "max-h-[300px] overflow-y-auto custom-scrollbar"}`}>
-                {filteredSuppliers.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => setSelectedSupplierId(s.id)}
-                    className={`flex flex-col p-3 rounded-xl border transition-all text-left ${
-                      selectedSupplierId === s.id
-                        ? "bg-purple-600/10 border-purple-500 text-purple-700 dark:text-white"
-                        : "bg-gray-50 dark:bg-[#1a1d23] border-gray-200 dark:border-[#2a2d33] text-gray-700 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500"
-                    }`}
-                  >
-                    <span className="text-sm font-bold">{s.name}</span>
-                    <span className="text-[10px] opacity-60">{s.location}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex justify-between items-end mb-2">
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-                  2. Select Products ({selectedProductNames.length} selected)
-                </label>
-                <input 
-                  type="text" 
-                  placeholder="Filter products..."
-                  value={productSearch}
-                  onChange={(e) => setProductSearch(e.target.value)}
-                  className="bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-3 py-1 text-[10px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 w-32"
-                />
-              </div>
-              <div className={`flex flex-wrap gap-2 p-3 bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl ${isPageMode ? "" : "max-h-[300px] overflow-y-auto custom-scrollbar"}`}>
-                {filteredProducts.map((p) => (
-                  <button
-                    key={p.product_name}
-                    onClick={() => handleProductToggle(p.product_name)}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${selectedProductNames.includes(p.product_name)
-                        ? "bg-purple-600 border-purple-500 text-white"
-                        : "bg-gray-100 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500"
-                      }`}
-                  >
-                    {p.product_name}
-                  </button>
-                ))}
-                {filteredProducts.length === 0 && (
-                  <p className="text-[10px] text-gray-600 italic py-4 w-full text-center">No products match your search</p>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-end pt-2">
-            <button
-              onClick={handleSaveToList}
-              disabled={!selectedSupplierId || selectedProductNames.length === 0}
-              className="px-8 py-3 bg-purple-600 text-white text-xs font-bold rounded-xl hover:bg-purple-500 transition-all disabled:opacity-40 flex items-center gap-2 shadow-lg shadow-purple-600/20"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-              </svg>
-              Add to Stage List
-            </button>
-          </div>
-        </div>
-
+      <div className="p-6 space-y-6">
         <div className="space-y-4">
-          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Step 2: Review Staged RFQs ({stagedRFQs.length})</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Please verify the vendors and their assigned products before sending the RFQ emails. This list was automatically generated based on the suppliers you selected in the Stock Check step.
+          </p>
           <div className="border border-gray-200 dark:border-[#2a2d33] rounded-2xl overflow-hidden bg-gray-100 dark:bg-[#0c0e12]">
             <DataTable
               columns={[
-                { key: "party", label: "Party / Supplier" },
-                { key: "items", label: "Items for RFQ" },
-                { key: "action", label: "Action", className: "text-right" },
+                { key: 'supplierName', label: 'VENDOR' },
+                { key: 'products', label: 'ASSIGNED PRODUCTS' }
               ]}
               data={stagedRFQs}
-              emptyMessage="No RFQs staged yet."
+              emptyMessage="No vendors selected. Please go back to Stock Check."
               renderRow={(rfq, idx) => {
                 const isExpanded = expandedIndices.includes(idx);
                 const productsToShow = isExpanded ? rfq.products : rfq.products.slice(0, 10);
                 return (
                   <tr key={idx} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}>
-                    <td className="px-6 py-4 align-top">
+                    <td className="px-6 py-4 align-top w-1/3">
                       <span className="text-gray-900 dark:text-white font-bold">{rfq.supplierName}</span>
                     </td>
                     <td className="px-6 py-4">
@@ -192,24 +77,14 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
                           </span>
                         ))}
                         {rfq.products.length > 10 && (
-                          <button 
+                          <button
                             onClick={() => toggleExpand(idx)}
-                            className="px-2 py-0.5 bg-purple-500/10 text-purple-400 rounded text-[10px] font-bold hover:bg-purple-500/20 transition-all border border-purple-500/20"
+                            className="px-2 py-0.5 bg-purple-500/10 text-purple-400 rounded text-[10px] font-bold hover:bg-purple-500/20 transition-all border border-purple-500/20 mt-1"
                           >
                             {isExpanded ? "Show Less" : `+${rfq.products.length - 10} more items`}
                           </button>
                         )}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => handleRemoveStaged(idx)}
-                        className="p-2 hover:bg-red-500/10 text-red-400 rounded-lg transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
                     </td>
                   </tr>
                 );
@@ -219,7 +94,7 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
         </div>
       </div>
 
-      <div className="p-6 border-t border-gray-200 dark:border-[#2a2d33] flex gap-4 bg-gray-50 dark:bg-[#1a1d23] mt-8">
+      <div className="p-6 border-t border-gray-200 dark:border-[#2a2d33] flex gap-4 bg-gray-50 dark:bg-[#1a1d23]">
         <button
           type="button"
           onClick={onClose}
@@ -235,7 +110,7 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
           </svg>
-          Confirm & Send {stagedRFQs.length} RFQs
+          Verify & Send {stagedRFQs.length} RFQ Emails
         </button>
       </div>
     </div>

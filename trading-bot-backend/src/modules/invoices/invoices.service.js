@@ -120,11 +120,11 @@ const updateInvoice = async (id, data, updaterId) => {
     if (data.status) updateData.status = data.status;
     if (data.dueDate) updateData.dueDate = new Date(data.dueDate);
     if (data.invoiceDate) updateData.invoiceDate = new Date(data.invoiceDate);
-    
+
     const sub = data.subtotal !== undefined ? parseFloat(data.subtotal) : old.subtotal.toNumber();
     const txVal = data.tax !== undefined ? parseFloat(data.tax) : old.tax.toNumber();
     const disc = data.discount !== undefined ? parseFloat(data.discount) : old.discount.toNumber();
-    
+
     if (data.subtotal !== undefined) updateData.subtotal = sub;
     if (data.tax !== undefined) updateData.tax = txVal;
     if (data.discount !== undefined) updateData.discount = disc;
@@ -232,7 +232,7 @@ const generateInvoiceFromShipment = async (shipmentId, creatorId) => {
 
   // 4. Generate PDF
   const templatePath = path.join(__dirname, '../../utils/templates/invoice.ejs');
-  
+
   // Convert Decimals to numbers for rendering
   const renderData = {
     invoice: {
@@ -244,7 +244,7 @@ const generateInvoiceFromShipment = async (shipmentId, creatorId) => {
       total: parseFloat(invoice.total)
     },
     client: shipment.client,
-    items: items.map(i => ({...i, unitPrice: parseFloat(i.unitPrice), totalPrice: parseFloat(i.totalPrice)}))
+    items: items.map(i => ({ ...i, unitPrice: parseFloat(i.unitPrice), totalPrice: parseFloat(i.totalPrice) }))
   };
 
   const html = await ejs.renderFile(templatePath, renderData);
@@ -256,12 +256,12 @@ const generateInvoiceFromShipment = async (shipmentId, creatorId) => {
   await browser.close();
 
   const pdfBase64 = Buffer.from(pdfUint8Array).toString('base64');
-  
+
   const defaultEmailSubject = `Your Invoice ${invoice.invoiceNumber}`;
   const defaultEmailBody = `Dear Client,\n\nPlease find attached the invoice ${invoice.invoiceNumber} for your recent order.\n\nThank you for your business!`;
 
-  return { 
-    invoice, 
+  return {
+    invoice,
     pdfBase64,
     defaultEmailSubject,
     defaultEmailBody
@@ -296,7 +296,7 @@ const generateInvoicePdfBuffer = async (invoiceId) => {
       total: parseFloat(invoice.total)
     },
     client: invoice.client,
-    items: invoice.items.map(i => ({...i, unitPrice: parseFloat(i.unitPrice), totalPrice: parseFloat(i.totalPrice)}))
+    items: invoice.items.map(i => ({ ...i, unitPrice: parseFloat(i.unitPrice), totalPrice: parseFloat(i.totalPrice) }))
   };
 
   const html = await ejs.renderFile(templatePath, renderData);
@@ -321,7 +321,7 @@ const sendInvoiceEmailAPI = async (invoiceId, emailSubject, emailBody, updaterId
     // Modify email service to accept custom body if needed, but for now we'll send it directly here
     const nodemailer = require('nodemailer');
     const { createTransporter } = require('../../utils/email.service');
-    
+
     // Fallback if the helper doesn't export createTransporter
     let testAccount = await nodemailer.createTestAccount();
     const transporter = nodemailer.createTransport({

@@ -89,10 +89,34 @@ const deleteProduct = async (req, res) => {
   return sendSuccess(res, 'Product deleted successfully');
 };
 
+/**
+ * Bulk upsert products
+ */
+const bulkUpsertProducts = async (req, res) => {
+  if (!req.body.products || !Array.isArray(req.body.products)) {
+    return sendError(res, 'Products array is required', [], 400);
+  }
+
+  const result = await service.bulkUpsertProducts(req.body.products, req.user.id);
+
+  await createAuditLog({
+    userId: req.user.id,
+    module: 'products',
+    action: 'bulk_upsert',
+    recordId: null,
+    newValue: { count: result.length },
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent']
+  });
+
+  return sendSuccess(res, `Successfully processed ${result.length} products`, result, 201);
+};
+
 module.exports = {
   getProducts,
   getProduct,
   createProduct,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  bulkUpsertProducts
 };

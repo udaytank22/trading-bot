@@ -4,8 +4,46 @@ const helmet = require('helmet');
 const config = require('./config');
 const errorHandler = require('./middleware/error.middleware');
 const { sendError } = require('./utils/response');
+const http = require('http');
+const { Server } = require('socket.io');
+const { verifyAccessToken } = require('./utils/token');
 
 const app = express();
+const httpServer = http.createServer(app);
+
+// Setup Socket.io
+const io = new Server(httpServer, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE']
+  }
+});
+
+// Expose io instance to the app and global
+app.set('io', io);
+global.io = io;
+
+// Socket.io Auth Middleware
+io.use((socket, next) => {
+  const token = socket.handshake.auth.token;
+  if (!token) return next(new Error('Authentication error'));
+  try {
+    const decoded = verifyAccessToken(token);
+    socket.user = decoded;
+    // user joins their own room for direct notifications
+    socket.join(`user_${decoded.userId}`);
+    next();
+  } catch(err) {
+    next(new Error('Authentication error'));
+  }
+});
+
+io.on('connection', (socket) => {
+  console.log(`[Socket] Client connected: ${socket.id} (User: ${socket.user.userId})`);
+  socket.on('disconnect', () => {
+    console.log(`[Socket] Client disconnected: ${socket.id}`);
+  });
+});
 
 // Security and middleware setup
 app.use(helmet());
@@ -53,7 +91,7 @@ app.use((req, res, next) => {
 // Global central error handler
 app.use(errorHandler);
 
-const server = app.listen(config.PORT, () => {
+const server = httpServer.listen(config.PORT, () => {
   console.log(`[Server] running in ${config.NODE_ENV} mode on port ${config.PORT}`);
 });
 

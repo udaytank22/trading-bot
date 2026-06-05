@@ -4,6 +4,7 @@ import { confirmAction } from '@utils/swal';
 import { useData } from '@context';
 import { api } from '@services/api';
 import { RightDrawer, ViewDetails, EyeIcon, TrashIcon } from './shared';
+import { DocumentsTabSchema1 } from '@config/tableSchemas';
 
 export default function DocumentsTab() {
   const { documentsData, refreshAll } = useData();
@@ -79,22 +80,14 @@ export default function DocumentsTab() {
 
       <div className="overflow-x-auto flex-1 custom-scrollbar">
         <DataTable
-          columns={[
-            { key: "id", label: "Document ID" },
-            { key: "name", label: "Document Name" },
-            { key: "category", label: "Category" },
-            { key: "type", label: "Entity Type" },
-            { key: "entityName", label: "Linked Entity" },
-            { key: "uploadedDate", label: "Uploaded Date" },
-            { key: "status", label: "Status" },
-            { key: "actions", label: "Actions", className: "text-right" },
-          ]}
+          columns={DocumentsTabSchema1}
           data={currentItems}
           emptyMessage="No documents found."
           renderRow={(doc, i) => (
             <tr key={doc.id} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
+              <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{((currentPage ? currentPage : 1) - 1) * (itemsPerPage ? itemsPerPage : 10) + i + 1}</td>
               <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">
-                {doc.id.slice(-8)}
+                {String(doc.id).slice(-8)}
               </td>
               <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">
                 {doc.title}

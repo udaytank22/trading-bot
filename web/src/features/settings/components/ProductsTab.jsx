@@ -1,9 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { DataTable, rowStripeClass, ROW_HOVER_CLS, Pagination } from '@components/ui';
+import { DataTable, rowStripeClass, ROW_HOVER_CLS, Pagination, ExcelImportModal } from '@components/ui';
 import { confirmAction } from '@utils/swal';
 import { useData } from '@context';
 import { api } from '@services/api';
 import { RightDrawer, ViewDetails, Field, inputCls, EyeIcon, EditIcon, TrashIcon } from './shared';
+import * as XLSX from 'xlsx';
+import { useToast } from '@hooks/useToast';
 
 export default function ProductsTab() {
   const { productsData, refreshAll } = useData();
@@ -13,6 +15,8 @@ export default function ProductsTab() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const { showToast } = useToast();
 
   const filteredProducts = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -71,8 +75,78 @@ export default function ProductsTab() {
     }
   };
 
+  const handleDownloadSample = () => {
+    let dataToExport = [];
+    if (productsData && productsData.length > 0) {
+      dataToExport = productsData.map(prod => ({
+        ID: prod.id,
+        Name: prod.name || "",
+        SKU: prod.sku || "",
+        Category: prod.category || "",
+        Unit: prod.unit || "pcs",
+        "Selling Price": prod.sellingPrice || 0,
+        "Purchase Price": prod.purchasePrice || 0
+      }));
+    } else {
+      dataToExport = [{
+        ID: "",
+        Name: "Industrial Valve",
+        SKU: "VLV-1001",
+        Category: "Mechanical",
+        Unit: "pcs",
+        "Selling Price": 1500.00,
+        "Purchase Price": 1200.00
+      }];
+    }
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Products");
+    XLSX.writeFile(wb, "Products_Data.xlsx");
+  };
+
+  const handleImport = async (jsonData) => {
+    let failCount = 0;
+    const validProducts = [];
+    
+    for (const row of jsonData) {
+      if (!row.Name) {
+        failCount++;
+        continue;
+      }
+      
+      validProducts.push({
+        id: row.ID || undefined,
+        name: row.Name,
+        sku: row.SKU || `SKU-${Date.now().toString().slice(-4)}`,
+        category: row.Category || 'General',
+        unit: row.Unit || 'pcs',
+        sellingPrice: parseFloat(row["Selling Price"]) || 0,
+        purchasePrice: parseFloat(row["Purchase Price"]) || 0,
+        minStock: 0
+      });
+    }
+    
+    let successCount = 0;
+    try {
+      if (validProducts.length > 0) {
+        const res = await api.products.bulkUpsert(validProducts);
+        if (res.success) {
+          successCount = validProducts.length;
+        } else {
+          failCount += validProducts.length;
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      failCount += validProducts.length;
+    }
+    
+    refreshAll();
+    showToast(`Successfully processed ${successCount} rows. ${failCount} failed.`, failCount > 0 ? 'info' : 'success');
+  };
+
   return (
-    <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-sm animate-fade-in flex-1 overflow-hidden flex flex-col">
+    <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-sm animate-fade-in flex-1 flex flex-col">
       <RightDrawer isOpen={!!viewItem} title="Product Details" onClose={() => setViewItem(null)}>
         <ViewDetails item={viewItem} onClose={() => setViewItem(null)} />
       </RightDrawer>
@@ -91,15 +165,38 @@ export default function ProductsTab() {
             onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
             className="w-full sm:w-64 bg-gray-50 dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-9 px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors"
           />
-          <button onClick={() => setIsFormOpen(true)} className="h-9 px-4 bg-purple-600 hover:bg-purple-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors">
-            + Add Product
+          <button onClick={handleDownloadSample} className="h-9 px-4 bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Sample
+          </button>
+          <button onClick={() => setIsImportModalOpen(true)} className="h-9 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            Import
+          </button>
+          <button onClick={() => setIsFormOpen(true)} className="h-9 px-4 bg-purple-600 hover:bg-purple-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Add Product
           </button>
         </div>
       </div>
 
-      <div className="overflow-x-auto flex-1 custom-scrollbar">
-        <DataTable
-          columns={[
+      <ExcelImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImport={handleImport}
+        expectedColumns={['ID', 'Name', 'SKU', 'Category', 'Unit', 'Selling Price', 'Purchase Price']}
+      />
+
+      <DataTable
+        maxHeight="max-h-none"
+        columns={[
+            { key: "srno", label: "#" },
             { key: "id", label: "Product ID" },
             { key: "name", label: "Name" },
             { key: "category", label: "Category" },
@@ -112,7 +209,8 @@ export default function ProductsTab() {
           emptyMessage="No products found."
           renderRow={(prod, i) => (
             <tr key={prod.id} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
-              <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{prod.id.slice(-8)}</td>
+              <td className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">{(currentPage - 1) * itemsPerPage + i + 1}</td>
+              <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{String(prod.id).slice(-8)}</td>
               <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">{prod.name}</td>
               <td className="px-5 py-3">
                 <span className="px-2 py-1 bg-gray-100 dark:bg-[#2a2d36] rounded text-[11px] font-bold text-gray-600 dark:text-gray-400">
@@ -130,7 +228,6 @@ export default function ProductsTab() {
             </tr>
           )}
         />
-      </div>
 
       <div className="p-4 border-t border-gray-200 dark:border-[#2a2d33]">
         <Pagination

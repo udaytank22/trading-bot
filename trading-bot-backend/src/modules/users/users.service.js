@@ -30,6 +30,20 @@ const getUserById = async (id) => {
  * Create a new user with hashed password
  */
 const createUser = async (data, creatorId) => {
+  // Check for duplicate user (by email)
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      email: data.email,
+      deletedAt: null
+    }
+  });
+
+  if (existingUser) {
+    const err = new Error('A user with this email already exists.');
+    err.statusCode = 400;
+    throw err;
+  }
+
   const hashedPassword = await bcrypt.hash(data.password, 10);
   return await prisma.user.create({
     data: {
@@ -49,6 +63,23 @@ const createUser = async (data, creatorId) => {
  * Update user details
  */
 const updateUser = async (id, data, updaterId) => {
+  // Check for duplicate user (by email) excluding the current user
+  if (data.email) {
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        id: { not: id },
+        email: data.email,
+        deletedAt: null
+      }
+    });
+
+    if (existingUser) {
+      const err = new Error('A user with this email already exists.');
+      err.statusCode = 400;
+      throw err;
+    }
+  }
+
   const updateData = {
     updatedById: updaterId
   };

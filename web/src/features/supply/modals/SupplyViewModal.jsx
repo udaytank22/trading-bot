@@ -1,3 +1,4 @@
+import { SupplyViewModalSchema1 } from '@config/tableSchemas';
 import React, { useEffect, useState, useMemo } from "react";
 import { formatINR } from '@services/marginEngine';
 import { DataTable, rowStripeClass, ROW_HOVER_CLS, StatusBadge } from '@components/ui';
@@ -374,12 +375,7 @@ export default function SupplyViewModal({
                       <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Cargo Items</h3>
                       <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-[#2a2d36] bg-gray-50/50 dark:bg-[#242830]/30 shadow-inner">
                         <DataTable
-                          columns={[
-                            { key: "product", label: "Product" },
-                            { key: "qty", label: "Qty" },
-                            { key: "unit", label: "Unit" },
-                            { key: "specs", label: "Category" },
-                          ]}
+                          columns={SupplyViewModalSchema1}
                           data={productsList}
                           emptyMessage="No items requested."
                           renderRow={(p, i) => (
@@ -387,7 +383,8 @@ export default function SupplyViewModal({
                               key={i}
                               className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}
                             >
-                              <td className="px-6 py-4 text-gray-900 dark:text-white font-bold">
+                              <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + i + 1}</td>
+                        <td className="px-6 py-4 text-gray-900 dark:text-white font-bold">
                                 {p.product_name}
                               </td>
                               <td className="px-6 py-4 font-mono text-gray-900 dark:text-white font-medium">

@@ -1,3 +1,4 @@
+import { AdminApprovalModalSchema1 } from '@config/tableSchemas';
 import React, { useState, useEffect } from "react";
 import { formatINR } from '@services/marginEngine';
 import { DataTable, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
@@ -135,17 +136,13 @@ const AdminApprovalModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) =>
           <div className="border border-gray-200 dark:border-[#2a2d33] rounded-2xl overflow-hidden bg-gray-100 dark:bg-[#0c0e12]">
             <div className={isPageMode ? "" : "max-h-[400px] overflow-y-auto custom-scrollbar"}>
               <DataTable
-                columns={[
-                  { key: "product", label: "Product" },
-                  { key: "costPrice", label: "Cost Price" },
-                  { key: "sellingPrice", label: "Selling Price", className: "text-right" },
-                  { key: "totalValue", label: "Total Value", className: "text-right" },
-                ]}
+                columns={AdminApprovalModalSchema1}
                 data={filteredProducts}
                 emptyMessage="No products match your search."
                 renderRow={(p, i) => (
                   <tr key={i} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
-                    <td className="px-6 py-4">
+                    <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + i + 1}</td>
+                        <td className="px-6 py-4">
                       <p className="font-bold text-gray-900 dark:text-white">{p.product_name}</p>
                       <p className="text-[10px] text-gray-500">{p.quantity} {p.unit}</p>
                     </td>

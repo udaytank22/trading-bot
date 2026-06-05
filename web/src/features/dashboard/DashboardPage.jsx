@@ -1,3 +1,4 @@
+import { DashboardPageSchema1 } from '@config/tableSchemas';
 import { useAuth, useUI, useData } from '@context';
 import React, { useState, useEffect, useMemo, useContext } from "react";
 import { useNavigate } from "react-router-dom";
@@ -194,13 +195,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <DataTable
-                columns={[
-                  { key: "id", label: "Inquiry ID" },
-                  { key: "buyer", label: "Buyer" },
-                  { key: "products", label: "Products", className: "w-1/3" },
-                  { key: "status", label: "Status" },
-                  { key: "date", label: "Date" }
-                ]}
+                columns={DashboardPageSchema1}
                 data={latestInquiries}
                 emptyMessage="No recent inquiries"
                 renderRow={(inq, idx) => (
@@ -208,7 +203,8 @@ export default function DashboardPage() {
                     key={inq.inquiry_id}
                     className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}
                   >
-                    <td className="px-4 py-2.5 font-mono text-purple-600 dark:text-purple-300 text-[11px]">
+                    <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + idx + 1}</td>
+                        <td className="px-4 py-2.5 font-mono text-purple-600 dark:text-purple-300 text-[11px]">
                       {inq.inquiry_id}
                     </td>
                     <td className="px-4 py-2.5 font-medium text-gray-900 dark:text-gray-200">

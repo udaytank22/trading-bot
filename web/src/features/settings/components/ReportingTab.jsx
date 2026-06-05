@@ -1,3 +1,4 @@
+import { ReportingTabSchema1, ReportingTabSchema2 } from '@config/tableSchemas';
 import React, { useState } from 'react';
 import { Select, DataTable, rowStripeClass, ROW_HOVER_CLS, DatePicker } from '@components/ui';
 import jsPDF from 'jspdf';
@@ -252,18 +253,13 @@ export default function ReportingTab() {
 
       <div className="overflow-x-auto flex-1 custom-scrollbar">
         <DataTable
-          columns={[
-            { key: "entity", label: entityLabel },
-            { key: "completed", label: "Completed Deals" },
-            { key: "failed", label: "Failed Deals" },
-            { key: "total", label: "Total Inquiries" },
-            { key: "details", label: "Details" },
-          ]}
+          columns={ReportingTabSchema1(entityLabel)}
           data={summaryData}
           emptyMessage="No data found for the selected filters."
           renderRow={(item, i) => (
             <tr key={item.key} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
-              <td className="px-4 py-3 font-semibold text-gray-900 dark:text-white">{item.key}</td>
+              <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + i + 1}</td>
+                        <td className="px-4 py-3 font-semibold text-gray-900 dark:text-white">{item.key}</td>
               <td className="px-4 py-3">{item.completed}</td>
               <td className="px-4 py-3">{item.failed}</td>
               <td className="px-4 py-3">{item.total}</td>
@@ -299,22 +295,13 @@ export default function ReportingTab() {
 
             <div className="overflow-x-auto flex-1 custom-scrollbar">
               <DataTable
-                columns={[
-                  { key: "id", label: "Inquiry ID" },
-                  { key: "client", label: "Client" },
-                  { key: "employee", label: "Employee" },
-                  { key: "received", label: "Inquiry Received" },
-                  { key: "rfqSent", label: "RFQ Sent" },
-                  { key: "supplierResponse", label: "Supplier Resp." },
-                  { key: "quotationSent", label: "Quotation Sent" },
-                  { key: "clientResponse", label: "Client Resp." },
-                  { key: "status", label: "Status" },
-                ]}
+                columns={ReportingTabSchema2}
                 data={detailHistory}
                 emptyMessage="No history records."
                 renderRow={(item, i) => (
                   <tr key={item.id} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
-                    <td className="px-4 py-3 font-medium text-purple-600 dark:text-purple-400">{item.id}</td>
+                    <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + i + 1}</td>
+                        <td className="px-4 py-3 font-medium text-purple-600 dark:text-purple-400">{item.id}</td>
                     <td className="px-4 py-3">{item.client}</td>
                     <td className="px-4 py-3">{item.employee}</td>
                     <td className="px-4 py-3">{item.received}</td>

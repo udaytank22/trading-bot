@@ -400,7 +400,7 @@ module.exports = {
   createInquiry,
   updateInquiry,
   deleteInquiry,
-  
+
   // Pipeline Handlers
   stockCheck,
   sendRFQ,

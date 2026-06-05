@@ -40,6 +40,23 @@ const getInventoryItemById = async (id) => {
  * Create a new inventory catalog item
  */
 const createInventoryItem = async (data, creatorId) => {
+  // Check for duplicate inventory item (by sku or itemName)
+  const existingItem = await prisma.inventoryItem.findFirst({
+    where: {
+      OR: [
+        { sku: data.sku },
+        { itemName: data.itemName }
+      ],
+      deletedAt: null
+    }
+  });
+
+  if (existingItem) {
+    const err = new Error(`An inventory item with this ${existingItem.sku === data.sku ? 'SKU' : 'item name'} already exists.`);
+    err.statusCode = 400;
+    throw err;
+  }
+
   return await prisma.inventoryItem.create({
     data: {
       itemName: data.itemName,
@@ -59,6 +76,24 @@ const createInventoryItem = async (data, creatorId) => {
  * Update inventory item catalog details
  */
 const updateInventoryItem = async (id, data, updaterId) => {
+  // Check for duplicate inventory item (by sku or itemName) excluding the current item
+  const existingItem = await prisma.inventoryItem.findFirst({
+    where: {
+      id: { not: id },
+      OR: [
+        { sku: data.sku },
+        { itemName: data.itemName }
+      ],
+      deletedAt: null
+    }
+  });
+
+  if (existingItem) {
+    const err = new Error(`An inventory item with this ${existingItem.sku === data.sku ? 'SKU' : 'item name'} already exists.`);
+    err.statusCode = 400;
+    throw err;
+  }
+
   return await prisma.inventoryItem.update({
     where: { id },
     data: {

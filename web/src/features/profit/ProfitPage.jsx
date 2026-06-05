@@ -1,3 +1,4 @@
+import { ProfitPageSchema1 } from '@config/tableSchemas';
 import React, { useState, useEffect, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
 import { api } from '@services/api';
@@ -192,14 +193,7 @@ export default function ProfitPage() {
           </div>
           <div className="overflow-auto flex-1 custom-scrollbar">
             <DataTable
-              columns={[
-                { key: "id", label: "Deal ID" },
-                { key: "buyer", label: "Buyer" },
-                { key: "revenue", label: "Revenue" },
-                { key: "cost", label: "Cost" },
-                { key: "profit", label: "Profit" },
-                { key: "margin", label: "Margin" },
-              ]}
+              columns={ProfitPageSchema1}
               data={closedDeals}
               emptyMessage="No closed deals found"
               renderRow={(d, i) => {
