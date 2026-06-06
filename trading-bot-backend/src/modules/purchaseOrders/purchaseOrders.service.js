@@ -3,21 +3,52 @@ const prisma = require('../../prisma/client');
 /**
  * Get all purchase orders
  */
-const getAllPurchaseOrders = async () => {
-  return await prisma.purchaseOrder.findMany({
-    where: { deletedAt: null },
-    include: {
-      supplier: true,
-      client: true,
-      inquiry: true,
-      items: {
-        include: {
-          product: true
+const getAllPurchaseOrders = async (query = {}) => {
+  const { page, pageSize, paginate } = query;
+  const where = { deletedAt: null };
+
+  if (paginate === 'false') {
+    const pos = await prisma.purchaseOrder.findMany({
+      where,
+      include: {
+        supplier: true,
+        client: true,
+        inquiry: true,
+        items: {
+          include: {
+            product: true
+          }
         }
-      }
-    },
-    orderBy: { createdAt: 'desc' }
-  });
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    return { data: pos, total: pos.length };
+  }
+
+  const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
+  const take = pageSize ? parseInt(pageSize) : undefined;
+
+  const [pos, total] = await Promise.all([
+    prisma.purchaseOrder.findMany({
+      where,
+      include: {
+        supplier: true,
+        client: true,
+        inquiry: true,
+        items: {
+          include: {
+            product: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take
+    }),
+    prisma.purchaseOrder.count({ where })
+  ]);
+
+  return { data: pos, total };
 };
 
 /**

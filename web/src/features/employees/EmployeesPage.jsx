@@ -18,9 +18,10 @@ import { api } from '@services/api';
  * @author TradeMind Dev Team
  */
 
-import React, { useState, useContext, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 
 import { useToast } from '@hooks/useToast';
+import { usePaginatedFetch } from '@hooks/usePaginatedFetch';
 import EmployeeTable from './components/EmployeeTable';
 import AddEmployeeModal from './modals/AddEmployeeModal';
 import EmployeeViewModal from './modals/EmployeeViewModal';
@@ -38,8 +39,6 @@ const FILTER_OPTIONS = [
 
 // ─── Main Page Component ───────────────────────────────────────────────────────
 export default function EmployeesPage() {
-  // Global employee data from AppContext (shared across pages)
-  const { employeesData, refreshAll } = useData();
 
   // ── Local UI state ────────────────────────────────────────────────────────
   const [search, setSearch]               = useState("");         // Search input value
@@ -52,30 +51,32 @@ export default function EmployeesPage() {
 
   const { toast, showToast } = useToast();
 
-  // ── Derived: filter employees by search + status ──────────────────────────
-  const filteredEmployees = useMemo(() => {
-    return employeesData.filter((emp) => {
-      const q = search.toLowerCase();
+  const {
+    data: employeesData,
+    meta,
+    loading,
+    handlePageChange,
+    handlePageSizeChange,
+    refresh
+  } = usePaginatedFetch(api.employees.getEmployees, 1, 10, {
+    search,
+    status: filter === 'All' ? undefined : filter
+  });
 
-      // Apply status filter first (short-circuit if status doesn't match)
-      if (filter !== "All" && emp.status !== filter) return false;
-
-      // Then apply text search across name, email, department, role
-      return (
-        emp.name.toLowerCase().includes(q) ||
-        emp.email.toLowerCase().includes(q) ||
-        emp.department.toLowerCase().includes(q) ||
-        emp.role.toLowerCase().includes(q)
-      );
-    });
-  }, [employeesData, search, filter]);
-
-  // ── Derived: paginate the filtered results ────────────────────────────────
-  const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage);
-  const currentItems = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredEmployees.slice(start, start + itemsPerPage);
-  }, [filteredEmployees, currentPage, itemsPerPage]);
+  const mappedEmployees = useMemo(() => {
+    return (employeesData || []).map(emp => ({
+      ...emp,
+      name: emp.fullName || emp.name || '',
+      role: emp.designation || emp.role || '',
+      status: emp.status === 'ACTIVE' ? 'Active' : (emp.status === 'INACTIVE' ? 'Inactive' : (emp.status || 'Active')),
+      avatar: (emp.fullName || emp.name || '')
+        .split(" ")
+        .filter(Boolean)
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+    }));
+  }, [employeesData]);
 
   // ── Handler: add new or update existing employee ──────────────────────────
   const handleAddOrEdit = async (formData) => {
@@ -94,7 +95,7 @@ export default function EmployeesPage() {
         const res = await api.employees.updateEmployee(employeeToEdit.id, payload);
         if (res.success) {
           showToast("Employee updated successfully", "success");
-          refreshAll();
+          refresh();
         } else {
           showToast(res.message || "Failed to update employee", "error");
         }
@@ -102,7 +103,7 @@ export default function EmployeesPage() {
         const res = await api.employees.createEmployee(payload);
         if (res.success) {
           showToast("New employee registered", "success");
-          refreshAll();
+          refresh();
         } else {
           showToast(res.message || "Failed to register employee", "error");
         }
@@ -129,7 +130,7 @@ export default function EmployeesPage() {
         const res = await api.employees.deleteEmployee(id);
         if (res.success) {
           showToast("Employee record deleted", "success");
-          refreshAll();
+          refresh();
         } else {
           showToast(res.message || "Failed to delete employee", "error");
         }
@@ -159,10 +160,10 @@ export default function EmployeesPage() {
        */}
       <PageToolbar
         search={search}
-        onSearchChange={(val) => { setSearch(val); setCurrentPage(1); }}
+        onSearchChange={(val) => { setSearch(val); handlePageChange(1); }}
         searchPlaceholder="Search by name, email or role..."
         filterValue={filter}
-        onFilterChange={(val) => { setFilter(val); setCurrentPage(1); }}
+        onFilterChange={(val) => { setFilter(val); handlePageChange(1); }}
         filterOptions={FILTER_OPTIONS}
         onAdd={handleAdd}
         addLabel="Add Employee"
@@ -173,7 +174,7 @@ export default function EmployeesPage() {
 
         {/* Employee grid */}
         <EmployeeTable
-          employees={currentItems}
+          employees={mappedEmployees}
           onView={(emp) => setEmployeeToView(emp)}
           onEdit={(emp) => {
             setEmployeeToEdit(emp);
@@ -183,7 +184,7 @@ export default function EmployeesPage() {
         />
 
         {/* Empty state when no employees match the filter */}
-        {filteredEmployees.length === 0 && (
+        {mappedEmployees.length === 0 && (
           <div className="flex-1 flex flex-col items-center justify-center p-12 text-center min-h-[300px]">
             <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800/50 rounded-2xl flex items-center justify-center mb-4 border border-gray-200 dark:border-gray-700/50">
               <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -206,14 +207,14 @@ export default function EmployeesPage() {
          */}
         <div className="mt-auto bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden shadow-sm">
           <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={filteredEmployees.length}
-            itemsPerPage={itemsPerPage}
-            onPrev={() => setCurrentPage((p) => p - 1)}
-            onNext={() => setCurrentPage((p) => p + 1)}
-            onPageChange={(p) => setCurrentPage(p)}
-            onItemsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
+            currentPage={meta.currentPage}
+            totalPages={meta.totalPages}
+            totalItems={meta.totalItems}
+            itemsPerPage={meta.pageSize}
+            onPrev={() => handlePageChange(meta.currentPage - 1)}
+            onNext={() => handlePageChange(meta.currentPage + 1)}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handlePageSizeChange}
             itemLabel="employees"
           />
         </div>

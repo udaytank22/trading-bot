@@ -1,54 +1,95 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, FileText, Eye, ChevronLeft } from "lucide-react";
-import { useUI } from "@context";
+import { useUI, useAuth, useSocket } from "@context";
+import { getChatUsers, getChatMessages } from "../../api/chat";
 
 // Local sample PDF served from /public folder
 const DUMMY_PDF_URL = "/memories/file-sample_150kB.pdf";
 
-const mockUsers = [
-  { id: 1, name: "Alice Cooper", status: "online", lastMsg: "See you at the meeting", avatar: "AC" },
-  { id: 2, name: "Bob Martin", status: "offline", lastMsg: "Offer sent", avatar: "BM" },
-  { id: 3, name: "Charlie Day", status: "online", lastMsg: "Everything is confirmed", avatar: "CD" },
-  { id: 4, name: "Diana Prince", status: "online", lastMsg: "Need the specs", avatar: "DP" },
-];
-
 const ChatDrawer = ({ isOpen, onClose }) => {
   const { startCall } = useUI();
+  const { currentUser } = useAuth();
+  const { socket } = useSocket() || {};
+  const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [pdfViewerUrl, setPdfViewerUrl] = useState(null); // in-app PDF viewer state
-  const [messages, setMessages] = useState([
-    { sender: "them", type: "text", text: "Hello! How can I help you today?" },
-    { sender: "me", type: "text", text: "I'm looking for the status of CGO-1001" },
-    {
-      sender: "them",
-      type: "doc",
-      fileName: "Shipment_Manifest_CGO1001.pdf",
-      fileSize: "1.2 MB",
-      url: DUMMY_PDF_URL,
-    },
-    { sender: "me", type: "text", text: "Thanks! Can you also share the invoice?" },
-    {
-      sender: "them",
-      type: "doc",
-      fileName: "Invoice_CGO1001_Oct2024.pdf",
-      fileSize: "840 KB",
-      url: DUMMY_PDF_URL,
-    },
-  ]);
+  const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
+
+  useEffect(() => {
+    if (isOpen) {
+      getChatUsers().then(data => {
+        setUsers(data || []);
+      }).catch(console.error);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (selectedUser && currentUser) {
+      getChatMessages(selectedUser.id).then(msgs => {
+        const formatted = (msgs || []).map(m => ({
+          sender: m.senderId === currentUser.userId ? "me" : "them",
+          type: m.type,
+          text: m.content,
+          fileName: m.fileName,
+          fileSize: m.fileSize,
+          url: m.fileUrl
+        }));
+        setMessages(formatted);
+      }).catch(console.error);
+
+      // Mark as read when opening chat
+      socket?.emit('mark_as_read', { senderId: selectedUser.id });
+    }
+  }, [selectedUser, currentUser, socket]);
+
+  useEffect(() => {
+    if (!socket || !currentUser) return;
+    
+    const handleReceive = (msg) => {
+      if (selectedUser && (msg.senderId === selectedUser.id || msg.receiverId === selectedUser.id)) {
+        setMessages(prev => [...prev, {
+          sender: msg.senderId === currentUser.userId ? "me" : "them",
+          type: msg.type,
+          text: msg.content,
+          fileName: msg.fileName,
+          fileSize: msg.fileSize,
+          url: msg.fileUrl
+        }]);
+        if (msg.senderId === selectedUser.id) {
+          socket.emit('mark_as_read', { senderId: selectedUser.id });
+        }
+      }
+    };
+    
+    socket.on('receive_message', handleReceive);
+    socket.on('message_sent', handleReceive); // ack to our own message
+    return () => {
+      socket.off('receive_message', handleReceive);
+      socket.off('message_sent', handleReceive);
+    };
+  }, [socket, selectedUser, currentUser]);
 
   if (!isOpen) return null;
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
-    setMessages([...messages, { sender: "me", type: "text", text: newMessage }]);
+    if (!newMessage.trim() || !selectedUser) return;
+    
+    const msgData = {
+      receiverId: selectedUser.id,
+      content: newMessage,
+      type: "text"
+    };
+    
+    socket?.emit('send_message', msgData);
     setNewMessage("");
   };
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    // For now we just mock this as there is no backend file upload handler
     const isImage = file.type.startsWith("image/");
     const newMsg = {
       sender: "me",
@@ -57,6 +98,7 @@ const ChatDrawer = ({ isOpen, onClose }) => {
       fileSize: (file.size / 1024).toFixed(1) + " KB",
       url: URL.createObjectURL(file),
     };
+    // local only
     setMessages([...messages, newMsg]);
   };
 
@@ -231,31 +273,35 @@ const ChatDrawer = ({ isOpen, onClose }) => {
           ) : (
             /* ── Contacts list ── */
             <div className="divide-y divide-gray-100 dark:divide-[#2a2d33]">
-              {mockUsers.map((user) => (
-                <button
-                  key={user.id}
-                  onClick={() => setSelectedUser(user)}
-                  className="w-full px-6 py-3 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left"
-                >
-                  <div className="relative">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-[#2a2d33] flex items-center justify-center text-sm font-bold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-[#3a3d43]">
-                      {user.avatar}
+              {users.length === 0 ? (
+                <div className="p-6 text-center text-sm text-gray-500">No users available</div>
+              ) : (
+                users.map((user) => (
+                  <button
+                    key={user.id}
+                    onClick={() => setSelectedUser(user)}
+                    className="w-full px-6 py-3 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left"
+                  >
+                    <div className="relative">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-[#2a2d33] flex items-center justify-center text-sm font-bold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-[#3a3d43]">
+                        {user.name?.substring(0, 2).toUpperCase() || "US"}
+                      </div>
+                      {user.status === "online" && (
+                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-[#1a1d23] rounded-full" />
+                      )}
                     </div>
-                    {user.status === "online" && (
-                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-[#1a1d23] rounded-full" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center mb-0.5">
-                      <span className="text-sm font-bold text-gray-900 dark:text-white truncate">
-                        {user.name}
-                      </span>
-                      <span className="text-[10px] text-gray-500">2h ago</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-center mb-0.5">
+                        <span className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                          {user.name || user.email}
+                        </span>
+                        {/* <span className="text-[10px] text-gray-500">2h ago</span> */}
+                      </div>
+                      <p className="text-xs text-gray-500 truncate">{user.lastMsg || "Click to view chat"}</p>
                     </div>
-                    <p className="text-xs text-gray-500 truncate">{user.lastMsg}</p>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                ))
+              )}
             </div>
           )}
         </div>

@@ -7,6 +7,7 @@ const { sendError } = require('./utils/response');
 const http = require('http');
 const { Server } = require('socket.io');
 const { verifyAccessToken } = require('./utils/token');
+const chatService = require('./modules/chat/chat.service');
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -40,6 +41,43 @@ io.use((socket, next) => {
 
 io.on('connection', (socket) => {
   console.log(`[Socket] Client connected: ${socket.id} (User: ${socket.user.userId})`);
+  
+  socket.on('send_message', async (data) => {
+    try {
+      const { receiverId, content, type, fileName, fileSize, fileUrl } = data;
+      const senderId = socket.user.userId;
+      
+      const savedMessage = await chatService.saveMessage({
+        senderId,
+        receiverId,
+        content,
+        type: type || 'text',
+        fileName,
+        fileSize,
+        fileUrl
+      });
+      
+      // Emit to receiver
+      io.to(`user_${receiverId}`).emit('receive_message', savedMessage);
+      
+      // Emit to sender so they get the DB ID and timestamp
+      socket.emit('message_sent', savedMessage);
+    } catch (error) {
+      console.error('[Socket] Error sending message:', error);
+      socket.emit('message_error', { error: 'Failed to send message' });
+    }
+  });
+
+  socket.on('mark_as_read', async (data) => {
+    try {
+      const { senderId } = data; // The user whose messages we are reading
+      const receiverId = socket.user.userId; // Current user
+      await chatService.markAsRead(senderId, receiverId);
+    } catch (error) {
+      console.error('[Socket] Error marking messages as read:', error);
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log(`[Socket] Client disconnected: ${socket.id}`);
   });
@@ -82,6 +120,8 @@ app.use('/api/notifications', require('./modules/notifications/notifications.rou
 app.use('/api/reports', require('./modules/reports/reports.routes'));
 app.use('/api/audit-logs', require('./modules/auditLogs/auditLogs.routes'));
 app.use('/api/vehicles', require('./modules/vehicles/vehicles.routes'));
+app.use('/api/outlook', require('./modules/outlook/outlook.routes'));
+app.use('/api/chat', require('./modules/chat/chat.routes'));
 
 // Catch-all route not found handler
 app.use((req, res, next) => {

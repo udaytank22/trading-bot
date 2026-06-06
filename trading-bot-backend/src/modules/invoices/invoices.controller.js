@@ -7,8 +7,14 @@ const { createNotification } = require('../notifications/notifications.service')
  * Get all invoices
  */
 const getInvoices = async (req, res) => {
-  const invoices = await service.getAllInvoices(req.user);
-  return sendSuccess(res, 'Invoices list retrieved successfully', invoices);
+  const { data, total } = await service.getAllInvoices(req.user, req.query);
+  const meta = {
+    totalItems: total,
+    currentPage: req.query.page ? parseInt(req.query.page) : 1,
+    pageSize: req.query.pageSize ? parseInt(req.query.pageSize) : total,
+    totalPages: req.query.pageSize ? Math.ceil(total / parseInt(req.query.pageSize)) : 1
+  };
+  return sendSuccess(res, 'Invoices list retrieved successfully', data, 200, meta);
 };
 
 /**

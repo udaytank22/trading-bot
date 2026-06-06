@@ -25,6 +25,8 @@ import React, {
 import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
+import { usePaginatedFetch } from '@hooks/usePaginatedFetch';
+
 import EmailPreviewModal from './modals/EmailPreviewModal';
 import { api } from '@services/api';
 import { formatDateString } from '@services/marginEngine';
@@ -32,7 +34,7 @@ import { useToast } from '@hooks/useToast';
 import InquiryTable from './components/InquiryTable';
 import InquiryKanban from './components/InquiryKanban';
 import AddInquiryModal from './modals/AddInquiryModal';
-import { Toast, PageToolbar, Pagination, Button } from '@components/ui';
+import { Toast, PageToolbar, Pagination, Button, EmptyState } from '@components/ui';
 
 function PlusIcon() {
   return (
@@ -42,38 +44,13 @@ function PlusIcon() {
   );
 }
 
-function EmptyState() {
-  return (
-    <div className="flex-1 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl flex flex-col items-center justify-center p-12 dark:bg-[#1a1d23] min-h-[400px]">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth={1.5}
-        stroke="currentColor"
-        className="w-14 h-14 dark:text-white/10 mb-5"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"
-        />
-      </svg>
-      <h3 className="dark:text-white text-lg font-bold mb-1.5">
-        No inquiries found
-      </h3>
-      <p className="text-gray-500 text-sm font-medium">
-        Try changing your search or filter
-      </p>
-    </div>
-  );
-}
+
 
 /* ── Main page ───────────────────────────────────────────────────── */
 export default function InquiriesPage() {
   const location = useLocation();
   const { currentUser } = useAuth();
-  const { inquiriesData, setInquiriesData, setSupplyData, refreshAll } = useData();
+  const { setSupplyData, refreshAll } = useData();
   const { toast, showToast } = useToast();
 
   // Filters & pagination
@@ -83,31 +60,22 @@ export default function InquiriesPage() {
   const [itemsPerPage, setItemsPerPage] = useState(30);
   const [viewMode, setViewMode] = useState("kanban"); // 'table' | 'kanban'
 
-  // Data loading
-  const [loading, setLoading] = useState(true);
+  const {
+    data: inquiriesData,
+    meta,
+    loading,
+    handlePageChange,
+    handlePageSizeChange,
+    refresh: loadData
+  } = usePaginatedFetch(api.inquiries.getInquiries, 1, 30, {
+    search,
+    status: ["QUOTE_SENT_ONLY", "PENDING_REPLIES"].includes(filter) ? undefined : filter
+  });
+
   const [lastSynced, setLastSynced] = useState(new Date());
   const [now, setNow] = useState(new Date());
 
-  const loadData = useCallback(
-    async (silent = false) => {
-      if (!silent) setLoading(true);
-      try {
-        const res = await api.inquiries.getInquiries();
-        setInquiriesData(res.data ?? []);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        const t = new Date();
-        setLastSynced(t);
-        setNow(t);
-        if (!silent) setLoading(false);
-      }
-    },
-    [setInquiriesData],
-  );
-
   useEffect(() => {
-    loadData();
     const poll = setInterval(() => loadData(true), 3 * 60 * 1000);
     const clock = setInterval(() => setNow(new Date()), 10_000);
     return () => {
@@ -134,52 +102,7 @@ export default function InquiriesPage() {
   }, [now, lastSynced]);
 
   // Filtering
-  const filteredInquiries = useMemo(() => {
-    let result = inquiriesData.filter((inq) => {
-      if (
-        filter === "QUOTE_SENT_ONLY" &&
-        !["QUOTE_SENT", "CLOSED"].includes(inq.status)
-      )
-        return false;
-      if (
-        filter === "PENDING_REPLIES" &&
-        !["PENDING", "RFQ_SENT", "TL_REVIEW"].includes(inq.status)
-      )
-        return false;
-      if (
-        !["All", "QUOTE_SENT_ONLY", "PENDING_REPLIES"].includes(filter) &&
-        inq.status !== filter
-      )
-        return false;
-
-      if (search.trim()) {
-        const q = search.toLowerCase();
-        const hit =
-          inq.buyer_name.toLowerCase().includes(q) ||
-          inq.buyer_email.toLowerCase().includes(q) ||
-          (inq.vessel_name && inq.vessel_name.toLowerCase().includes(q)) ||
-          (inq.vessel_ref && inq.vessel_ref.toLowerCase().includes(q)) ||
-          inq.products.some((p) => p.product_name.toLowerCase().includes(q));
-        if (!hit) return false;
-      }
-      return true;
-    });
-
-    // Sort by latest date first
-    return result.sort(
-      (a, b) => new Date(b.date_received) - new Date(a.date_received),
-    );
-  }, [inquiriesData, search, filter]);
-
-  const totalPages = Math.ceil(filteredInquiries.length / itemsPerPage);
-  const currentItems = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredInquiries.slice(start, start + itemsPerPage);
-  }, [filteredInquiries, currentPage, itemsPerPage]);
-
-  useEffect(() => {
-    if (currentPage > totalPages && totalPages > 0) setCurrentPage(1);
-  }, [totalPages, currentPage]);
+  const filteredInquiries = inquiriesData || [];
 
   // Drawer / modal state
   const [emailModalDeal, setEmailModalDeal] = useState(null);
@@ -189,15 +112,9 @@ export default function InquiriesPage() {
 
   const updateDealStatus = useCallback(
     (id, newStatus, extraData = {}) => {
-      setInquiriesData((prev) =>
-        prev.map((inq) =>
-          inq.inquiry_id === id
-            ? { ...inq, status: newStatus, ...extraData }
-            : inq,
-        ),
-      );
+      loadData();
     },
-    [setInquiriesData],
+    [loadData],
   );
 
   const onView = (inq) => {
@@ -270,7 +187,7 @@ export default function InquiriesPage() {
         search={search}
         onSearchChange={(val) => {
           setSearch(val);
-          setCurrentPage(1);
+          handlePageChange(1);
         }}
         searchPlaceholder="Search by buyer, vessel, ref..."
         filterValue={
@@ -280,7 +197,7 @@ export default function InquiriesPage() {
         }
         onFilterChange={(val) => {
           setFilter(val);
-          setCurrentPage(1);
+          handlePageChange(1);
         }}
         filterOptions={[
           { value: "All", label: "All Status" },
@@ -355,30 +272,32 @@ export default function InquiriesPage() {
             />
           </div>
         ) : (
-          <EmptyState />
+          <div className="flex-1 flex w-full">
+            <EmptyState title="No inquiries found" description="Try changing your search or filter" />
+          </div>
         )
       ) : (
         /* ── Table view (with pagination) ── */
         <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg transition-colors duration-300">
           {filteredInquiries.length > 0 ? (
             <InquiryTable
-              items={currentItems}
+              items={filteredInquiries}
               onView={onView}
               onAction={handleAction}
               currentUser={currentUser}
             />
           ) : (
-            <EmptyState />
+            <EmptyState title="No inquiries found" description="Try changing your search or filter" />
           )}
           <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={filteredInquiries.length}
-            itemsPerPage={itemsPerPage}
-            onPrev={() => setCurrentPage((p) => p - 1)}
-            onNext={() => setCurrentPage((p) => p + 1)}
-            onPageChange={(p) => setCurrentPage(p)}
-            onItemsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
+            currentPage={meta.currentPage}
+            totalPages={meta.totalPages}
+            totalItems={meta.totalItems}
+            itemsPerPage={meta.pageSize}
+            onPrev={() => handlePageChange(meta.currentPage - 1)}
+            onNext={() => handlePageChange(meta.currentPage + 1)}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handlePageSizeChange}
             itemLabel="records"
           />
         </div>

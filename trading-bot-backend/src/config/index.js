@@ -7,5 +7,8 @@ module.exports = {
   REFRESH_SECRET: process.env.REFRESH_SECRET || 'trademind_super_secret_refresh_key_1122',
   ACCESS_TOKEN_EXPIRY: process.env.ACCESS_TOKEN_EXPIRY || '15m',
   REFRESH_TOKEN_EXPIRY: process.env.REFRESH_TOKEN_EXPIRY || '7d',
-  DATABASE_URL: process.env.DATABASE_URL
+  DATABASE_URL: process.env.DATABASE_URL,
+  OUTLOOK_CLIENT_ID: process.env.OUTLOOK_CLIENT_ID,
+  OUTLOOK_CLIENT_SECRET: process.env.OUTLOOK_CLIENT_SECRET,
+  OUTLOOK_REDIRECT_URI: process.env.OUTLOOK_REDIRECT_URI || 'http://localhost:5000/api/outlook/callback'
 };

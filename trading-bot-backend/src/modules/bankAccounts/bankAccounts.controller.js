@@ -6,8 +6,14 @@ const { createAuditLog } = require('../auditLogs/auditLogs.service');
  * Get all bank accounts
  */
 const getBankAccounts = async (req, res) => {
-  const accounts = await service.getAllBankAccounts();
-  return sendSuccess(res, 'Bank accounts list retrieved successfully', accounts);
+  const { data, total } = await service.getAllBankAccounts(req.query);
+  const meta = {
+    totalItems: total,
+    currentPage: req.query.page ? parseInt(req.query.page) : 1,
+    pageSize: req.query.pageSize ? parseInt(req.query.pageSize) : total,
+    totalPages: req.query.pageSize ? Math.ceil(total / parseInt(req.query.pageSize)) : 1
+  };
+  return sendSuccess(res, 'Bank accounts retrieved successfully', data, 200, meta);
 };
 
 /**

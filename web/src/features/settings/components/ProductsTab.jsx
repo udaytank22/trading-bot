@@ -70,8 +70,10 @@ export default function ProductsTab() {
       }
       setIsFormOpen(false);
       setEditItem(null);
+      showToast(editItem ? 'Product updated successfully!' : 'Product added successfully!', 'success');
     } catch (e) {
       console.error('Failed to save product:', e);
+      showToast(e.response?.data?.message || 'Failed to save product', 'error');
     }
   };
 
@@ -107,13 +109,13 @@ export default function ProductsTab() {
   const handleImport = async (jsonData) => {
     let failCount = 0;
     const validProducts = [];
-    
+
     for (const row of jsonData) {
       if (!row.Name) {
         failCount++;
         continue;
       }
-      
+
       validProducts.push({
         id: row.ID || undefined,
         name: row.Name,
@@ -125,7 +127,7 @@ export default function ProductsTab() {
         minStock: 0
       });
     }
-    
+
     let successCount = 0;
     try {
       if (validProducts.length > 0) {
@@ -140,7 +142,7 @@ export default function ProductsTab() {
       console.error(err);
       failCount += validProducts.length;
     }
-    
+
     refreshAll();
     showToast(`Successfully processed ${successCount} rows. ${failCount} failed.`, failCount > 0 ? 'info' : 'success');
   };
@@ -155,35 +157,55 @@ export default function ProductsTab() {
         <ProductForm initialData={editItem} onSave={handleSave} onClose={() => { setIsFormOpen(false); setEditItem(null); }} />
       </RightDrawer>
 
-      <div className="p-2 border-b border-gray-200 dark:border-[#2a2d33] flex flex-col sm:flex-row items-center justify-between gap-4">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Products List</h2>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+      <div className="p-2 border-b border-gray-200 dark:border-[#2a2d33] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+        {/* Left Side - Search */}
+        <div className="w-full sm:w-auto">
           <input
             type="text"
             placeholder="Search products..."
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
             className="w-full sm:w-64 bg-gray-50 dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-9 px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors"
           />
-          <button onClick={handleDownloadSample} className="h-9 px-4 bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2">
+        </div>
+
+        {/* Right Side - Buttons */}
+        <div className="flex flex-wrap items-center gap-3 justify-start sm:justify-end">
+          <button
+            onClick={handleDownloadSample}
+            className="h-9 px-4 bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2"
+          >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
             Sample
           </button>
-          <button onClick={() => setIsImportModalOpen(true)} className="h-9 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2">
+
+          <button
+            onClick={() => setIsImportModalOpen(true)}
+            className="h-9 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2"
+          >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
             </svg>
             Import
           </button>
-          <button onClick={() => setIsFormOpen(true)} className="h-9 px-4 bg-purple-600 hover:bg-purple-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2">
+
+          <button
+            onClick={() => setIsFormOpen(true)}
+            className="h-9 px-4 bg-purple-600 hover:bg-purple-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2"
+          >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             Add Product
           </button>
         </div>
+
       </div>
 
       <ExcelImportModal
@@ -196,38 +218,38 @@ export default function ProductsTab() {
       <DataTable
         maxHeight="max-h-none"
         columns={[
-            { key: "srno", label: "#" },
-            { key: "id", label: "Product ID" },
-            { key: "name", label: "Name" },
-            { key: "category", label: "Category" },
-            { key: "sku", label: "SKU" },
-            { key: "sellingPrice", label: "Selling Price" },
-            { key: "purchasePrice", label: "Purchase Price" },
-            { key: "actions", label: "Actions", className: "text-right" },
-          ]}
-          data={currentItems}
-          emptyMessage="No products found."
-          renderRow={(prod, i) => (
-            <tr key={prod.id} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
-              <td className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">{(currentPage - 1) * itemsPerPage + i + 1}</td>
-              <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{String(prod.id).slice(-8)}</td>
-              <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">{prod.name}</td>
-              <td className="px-5 py-3">
-                <span className="px-2 py-1 bg-gray-100 dark:bg-[#2a2d36] rounded text-[11px] font-bold text-gray-600 dark:text-gray-400">
-                  {prod.category || 'Uncategorized'}
-                </span>
-              </td>
-              <td className="px-5 py-3 font-mono">{prod.sku}</td>
-              <td className="px-5 py-3">₹{parseFloat(prod.sellingPrice || 0).toFixed(2)}</td>
-              <td className="px-5 py-3">₹{parseFloat(prod.purchasePrice || 0).toFixed(2)}</td>
-              <td className="px-5 py-3 text-right space-x-3">
-                <button onClick={() => setViewItem(prod)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" title="View"><EyeIcon /></button>
-                <button onClick={() => { setEditItem(prod); setIsFormOpen(true); }} className="text-blue-500 hover:text-blue-600 transition-colors" title="Edit"><EditIcon /></button>
-                <button onClick={() => handleDelete(prod.id)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete"><TrashIcon /></button>
-              </td>
-            </tr>
-          )}
-        />
+          { key: "srno", label: "#" },
+          { key: "id", label: "Product ID" },
+          { key: "name", label: "Name" },
+          { key: "category", label: "Category" },
+          { key: "sku", label: "SKU" },
+          { key: "sellingPrice", label: "Selling Price" },
+          { key: "purchasePrice", label: "Purchase Price" },
+          { key: "actions", label: "Actions", className: "text-right" },
+        ]}
+        data={currentItems}
+        emptyMessage="No products found."
+        renderRow={(prod, i) => (
+          <tr key={prod.id} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
+            <td className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">{(currentPage - 1) * itemsPerPage + i + 1}</td>
+            <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{String(prod.id).slice(-8)}</td>
+            <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">{prod.name}</td>
+            <td className="px-5 py-3">
+              <span className="px-2 py-1 bg-gray-100 dark:bg-[#2a2d36] rounded text-[11px] font-bold text-gray-600 dark:text-gray-400">
+                {prod.category || 'Uncategorized'}
+              </span>
+            </td>
+            <td className="px-5 py-3 font-mono">{prod.sku}</td>
+            <td className="px-5 py-3">₹{parseFloat(prod.sellingPrice || 0).toFixed(2)}</td>
+            <td className="px-5 py-3">₹{parseFloat(prod.purchasePrice || 0).toFixed(2)}</td>
+            <td className="px-5 py-3 text-right space-x-3">
+              <button onClick={() => setViewItem(prod)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" title="View"><EyeIcon /></button>
+              <button onClick={() => { setEditItem(prod); setIsFormOpen(true); }} className="text-blue-500 hover:text-blue-600 transition-colors" title="Edit"><EditIcon /></button>
+              <button onClick={() => handleDelete(prod.id)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete"><TrashIcon /></button>
+            </td>
+          </tr>
+        )}
+      />
 
       <div className="p-4 border-t border-gray-200 dark:border-[#2a2d33]">
         <Pagination
@@ -248,6 +270,11 @@ export default function ProductsTab() {
 
 function ProductForm({ initialData, onSave, onClose }) {
   const [formData, setFormData] = useState(initialData || { name: '', category: '', sku: '', sellingPrice: '', purchasePrice: '', unit: 'pcs' });
+
+  React.useEffect(() => {
+    setFormData(initialData || { name: '', category: '', sku: '', sellingPrice: '', purchasePrice: '', unit: 'pcs' });
+  }, [initialData]);
+
   const set = (key) => (e) => setFormData(prev => ({ ...prev, [key]: e.target.value }));
 
   return (

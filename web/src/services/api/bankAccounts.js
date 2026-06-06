@@ -1,7 +1,7 @@
 import apiClient from '../apiClient';
 
-export const getBankAccounts = async () => {
-  const response = await apiClient.get('/bank-accounts');
+export const getBankAccounts = async (params = {}) => {
+  const response = await apiClient.get('/bank-accounts', { params });
   return response.data;
 };
 

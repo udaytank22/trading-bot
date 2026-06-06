@@ -3,12 +3,34 @@ const prisma = require('../../prisma/client');
 /**
  * Get all active clients
  */
-const getAllClients = async () => {
-  return await prisma.client.findMany({
-    where: { deletedAt: null },
-    include: { vessels: true },
-    orderBy: { name: 'asc' }
-  });
+const getAllClients = async (query = {}) => {
+  const { page, pageSize, paginate } = query;
+  const where = { deletedAt: null };
+
+  if (paginate === 'false') {
+    const clients = await prisma.client.findMany({
+      where,
+      orderBy: { name: 'asc' },
+      include: { vessels: true }
+    });
+    return { data: clients, total: clients.length };
+  }
+
+  const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
+  const take = pageSize ? parseInt(pageSize) : undefined;
+
+  const [clients, total] = await Promise.all([
+    prisma.client.findMany({
+      where,
+      include: { vessels: true },
+      orderBy: { name: 'asc' },
+      skip,
+      take
+    }),
+    prisma.client.count({ where })
+  ]);
+
+  return { data: clients, total };
 };
 
 /**
@@ -16,7 +38,7 @@ const getAllClients = async () => {
  */
 const getClientById = async (id) => {
   return await prisma.client.findFirst({
-    where: { id, deletedAt: null },
+    where: { id: parseInt(id, 10), deletedAt: null },
     include: { vessels: true }
   });
 };
@@ -68,10 +90,11 @@ const createClient = async (data, creatorId) => {
  * Update client
  */
 const updateClient = async (id, data, updaterId) => {
+  const clientId = parseInt(id, 10);
   // Check for duplicate client (by email or name) excluding the current client
   const existingClient = await prisma.client.findFirst({
     where: {
-      id: { not: id },
+      id: { not: clientId },
       OR: [
         { email: data.email },
         { name: data.name }
@@ -89,12 +112,12 @@ const updateClient = async (id, data, updaterId) => {
   return await prisma.$transaction(async (tx) => {
     if (data.vessels) {
       await tx.clientVessel.deleteMany({
-        where: { clientId: id }
+        where: { clientId: clientId }
       });
     }
 
     return await tx.client.update({
-      where: { id },
+      where: { id: clientId },
       data: {
         name: data.name,
         email: data.email,
@@ -122,7 +145,7 @@ const updateClient = async (id, data, updaterId) => {
  */
 const deleteClient = async (id, updaterId) => {
   return await prisma.client.update({
-    where: { id },
+    where: { id: parseInt(id, 10) },
     data: {
       deletedAt: new Date(),
       isActive: false,

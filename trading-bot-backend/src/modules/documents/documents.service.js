@@ -26,27 +26,52 @@ const resolveDocumentStatus = (expiryDate) => {
  * Get all documents
  */
 const getAllDocuments = async (query = {}) => {
+  const { page, pageSize, paginate, entityType, entityId } = query;
   const where = { deletedAt: null };
-  if (query.entityType) {
-    where.entityType = query.entityType;
+  if (entityType) {
+    where.entityType = entityType;
   }
-  if (query.entityId) {
-    where.entityId = query.entityId;
+  if (entityId) {
+    where.entityId = entityId;
   }
 
-  const docs = await prisma.document.findMany({
-    where,
-    include: {
-      uploadedBy: { select: { id: true, email: true } }
-    },
-    orderBy: { createdAt: 'desc' }
-  });
+  if (paginate === 'false') {
+    const docs = await prisma.document.findMany({
+      where,
+      include: {
+        uploadedBy: { select: { id: true, email: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    const mappedDocs = docs.map((doc) => ({
+      ...doc,
+      status: resolveDocumentStatus(doc.expiryDate)
+    }));
+    return { data: mappedDocs, total: mappedDocs.length };
+  }
+
+  const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
+  const take = pageSize ? parseInt(pageSize) : undefined;
+
+  const [docs, total] = await Promise.all([
+    prisma.document.findMany({
+      where,
+      include: {
+        uploadedBy: { select: { id: true, email: true } }
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take
+    }),
+    prisma.document.count({ where })
+  ]);
 
   // Dynamically recalculate and update statuses on fetch
-  return docs.map((doc) => ({
+  const mappedDocs = docs.map((doc) => ({
     ...doc,
     status: resolveDocumentStatus(doc.expiryDate)
   }));
+  return { data: mappedDocs, total };
 };
 
 /**

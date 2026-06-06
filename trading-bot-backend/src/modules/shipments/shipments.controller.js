@@ -7,8 +7,14 @@ const { createNotification } = require('../notifications/notifications.service')
  * Get all shipments
  */
 const getShipments = async (req, res) => {
-  const shipments = await service.getAllShipments();
-  return sendSuccess(res, 'Shipments list retrieved successfully', shipments);
+  const { data, total } = await service.getAllShipments(req.query);
+  const meta = {
+    totalItems: total,
+    currentPage: req.query.page ? parseInt(req.query.page) : 1,
+    pageSize: req.query.pageSize ? parseInt(req.query.pageSize) : total,
+    totalPages: req.query.pageSize ? Math.ceil(total / parseInt(req.query.pageSize)) : 1
+  };
+  return sendSuccess(res, 'Shipments list retrieved successfully', data, 200, meta);
 };
 
 /**

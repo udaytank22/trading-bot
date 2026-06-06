@@ -1,4 +1,3 @@
-import { useAuth, useUI, useData } from '@context';
 import { api } from '@services/api';
 /**
  * @file PurchaseOrdersPage.jsx
@@ -15,44 +14,19 @@ import { api } from '@services/api';
  * @author TradeMind Dev Team
  */
 
-import React, { useState, useMemo, useContext, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useToast } from '@hooks/useToast';
+import { usePaginatedFetch } from '@hooks/usePaginatedFetch';
 import AddPurchaseOrderModal from './modals/AddPurchaseOrderModal';
 import POTable from './components/POTable';
 import POEmailModal from './modals/POEmailModal';
-import { Toast, PageToolbar, Pagination } from '@components/ui';
+import { Toast, PageToolbar, Pagination, EmptyState } from '@components/ui';
 
-function EmptyState() {
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center p-12 bg-[#1a1d23] min-h-[400px]">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth={1.5}
-        stroke="currentColor"
-        className="w-14 h-14 text-white/10 mb-5"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
-        />
-      </svg>
-      <h3 className="text-white text-lg font-bold mb-1.5">
-        No purchase orders found
-      </h3>
-      <p className="text-gray-500 text-sm font-medium">
-        Create your first purchase order to get started
-      </p>
-    </div>
-  );
-}
+
 
 export default function PurchaseOrdersPage() {
-  const { purchaseOrdersData, refreshAll } = useData();
   const { toast, showToast } = useToast();
   const navigate = useNavigate();
 
@@ -61,32 +35,35 @@ export default function PurchaseOrdersPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [selectedPO, setSelectedPO] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const filteredPOs = useMemo(() => {
-    let result = (purchaseOrdersData || []).filter((po) => {
-      if (filter !== "All" && po.status !== filter) return false;
+  const {
+    data: purchaseOrdersData,
+    meta,
+    loading,
+    handlePageChange,
+    handlePageSizeChange,
+    refresh
+  } = usePaginatedFetch(api.purchaseOrders.getPurchaseOrders, 1, 10, {
+    search,
+    status: filter === 'All' ? undefined : filter
+  });
 
-      if (search.trim()) {
-        const q = search.toLowerCase();
-        return (
-          po.customer.toLowerCase().includes(q) ||
-          po.po_id.toLowerCase().includes(q) ||
-          po.vessel.toLowerCase().includes(q)
-        );
-      }
-      return true;
-    });
-
-    return result.sort((a, b) => new Date(b.date) - new Date(a.date));
-  }, [purchaseOrdersData, search, filter]);
-
-  const totalPages = Math.ceil(filteredPOs.length / itemsPerPage);
-  const currentItems = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredPOs.slice(start, start + itemsPerPage);
-  }, [filteredPOs, currentPage, itemsPerPage]);
+  const mappedPOs = useMemo(() => {
+    return (purchaseOrdersData || []).map(po => ({
+      ...po,
+      po_id: po.poNumber,
+      total_amount: parseFloat(po.amount || 0),
+      customer: po.client?.name || 'Unknown',
+      vessel: po.inquiry?.vesselName || 'N/A',
+      date: po.createdAt,
+      products: po.items?.map(item => ({
+        product_name: item.description,
+        quantity: item.quantity,
+        unit_price: parseFloat(item.unitPrice || 0),
+        total_price: parseFloat(item.totalPrice || 0)
+      })) || []
+    }));
+  }, [purchaseOrdersData]);
 
   const handleAddPO = async (newPO) => {
     try {
@@ -108,7 +85,7 @@ export default function PurchaseOrdersPage() {
       const res = await api.purchaseOrders.createPurchaseOrder(payload);
       if (res.success) {
         showToast("Purchase order created successfully", "success");
-        refreshAll();
+        refresh();
       } else {
         showToast(res.message || "Failed to create purchase order", "error");
       }
@@ -126,16 +103,14 @@ export default function PurchaseOrdersPage() {
       }
       const res = await api.purchaseOrders.updatePurchaseOrder(id, payload);
       if (res.success) {
-        refreshAll();
+        refresh();
         setSelectedPO(prev => prev?.id === id ? { ...prev, status, ...(attachment ? { attachment } : {}) } : prev);
       }
     } catch (e) {
       console.error("Failed to update PO status:", e);
     }
-  }, [refreshAll]);
+  }, [refresh]);
 
-  const startShowing = filteredPOs.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
-  const endShowing = Math.min(currentPage * itemsPerPage, filteredPOs.length);
 
 
   // ─── Render ─────────────────────────────────────────────────────────────────
@@ -146,10 +121,10 @@ export default function PurchaseOrdersPage() {
       {/* Centralized toolbar: search + status filter + Add PO button */}
       <PageToolbar
         search={search}
-        onSearchChange={(val) => { setSearch(val); setCurrentPage(1); }}
+        onSearchChange={(val) => { setSearch(val); handlePageChange(1); }}
         searchPlaceholder="Search by customer or PO ID..."
         filterValue={filter}
-        onFilterChange={(val) => { setFilter(val); setCurrentPage(1); }}
+        onFilterChange={(val) => { setFilter(val); handlePageChange(1); }}
         filterOptions={[
           { value: "All", label: "All Status" },
           { value: "PENDING", label: "Pending" },
@@ -163,9 +138,9 @@ export default function PurchaseOrdersPage() {
       />
 
       <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg transition-colors duration-300">
-        {filteredPOs.length > 0 ? (
+        {mappedPOs.length > 0 ? (
           <POTable
-            items={currentItems}
+            items={mappedPOs}
             onView={(po) => {
               navigate(`/purchase-orders/${po.id}`);
             }}
@@ -175,20 +150,20 @@ export default function PurchaseOrdersPage() {
             }}
           />
         ) : (
-          <EmptyState />
+          <EmptyState title="No purchase orders found" description="Create your first purchase order to get started" />
         )}
 
 
         {/* Centralized pagination footer */}
         <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={filteredPOs.length}
-          itemsPerPage={itemsPerPage}
-          onPrev={() => setCurrentPage((p) => p - 1)}
-          onNext={() => setCurrentPage((p) => p + 1)}
-          onPageChange={(p) => setCurrentPage(p)}
-          onItemsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
+          currentPage={meta.currentPage}
+          totalPages={meta.totalPages}
+          totalItems={meta.totalItems}
+          itemsPerPage={meta.pageSize}
+          onPrev={() => handlePageChange(meta.currentPage - 1)}
+          onNext={() => handlePageChange(meta.currentPage + 1)}
+          onPageChange={handlePageChange}
+          onItemsPerPageChange={handlePageSizeChange}
           itemLabel="orders"
         />
       </div>

@@ -48,16 +48,16 @@ export function DataProvider({ children }) {
         cliRes,
         supplierRes,
       ] = await Promise.all([
-        safeFetch(api.inquiries.getInquiries()),
-        safeFetch(api.shipments.getShipments()),
-        isClient ? { success: true, data: [] } : safeFetch(api.purchaseOrders.getPurchaseOrders()),
-        isClient ? { success: true, data: [] } : safeFetch(api.employees.getEmployees()),
-        isClient ? { success: true, data: [] } : safeFetch(api.documents.getDocuments()),
-        isClient ? { success: true, data: [] } : safeFetch(api.bankAccounts.getBankAccounts()),
-        safeFetch(api.invoices.getInvoices()), // Both clients and admins need invoices
-        isClient ? { success: true, data: [] } : safeFetch(api.products.getProducts()),
-        isClient ? { success: true, data: [] } : safeFetch(api.clients.getClients()),
-        safeFetch(api.suppliers.getSuppliers()),
+        safeFetch(api.inquiries.getInquiries({ paginate: 'false' })),
+        safeFetch(api.shipments.getShipments({ paginate: 'false' })),
+        isClient ? { success: true, data: [] } : safeFetch(api.purchaseOrders.getPurchaseOrders({ paginate: 'false' })),
+        isClient ? { success: true, data: [] } : safeFetch(api.employees.getEmployees({ paginate: 'false' })),
+        isClient ? { success: true, data: [] } : safeFetch(api.documents.getDocuments({ paginate: 'false' })),
+        isClient ? { success: true, data: [] } : safeFetch(api.bankAccounts.getBankAccounts({ paginate: 'false' })),
+        safeFetch(api.invoices.getInvoices({ paginate: 'false' })), // Both clients and admins need invoices
+        isClient ? { success: true, data: [] } : safeFetch(api.products.getProducts({ paginate: 'false' })),
+        isClient ? { success: true, data: [] } : safeFetch(api.clients.getClients({ paginate: 'false' })),
+        safeFetch(api.suppliers.getSuppliers({ paginate: 'false' })),
       ]);
 
       if (inqRes.success) setInquiriesData(inqRes.data ?? []);

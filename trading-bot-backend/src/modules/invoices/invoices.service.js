@@ -7,23 +7,49 @@ const { sendInvoiceEmail } = require('../../utils/email.service');
 /**
  * Get all invoices (filtered for clients)
  */
-const getAllInvoices = async (user) => {
+const getAllInvoices = async (user, query = {}) => {
+  const { page, pageSize, paginate } = query;
   const whereClause = { deletedAt: null };
   if (user && user.role === 'Client') {
     whereClause.clientId = user.id;
   }
 
-  return await prisma.invoice.findMany({
-    where: whereClause,
-    include: {
-      client: true,
-      inquiry: true,
-      shipment: true,
-      items: true,
-      payments: true
-    },
-    orderBy: { createdAt: 'desc' }
-  });
+  if (paginate === 'false') {
+    const invoices = await prisma.invoice.findMany({
+      where: whereClause,
+      include: {
+        client: true,
+        inquiry: true,
+        shipment: true,
+        items: true,
+        payments: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    return { data: invoices, total: invoices.length };
+  }
+
+  const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
+  const take = pageSize ? parseInt(pageSize) : undefined;
+
+  const [invoices, total] = await Promise.all([
+    prisma.invoice.findMany({
+      where: whereClause,
+      include: {
+        client: true,
+        inquiry: true,
+        shipment: true,
+        items: true,
+        payments: true
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take
+    }),
+    prisma.invoice.count({ where: whereClause })
+  ]);
+
+  return { data: invoices, total };
 };
 
 /**

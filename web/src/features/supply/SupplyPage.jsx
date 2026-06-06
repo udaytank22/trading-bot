@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth, useUI, useData } from '@context';
 import { api } from '@services/api';
+import { usePaginatedFetch } from '@hooks/usePaginatedFetch';
 import ContactModal from '@features/accounts/modals/ContactModal';
 import AddSupplyModal from './modals/AddSupplyModal';
 import AllotVehicleModal from '@features/employees/modals/AllotVehicleModal';
@@ -46,14 +47,24 @@ const FILTER_OPTIONS = [
 
 // ─── Main Page Component ───────────────────────────────────────────────────────
 export default function SupplyPage() {
-  const { supplyData, setSupplyData, refreshAll } = useData();
+  const { setSupplyData } = useData();
   const navigate = useNavigate();
 
   // ── Local UI state ────────────────────────────────────────────────────────
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const {
+    data: supplyData,
+    meta,
+    loading,
+    handlePageChange,
+    handlePageSizeChange,
+    refresh
+  } = usePaginatedFetch(api.shipments.getShipments, 1, 10, {
+    search,
+    status: filter === 'All' ? undefined : filter
+  });
 
   // Contact modal state (ContactModal)
   const [contactModalDeal, setContactModalDeal] = useState(null);
@@ -71,40 +82,22 @@ export default function SupplyPage() {
   // Declared here to prevent the "Add Supply" button from crashing (BUG-01 fix)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // ── Derived: filter + sort supply records ─────────────────────────────────
-  const filteredData = useMemo(() => {
-    let result = supplyData.filter((item) => {
-      // Apply status filter
-      if (filter !== "All" && item.status !== filter) return false;
-
-      // Apply text search across supplier, cargo, destination
-      const q = search.toLowerCase();
-      return (
-        item.supplier.toLowerCase().includes(q) ||
-        item.cargo.toLowerCase().includes(q) ||
-        item.destination.toLowerCase().includes(q)
-      );
-    });
-
-    // Sort newest shipments first by date
-    return result.sort((a, b) => new Date(b.date) - new Date(a.date));
-  }, [search, filter, supplyData]);
-
-  // ── Derived: paginate ─────────────────────────────────────────────────────
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const currentItems = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredData.slice(start, start + itemsPerPage);
-  }, [filteredData, currentPage, itemsPerPage]);
+  const mappedSupply = useMemo(() => {
+    return (supplyData || []).map(item => ({
+      ...item,
+      supplier: item.supplier?.name || item.supplier || 'Unknown Supplier',
+      cargo: item.inquiry?.items?.[0]?.description || item.cargo || 'Cargo',
+      destination: item.inquiry?.vesselName || item.destination || 'Destination',
+      date: item.createdAt || item.date
+    }));
+  }, [supplyData]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   const handleStatusUpdate = async (id, newStatus) => {
     if (newStatus === "SUPPLY") { // Transition to SUPPLY status
       const res = await api.shipments.updateShipment(id, { currentStatus: "SUPPLY" });
       if (res.success) {
-        // Clear old supply data and refresh to show only updated entry
-        setSupplyData([]);
-        refreshAll();
+        refresh();
       }
       return;
     }
@@ -137,7 +130,7 @@ export default function SupplyPage() {
               })) || []
             };
             await api.invoices.createInvoice(invoicePayload);
-            refreshAll();
+            refresh();
           }
         } catch (e) {
           console.error("Failed to transition shipment to invoice:", e);
@@ -149,7 +142,7 @@ export default function SupplyPage() {
     try {
       const res = await api.shipments.updateShipment(id, { currentStatus: newStatus });
       if (res.success) {
-        refreshAll();
+        refresh();
       }
     } catch (e) {
       console.error("Failed to update shipment status:", e);
@@ -166,10 +159,10 @@ export default function SupplyPage() {
        */}
       <PageToolbar
         search={search}
-        onSearchChange={(val) => { setSearch(val); setCurrentPage(1); }}
+        onSearchChange={(val) => { setSearch(val); handlePageChange(1); }}
         searchPlaceholder="Search by supplier, cargo or destination..."
         filterValue={filter}
-        onFilterChange={(val) => { setFilter(val); setCurrentPage(1); }}
+        onFilterChange={(val) => { setFilter(val); handlePageChange(1); }}
         filterOptions={FILTER_OPTIONS}
         onAdd={() => setIsAddModalOpen(true)}
         addLabel="Add Supply"
@@ -183,7 +176,7 @@ export default function SupplyPage() {
          * StatusBadge inside SupplyTable now handles all supply statuses directly.
          */}
         <SupplyTable
-          items={currentItems}
+          items={mappedSupply}
           onView={(item) => {
             navigate(`/supply/${item.inquiry_id}`);
           }}
@@ -200,14 +193,14 @@ export default function SupplyPage() {
 
         {/* Centralized pagination footer */}
         <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={filteredData.length}
-          itemsPerPage={itemsPerPage}
-          onPrev={() => setCurrentPage((p) => p - 1)}
-          onNext={() => setCurrentPage((p) => p + 1)}
-          onPageChange={(p) => setCurrentPage(p)}
-          onItemsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
+          currentPage={meta.currentPage}
+          totalPages={meta.totalPages}
+          totalItems={meta.totalItems}
+          itemsPerPage={meta.pageSize}
+          onPrev={() => handlePageChange(meta.currentPage - 1)}
+          onNext={() => handlePageChange(meta.currentPage + 1)}
+          onPageChange={handlePageChange}
+          onItemsPerPageChange={handlePageSizeChange}
           itemLabel="cargo supplies"
         />
       </div>
@@ -236,7 +229,7 @@ export default function SupplyPage() {
               driverDetails: `${vehicle.driver_name || vehicle.owner_name} (${vehicle.phone || vehicle.owner_phone})`
             });
             if (res.success) {
-              refreshAll();
+              refresh();
             }
           } catch (e) {
             console.error("Failed to allot vehicle:", e);

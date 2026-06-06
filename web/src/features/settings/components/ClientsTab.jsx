@@ -7,32 +7,27 @@ import { RightDrawer, ViewDetails, Field, inputCls, EyeIcon, EditIcon, TrashIcon
 import * as XLSX from 'xlsx';
 import { useToast } from '@hooks/useToast';
 import { ClientsTabSchema1 } from '@config/tableSchemas';
+import { usePaginatedFetch } from '@hooks/usePaginatedFetch';
 
 export default function ClientsTab() {
-  const { clientsData, supplyData, refreshAll } = useData();
+  const { supplyData, refreshAll } = useData();
   const [search, setSearch] = useState('');
   const [viewItem, setViewItem] = useState(null);
   const [editItem, setEditItem] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const { showToast } = useToast();
 
-  const filteredClients = useMemo(() => {
-    const q = search.toLowerCase().trim();
-    if (!q) return clientsData;
-    return clientsData.filter(c =>
-      c.name.toLowerCase().includes(q) ||
-      (c.email && c.email.toLowerCase().includes(q)) ||
-      (c.company && c.company.toLowerCase().includes(q))
-    );
-  }, [clientsData, search]);
-
-  const totalPages = Math.max(1, Math.ceil((filteredClients?.length || 0) / itemsPerPage));
-  const currentItems = useMemo(() => {
-    return filteredClients.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  }, [filteredClients, currentPage, itemsPerPage]);
+  const {
+    data: clientsData,
+    meta,
+    loading,
+    handlePageChange,
+    handlePageSizeChange,
+    refresh
+  } = usePaginatedFetch(api.clients.getClients, 1, 10, {
+    search
+  });
 
   const handleDelete = async (id) => {
     const isConfirmed = await confirmAction({
@@ -44,7 +39,7 @@ export default function ClientsTab() {
       try {
         const res = await api.clients.deleteClient(id);
         if (res.success) {
-          refreshAll();
+          refresh();
         }
       } catch (e) {
         console.error('Failed to delete client:', e);
@@ -65,10 +60,10 @@ export default function ClientsTab() {
       };
       if (editItem) {
         const res = await api.clients.updateClient(editItem.id, data);
-        if (res.success) refreshAll();
+        if (res.success) refresh();
       } else {
         const res = await api.clients.createClient(data);
-        if (res.success) refreshAll();
+        if (res.success) refresh();
       }
       setIsFormOpen(false);
       setEditItem(null);
@@ -77,10 +72,12 @@ export default function ClientsTab() {
     }
   };
 
-  const handleDownloadSample = () => {
+  const handleDownloadSample = async () => {
     let dataToExport = [];
-    if (clientsData && clientsData.length > 0) {
-      dataToExport = clientsData.map(client => ({
+    const res = await api.clients.getClients({ paginate: 'false' });
+    const allClients = res.data || [];
+    if (allClients && allClients.length > 0) {
+      dataToExport = allClients.map(client => ({
         ID: client.id,
         Name: client.name || "",
         Email: client.email || "",
@@ -113,13 +110,13 @@ export default function ClientsTab() {
   const handleImport = async (jsonData) => {
     const clientsToImport = [];
     let failCount = 0;
-    
+
     for (const row of jsonData) {
       if (!row.Name || !row.Email) {
         failCount++;
         continue;
       }
-      
+
       const data = {
         id: row.ID || undefined,
         name: row.Name,
@@ -139,12 +136,12 @@ export default function ClientsTab() {
       };
       clientsToImport.push(data);
     }
-    
+
     if (clientsToImport.length > 0) {
       try {
         const res = await api.clients.bulkImportClients(clientsToImport);
         if (res.success) {
-          refreshAll();
+          refresh();
           showToast(`Successfully processed ${res.data?.successCount || clientsToImport.length} rows. ${failCount} failed due to missing fields.`, 'success');
         } else {
           showToast(`Failed to import data.`, 'error');
@@ -169,37 +166,57 @@ export default function ClientsTab() {
       <RightDrawer isOpen={isFormOpen} title={editItem ? 'Edit Client' : 'Add New Client'} onClose={() => { setIsFormOpen(false); setEditItem(null); }}>
         <ClientForm initialData={editItem} onSave={handleSave} onClose={() => { setIsFormOpen(false); setEditItem(null); }} />
       </RightDrawer>
+      <div className="p-2 border-b border-gray-200 dark:border-[#2a2d33] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
-      <div className="p-2 border-b border-gray-200 dark:border-[#2a2d33] flex flex-col sm:flex-row items-center justify-between gap-4">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Clients List</h2>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        {/* Left Side - Search */}
+        <div className="w-full sm:w-auto">
           <input
             type="text"
-            placeholder="Search clients..."
+            placeholder="Search products..."
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
             className="w-full sm:w-64 bg-gray-50 dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-9 px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors"
           />
-          <button onClick={handleDownloadSample} className="h-9 px-4 bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2">
+        </div>
+
+        {/* Right Side - Buttons */}
+        <div className="flex flex-wrap items-center gap-3 justify-start sm:justify-end">
+          <button
+            onClick={handleDownloadSample}
+            className="h-9 px-4 bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2"
+          >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
             Sample
           </button>
-          <button onClick={() => setIsImportModalOpen(true)} className="h-9 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2">
+
+          <button
+            onClick={() => setIsImportModalOpen(true)}
+            className="h-9 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2"
+          >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
             </svg>
             Import
           </button>
-          <button onClick={() => setIsFormOpen(true)} className="h-9 px-4 bg-purple-600 hover:bg-purple-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2">
+
+          <button
+            onClick={() => setIsFormOpen(true)}
+            className="h-9 px-4 bg-purple-600 hover:bg-purple-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2"
+          >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             Add Client
           </button>
         </div>
+
       </div>
+
 
       <ExcelImportModal
         isOpen={isImportModalOpen}
@@ -211,50 +228,50 @@ export default function ClientsTab() {
       <DataTable
         maxHeight="max-h-none"
         columns={[
-            { key: "srno", label: "#" },
-            { key: "id", label: "Client ID" },
-            { key: "name", label: "Client Name" },
-            { key: "company", label: "Company" },
-            { key: "email", label: "Email" },
-            { key: "status", label: "Status" },
-            { key: "actions", label: "Actions", className: "text-right" },
-          ]}
-          data={currentItems}
-          emptyMessage="No clients found."
-          renderRow={(client, i) => (
-            <tr key={client.id} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
-              <td className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">{(currentPage - 1) * itemsPerPage + i + 1}</td>
-              <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{String(client.id).slice(-8)}</td>
-              <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">{client.name}</td>
-              <td className="px-5 py-3 text-gray-700 dark:text-gray-300">{client.company || '-'}</td>
-              <td className="px-5 py-3">{client.email}</td>
-              <td className="px-5 py-3">
-                <span className={`px-2 py-1 rounded text-[11px] font-bold ${client.isActive
-                  ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
-                  : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+          { key: "srno", label: "#" },
+          { key: "id", label: "Client ID" },
+          { key: "name", label: "Client Name" },
+          { key: "company", label: "Company" },
+          { key: "email", label: "Email" },
+          { key: "status", label: "Status" },
+          { key: "actions", label: "Actions", className: "text-right" },
+        ]}
+        data={clientsData || []}
+        emptyMessage="No clients found."
+        renderRow={(client, i) => (
+          <tr key={client.id} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
+            <td className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">{((meta.currentPage ? meta.currentPage : 1) - 1) * (meta.pageSize ? meta.pageSize : 10) + i + 1}</td>
+            <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{String(client.id).slice(-8)}</td>
+            <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">{client.name}</td>
+            <td className="px-5 py-3 text-gray-700 dark:text-gray-300">{client.company || '-'}</td>
+            <td className="px-5 py-3">{client.email}</td>
+            <td className="px-5 py-3">
+              <span className={`px-2 py-1 rounded text-[11px] font-bold ${client.isActive
+                ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
                 }`}>
-                  {client.isActive ? 'Active' : 'Inactive'}
-                </span>
-              </td>
-              <td className="px-5 py-3 text-right space-x-3">
-                <button onClick={() => setViewItem(client)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" title="View"><EyeIcon /></button>
-                <button onClick={() => { setEditItem(client); setIsFormOpen(true); }} className="text-blue-500 hover:text-blue-600 transition-colors" title="Edit"><EditIcon /></button>
-                <button onClick={() => handleDelete(client.id)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete"><TrashIcon /></button>
-              </td>
-            </tr>
-          )}
-        />
+                {client.isActive ? 'Active' : 'Inactive'}
+              </span>
+            </td>
+            <td className="px-5 py-3 text-right space-x-3">
+              <button onClick={() => setViewItem(client)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" title="View"><EyeIcon /></button>
+              <button onClick={() => { setEditItem(client); setIsFormOpen(true); }} className="text-blue-500 hover:text-blue-600 transition-colors" title="Edit"><EditIcon /></button>
+              <button onClick={() => handleDelete(client.id)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete"><TrashIcon /></button>
+            </td>
+          </tr>
+        )}
+      />
 
       <div className="p-4 border-t border-gray-200 dark:border-[#2a2d33]">
         <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={filteredClients?.length || 0}
-          itemsPerPage={itemsPerPage}
-          onPrev={() => setCurrentPage((p) => Math.max(1, p - 1))}
-          onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-          onPageChange={(p) => setCurrentPage(p)}
-          onItemsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
+          currentPage={meta.currentPage}
+          totalPages={meta.totalPages}
+          totalItems={meta.totalItems}
+          itemsPerPage={meta.pageSize}
+          onPrev={() => handlePageChange(meta.currentPage - 1)}
+          onNext={() => handlePageChange(meta.currentPage + 1)}
+          onPageChange={handlePageChange}
+          onItemsPerPageChange={handlePageSizeChange}
           itemLabel="clients"
         />
       </div>
@@ -293,7 +310,7 @@ function ClientForm({ initialData, onSave, onClose }) {
           />
         </Field>
       </div>
-      
+
       {/* Vessels Section */}
       <div className="flex-1 flex flex-col pt-4 border-t border-gray-200 dark:border-[#2a2d36] mt-4">
         <div className="flex items-center justify-between mb-3">
@@ -302,7 +319,7 @@ function ClientForm({ initialData, onSave, onClose }) {
             + Add Vessel
           </button>
         </div>
-        
+
         <div className="space-y-3 max-h-[200px] overflow-y-auto custom-scrollbar pr-2">
           {(!formData.vessels || formData.vessels.length === 0) && (
             <div className="text-xs text-gray-500 italic text-center py-4 bg-gray-50 dark:bg-[#1a1d23]/50 rounded-lg border border-dashed border-gray-200 dark:border-[#2a2d36]">
@@ -375,7 +392,7 @@ function ClientDetailsView({ client, supplyData, onClose }) {
           <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${client.isActive
             ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
             : 'bg-red-500/10 text-red-500 border border-red-500/20'
-          }`}>
+            }`}>
             {client.isActive ? 'ACTIVE' : 'INACTIVE'}
           </span>
         </div>
@@ -431,13 +448,12 @@ function ClientDetailsView({ client, supplyData, onClose }) {
                     <span className="font-mono font-bold text-xs text-gray-900 dark:text-white">
                       {ship.shipmentNumber || ship.inquiry_id}
                     </span>
-                    <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
-                      isDispatched
-                        ? 'bg-purple-500/10 text-purple-500 border border-purple-500/20'
-                        : isConfirmed
+                    <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${isDispatched
+                      ? 'bg-purple-500/10 text-purple-500 border border-purple-500/20'
+                      : isConfirmed
                         ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20'
                         : 'bg-gray-500/10 text-gray-400 border border-gray-500/20'
-                    }`}>
+                      }`}>
                       {isConfirmed ? 'Confirmed' : isDispatched ? 'Dispatched' : ship.status || 'Unknown'}
                     </span>
                   </div>

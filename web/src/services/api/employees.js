@@ -1,7 +1,7 @@
 import apiClient from '../apiClient';
 
-export const getEmployees = async () => {
-  const response = await apiClient.get('/employees');
+export const getEmployees = async (params = {}) => {
+  const response = await apiClient.get('/employees', { params });
   return response.data;
 };
 

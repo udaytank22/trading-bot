@@ -38,6 +38,7 @@
  */
 
 import React from "react";
+import EmptyState from "./emptyState";
 
 // ─── Shared row stripe helper (exported so individual tables can use it) ───────
 
@@ -72,7 +73,7 @@ export default function DataTable({
   data = [],
   renderRow,
   emptyMessage = "No data found.",
-  maxHeight = "max-h-[600px]",
+  maxHeight = "max-h-none",
 }) {
   return (
     /* Outer wrapper — hides overflow for rounded corners */
@@ -113,11 +114,8 @@ export default function DataTable({
             ) : (
               // Empty state row spans all columns
               <tr>
-                <td
-                  colSpan={columns.length}
-                  className="px-6 py-16 text-center text-gray-400 text-sm font-medium"
-                >
-                  {emptyMessage}
+                <td colSpan={columns.length} className="p-0">
+                  <EmptyState title={emptyMessage} description="" />
                 </td>
               </tr>
             )}

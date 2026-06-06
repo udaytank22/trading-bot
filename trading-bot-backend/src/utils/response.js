@@ -1,11 +1,12 @@
 /**
  * Helper to send standard success response
  */
-const sendSuccess = (res, message = 'Operation completed successfully', data = {}, statusCode = 200) => {
+const sendSuccess = (res, message = 'Operation completed successfully', data = {}, statusCode = 200, meta = undefined) => {
   return res.status(statusCode).json({
     success: true,
     message,
-    data
+    data,
+    ...(meta && { meta })
   });
 };
 

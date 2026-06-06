@@ -6,8 +6,14 @@ const { createAuditLog } = require('../auditLogs/auditLogs.service');
  * Get all suppliers
  */
 const getSuppliers = async (req, res) => {
-  const suppliers = await service.getAllSuppliers();
-  return sendSuccess(res, 'Suppliers retrieved successfully', suppliers);
+  const { data, total } = await service.getAllSuppliers(req.query);
+  const meta = {
+    totalItems: total,
+    currentPage: req.query.page ? parseInt(req.query.page) : 1,
+    pageSize: req.query.pageSize ? parseInt(req.query.pageSize) : total,
+    totalPages: req.query.pageSize ? Math.ceil(total / parseInt(req.query.pageSize)) : 1
+  };
+  return sendSuccess(res, 'Suppliers retrieved successfully', data, 200, meta);
 };
 
 /**

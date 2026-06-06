@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { name: "Invoices", path: "/invoices", icon: <InvoicesIcon /> },
   { name: "Inventory", path: "/inventory", icon: <InventoryIcon /> },
   { name: "Employees", path: "/employees", icon: <UsersIcon /> },
+  { name: "Inbox", path: "/inbox", icon: <InboxIcon /> },
   { name: "To-Do", path: "/todo", icon: <TodoIcon /> },
 ];
 
@@ -33,7 +34,7 @@ export default function Sidebar({ isOpen }) {
       return link.name === "Client RFQs";
     }
     if (roleLower === 'employee' || roleLower === 'user') {
-      const employeeTabs = ["Dashboard", "Inquiries", "Purchase Orders", "Supply", "Documents", "Notifications", "To-Do"];
+      const employeeTabs = ["Dashboard", "Inquiries", "Purchase Orders", "Supply", "Documents", "Notifications", "Inbox", "To-Do"];
       return employeeTabs.includes(link.name) && link.name !== "Client RFQs";
     }
     return true; // Admin sees everything
@@ -160,6 +161,13 @@ function InvoicesIcon() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-full h-full">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 14h6M9 10h6M21 12v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6M7 8h10l-1.5-3h-7L7 8z" />
+    </svg>
+  );
+}
+function InboxIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-full h-full">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.909A2.25 2.25 0 0 1 2.25 6.993V6.75m19.5 0v.243m0 0a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.909a2.25 2.25 0 0 1-1.07-1.916V6.75" />
     </svg>
   );
 }

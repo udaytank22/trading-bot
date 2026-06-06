@@ -7,8 +7,14 @@ const { notifyAdmins, createNotification } = require('../notifications/notificat
  * Get all inquiries
  */
 const getInquiries = async (req, res) => {
-  const inquiries = await service.getAllInquiries(req.query);
-  return sendSuccess(res, 'Inquiries retrieved successfully', inquiries);
+  const { data, total } = await service.getAllInquiries(req.query);
+  const meta = {
+    totalItems: total,
+    currentPage: req.query.page ? parseInt(req.query.page) : 1,
+    pageSize: req.query.pageSize ? parseInt(req.query.pageSize) : total,
+    totalPages: req.query.pageSize ? Math.ceil(total / parseInt(req.query.pageSize)) : 1
+  };
+  return sendSuccess(res, 'Inquiries retrieved successfully', data, 200, meta);
 };
 
 /**

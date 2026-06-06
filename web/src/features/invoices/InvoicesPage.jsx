@@ -1,39 +1,34 @@
 import { InvoicesPageSchema1 } from '@config/tableSchemas';
 import { useAuth, useUI, useData } from '@context';
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { api } from '@services/api';
+import { usePaginatedFetch } from '@hooks/usePaginatedFetch';
 
 import { PageToolbar, Pagination, Button, StatusBadge, DataTable, rowStripeClass, ROW_HOVER_CLS, DatePicker, Select } from '@components/ui';
 
 export default function InvoicesPage() {
-    const { invoicesData, refreshAll, accountsData } = useData();
+    const { accountsData } = useData();
 
     const [search, setSearch] = useState("");
-    const [currentPage, setCurrentPage] = useState(1);
     const [paymentModalInvoice, setPaymentModalInvoice] = useState(null);
     const [paymentForm, setPaymentForm] = useState({ amount: "", date: "", reference: "", bankAccountId: "", paymentMode: "Bank Transfer" });
-    const [itemsPerPage, setItemsPerPage] = useState(10);
 
-    const filtered = useMemo(() => {
-        const nonDraft = (invoicesData || []).filter(inv => inv.invoice_status !== 'DRAFT');
-        const q = search.toLowerCase().trim();
-        if (!q) return nonDraft;
-        return nonDraft.filter((inv) =>
-            (inv.inquiry_id && inv.inquiry_id.toLowerCase().includes(q)) ||
-            (inv.buyer_name && inv.buyer_name.toLowerCase().includes(q)) ||
-            (inv.buyer_email && inv.buyer_email.toLowerCase().includes(q)) ||
-            (inv.cargo && inv.cargo.toLowerCase().includes(q))
-        );
-    }, [invoicesData, search]);
-
-    const totalPages = Math.max(1, Math.ceil((filtered?.length || 0) / itemsPerPage));
-    const currentItems = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    const {
+        data: invoicesData,
+        meta,
+        loading,
+        handlePageChange,
+        handlePageSizeChange,
+        refresh
+    } = usePaginatedFetch(api.invoices.getInvoices, 1, 10, {
+        search
+    });
 
     const handleSend = async (id) => {
         try {
             const res = await api.invoices.updateInvoice(id, { status: "SENT" });
             if (res.success) {
-                refreshAll();
+                refresh();
             }
         } catch (e) {
             console.error("Failed to send invoice:", e);
@@ -41,7 +36,7 @@ export default function InvoicesPage() {
     };
 
     const openPaymentModal = (inv) => {
-        const defaultAmount = inv.products?.reduce((s, p) => s + (p.total_price || 0), 0) || "";
+        const defaultAmount = inv.items?.reduce((s, p) => s + (p.totalPrice || 0), 0) || "";
         const defaultBankId = accountsData?.[0]?.id || "";
         setPaymentForm({
             amount: defaultAmount,
@@ -69,7 +64,7 @@ export default function InvoicesPage() {
             const res = await api.payments.createPayment(payload);
             if (res.success) {
                 setPaymentModalInvoice(null);
-                refreshAll();
+                refresh();
             } else {
                 console.error("Failed to save payment:", res.message);
             }
@@ -99,46 +94,46 @@ export default function InvoicesPage() {
         <div className="flex flex-col w-full h-full pb-4">
             <PageToolbar
                 search={search}
-                onSearchChange={(val) => { setSearch(val); setCurrentPage(1); }}
+                onSearchChange={(val) => { setSearch(val); handlePageChange(1); }}
                 searchPlaceholder="Search invoices by ID, buyer or cargo..."
             />
 
             <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg">
                 <DataTable
                     columns={InvoicesPageSchema1}
-                    data={currentItems}
+                    data={invoicesData || []}
                     emptyMessage="No invoices found"
                     renderRow={(inv, idx) => (
                         <tr key={inv.id} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}>
-                            <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{((currentPage ? currentPage : 1) - 1) * (itemsPerPage ? itemsPerPage : 10) + idx + 1}</td>
-                        <td className="px-4 py-3 font-mono text-gray-500">{inv.invoiceNumber || inv.id}</td>
-                            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{inv.buyer_name}</td>
-                            <td className="px-4 py-3 text-sm truncate max-w-[250px]" title={inv.cargo}>{inv.cargo}</td>
-                            <td className="px-4 py-3">{inv.invoice_date ? new Date(inv.invoice_date).toLocaleString() : '-'}</td>
+                            <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{((meta.currentPage ? meta.currentPage : 1) - 1) * (meta.pageSize ? meta.pageSize : 10) + idx + 1}</td>
+                            <td className="px-4 py-3 font-mono text-gray-500">{inv.invoiceNumber || inv.id}</td>
+                            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{inv.client?.name || 'Unknown Buyer'}</td>
+                            <td className="px-4 py-3 text-sm truncate max-w-[250px]" title={inv.shipment?.cargoDetails || 'General Cargo'}>{inv.shipment?.cargoDetails || 'General Cargo'}</td>
+                            <td className="px-4 py-3">{inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleString() : '-'}</td>
                             <td className="px-4 py-3">
-                                <StatusBadge status={inv.invoice_status || 'N/A'} />
+                                <StatusBadge status={inv.status || 'N/A'} />
                             </td>
                             <td className="px-4 py-3 text-right">
                                 <div className="flex items-center justify-end gap-2">
                                     <button
-                                        onClick={() => handleDownloadPdf(inv.id, inv.inquiry_id)}
+                                        onClick={() => handleDownloadPdf(inv.id, inv.invoiceNumber || inv.id)}
                                         className="inline-flex items-center justify-center gap-2 rounded-lg border border-purple-500/40 px-3 py-1.5 text-xs font-bold text-purple-400 hover:bg-purple-500/10"
                                     >
                                         Download
                                     </button>
 
-                                    {inv.invoice_status !== 'SENT' && inv.invoice_status !== 'PAID' && (
+                                    {inv.status !== 'SENT' && inv.status !== 'PAID' && (
                                         <Button
                                             variant="secondary"
                                             size="sm"
                                             className="border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10"
-                                            onClick={() => handleSend(inv.inquiry_id)}
+                                            onClick={() => handleSend(inv.id)}
                                         >
                                             Send Invoice
                                         </Button>
                                     )}
 
-                                    {inv.invoice_status === 'SENT' && (
+                                    {inv.status === 'SENT' && (
                                         <Button
                                             variant="secondary"
                                             size="sm"
@@ -149,7 +144,7 @@ export default function InvoicesPage() {
                                         </Button>
                                     )}
 
-                                    {inv.invoice_status === 'PAID' && (
+                                    {inv.status === 'PAID' && (
                                         <span className="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-700 text-xs font-bold uppercase tracking-wide">
                                             Paid
                                         </span>
@@ -162,14 +157,14 @@ export default function InvoicesPage() {
 
                 <div className="p-4 border-t border-gray-200 dark:border-[#2a2d33]">
                     <Pagination
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        totalItems={filtered?.length || 0}
-                        itemsPerPage={itemsPerPage}
-                        onPrev={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                        onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                        onPageChange={(p) => setCurrentPage(p)}
-                        onItemsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
+                        currentPage={meta.currentPage}
+                        totalPages={meta.totalPages}
+                        totalItems={meta.totalItems}
+                        itemsPerPage={meta.pageSize}
+                        onPrev={() => handlePageChange(meta.currentPage - 1)}
+                        onNext={() => handlePageChange(meta.currentPage + 1)}
+                        onPageChange={handlePageChange}
+                        onItemsPerPageChange={handlePageSizeChange}
                         itemLabel="invoices"
                     />
                 </div>
@@ -189,7 +184,7 @@ export default function InvoicesPage() {
                                 Mark Invoice Paid
                             </h3>
                             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                Invoice: {paymentModalInvoice.inquiry_id} • {paymentModalInvoice.buyer_name}
+                                Invoice: {paymentModalInvoice.invoiceNumber || paymentModalInvoice.id} • {paymentModalInvoice.client?.name || 'Unknown Buyer'}
                             </p>
                         </div>
 

@@ -12,6 +12,9 @@ model User {
   email                 String                 @unique
   password              String
   refreshToken          String?
+  outlookAccessToken    String?
+  outlookRefreshToken   String?
+  outlookAccountId      String?
   roleId Int
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
@@ -31,6 +34,8 @@ model User {
   notifications         Notification[]
   employeeProfile       Employee?              @relation(fields: [employeeProfileId], references: [id])
   role                  Role                   @relation(fields: [roleId], references: [id])
+  sentMessages          Message[]              @relation("SentMessages")
+  receivedMessages      Message[]              @relation("ReceivedMessages")
 }
 
 model Role {
@@ -576,4 +581,20 @@ model Vehicle {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
+}
+
+model Message {
+  id Int @id @default(autoincrement())
+  senderId Int
+  receiverId Int
+  content String
+  type String @default("text") // text, file, image
+  fileName String?
+  fileSize String?
+  fileUrl String?
+  isRead Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  sender User @relation("SentMessages", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id])
 }

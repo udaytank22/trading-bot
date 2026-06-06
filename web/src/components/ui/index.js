@@ -35,6 +35,7 @@ export { default as DataTable, rowStripeClass, ROW_HOVER_CLS } from "./dataTable
 // ── Layout / chrome components ─────────────────────────────────────────────────
 export { default as PageToolbar } from "./pageToolbar";
 export { default as Pagination } from "./pagination";
+export { default as EmptyState } from "./emptyState";
 export { default as Toast } from "./toast";
 export { default as Modal } from "./modal";
 export { default as ExcelImportModal } from "./ExcelImportModal";

@@ -3,11 +3,32 @@ const prisma = require('../../prisma/client');
 /**
  * Get all active suppliers
  */
-const getAllSuppliers = async () => {
-  return await prisma.supplier.findMany({
-    where: { deletedAt: null },
-    orderBy: { name: 'asc' }
-  });
+const getAllSuppliers = async (query = {}) => {
+  const { page, pageSize, paginate } = query;
+  const where = { deletedAt: null };
+
+  if (paginate === 'false') {
+    const suppliers = await prisma.supplier.findMany({
+      where,
+      orderBy: { name: 'asc' }
+    });
+    return { data: suppliers, total: suppliers.length };
+  }
+
+  const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
+  const take = pageSize ? parseInt(pageSize) : undefined;
+
+  const [suppliers, total] = await Promise.all([
+    prisma.supplier.findMany({
+      where,
+      orderBy: { name: 'asc' },
+      skip,
+      take
+    }),
+    prisma.supplier.count({ where })
+  ]);
+
+  return { data: suppliers, total };
 };
 
 /**

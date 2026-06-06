@@ -3,11 +3,32 @@ const prisma = require('../../prisma/client');
 /**
  * Get all active products
  */
-const getAllProducts = async () => {
-  return await prisma.product.findMany({
-    where: { deletedAt: null },
-    orderBy: { name: 'asc' }
-  });
+const getAllProducts = async (query = {}) => {
+  const { page, pageSize, paginate } = query;
+  const where = { deletedAt: null };
+
+  if (paginate === 'false') {
+    const products = await prisma.product.findMany({
+      where,
+      orderBy: { name: 'asc' }
+    });
+    return { data: products, total: products.length };
+  }
+
+  const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
+  const take = pageSize ? parseInt(pageSize) : undefined;
+
+  const [products, total] = await Promise.all([
+    prisma.product.findMany({
+      where,
+      orderBy: { name: 'asc' },
+      skip,
+      take
+    }),
+    prisma.product.count({ where })
+  ]);
+
+  return { data: products, total };
 };
 
 /**
@@ -15,7 +36,7 @@ const getAllProducts = async () => {
  */
 const getProductById = async (id) => {
   return await prisma.product.findFirst({
-    where: { id, deletedAt: null }
+    where: { id: parseInt(id, 10), deletedAt: null }
   });
 };
 
@@ -23,19 +44,16 @@ const getProductById = async (id) => {
  * Create product
  */
 const createProduct = async (data, creatorId) => {
-  // Check for duplicate product (by sku or name)
+  // Check for duplicate product (by sku)
   const existingProduct = await prisma.product.findFirst({
     where: {
-      OR: [
-        { sku: data.sku },
-        { name: data.name }
-      ],
+      sku: data.sku,
       deletedAt: null
     }
   });
 
   if (existingProduct) {
-    const err = new Error(`A product with this ${existingProduct.sku === data.sku ? 'SKU' : 'name'} already exists.`);
+    const err = new Error(`A product with this SKU already exists.`);
     err.statusCode = 400;
     throw err;
   }
@@ -58,26 +76,24 @@ const createProduct = async (data, creatorId) => {
  * Update product
  */
 const updateProduct = async (id, data, updaterId) => {
-  // Check for duplicate product (by sku or name) excluding the current product
+  const productId = parseInt(id, 10);
+  // Check for duplicate product (by sku) excluding the current product
   const existingProduct = await prisma.product.findFirst({
     where: {
-      id: { not: id },
-      OR: [
-        { sku: data.sku },
-        { name: data.name }
-      ],
+      id: { not: productId },
+      sku: data.sku,
       deletedAt: null
     }
   });
 
   if (existingProduct) {
-    const err = new Error(`A product with this ${existingProduct.sku === data.sku ? 'SKU' : 'name'} already exists.`);
+    const err = new Error(`A product with this SKU already exists.`);
     err.statusCode = 400;
     throw err;
   }
 
   return await prisma.product.update({
-    where: { id },
+    where: { id: productId },
     data: {
       name: data.name,
       sku: data.sku,
@@ -96,7 +112,7 @@ const updateProduct = async (id, data, updaterId) => {
  */
 const deleteProduct = async (id, updaterId) => {
   return await prisma.product.update({
-    where: { id },
+    where: { id: parseInt(id, 10) },
     data: {
       deletedAt: new Date(),
       isActive: false,

@@ -71,8 +71,8 @@ const normalizeInquiry = (inq) => {
   };
 };
 
-export const getInquiries = async () => {
-  const response = await apiClient.get('/inquiries');
+export const getInquiries = async (params = {}) => {
+  const response = await apiClient.get('/inquiries', { params });
   if (response.data && response.data.success && Array.isArray(response.data.data)) {
     response.data.data = response.data.data.map(normalizeInquiry);
   }

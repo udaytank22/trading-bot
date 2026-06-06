@@ -3,17 +3,38 @@ const bcrypt = require('bcryptjs');
 /**
  * Get all employees
  */
-const getAllEmployees = async () => {
-  return await prisma.employee.findMany({
-    where: { deletedAt: null },
-    include: {
-      attendance: {
-        orderBy: { date: 'desc' },
-        take: 30
-      }
-    },
-    orderBy: { fullName: 'asc' }
-  });
+const getAllEmployees = async (query = {}) => {
+  const { page, pageSize, paginate } = query;
+  const where = { deletedAt: null };
+
+  if (paginate === 'false') {
+    const employees = await prisma.employee.findMany({
+      where,
+      orderBy: { fullName: 'asc' }
+    });
+    return { data: employees, total: employees.length };
+  }
+
+  const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
+  const take = pageSize ? parseInt(pageSize) : undefined;
+
+  const [employees, total] = await Promise.all([
+    prisma.employee.findMany({
+      where,
+      include: {
+        attendance: {
+          orderBy: { date: 'desc' },
+          take: 30
+        }
+      },
+      orderBy: { fullName: 'asc' },
+      skip,
+      take
+    }),
+    prisma.employee.count({ where })
+  ]);
+
+  return { data: employees, total };
 };
 
 /**

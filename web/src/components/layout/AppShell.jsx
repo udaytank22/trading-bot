@@ -1,11 +1,11 @@
 // src/components/layout/AppShell.jsx
 import React, { Suspense } from 'react';
-import Sidebar       from './sidebar';
-import Topbar        from './topbar';
-import CallOverlay   from './callOverlay';
-import PageLoader    from '@components/common/PageLoader';
+import Sidebar from './sidebar';
+import Topbar from './topbar';
+import CallOverlay from './callOverlay';
+import PageLoader from '@components/common/PageLoader';
 import ErrorBoundary from '@components/common/ErrorBoundary';
-import { useUI }     from '@context';
+import { useUI } from '@context';
 
 /**
  * AppShell wraps the authenticated layout: sidebar + topbar + scrollable content area.

@@ -17,6 +17,7 @@ const NotificationsPage = React.lazy(() => import('@features/notifications/Notif
 const TodoPage = React.lazy(() => import('@features/todo/TodoPage'));
 const SettingsPage = React.lazy(() => import('@features/settings/SettingsPage'));
 const ProfilePage = React.lazy(() => import('@features/profile/ProfilePage'));
+const InboxPage = React.lazy(() => import('@features/inbox/InboxPage'));
 const ClientRFQsPage = React.lazy(() => import('@features/client-portal/ClientRFQsPage'));
 const InquiryDetailsPage = React.lazy(() => import('@features/inquiries/InquiryDetailsPage'));
 const PODetailsPage = React.lazy(() => import('@features/purchase-orders/PODetailsPage'));
@@ -45,6 +46,7 @@ export const PROTECTED_ROUTES = [
   { path: '/documents', element: <DocumentsPage /> },
   { path: '/notifications', element: <NotificationsPage /> },
   { path: '/todo', element: <TodoPage /> },
+  { path: '/inbox', element: <InboxPage /> },
   { path: '/settings', element: <SettingsPage /> },
   { path: '/profile', element: <ProfilePage /> },
 ];

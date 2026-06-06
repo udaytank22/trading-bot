@@ -1,7 +1,7 @@
 import apiClient from '../apiClient';
 
-export const getPurchaseOrders = async () => {
-  const response = await apiClient.get('/purchase-orders');
+export const getPurchaseOrders = async (params = {}) => {
+  const response = await apiClient.get('/purchase-orders', { params });
   return response.data;
 };
 

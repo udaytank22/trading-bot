@@ -14,17 +14,39 @@ const generateInquiryNumber = async () => {
  * Get all inquiries with filtering, sorting, pagination
  */
 const getAllInquiries = async (query = {}) => {
+  const { page, pageSize, paginate, status, clientId } = query;
   const where = { deletedAt: null };
 
-  if (query.status) {
-    where.currentStatus = query.status;
+  if (status) {
+    where.currentStatus = status;
   }
 
-  if (query.clientId) {
-    where.clientId = query.clientId;
+  if (clientId) {
+    where.clientId = clientId;
   }
 
-  return await prisma.inquiry.findMany({
+  if (paginate === 'false') {
+    const inquiries = await prisma.inquiry.findMany({
+      where,
+      include: {
+        client: true,
+        items: { include: { product: true } },
+        suppliers: { include: { supplier: true } },
+        supplierQuotes: { include: { supplier: true, items: true } },
+        assignedEmployee: { select: { id: true, email: true } },
+        assignedTeamLead: { select: { id: true, email: true } },
+        statusHistory: { orderBy: { createdAt: 'desc' } },
+        clientQuotations: { include: { items: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    return { data: inquiries, total: inquiries.length };
+  }
+
+  const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
+  const take = pageSize ? parseInt(pageSize) : undefined;
+
+  const data = await prisma.inquiry.findMany({
     where,
     include: {
       client: true,
@@ -59,8 +81,13 @@ const getAllInquiries = async (query = {}) => {
         }
       }
     },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
+    skip,
+    take
   });
+
+  const total = await prisma.inquiry.count({ where });
+  return { data, total };
 };
 
 /**
