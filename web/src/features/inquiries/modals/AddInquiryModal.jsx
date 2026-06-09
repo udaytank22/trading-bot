@@ -28,7 +28,7 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
     clientCategory: "",
     currency: "",
     vesselReference: "",
-    validityDate: new Date().toISOString().split("T")[0],
+    validityDate: "",
     requestType: "",
     category: "",
     subCategory: "",

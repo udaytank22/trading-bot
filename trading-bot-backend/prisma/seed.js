@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding database started...');
 
-  // 1. Clean existing records (Optional, in order of dependencies)
+  // 1. Clean existing records (in order of dependencies)
   await prisma.attendance.deleteMany({});
   await prisma.employee.deleteMany({});
 
@@ -65,7 +65,8 @@ async function main() {
   const modules = [
     'dashboard', 'inquiries', 'suppliers', 'clients', 'products',
     'purchaseOrders', 'shipments', 'invoices', 'payments', 'inventory',
-    'employees', 'bankAccounts', 'documents', 'notifications', 'reports', 'settings'
+    'employees', 'bankAccounts', 'documents', 'notifications', 'reports',
+    'settings', 'vehicles', 'chat'
   ];
   const actions = ['create', 'read', 'update', 'delete', 'approve', 'export'];
 
@@ -82,18 +83,22 @@ async function main() {
   // 4. Map permissions to Roles
   const rolePermissions = [];
 
-  // Super Admin: gets all permissions
+  // Super Admin: all permissions
   permissions.forEach((perm) => {
     rolePermissions.push({ roleId: roles.superAdmin.id, permissionId: perm.id });
   });
 
-  // Admin: gets all exceptSettings Delete
+  // Admin: all except settings:delete
   permissions.forEach((perm) => {
     if (perm.module === 'settings' && perm.action === 'delete') return;
     rolePermissions.push({ roleId: roles.admin.id, permissionId: perm.id });
   });
 
-  // Team Lead: dashboard read, reports read, inquiries read/create/update/approve, others read
+  // Team Lead:
+  //   - inquiries, reports, dashboard: all except delete
+  //   - vehicles: read/create/update (no delete)
+  //   - chat: read only
+  //   - everything else: read and export only
   permissions.forEach((perm) => {
     if (
       perm.module === 'inquiries' ||
@@ -103,14 +108,39 @@ async function main() {
       if (perm.action !== 'delete') {
         rolePermissions.push({ roleId: roles.teamLead.id, permissionId: perm.id });
       }
+    } else if (perm.module === 'vehicles') {
+      if (['read', 'create', 'update'].includes(perm.action)) {
+        rolePermissions.push({ roleId: roles.teamLead.id, permissionId: perm.id });
+      }
+    } else if (perm.module === 'chat') {
+      if (perm.action === 'read') {
+        rolePermissions.push({ roleId: roles.teamLead.id, permissionId: perm.id });
+      }
     } else if (perm.action === 'read' || perm.action === 'export') {
       rolePermissions.push({ roleId: roles.teamLead.id, permissionId: perm.id });
     }
   });
 
-  // Employee: dashboard, inquiries read/create/update/approve, others read/create/update except Settings/Reports
+  // Employee:
+  //   - settings, reports: no access
+  //   - vehicles: read/create/update (no delete)
+  //   - chat: read only
+  //   - inquiries: read/create/update/approve
+  //   - everything else: read/create/update
   permissions.forEach((perm) => {
     if (['settings', 'reports'].includes(perm.module)) return;
+    if (perm.module === 'vehicles') {
+      if (['read', 'create', 'update'].includes(perm.action)) {
+        rolePermissions.push({ roleId: roles.employee.id, permissionId: perm.id });
+      }
+      return;
+    }
+    if (perm.module === 'chat') {
+      if (perm.action === 'read') {
+        rolePermissions.push({ roleId: roles.employee.id, permissionId: perm.id });
+      }
+      return;
+    }
     if (
       perm.action === 'read' ||
       perm.action === 'create' ||
@@ -121,20 +151,23 @@ async function main() {
     }
   });
 
-  // Viewer: read-only on everything except settings
+  // Viewer: read and export on everything except settings and chat
   permissions.forEach((perm) => {
     if (perm.module === 'settings') return;
+    if (perm.module === 'chat') return;
     if (perm.action === 'read' || perm.action === 'export') {
       rolePermissions.push({ roleId: roles.viewer.id, permissionId: perm.id });
     }
   });
 
-  // Client: inquiries read/approve, suppliers read, shipments read/update
+  // Client: limited access to relevant modules only
   permissions.forEach((perm) => {
     if (
       (perm.module === 'inquiries' && ['read', 'approve'].includes(perm.action)) ||
       (perm.module === 'suppliers' && perm.action === 'read') ||
-      (perm.module === 'shipments' && ['read', 'update'].includes(perm.action))
+      (perm.module === 'shipments' && ['read', 'update'].includes(perm.action)) ||
+      (perm.module === 'invoices' && perm.action === 'read') ||
+      (perm.module === 'payments' && perm.action === 'read')
     ) {
       rolePermissions.push({ roleId: roles.client.id, permissionId: perm.id });
     }
@@ -182,6 +215,15 @@ async function main() {
       email: 'employee@trademind.com',
       password: passwordHash,
       roleId: roles.employee.id,
+      isActive: true
+    }
+  });
+
+  await prisma.user.create({
+    data: {
+      email: 'viewer@trademind.com',   // ✅ added missing viewer user
+      password: passwordHash,
+      roleId: roles.viewer.id,
       isActive: true
     }
   });

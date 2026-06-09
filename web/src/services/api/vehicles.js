@@ -24,3 +24,8 @@ export const deleteVehicle = async (id) => {
   const response = await apiClient.delete(`/vehicles/${id}`);
   return response.data;
 };
+
+export const bulkImport = async (vehiclesData) => {
+  const response = await apiClient.post('/vehicles/bulk', { vehicles: vehiclesData });
+  return response.data;
+};

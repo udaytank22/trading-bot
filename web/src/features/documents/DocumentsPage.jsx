@@ -1,6 +1,6 @@
 import { useAuth, useUI, useData } from '@context';
 import { api } from '@services/api';
-import React, { useState, useContext, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 
 import { useToast } from '@hooks/useToast';
 import Toast from '@components/ui/toast';

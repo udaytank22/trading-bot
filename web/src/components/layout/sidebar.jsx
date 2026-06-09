@@ -34,7 +34,7 @@ export default function Sidebar({ isOpen }) {
       return link.name === "Client RFQs";
     }
     if (roleLower === 'employee' || roleLower === 'user') {
-      const employeeTabs = ["Dashboard", "Inquiries", "Purchase Orders", "Supply", "Documents", "Notifications", "Inbox", "To-Do"];
+      const employeeTabs = ["Dashboard", "Inquiries", "Purchase Orders", "Supply", "Documents", "Invoices", "Notifications", "Inbox", "To-Do"];
       return employeeTabs.includes(link.name) && link.name !== "Client RFQs";
     }
     return true; // Admin sees everything

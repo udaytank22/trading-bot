@@ -1,8 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Select, DataTable, rowStripeClass, ROW_HOVER_CLS, Pagination } from '@components/ui';
+import { Select, DataTable, rowStripeClass, ROW_HOVER_CLS, Pagination, ExcelImportModal } from '@components/ui';
 import { confirmAction } from '@utils/swal';
 import { api } from '@services/api';
 import { RightDrawer, ViewDetails, Field, inputCls, EyeIcon, EditIcon, TrashIcon } from './shared';
+import * as XLSX from 'xlsx';
+import { useToast } from '@hooks/useToast';
 
 export default function VehiclesTab() {
   const [vehicles, setVehicles] = useState([]);
@@ -13,6 +15,8 @@ export default function VehiclesTab() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isLoading, setIsLoading] = useState(true);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const { showToast } = useToast();
 
   const fetchVehicles = async () => {
     try {
@@ -93,6 +97,66 @@ export default function VehiclesTab() {
     }
   };
 
+  const handleDownloadSample = () => {
+    const dataToExport = vehicles.length > 0
+      ? vehicles.map(v => ({
+          ID: v.id,
+          'Vehicle Number': v.vehicle_no || '',
+          Type: v.type || '',
+          Capacity: v.capacity || '',
+          'Driver Name': v.driver_name || '',
+          Phone: v.phone || '',
+          Status: v.status || 'Active'
+        }))
+      : [{
+          ID: '',
+          'Vehicle Number': 'MH-12-AB-1234',
+          Type: 'Truck',
+          Capacity: '10 Tons',
+          'Driver Name': 'Rajesh Kumar',
+          Phone: '9876543210',
+          Status: 'Active'
+        }];
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Vehicles');
+    XLSX.writeFile(wb, 'Vehicles_Data.xlsx');
+  };
+
+  const handleImport = async (jsonData) => {
+    let failCount = 0;
+    const validVehicles = [];
+    for (const row of jsonData) {
+      if (!row['Vehicle Number']) { failCount++; continue; }
+      const rawId = parseInt(row.ID);
+      validVehicles.push({
+        id: rawId > 0 ? rawId : undefined,
+        vehicle_no: row['Vehicle Number'],
+        type: row.Type || '',
+        capacity: row.Capacity || '',
+        driver_name: row['Driver Name'] || '',
+        phone: String(row.Phone || ''),
+        status: row.Status === 'Inactive' ? 'Inactive' : 'Active'
+      });
+    }
+    if (validVehicles.length > 0) {
+      try {
+        const res = await api.vehicles.bulkImport(validVehicles);
+        if (res.success) {
+          fetchVehicles();
+          showToast(`Successfully processed ${res.data?.successCount || validVehicles.length} vehicles. ${failCount} failed.`, 'success');
+        } else {
+          showToast('Failed to import data.', 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Error importing data.', 'error');
+      }
+    } else {
+      showToast(`No valid rows to import. ${failCount} failed.`, 'info');
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-sm animate-fade-in flex-1 flex flex-col">
       <RightDrawer isOpen={!!viewItem} title="Vehicle Details" onClose={() => setViewItem(null)}>
@@ -135,7 +199,25 @@ export default function VehiclesTab() {
 
         {/* Right Side - Buttons */}
         <div className="flex flex-wrap items-center gap-3 justify-start sm:justify-end">
+          <button
+            onClick={handleDownloadSample}
+            className="h-9 px-4 bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Sample
+          </button>
 
+          <button
+            onClick={() => setIsImportModalOpen(true)}
+            className="h-9 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            Import
+          </button>
 
           <button
             onClick={() => setIsFormOpen(true)}
@@ -150,9 +232,17 @@ export default function VehiclesTab() {
 
       </div>
 
+      <ExcelImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImport={handleImport}
+        expectedColumns={['ID', 'Vehicle Number', 'Type', 'Capacity', 'Driver Name', 'Phone', 'Status']}
+      />
+
       {isLoading ? (
         <div className="flex justify-center items-center h-32 text-gray-500">Loading vehicles...</div>
       ) : (
+
         <DataTable
           maxHeight="max-h-none"
           columns={[

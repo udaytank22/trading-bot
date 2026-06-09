@@ -116,8 +116,9 @@ export default function VendorsTab() {
         continue;
       }
 
+      const rawId = parseInt(row.ID);
       const data = {
-        id: row.ID || undefined,
+        id: rawId > 0 ? rawId : undefined,
         name: row.Name,
         email: row.Email,
         phone: String(row.Phone || ''),
@@ -300,9 +301,7 @@ function VendorForm({ initialData, onSave, onClose }) {
     const cats = (productsData || [])
       .map(p => p.category)
       .filter(Boolean);
-    const defaults = ['Mechanical', 'Electrical', 'Chemical', 'Machinery', 'Parts', 'Electronics', 'Consumables', 'General'];
-    const merged = [...new Set([...cats, ...defaults])];
-    return merged.sort();
+    return [...new Set(cats)].sort();
   }, [productsData]);
 
   const filteredCats = useMemo(() => {
@@ -359,42 +358,54 @@ function VendorForm({ initialData, onSave, onClose }) {
 
         <div className="sm:col-span-2 flex flex-col gap-2 mt-2">
           <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Supplied Categories</label>
-          <input
-            type="text"
-            placeholder="Search categories to link..."
-            value={catSearch}
-            onChange={(e) => setCatSearch(e.target.value)}
-            className="w-full bg-gray-50 dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-9 px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors mb-2 animate-all"
-          />
-          <div className="border border-gray-200 dark:border-[#2a2d36] rounded-xl p-3 max-h-48 overflow-y-auto custom-scrollbar grid grid-cols-1 sm:grid-cols-2 gap-2 bg-gray-50/50 dark:bg-[#0f1117]/30">
-            {filteredCats.map(cat => {
-              const isSelected = (formData.categories || []).includes(cat);
-              return (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => toggleCategory(cat)}
-                  className={`flex items-center gap-2.5 p-2 rounded-lg border transition-all text-left ${isSelected
-                    ? "bg-purple-600/10 border-purple-500 text-purple-700 dark:text-white"
-                    : "bg-white dark:bg-[#1a1d23] border-gray-200 dark:border-[#2a2d36] text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500"
-                    }`}
-                >
-                  <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${isSelected ? "bg-purple-500 border-purple-500" : "border-gray-400 dark:border-gray-600"
-                    }`}>
-                    {isSelected && (
-                      <svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </div>
-                  <span className="text-xs font-semibold truncate">{cat}</span>
-                </button>
-              );
-            })}
-            {filteredCats.length === 0 && (
-              <div className="sm:col-span-2 text-center py-4 text-xs text-gray-500 italic">No categories found.</div>
-            )}
-          </div>
+          {availableCategories.length === 0 ? (
+            <div className="border border-dashed border-gray-200 dark:border-[#2a2d36] rounded-xl p-5 flex flex-col items-center justify-center gap-2 bg-gray-50/50 dark:bg-[#0f1117]/30 text-center">
+              <svg className="w-7 h-7 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+              </svg>
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">No product categories available</p>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500">Add products with categories first to link them here.</p>
+            </div>
+          ) : (
+            <>
+              <input
+                type="text"
+                placeholder="Search categories to link..."
+                value={catSearch}
+                onChange={(e) => setCatSearch(e.target.value)}
+                className="w-full bg-gray-50 dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-9 px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors mb-2 animate-all"
+              />
+              <div className="border border-gray-200 dark:border-[#2a2d36] rounded-xl p-3 max-h-48 overflow-y-auto custom-scrollbar grid grid-cols-1 sm:grid-cols-2 gap-2 bg-gray-50/50 dark:bg-[#0f1117]/30">
+                {filteredCats.map(cat => {
+                  const isSelected = (formData.categories || []).includes(cat);
+                  return (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => toggleCategory(cat)}
+                      className={`flex items-center gap-2.5 p-2 rounded-lg border transition-all text-left ${isSelected
+                        ? "bg-purple-600/10 border-purple-500 text-purple-700 dark:text-white"
+                        : "bg-white dark:bg-[#1a1d23] border-gray-200 dark:border-[#2a2d36] text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500"
+                        }`}
+                    >
+                      <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center flex-shrink-0 transition-colors ${isSelected ? "bg-purple-500 border-purple-500" : "border-gray-400 dark:border-gray-600"
+                        }`}>
+                        {isSelected && (
+                          <svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                      <span className="text-xs font-semibold truncate">{cat}</span>
+                    </button>
+                  );
+                })}
+                {filteredCats.length === 0 && (
+                  <div className="sm:col-span-2 text-center py-4 text-xs text-gray-500 italic">No categories match your search.</div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
 

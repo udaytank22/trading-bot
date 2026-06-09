@@ -3,13 +3,7 @@
  * @description Table for the Supply / Cargo Tracking module.
  *
  * REFACTORED: Now uses centralized DataTable, Button, StatusBadge from ui/index.
- * The previous version used a custom getStatusStyle() prop — now replaced by
- * the unified StatusBadge which covers all supply statuses (PENDING, LOADING,
- * IN_TRANSIT, DELIVERED).
- *
- * ACTIONS PER ROW:
- *   - "View"    → opens SupplyViewModal for cargo details
- *   - "Contact" → opens ContactModal to message the supplier
+ * All action callbacks now use item.id (the shipment integer ID), not item.inquiry_id.
  *
  * @author TradeMind Dev Team
  */
@@ -26,42 +20,40 @@ import {
 
 // ─── Column definitions ─────────────────────────────────────────────────────────
 const COLUMNS = [
-  { key: "sr_no", label: "#", className: "w-10 text-center" },
-  { key: "inquiry_id",   label: "Cargo ID" },
-  { key: "supplier",     label: "Supplier" },
-  { key: "cargo",        label: "Cargo" },
-  { key: "quantity",     label: "Quantity",    hidden: "hidden lg:table-cell" },
-  { key: "destination",  label: "Destination", hidden: "hidden xl:table-cell" },
-  { key: "status",       label: "Status" },
-  { key: "actions",      label: "Actions",     className: "text-right" },
+  { key: "sr_no",       label: "#",           className: "w-10 text-center" },
+  { key: "shipment_no", label: "Shipment No." },
+  { key: "supplier",    label: "Supplier" },
+  { key: "cargo",       label: "Cargo" },
+  { key: "quantity",    label: "Quantity",    hidden: "hidden lg:table-cell" },
+  { key: "destination", label: "Destination", hidden: "hidden xl:table-cell" },
+  { key: "status",      label: "Status" },
+  { key: "actions",     label: "Actions",     className: "text-right" },
 ];
-
-// ─── Component ─────────────────────────────────────────────────────────────────
 
 /**
  * @param {Object}   props
- * @param {Array}    props.items     - Filtered + paginated supply records
- * @param {function} props.onView    - Opens SupplyViewModal
- * @param {function} props.onContact - Opens ContactModal
- *
- * NOTE: The old `getStatusStyle` prop has been removed. StatusBadge now handles
- * all supply statuses internally via its STATUS_STYLES map.
+ * @param {Array}    props.items          - Filtered + paginated supply records
+ * @param {function} props.onView         - Navigate to detail page
+ * @param {function} props.onContact      - Opens ContactModal
+ * @param {function} props.onAllot        - Opens AllotVehicleModal
+ * @param {function} props.onStatusUpdate - Updates shipment status
  */
 const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
   const renderRow = (item, idx) => (
     <tr
-      key={item.inquiry_id}
+      key={item.id || idx}
       className={`${ROW_HOVER_CLS} ${rowStripeClass(idx)}`}
     >
       <td className="px-4 md:px-6 py-4 text-center text-gray-500 text-sm font-medium">{idx + 1}</td>
-      {/* ── Cargo ID (monospace, muted) ───────────────────────────────── */}
-      <td className="px-4 md:px-6 py-4 text-sm text-gray-400">
-        <Tooltip content={item.inquiry_id}>
-          <span className="cursor-default">{item.inquiry_id}</span>
+
+      {/* ── Shipment Number ─────────────────────────────────────────── */}
+      <td className="px-4 md:px-6 py-4 text-sm text-gray-400 font-mono">
+        <Tooltip content={item.shipmentNumber || `SH-${item.id}`}>
+          <span className="cursor-default">{item.shipmentNumber || `SH-${item.id}`}</span>
         </Tooltip>
       </td>
 
-      {/* ── Supplier name + buyer email stacked ───────────────────────── */}
+      {/* ── Supplier name ───────────────────────────────────────────── */}
       <td className="px-4 md:px-6 py-4">
         <div className="flex flex-col">
           <Tooltip content={item.supplier}>
@@ -69,11 +61,13 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
               {item.supplier}
             </span>
           </Tooltip>
-          <Tooltip content={item.buyer_email}>
-            <span className="text-gray-500 text-[11px] break-all cursor-default">
-              {item.buyer_email}
-            </span>
-          </Tooltip>
+          {item.buyer_email && (
+            <Tooltip content={item.buyer_email}>
+              <span className="text-gray-500 text-[11px] break-all cursor-default">
+                {item.buyer_email}
+              </span>
+            </Tooltip>
+          )}
         </div>
       </td>
 
@@ -86,9 +80,7 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
 
       {/* ── Quantity (hidden on mobile) ────────────────────────────────── */}
       <td className="px-4 md:px-6 py-4 text-sm text-gray-600 dark:text-gray-300 hidden lg:table-cell">
-        <Tooltip content={item.quantity}>
-          <span className="cursor-default">{item.quantity}</span>
-        </Tooltip>
+        <span>{item.quantity || '—'}</span>
       </td>
 
       {/* ── Destination (hidden on tablet) ────────────────────────────── */}
@@ -98,15 +90,32 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
         </Tooltip>
       </td>
 
-      {/* ── Status badge (uses unified StatusBadge) ────────────────────── */}
+      {/* ── Status badge ────────────────────────────────────────────── */}
       <td className="px-4 md:px-6 py-4">
         <StatusBadge status={item.status} />
       </td>
 
-      {/* ── Actions: Dynamic based on Status ───────────────────────────── */}
+      {/* ── Actions: Dynamic based on Status ───────────────────────── */}
       <td className="px-4 md:px-6 py-4 text-right">
         <div className="flex flex-col md:flex-row justify-end gap-2">
-          {item.status === "DISPATCHED" && (
+
+
+          {item.status === "LOADING" && (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="border-orange-500/40 text-orange-400 hover:bg-orange-500/10"
+              onClick={() => {
+                if (confirm("Mark this cargo as loaded and advance to IN_TRANSIT?")) {
+                  onStatusUpdate(item.id, "IN_TRANSIT");
+                }
+              }}
+            >
+              Mark Loaded
+            </Button>
+          )}
+
+          {item.status === "LOADING" && (
             <Button
               variant="secondary"
               size="sm"
@@ -117,28 +126,12 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
             </Button>
           )}
 
-          {item.status === "LOADING" && (
-            <Button
-              variant="secondary"
-              size="sm"
-              className="border-orange-500/40 text-orange-400 hover:bg-orange-500/10"
-              onClick={() => {
-                alert("Cargo loading verification checks completed successfully.");
-                if (confirm("Are you sure you want to mark this cargo as loaded and advance the status to IN_TRANSIT?")) {
-                  onStatusUpdate(item.inquiry_id, "IN_TRANSIT");
-                }
-              }}
-            >
-              Mark Loaded
-            </Button>
-          )}
-
           {(item.status === "IN_TRANSIT" || item.status === "DISPATCHED") && (
             <Button
               variant="secondary"
               size="sm"
               className="border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
-              onClick={() => onStatusUpdate(item.inquiry_id, "DELIVERED")}
+              onClick={() => onStatusUpdate(item.id, "DELIVERED")}
             >
               Mark Delivered
             </Button>
@@ -149,7 +142,7 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
               variant="secondary"
               size="sm"
               className="border-indigo-500/40 text-indigo-400 hover:bg-indigo-500/10"
-              onClick={() => onStatusUpdate(item.inquiry_id, "SEND_INVOICE")}
+              onClick={() => onStatusUpdate(item.id, "SEND_INVOICE")}
             >
               Send Invoice
             </Button>
@@ -169,7 +162,7 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
               variant="secondary"
               size="sm"
               className="border-green-500/40 text-green-400 hover:bg-green-500/10"
-              onClick={() => onStatusUpdate(item.inquiry_id, "SUPPLY")}
+              onClick={() => onStatusUpdate(item.id, "SUPPLY")}
             >
               Move to Supply
             </Button>

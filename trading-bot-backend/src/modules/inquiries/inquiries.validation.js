@@ -4,7 +4,7 @@
 const validateCreateInquiry = {
   body: (body) => {
     const errors = [];
-    if (!body.clientId || typeof body.clientId !== 'string') {
+    if (!body.clientId || isNaN(parseInt(body.clientId, 10)) || parseInt(body.clientId, 10) <= 0) {
       errors.push('clientId is required and must be a string');
     }
     if (!body.items || !Array.isArray(body.items) || body.items.length === 0) {

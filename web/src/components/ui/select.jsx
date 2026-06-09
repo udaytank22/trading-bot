@@ -4,11 +4,11 @@ import { ChevronDown } from "lucide-react";
 
 const VARIANT_STYLES = {
   form: [
-    "bg-gray-100 dark:bg-[#0c0e12]",
+    "bg-white dark:bg-[#0f1117]",
     "border-gray-200 dark:border-[#2a2d33]",
     "rounded-lg px-4 h-[35px] py-0 text-sm",
     "text-gray-900 dark:text-white",
-    "hover:bg-gray-200 dark:hover:bg-[#14171c]",
+    "hover:bg-gray-50 dark:hover:bg-[#14171c]",
   ].join(" "),
   settings: [
     "bg-white dark:bg-[#0f1117]",
@@ -36,6 +36,7 @@ export default function Select({
   options = [],
   className = "",
   variant = "toolbar",
+  placeholder = "Select...",
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -83,10 +84,9 @@ export default function Select({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const selectedOption =
-    options.find((opt) => opt.value === value) ?? options[0];
+  const selectedOption = options.find((opt) => opt.value === value);
   const hasValue = value !== "" && value !== null && value !== undefined;
-  const isPlaceholder = !hasValue && selectedOption?.value === "";
+  const isPlaceholder = !hasValue;
 
   const variantCls = VARIANT_STYLES[variant] ?? VARIANT_STYLES.toolbar;
   const itemTextSize = variant === "form" || variant === "settings" ? "text-sm" : "text-xs";
@@ -111,7 +111,7 @@ export default function Select({
               : "text-gray-900 dark:text-white",
           ].join(" ")}
         >
-          {selectedOption?.label ?? value}
+          {isPlaceholder ? placeholder : (selectedOption?.label ?? value)}
         </span>
         <ChevronDown
           className={`w-3.5 h-3.5 shrink-0 text-gray-500 dark:text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`}

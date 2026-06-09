@@ -1,4 +1,4 @@
-import { useAuth, useUI, useData } from '@context';
+import { useAuth } from '@context';
 /**
  * @file InquiriesPage.jsx
  * @description Customer Inquiries management page — list, filter, send RFQ/Quote, confirm deals.
@@ -18,18 +18,14 @@ import { useAuth, useUI, useData } from '@context';
 import React, {
   useState,
   useEffect,
-  useMemo,
-  useContext,
   useCallback,
 } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Swal from "sweetalert2";
 
 import { usePaginatedFetch } from '@hooks/usePaginatedFetch';
 
 import EmailPreviewModal from './modals/EmailPreviewModal';
 import { api } from '@services/api';
-import { formatDateString } from '@services/marginEngine';
 import { useToast } from '@hooks/useToast';
 import InquiryTable from './components/InquiryTable';
 import InquiryKanban from './components/InquiryKanban';
@@ -50,14 +46,11 @@ function PlusIcon() {
 export default function InquiriesPage() {
   const location = useLocation();
   const { currentUser } = useAuth();
-  const { setSupplyData, refreshAll } = useData();
   const { toast, showToast } = useToast();
 
   // Filters & pagination
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState(location.state?.filter ?? "All");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(30);
   const [viewMode, setViewMode] = useState("kanban"); // 'table' | 'kanban'
 
   const {
@@ -68,11 +61,9 @@ export default function InquiriesPage() {
     handlePageSizeChange,
     refresh: loadData
   } = usePaginatedFetch(api.inquiries.getInquiries, 1, 30, {
-    search,
-    status: ["QUOTE_SENT_ONLY", "PENDING_REPLIES"].includes(filter) ? undefined : filter
+    search
   });
 
-  const [lastSynced, setLastSynced] = useState(new Date());
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -96,13 +87,10 @@ export default function InquiriesPage() {
     }
   }, [location.state, inquiriesData, navigate]);
 
-  const syncLabel = useMemo(() => {
-    const mins = Math.floor((now - lastSynced) / 60_000);
-    return mins < 1 ? "Just now" : `${mins} min ago`;
-  }, [now, lastSynced]);
-
   // Filtering
   const filteredInquiries = inquiriesData || [];
+  console.log('https://omship.in/', filteredInquiries)
+
 
   // Drawer / modal state
   const [emailModalDeal, setEmailModalDeal] = useState(null);

@@ -73,14 +73,14 @@ export default function DataTable({
   data = [],
   renderRow,
   emptyMessage = "No data found.",
-  maxHeight = "max-h-none",
+  maxHeight = "max-h-[600px]",
 }) {
   return (
     /* Outer wrapper — hides overflow for rounded corners */
-    <div className="w-full overflow-hidden flex flex-col h-full">
+    <div className="w-full overflow-hidden flex flex-col ">
 
       {/* Scrollable container — both axes, styled scrollbar */}
-      <div className={`w-full overflow-x-auto overflow-y-auto ${maxHeight} custom-scrollbar`}>
+      <div className={`w-full max-w-full overflow-auto ${maxHeight} custom-scrollbar`}>
 
         {/* Main table — auto layout so columns size to content */}
         <table className="w-full text-left text-sm table-auto border-collapse">

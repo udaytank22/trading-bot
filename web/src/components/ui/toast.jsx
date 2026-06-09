@@ -1,7 +1,19 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 export default function Toast({ message, type = 'success' }) {
-  if (!message) return null;
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (message) {
+      setVisible(true);
+    }
+  }, [message]);
+
+  if (!message || !visible) return null;
+
+  const handleClose = () => {
+    setVisible(false);
+  };
 
   const icons = {
     success: (
@@ -40,36 +52,34 @@ export default function Toast({ message, type = 'success' }) {
   };
 
   return (
-    <div 
-      className={`fixed top-8 right-8 z-[1000] w-[400px] bg-white dark:bg-[#1a1d23] border border-gray-100 dark:border-white/5 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] overflow-hidden transform transition-all duration-500 ease-out ${message ? 'translate-x-0 opacity-100 scale-100' : 'translate-x-12 opacity-0 scale-95 pointer-events-none'}`}
-    >
+    <div className="fixed top-8 right-8 z-[1000] w-[400px] bg-white dark:bg-[#1a1d23] border border-gray-100 dark:border-white/5 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] overflow-hidden transform transition-all duration-500 ease-out translate-x-0 opacity-100 scale-100">
       <div className="p-5 flex gap-5 items-start relative">
-        {/* Icon/Avatar Area */}
         {icons[type] || icons.info}
 
-        {/* Text Content */}
-        <div className="flex-1 min-w-0 pr-4">
+        <div className="flex-1 min-w-0 pr-6">
           <h4 className="text-[15px] font-bold text-gray-800 dark:text-white mb-1 tracking-tight leading-none">
             {titles[type] || titles.info}
           </h4>
+
           <p className="text-[13px] text-gray-500 dark:text-gray-400 leading-snug font-medium line-clamp-2 italic">
             "{message}"
           </p>
         </div>
 
-        {/* Close Button */}
-        <button className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors">
+        <button
+          type="button"
+          onClick={handleClose}
+          aria-label="Close toast"
+          className="absolute top-4 right-4 w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:text-white dark:hover:bg-white/10 transition-all"
+        >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </div>
 
-      {/* Progress Bar Style Line */}
       <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-50 dark:bg-white/5">
-        <div 
-          className={`h-full ${barColors[type] || barColors.info} animate-progress shadow-[0_-2px_10px_rgba(37,99,235,0.2)]`}
-        />
+        <div className={`h-full ${barColors[type] || barColors.info} animate-progress`} />
       </div>
 
       <style>{`
@@ -77,6 +87,7 @@ export default function Toast({ message, type = 'success' }) {
           from { width: 100%; }
           to { width: 0%; }
         }
+
         .animate-progress {
           animation: progress 3s linear forwards;
         }

@@ -39,10 +39,19 @@ const deleteVehicle = async (req, res) => {
   return sendSuccess(res, 'Vehicle deleted successfully');
 };
 
+const bulkImportVehicles = async (req, res) => {
+  if (!req.body.vehicles || !Array.isArray(req.body.vehicles)) {
+    return sendError(res, 'Vehicles array is required', [], 400);
+  }
+  const { successCount, errors } = await service.bulkImportVehicles(req.body.vehicles);
+  return sendSuccess(res, `Successfully processed ${successCount} vehicles${errors.length ? `, ${errors.length} skipped` : ''}`, { successCount, errors }, 201);
+};
+
 module.exports = {
   getVehicles,
   getVehicle,
   createVehicle,
   updateVehicle,
-  deleteVehicle
+  deleteVehicle,
+  bulkImportVehicles
 };

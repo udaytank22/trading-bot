@@ -86,8 +86,9 @@ export default function SupplyPage() {
     return (supplyData || []).map(item => ({
       ...item,
       supplier: item.supplier?.name || item.supplier || 'Unknown Supplier',
-      cargo: item.inquiry?.items?.[0]?.description || item.cargo || 'Cargo',
-      destination: item.inquiry?.vesselName || item.destination || 'Destination',
+      cargo: item.cargoDetails || item.cargo || 'Cargo',
+      destination: item.inquiry?.vessel || item.client?.name || item.destination || '—',
+      status: item.currentStatus || item.status || '—',
       date: item.createdAt || item.date
     }));
   }, [supplyData]);
@@ -178,7 +179,7 @@ export default function SupplyPage() {
         <SupplyTable
           items={mappedSupply}
           onView={(item) => {
-            navigate(`/supply/${item.inquiry_id}`);
+            navigate(`/supply/${item.id}`);
           }}
           onContact={(item) => {
             setContactModalDeal(item);

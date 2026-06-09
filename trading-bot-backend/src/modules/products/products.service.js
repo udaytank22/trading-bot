@@ -124,39 +124,57 @@ const deleteProduct = async (id, updaterId) => {
 /**
  * Bulk upsert products
  */
-const bulkUpsertProducts = async (products, updaterId) => {
-  return await prisma.$transaction(
-    products.map(data => {
-      if (data.id) {
-        return prisma.product.update({
-          where: { id: data.id },
+const bulkUpsertProducts = async (products, creatorId) => {
+  const results = [];
+  const errors = [];
+
+  for (const item of products) {
+    try {
+      if (!item.name || !item.sku) {
+        errors.push({ sku: item.sku || null, error: 'Name and SKU are required' });
+        continue;
+      }
+
+      const existing = await prisma.product.findFirst({
+        where: { sku: item.sku, deletedAt: null }
+      });
+
+      let product;
+      if (existing) {
+        product = await prisma.product.update({
+          where: { id: existing.id },
           data: {
-            name: data.name,
-            sku: data.sku,
-            category: data.category,
-            unit: data.unit,
-            sellingPrice: data.sellingPrice,
-            purchasePrice: data.purchasePrice,
-            isActive: data.isActive,
-            updatedById: updaterId
+            name: item.name,
+            category: item.category || null,
+            unit: item.unit || null,
+            sellingPrice: item.sellingPrice !== undefined ? parseFloat(item.sellingPrice) : existing.sellingPrice,
+            purchasePrice: item.purchasePrice !== undefined ? parseFloat(item.purchasePrice) : existing.purchasePrice,
+            isActive: item.isActive !== undefined ? item.isActive : existing.isActive,
+            updatedById: creatorId
           }
         });
       } else {
-        return prisma.product.create({
+        product = await prisma.product.create({
           data: {
-            name: data.name,
-            sku: data.sku,
-            category: data.category || null,
-            unit: data.unit || null,
-            sellingPrice: data.sellingPrice,
-            purchasePrice: data.purchasePrice,
-            createdById: updaterId,
-            isActive: data.isActive !== undefined ? data.isActive : true
+            name: item.name,
+            sku: item.sku,
+            category: item.category || null,
+            unit: item.unit || null,
+            sellingPrice: item.sellingPrice !== undefined ? parseFloat(item.sellingPrice) : 0,
+            purchasePrice: item.purchasePrice !== undefined ? parseFloat(item.purchasePrice) : 0,
+            isActive: item.isActive !== undefined ? item.isActive : true,
+            createdById: creatorId
           }
         });
       }
-    })
-  );
+
+      results.push(product);
+    } catch (err) {
+      errors.push({ sku: item.sku || null, error: err.message });
+    }
+  }
+
+  return { results, errors };
 };
 
 module.exports = {

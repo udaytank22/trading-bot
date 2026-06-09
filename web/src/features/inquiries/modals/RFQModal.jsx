@@ -65,21 +65,21 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
                 const isExpanded = expandedIndices.includes(idx);
                 const productsToShow = isExpanded ? rfq.products : rfq.products.slice(0, 10);
                 return (
-                  <tr key={idx} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}>
+                  <tr key={idx} className={`${rowStripeClass(idx)}`}>
                     <td className="px-6 py-4 align-top w-1/3">
                       <span className="text-gray-900 dark:text-white font-bold">{rfq.supplierName}</span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap gap-1 max-w-xl">
                         {productsToShow.map((p) => (
-                          <span key={p} className="px-2 py-0.5 bg-gray-800 text-gray-400 rounded text-[10px] border border-gray-700">
+                          <span key={p} className="px-2 py-0.5 rounded text-[11px] border border-gray-00">
                             {p}
                           </span>
                         ))}
                         {rfq.products.length > 10 && (
                           <button
                             onClick={() => toggleExpand(idx)}
-                            className="px-2 py-0.5 bg-purple-500/10 text-purple-400 rounded text-[10px] font-bold hover:bg-purple-500/20 transition-all border border-purple-500/20 mt-1"
+                            className="px-2 py-0.5 bg-purple-500/10 text-purple-400 rounded text-[10px] font-bold transition-all border border-purple-500/20 mt-1"
                           >
                             {isExpanded ? "Show Less" : `+${rfq.products.length - 10} more items`}
                           </button>
@@ -98,14 +98,14 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
         <button
           type="button"
           onClick={onClose}
-          className="px-8 py-3 rounded-xl border border-gray-200 dark:border-[#2a2d33] text-gray-400 text-sm font-bold hover:bg-white/[0.05] hover:text-white transition-all"
+          className="px-8 py-3 rounded-xl border border-gray-200 dark:border-[#2a2d33] text-gray-400 text-sm font-bold transition-all"
         >
           Cancel
         </button>
         <button
           onClick={() => onSubmit(stagedRFQs)}
           disabled={stagedRFQs.length === 0}
-          className="flex-1 px-8 py-3 rounded-xl bg-purple-600 text-white text-sm font-bold hover:bg-purple-500 transition-all shadow-lg shadow-purple-600/20 disabled:opacity-50 flex items-center justify-center gap-3"
+          className="flex-1 px-8 py-3 rounded-xl bg-purple-600 text-white text-sm font-bold transition-all shadow-lg shadow-purple-600/20 disabled:opacity-50 flex items-center justify-center gap-3"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />

@@ -18,6 +18,7 @@ const PAGE_TITLES = {
   "/settings": "Settings",
   "/inventory": "Inventory",
   "/inbox": "Inbox",
+  "/invoices": "Invoices",
 };
 
 export default function Topbar({ onToggleSidebar }) {

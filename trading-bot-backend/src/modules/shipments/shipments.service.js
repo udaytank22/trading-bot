@@ -62,7 +62,7 @@ const getAllShipments = async (query = {}) => {
  */
 const getShipmentById = async (id) => {
   return await prisma.shipment.findFirst({
-    where: { id, deletedAt: null },
+    where: { id: parseInt(id, 10), deletedAt: null },
     include: {
       inquiry: true,
       purchaseOrder: {
@@ -123,7 +123,7 @@ const updateShipment = async (id, data, updaterId) => {
   if (data.trackingRemarks !== undefined) updateData.trackingRemarks = data.trackingRemarks;
 
   return await prisma.shipment.update({
-    where: { id },
+    where: { id: parseInt(id, 10) },
     data: updateData
   });
 };
@@ -133,7 +133,7 @@ const updateShipment = async (id, data, updaterId) => {
  */
 const deleteShipment = async (id, updaterId) => {
   return await prisma.shipment.update({
-    where: { id },
+    where: { id: parseInt(id, 10) },
     data: {
       deletedAt: new Date(),
       isActive: false,

@@ -103,19 +103,19 @@ const bulkUpsertProducts = async (req, res) => {
     return sendError(res, 'Products array is required', [], 400);
   }
 
-  const result = await service.bulkUpsertProducts(req.body.products, req.user.id);
+  const { results, errors } = await service.bulkUpsertProducts(req.body.products, req.user.id);
 
   await createAuditLog({
     userId: req.user.id,
     module: 'products',
     action: 'bulk_upsert',
     recordId: null,
-    newValue: { count: result.length },
+    newValue: { count: results.length },
     ipAddress: req.ip,
     userAgent: req.headers['user-agent']
   });
 
-  return sendSuccess(res, `Successfully processed ${result.length} products`, result, 201);
+  return sendSuccess(res, `Successfully processed ${results.length} products${errors.length ? `, ${errors.length} skipped` : ''}`, { results, errors }, 201);
 };
 
 module.exports = {

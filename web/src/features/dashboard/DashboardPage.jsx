@@ -204,7 +204,7 @@ export default function DashboardPage() {
                     className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}
                   >
                     <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + idx + 1}</td>
-                        <td className="px-4 py-2.5 font-mono text-purple-600 dark:text-purple-300 text-[11px]">
+                    <td className="px-4 py-2.5 font-mono text-purple-600 dark:text-purple-300 text-[11px]">
                       {inq.inquiry_id}
                     </td>
                     <td className="px-4 py-2.5 font-medium text-gray-900 dark:text-gray-200">
@@ -222,7 +222,7 @@ export default function DashboardPage() {
                       <StatusBadge status={inq.status} />
                     </td>
                     <td className="px-4 py-2.5 text-gray-500 font-medium">
-                      {formatDateString(inq.date_received)}
+                      {formatDateString(inq.createdAt)}
                     </td>
                   </tr>
                 )}

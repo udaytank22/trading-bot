@@ -36,7 +36,7 @@ const getAllSuppliers = async (query = {}) => {
  */
 const getSupplierById = async (id) => {
   return await prisma.supplier.findFirst({
-    where: { id, deletedAt: null }
+    where: { id: parseInt(id, 10), deletedAt: null }
   });
 };
 
@@ -44,19 +44,16 @@ const getSupplierById = async (id) => {
  * Create supplier
  */
 const createSupplier = async (data, creatorId) => {
-  // Check for duplicate supplier (by email or name)
+  // Check for duplicate supplier (by email only)
   const existingSupplier = await prisma.supplier.findFirst({
     where: {
-      OR: [
-        { email: data.email },
-        { name: data.name }
-      ],
+      email: data.email,
       deletedAt: null
     }
   });
 
   if (existingSupplier) {
-    const err = new Error(`A supplier with this ${existingSupplier.email === data.email ? 'email' : 'name'} already exists.`);
+    const err = new Error(`A supplier with this email already exists.`);
     err.statusCode = 400;
     throw err;
   }
@@ -79,26 +76,24 @@ const createSupplier = async (data, creatorId) => {
  * Update supplier
  */
 const updateSupplier = async (id, data, updaterId) => {
-  // Check for duplicate supplier (by email or name) excluding the current supplier
+  const supplierId = parseInt(id, 10);
+  // Check for duplicate supplier (by email) excluding the current supplier
   const existingSupplier = await prisma.supplier.findFirst({
     where: {
-      id: { not: id },
-      OR: [
-        { email: data.email },
-        { name: data.name }
-      ],
+      id: { not: supplierId },
+      email: data.email,
       deletedAt: null
     }
   });
 
   if (existingSupplier) {
-    const err = new Error(`A supplier with this ${existingSupplier.email === data.email ? 'email' : 'name'} already exists.`);
+    const err = new Error(`A supplier with this email already exists.`);
     err.statusCode = 400;
     throw err;
   }
 
   return await prisma.supplier.update({
-    where: { id },
+    where: { id: supplierId },
     data: {
       name: data.name,
       email: data.email,
@@ -178,25 +173,45 @@ const deleteSupplier = async (id, updaterId) => {
  * Bulk import suppliers
  */
 const bulkImportSuppliers = async (suppliersArray, updaterId) => {
-  return await prisma.$transaction(async (tx) => {
-    let successCount = 0;
-    for (const data of suppliersArray) {
+  let successCount = 0;
+  const errors = [];
+
+  for (const data of suppliersArray) {
+    try {
+      // Determine whether to update or create
+      let shouldUpdate = false;
       if (data.id) {
-        await tx.supplier.update({
-          where: { id: data.id },
+        const existing = await prisma.supplier.findFirst({
+          where: { id: parseInt(data.id, 10), deletedAt: null }
+        });
+        shouldUpdate = !!existing;
+      }
+
+      if (shouldUpdate) {
+        await prisma.supplier.update({
+          where: { id: parseInt(data.id, 10) },
           data: {
             name: data.name,
             email: data.email,
-            phone: data.phone,
-            company: data.company,
-            address: data.address,
-            categories: data.categories !== undefined ? data.categories : undefined,
-            isActive: data.isActive,
+            phone: data.phone || null,
+            company: data.company || null,
+            address: data.address || null,
+            categories: data.categories !== undefined ? data.categories : [],
+            isActive: data.isActive !== undefined ? data.isActive : true,
             updatedById: updaterId
           }
         });
       } else {
-        await tx.supplier.create({
+        // Check for email duplicate before creating
+        const duplicate = await prisma.supplier.findFirst({
+          where: { email: data.email, deletedAt: null }
+        });
+        if (duplicate) {
+          errors.push({ email: data.email, error: 'A supplier with this email already exists' });
+          continue;
+        }
+
+        await prisma.supplier.create({
           data: {
             name: data.name,
             email: data.email,
@@ -209,10 +224,14 @@ const bulkImportSuppliers = async (suppliersArray, updaterId) => {
           }
         });
       }
+
       successCount++;
+    } catch (err) {
+      errors.push({ email: data.email || null, error: err.message });
     }
-    return { successCount };
-  }, { timeout: 60000 });
+  }
+
+  return { successCount, errors };
 };
 
 module.exports = {

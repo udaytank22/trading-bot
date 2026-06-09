@@ -19,9 +19,10 @@ export default function ProductsTab() {
   const { showToast } = useToast();
 
   const filteredProducts = useMemo(() => {
+    const list = productsData || [];
     const q = search.toLowerCase().trim();
-    if (!q) return productsData;
-    return productsData.filter(p =>
+    if (!q) return list;
+    return list.filter(p =>
       p.name.toLowerCase().includes(q) ||
       (p.sku && p.sku.toLowerCase().includes(q)) ||
       (p.category && p.category.toLowerCase().includes(q))
@@ -30,8 +31,9 @@ export default function ProductsTab() {
 
   const totalPages = Math.max(1, Math.ceil((filteredProducts?.length || 0) / itemsPerPage));
   const currentItems = useMemo(() => {
-    return filteredProducts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    return (filteredProducts || []).slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   }, [filteredProducts, currentPage, itemsPerPage]);
+
 
   const handleDelete = async (id) => {
     const isConfirmed = await confirmAction({

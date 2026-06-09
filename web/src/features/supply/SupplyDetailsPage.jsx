@@ -7,6 +7,7 @@ import { formatINR } from '@services/marginEngine';
 import { DataTable, rowStripeClass, ROW_HOVER_CLS, StatusBadge } from '@components/ui';
 import AllotVehicleModal from '@features/employees/modals/AllotVehicleModal';
 import InvoiceEmailModal from '@features/invoices/modals/InvoiceEmailModal';
+import Swal from 'sweetalert2';
 
 const DUMMY_PDF_URL = "/memories/file-sample_150kB.pdf";
 
@@ -31,47 +32,44 @@ export default function SupplyDetailsPage() {
   const [invoiceModalDeal, setInvoiceModalDeal] = useState(null);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
 
+  // Load shipment — id from URL is a string, backend IDs are integers
   useEffect(() => {
-    const found = supplyData.find(item => item.id === id || item.inquiry_id === id);
+    const numId = parseInt(id, 10);
+    const found = supplyData.find(item => item.id === numId || item.id === id);
     if (found) {
       setDeal({
         ...found,
-        status: found.status || found.currentStatus
+        status: found.currentStatus || found.status
       });
     } else {
       setLoading(true);
-      api.shipments.getShipment(id).then(res => {
-        if (res.success && res.data) {
-          setDeal({
-            ...res.data,
-            status: res.data.currentStatus || res.data.status
-          });
-        }
-      }).catch(err => {
-        console.error('Failed to fetch shipment details:', err);
-      }).finally(() => {
-        setLoading(false);
-      });
+      api.shipments.getShipment(id)
+        .then(res => {
+          if (res.success && res.data) {
+            setDeal({
+              ...res.data,
+              status: res.data.currentStatus || res.data.status
+            });
+          }
+        })
+        .catch(err => console.error('Failed to fetch shipment details:', err))
+        .finally(() => setLoading(false));
     }
   }, [id, supplyData]);
 
-  // Close on Escape when PDF preview is open
+  // Close PDF viewer on Escape
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === "Escape" && showPdf) {
-        setShowPdf(false);
-      }
+      if (e.key === "Escape" && showPdf) setShowPdf(false);
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [showPdf]);
 
-  const handleStatusUpdate = async (inqId, newStatus) => {
+  const handleStatusUpdate = async (shipmentId, newStatus) => {
     if (newStatus === "SUPPLY") {
-      const res = await api.shipments.updateShipment(inqId, { currentStatus: "SUPPLY" });
-      if (res.success) {
-        refreshAll();
-      }
+      const res = await api.shipments.updateShipment(shipmentId, { currentStatus: "SUPPLY" });
+      if (res.success) refreshAll();
       return;
     }
     if (newStatus === "SEND_INVOICE") {
@@ -81,7 +79,7 @@ export default function SupplyDetailsPage() {
     }
     if (newStatus === "INVOICE_SENT") {
       try {
-        const res = await api.shipments.updateShipment(inqId, { currentStatus: "DELIVERED" });
+        const res = await api.shipments.updateShipment(shipmentId, { currentStatus: "DELIVERED" });
         if (res.success) {
           const invoicePayload = {
             clientId: deal.clientId,
@@ -89,11 +87,11 @@ export default function SupplyDetailsPage() {
             shipmentId: deal.id,
             subtotal: 1000.00,
             status: 'SENT',
-            items: deal.products?.map(p => ({
-              description: p.product_name || 'Product',
+            items: deal.purchaseOrder?.items?.map(p => ({
+              description: p.product?.name || p.description || 'Product',
               quantity: p.quantity || 1,
-              unitPrice: p.price || 1000.00,
-              totalPrice: (p.quantity || 1) * (p.price || 1000.00)
+              unitPrice: Number(p.unitPrice) || 1000.00,
+              totalPrice: Number(p.totalPrice) || 1000.00
             })) || []
           };
           await api.invoices.createInvoice(invoicePayload);
@@ -107,7 +105,7 @@ export default function SupplyDetailsPage() {
     }
 
     try {
-      const res = await api.shipments.updateShipment(inqId, { currentStatus: newStatus });
+      const res = await api.shipments.updateShipment(shipmentId, { currentStatus: newStatus });
       if (res.success) {
         refreshAll();
         setDeal(prev => ({ ...prev, status: newStatus }));
@@ -120,7 +118,7 @@ export default function SupplyDetailsPage() {
   const productsList = useMemo(() => {
     if (deal?.purchaseOrder?.items && deal.purchaseOrder.items.length > 0) {
       return deal.purchaseOrder.items.map((item) => ({
-        product_name: item.description || item.product?.name || "Product Item",
+        product_name: item.product?.name || item.description || "Product Item",
         quantity: item.quantity,
         unit: item.product?.unit || "PCS",
         specs: item.product?.category || "—",
@@ -133,43 +131,32 @@ export default function SupplyDetailsPage() {
     if (deal?.purchaseOrder?.items && deal.purchaseOrder.items.length > 0) {
       return deal.purchaseOrder.items.reduce((sum, item) => sum + (Number(item.totalPrice) || 0), 0);
     }
-    return deal?.purchaseOrder?.amount ? Number(deal.purchaseOrder.amount) / 1.18 : 45000;
+    return deal?.purchaseOrder?.amount ? Number(deal.purchaseOrder.amount) / 1.18 : 0;
   }, [deal]);
 
   const totalAmount = useMemo(() => {
     return deal?.purchaseOrder?.amount ? Number(deal.purchaseOrder.amount) : subtotal * 1.18;
   }, [deal, subtotal]);
 
-  const gstAmount = useMemo(() => {
-    return Math.max(0, totalAmount - subtotal);
-  }, [totalAmount, subtotal]);
+  const gstAmount = useMemo(() => Math.max(0, totalAmount - subtotal), [totalAmount, subtotal]);
 
-  const pickupLocation = deal?.supplier?.address || deal?.supplier?.company || deal?.supplier || "N/A";
-  const dropLocation = deal?.client?.address || deal?.destination || "N/A";
+  const pickupLocation = deal?.supplier?.address || deal?.supplier?.company || deal?.supplier?.name || "N/A";
+  const dropLocation = deal?.client?.address || deal?.client?.name || deal?.destination || "N/A";
   const driverDetails = deal?.driverDetails || "Not Assigned";
   const vehicleDetails = deal?.vehicleDetails || "Not Assigned";
 
-  const loadingDate = deal?.loadingDate
-    ? new Date(deal.loadingDate).toLocaleString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    })
-    : "Not Scheduled";
+  const formatDateTime = (d) => {
+    if (!d) return "Not Scheduled";
+    const parsed = new Date(d);
+    if (isNaN(parsed.getTime())) return "Not Scheduled";
+    return parsed.toLocaleString("en-GB", {
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit", hour12: true,
+    });
+  };
 
-  const deliveryDate = deal?.deliveryDate
-    ? new Date(deal.deliveryDate).toLocaleString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    })
-    : "Not Scheduled";
+  const loadingDate = formatDateTime(deal?.loadingDate);
+  const deliveryDate = formatDateTime(deal?.deliveryDate);
 
   const contactPerson = deal?.supplier?.name
     ? `${deal.supplier.name} (${deal.supplier.phone || "—"})`
@@ -203,11 +190,11 @@ export default function SupplyDetailsPage() {
 
   const currentStepIdx = useMemo(() => {
     if (!deal) return 0;
-    const status = deal.status || deal.currentStatus;
-    if (status === "PENDING" || status === "ORDER_PLACED") return 0;
-    if (status === "LOADING") return 1;
-    if (status === "DISPATCHED" || status === "IN_TRANSIT") return 2;
-    if (status === "DELIVERED") return 3;
+    const s = deal.status || deal.currentStatus;
+    if (s === "PENDING" || s === "ORDER_PLACED") return 0;
+    if (s === "LOADING") return 1;
+    if (s === "DISPATCHED" || s === "IN_TRANSIT") return 2;
+    if (s === "DELIVERED") return 3;
     return 0;
   }, [deal]);
 
@@ -226,7 +213,7 @@ export default function SupplyDetailsPage() {
     <div className="w-full animate-in fade-in duration-300 pb-6">
       <div className="max-w-7xl mx-auto py-2 px-2 md:px-4 flex flex-col gap-4 relative">
 
-        {/* ── Inline PDF Viewer overlay inside container ── */}
+        {/* ── Inline PDF Viewer overlay ── */}
         {showPdf && (
           <div className="absolute inset-0 z-50 flex flex-col bg-white dark:bg-[#1e2028] rounded-2xl overflow-hidden border border-gray-200 dark:border-[#2a2d36] min-h-[70vh] shadow-2xl">
             <div className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36] bg-gray-50 dark:bg-[#1a1d23] flex items-center justify-between flex-shrink-0">
@@ -234,66 +221,28 @@ export default function SupplyDetailsPage() {
                 onClick={() => setShowPdf(false)}
                 className="flex items-center gap-2 text-sm font-bold text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M15 19l-7-7 7-7"
-                  />
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
                 Back to Supply Details
               </button>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-red-500 bg-red-500/10 px-2.5 py-1 rounded-full border border-red-500/20">
-                  <svg
-                    className="w-3 h-3"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                    />
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
                   {pdfLabel}
                 </div>
-                <a
-                  href={pdfUrl}
-                  download={pdfLabel}
-                  className="flex items-center gap-1.5 text-xs font-bold text-purple-500 bg-purple-500/10 px-2.5 py-1 rounded-full border border-purple-500/20 hover:bg-purple-500/20 transition-colors"
-                >
-                  <svg
-                    className="w-3 h-3"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                    />
+                <a href={pdfUrl} download={pdfLabel} className="flex items-center gap-1.5 text-xs font-bold text-purple-500 bg-purple-500/10 px-2.5 py-1 rounded-full border border-purple-500/20 hover:bg-purple-500/20 transition-colors">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                   </svg>
                   Download
                 </a>
               </div>
             </div>
             <div className="flex-1 overflow-hidden bg-gray-100 dark:bg-[#0c0e12]">
-              <iframe
-                src={pdfUrl}
-                title="Document Preview"
-                className="w-full h-full border-0"
-              />
+              <iframe src={pdfUrl} title="Document Preview" className="w-full h-full border-0" />
             </div>
           </div>
         )}
@@ -311,33 +260,32 @@ export default function SupplyDetailsPage() {
               Supply
             </button>
             <span className="text-gray-300 dark:text-[#2a2d36] font-light">|</span>
-            <span className="font-mono text-gray-955 dark:text-white text-lg font-bold tracking-wide">
-              Cargo Supply — {deal.shipmentNumber || deal.inquiry_id}
+            <span className="font-mono text-gray-900 dark:text-white text-lg font-bold tracking-wide">
+              {deal.shipmentNumber || `SH-${deal.id}`}
             </span>
           </div>
           <div className="flex items-center gap-3">
             <StatusBadge status={status} />
 
-            {status === "DISPATCHED" && (
-              <button
-                onClick={() => {
-                  setAllotModalDeal(deal);
-                  setIsAllotModalOpen(true);
-                }}
-                className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-white hover:bg-gray-55 dark:bg-[#1e2028] dark:hover:bg-[#242830] text-purple-600 dark:text-purple-400 border border-purple-500/30 transition-all shadow-sm"
-              >
-                Allot Vehicle
-              </button>
-            )}
 
             {status === "ORDER_PLACED" && isAdminOrClient && (
               <button
-                onClick={() => {
-                  if (confirm("Are you sure you want to mark this shipment as Dispatched?")) {
-                    handleStatusUpdate(deal.inquiry_id, "DISPATCHED");
-                  }
+                onClick={async () => {
+                  const result = await Swal.fire({
+                    title: 'Mark as Dispatched?',
+                    text: 'This will advance the shipment status to Dispatched.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#8b5cf6',
+                    cancelButtonColor: '#374151',
+                    confirmButtonText: 'Yes, Dispatch',
+                    cancelButtonText: 'Cancel',
+                    background: '#1a1d23',
+                    color: '#fff',
+                  });
+                  if (result.isConfirmed) handleStatusUpdate(deal.id, 'DISPATCHED');
                 }}
-                className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-purple-600 hover:bg-purple-555 text-white"
+                className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-purple-600 hover:bg-purple-500 text-white"
               >
                 Mark Dispatched
               </button>
@@ -345,26 +293,54 @@ export default function SupplyDetailsPage() {
 
             {status === "LOADING" && (
               <button
-                onClick={() => {
-                  alert("Cargo loading verification checks completed successfully.");
-                  if (confirm("Are you sure you want to mark this cargo as loaded and advance the status to IN_TRANSIT?")) {
-                    handleStatusUpdate(deal.inquiry_id, "IN_TRANSIT");
-                  }
+                onClick={async () => {
+                  const result = await Swal.fire({
+                    title: 'Mark as Loaded?',
+                    text: 'This will advance the shipment status to In Transit.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ea580c',
+                    cancelButtonColor: '#374151',
+                    confirmButtonText: 'Yes, Mark Loaded',
+                    cancelButtonText: 'Cancel',
+                    background: '#1a1d23',
+                    color: '#fff',
+                  });
+                  if (result.isConfirmed) handleStatusUpdate(deal.id, 'IN_TRANSIT');
                 }}
-                className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-orange-600 hover:bg-orange-555 text-white"
+                className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-orange-600 hover:bg-orange-500 text-white"
               >
                 Mark Loaded
               </button>
             )}
 
+            {status === "LOADING" && (
+              <button
+                onClick={() => { setAllotModalDeal(deal); setIsAllotModalOpen(true); }}
+                className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-white hover:bg-gray-50 dark:bg-[#1e2028] dark:hover:bg-[#242830] text-purple-600 dark:text-purple-400 border border-purple-500/30 transition-all shadow-sm"
+              >
+                Allot Vehicle
+              </button>
+            )}
+
             {(status === "IN_TRANSIT" || status === "DISPATCHED") && (
               <button
-                onClick={() => {
-                  if (confirm("Mark this shipment as Delivered?")) {
-                    handleStatusUpdate(deal.inquiry_id, "DELIVERED");
-                  }
+                onClick={async () => {
+                  const result = await Swal.fire({
+                    title: 'Mark as Delivered?',
+                    text: 'This will mark the shipment as successfully delivered.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#2563eb',
+                    cancelButtonColor: '#374151',
+                    confirmButtonText: 'Yes, Delivered',
+                    cancelButtonText: 'Cancel',
+                    background: '#1a1d23',
+                    color: '#fff',
+                  });
+                  if (result.isConfirmed) handleStatusUpdate(deal.id, 'DELIVERED');
                 }}
-                className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-blue-600 hover:bg-blue-550 text-white transition-all shadow-sm shadow-blue-600/10"
+                className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-sm"
               >
                 Mark Delivered
               </button>
@@ -372,8 +348,8 @@ export default function SupplyDetailsPage() {
 
             {status === "DELIVERED" && (
               <button
-                onClick={() => handleStatusUpdate(deal.inquiry_id, "SEND_INVOICE")}
-                className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-indigo-600 hover:bg-indigo-550 text-white transition-all shadow-sm shadow-indigo-600/10"
+                onClick={() => handleStatusUpdate(deal.id, "SEND_INVOICE")}
+                className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-sm"
               >
                 Send Invoice
               </button>
@@ -381,8 +357,8 @@ export default function SupplyDetailsPage() {
 
             {status === "SHIPPED" && (
               <button
-                onClick={() => handleStatusUpdate(deal.inquiry_id, "SUPPLY")}
-                className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-green-600 hover:bg-green-550 text-white transition-all shadow-sm shadow-green-600/10"
+                onClick={() => handleStatusUpdate(deal.id, "SUPPLY")}
+                className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-green-600 hover:bg-green-500 text-white transition-all shadow-sm"
               >
                 Move to Supply
               </button>
@@ -392,21 +368,15 @@ export default function SupplyDetailsPage() {
 
         {/* STEPPER TIMELINE */}
         <div className="bg-white dark:bg-[#1e2028] rounded-xl p-5 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
-          <div className="text-[10px] font-bold text-gray-400 dark:text-gray-550 uppercase tracking-widest mb-3 px-1">
+          <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 px-1">
             Logistics Milestone Progress
           </div>
-          <div className="overflow-x-auto w-full custom-scrollbar pb-1">
+          <div className="overflow-x-auto w-full pb-1">
             <div className="relative flex items-start pt-1 pb-2 min-w-[500px] justify-between px-10">
-              <div
-                className="absolute left-[80px] right-[80px] h-[2px] bg-gray-200 dark:bg-[#2a2d36] -z-10"
-                style={{ top: "15px" }}
-              />
+              <div className="absolute left-[80px] right-[80px] h-[2px] bg-gray-200 dark:bg-[#2a2d36] -z-10" style={{ top: "15px" }} />
               <div
                 className="absolute left-[80px] h-[2px] bg-purple-500 -z-10 transition-all duration-350"
-                style={{
-                  top: "15px",
-                  width: `calc((${currentStepIdx} / ${steps.length - 1}) * (100% - 160px))`
-                }}
+                style={{ top: "15px", width: `calc((${currentStepIdx} / ${steps.length - 1}) * (100% - 160px))` }}
               />
               {steps.map((step, idx) => {
                 const isActive = idx <= currentStepIdx;
@@ -414,13 +384,11 @@ export default function SupplyDetailsPage() {
                 return (
                   <div key={step.id} className="flex flex-col items-center w-[80px] flex-shrink-0">
                     <div className="h-4 flex items-center justify-center">
-                      <div className={`w-3.5 h-3.5 rounded-full border-2 bg-white dark:bg-[#1e2028] z-10 transition-all duration-300 flex items-center justify-center
-                        ${isActive ? "border-purple-500 shadow" : "border-gray-300 dark:border-gray-600"}`}>
+                      <div className={`w-3.5 h-3.5 rounded-full border-2 bg-white dark:bg-[#1e2028] z-10 transition-all duration-300 flex items-center justify-center ${isActive ? "border-purple-500 shadow" : "border-gray-300 dark:border-gray-600"}`}>
                         {isActive && <div className={`w-1.5 h-1.5 rounded-full bg-purple-500 ${isCurrent ? "animate-pulse" : ""}`} />}
                       </div>
                     </div>
-                    <span className={`text-[8px] mt-2 font-bold uppercase tracking-wider text-center max-w-[76px] leading-tight select-none
-                      ${isCurrent ? "text-purple-500 font-extrabold" : isActive ? "text-purple-550/80 dark:text-purple-400/80" : "text-gray-550"}`}>
+                    <span className={`text-[8px] mt-2 font-bold uppercase tracking-wider text-center max-w-[76px] leading-tight select-none ${isCurrent ? "text-purple-500 font-extrabold" : isActive ? "text-purple-400/80" : "text-gray-400"}`}>
                       {step.label}
                     </span>
                   </div>
@@ -435,7 +403,7 @@ export default function SupplyDetailsPage() {
 
           {/* Left Column: Items and Logistics */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Products/Cargo Items */}
+            {/* Cargo Items */}
             <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Cargo Items</h3>
               <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-[#2a2d36] bg-gray-50/50 dark:bg-[#242830]/30 shadow-inner">
@@ -444,23 +412,12 @@ export default function SupplyDetailsPage() {
                   data={productsList}
                   emptyMessage="No items requested."
                   renderRow={(p, i) => (
-                    <tr
-                      key={i}
-                      className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}
-                    >
-                      <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + i + 1}</td>
-                        <td className="px-6 py-4 text-gray-900 dark:text-white font-bold">
-                        {p.product_name}
-                      </td>
-                      <td className="px-6 py-4 font-mono text-gray-900 dark:text-white font-medium">
-                        {p.quantity}
-                      </td>
-                      <td className="px-6 py-4 text-gray-450 font-semibold">
-                        {p.unit || "PCS"}
-                      </td>
-                      <td className="px-6 py-4 text-gray-450 text-xs">
-                        {p.specs || "—"}
-                      </td>
+                    <tr key={i} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
+                      <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{i + 1}</td>
+                      <td className="px-6 py-4 text-gray-900 dark:text-white font-bold">{p.product_name}</td>
+                      <td className="px-6 py-4 font-mono text-gray-900 dark:text-white font-medium">{p.quantity}</td>
+                      <td className="px-6 py-4 text-gray-500 font-semibold">{p.unit || "PCS"}</td>
+                      <td className="px-6 py-4 text-gray-500 text-xs">{p.specs || "—"}</td>
                     </tr>
                   )}
                 />
@@ -470,51 +427,44 @@ export default function SupplyDetailsPage() {
             {/* Logistics Card */}
             <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Logistics Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-700 dark:text-gray-300 text-sm">
-                <div className="flex flex-col bg-gray-50 dark:bg-[#0c0e12] p-4 rounded-xl border border-gray-150 dark:border-[#2a2d36]/60">
-                  <span className="text-[10px] font-bold text-gray-450 dark:text-gray-500 uppercase tracking-widest">Pickup Address</span>
-                  <span className="text-gray-900 dark:text-white font-semibold mt-1">{pickupLocation}</span>
-                </div>
-                <div className="flex flex-col bg-gray-50 dark:bg-[#0c0e12] p-4 rounded-xl border border-gray-150 dark:border-[#2a2d36]/60">
-                  <span className="text-[10px] font-bold text-gray-450 dark:text-gray-555 uppercase tracking-widest">Delivery Address</span>
-                  <span className="text-gray-900 dark:text-white font-semibold mt-1">{dropLocation}</span>
-                </div>
-                <div className="flex flex-col bg-gray-50 dark:bg-[#0c0e12] p-4 rounded-xl border border-gray-150 dark:border-[#2a2d36]/60">
-                  <span className="text-[10px] font-bold text-gray-455 dark:text-gray-500 uppercase tracking-widest">Scheduled Loading Date</span>
-                  <span className="text-gray-900 dark:text-white font-mono font-medium mt-1">{loadingDate}</span>
-                </div>
-                <div className="flex flex-col bg-gray-50 dark:bg-[#0c0e12] p-4 rounded-xl border border-gray-150 dark:border-[#2a2d36]/60">
-                  <span className="text-[10px] font-bold text-gray-455 dark:text-gray-550 uppercase tracking-widest">Scheduled Delivery Date</span>
-                  <span className="text-gray-900 dark:text-white font-mono font-medium mt-1">{deliveryDate}</span>
-                </div>
-                <div className="flex flex-col bg-gray-50 dark:bg-[#0c0e12] p-4 rounded-xl border border-gray-150 dark:border-[#2a2d36]/60">
-                  <span className="text-[10px] font-bold text-gray-455 dark:text-gray-550 uppercase tracking-widest">Vehicle Details</span>
-                  <span className="text-gray-900 dark:text-white font-semibold mt-1">{vehicleDetails}</span>
-                </div>
-                <div className="flex flex-col bg-gray-50 dark:bg-[#0c0e12] p-4 rounded-xl border border-gray-150 dark:border-[#2a2d36]/60">
-                  <span className="text-[10px] font-bold text-gray-455 dark:text-gray-550 uppercase tracking-widest">Driver / Operator Details</span>
-                  <span className="text-gray-900 dark:text-white font-semibold mt-1">{driverDetails}</span>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[
+                  { label: "Pickup Address", value: pickupLocation },
+                  { label: "Delivery Address", value: dropLocation },
+                  { label: "Scheduled Loading Date", value: loadingDate },
+                  { label: "Scheduled Delivery Date", value: deliveryDate },
+                  { label: "Vehicle Details", value: vehicleDetails },
+                  { label: "Driver / Operator Details", value: driverDetails },
+                ].map(({ label, value }) => (
+                  <div key={label} className="flex flex-col bg-gray-50 dark:bg-[#0c0e12] p-4 rounded-xl border border-gray-200 dark:border-[#2a2d36]/60">
+                    <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">{label}</span>
+                    <span className="text-gray-900 dark:text-white font-semibold mt-1">{value}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Right Column: Summaries & Documents */}
+          {/* Right Column */}
           <div className="space-y-6">
             {/* Order Context */}
             <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm space-y-4">
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Order Context</h3>
               <div>
-                <span className="text-[10px] font-bold text-gray-455 dark:text-gray-550 uppercase tracking-widest block">Customer Name</span>
-                <span className="text-sm font-bold text-gray-900 dark:text-white mt-1 block">{deal.client?.name || deal.buyer_name}</span>
+                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block">Customer Name</span>
+                <span className="text-sm font-bold text-gray-900 dark:text-white mt-1 block">{deal.client?.name || deal.buyer_name || "—"}</span>
               </div>
               <div className="border-t border-gray-100 dark:border-[#2a2d36]/80 pt-3">
-                <span className="text-[10px] font-bold text-gray-455 dark:text-gray-550 uppercase tracking-widest block">Supplier Company</span>
-                <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 mt-1 block">{deal.supplier?.company || deal.supplier}</span>
+                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block">Supplier</span>
+                <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 mt-1 block">{deal.supplier?.name || deal.supplier?.company || "—"}</span>
               </div>
               <div className="border-t border-gray-100 dark:border-[#2a2d36]/80 pt-3">
-                <span className="text-[10px] font-bold text-gray-455 dark:text-gray-550 uppercase tracking-widest block">Contact Person</span>
+                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block">Contact Person</span>
                 <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 mt-1 block">{contactPerson}</span>
+              </div>
+              <div className="border-t border-gray-100 dark:border-[#2a2d36]/80 pt-3">
+                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block">Shipment No.</span>
+                <span className="text-sm font-mono font-bold text-purple-600 dark:text-purple-400 mt-1 block">{deal.shipmentNumber || `SH-${deal.id}`}</span>
               </div>
             </div>
 
@@ -522,16 +472,16 @@ export default function SupplyDetailsPage() {
             <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm space-y-4">
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Quotation Summary</h3>
               <div className="space-y-3">
-                <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-gray-455 tracking-wide">
+                <div className="flex justify-between text-xs font-semibold text-gray-500 tracking-wide">
                   <span>Subtotal Quoted:</span>
-                  <span className="font-mono text-gray-900 dark:text-gray-105 text-sm">{formatINR(subtotal)}</span>
+                  <span className="font-mono text-gray-900 dark:text-white text-sm">{formatINR(subtotal)}</span>
                 </div>
-                <div className="flex justify-between text-xs font-semibold text-gray-500 dark:text-gray-455 tracking-wide">
+                <div className="flex justify-between text-xs font-semibold text-gray-500 tracking-wide">
                   <span>GST (18%):</span>
-                  <span className="font-mono text-gray-900 dark:text-gray-105 text-sm">{formatINR(gstAmount)}</span>
+                  <span className="font-mono text-gray-900 dark:text-white text-sm">{formatINR(gstAmount)}</span>
                 </div>
                 <div className="border-t border-dashed border-gray-200 dark:border-[#2a2d36] pt-3 mt-2">
-                  <div className="flex justify-between items-center text-sm font-black text-gray-900 dark:text-white">
+                  <div className="flex justify-between items-center">
                     <span className="uppercase tracking-wider text-[10px] text-gray-400 font-bold">Total PO Amount</span>
                     <span className="font-mono text-base font-extrabold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-3 py-1 rounded-lg border border-purple-500/20">
                       {formatINR(totalAmount)}
@@ -547,44 +497,23 @@ export default function SupplyDetailsPage() {
               {isVehicleAllotted ? (
                 <div className="space-y-3">
                   {documents.map((doc, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-[#242830]/50 border border-gray-200 dark:border-[#2a2d36] rounded-xl hover:border-purple-400/40 hover:bg-purple-500/5 dark:hover:bg-[#242830] transition-all group"
-                    >
+                    <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-[#242830]/50 border border-gray-200 dark:border-[#2a2d36] rounded-xl hover:border-purple-400/40 hover:bg-purple-500/5 dark:hover:bg-[#242830] transition-all group">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div
-                          className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-[10px] flex-shrink-0 ${doc.type === "PDF"
-                            ? "bg-red-500/10 text-red-500"
-                            : "bg-blue-500/10 text-blue-500"
-                            }`}
-                        >
+                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-[10px] flex-shrink-0 ${doc.type === "PDF" ? "bg-red-500/10 text-red-500" : "bg-blue-500/10 text-blue-500"}`}>
                           {doc.type}
                         </div>
                         <div
-                          onClick={() => {
-                            setPdfLabel(doc.name);
-                            setPdfUrl(doc.url);
-                            setShowPdf(true);
-                          }}
+                          onClick={() => { setPdfLabel(doc.name); setPdfUrl(doc.url); setShowPdf(true); }}
                           className="cursor-pointer min-w-0"
                           title="Click to view document"
                         >
-                          <p className="text-gray-900 dark:text-white text-xs font-bold group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors hover:underline truncate max-w-[140px]">
-                            {doc.name}
-                          </p>
-                          <p className="text-gray-400 text-[10px] truncate">
-                            {doc.size}
-                          </p>
+                          <p className="text-gray-900 dark:text-white text-xs font-bold group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors hover:underline truncate max-w-[140px]">{doc.name}</p>
+                          <p className="text-gray-400 text-[10px] truncate">{doc.size}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0">
-                        {/* View */}
                         <button
-                          onClick={() => {
-                            setPdfLabel(doc.name);
-                            setPdfUrl(doc.url);
-                            setShowPdf(true);
-                          }}
+                          onClick={() => { setPdfLabel(doc.name); setPdfUrl(doc.url); setShowPdf(true); }}
                           title="View document"
                           className="p-1 rounded-lg text-purple-500 bg-purple-500/10 hover:bg-purple-500/20 transition-colors"
                         >
@@ -593,13 +522,7 @@ export default function SupplyDetailsPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
                         </button>
-                        {/* Download */}
-                        <a
-                          href={doc.url}
-                          download={doc.name}
-                          title="Download"
-                          className="p-1 rounded-lg text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors"
-                        >
+                        <a href={doc.url} download={doc.name} title="Download" className="p-1 rounded-lg text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors">
                           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                           </svg>
@@ -626,14 +549,14 @@ export default function SupplyDetailsPage() {
         </div>
       </div>
 
-      {/* Modals needed for logistics actions */}
+      {/* Modals */}
       <AllotVehicleModal
         deal={allotModalDeal}
         isOpen={isAllotModalOpen}
         onClose={() => setIsAllotModalOpen(false)}
-        onAllot={async (id, vehicle) => {
+        onAllot={async (allotId, vehicle) => {
           try {
-            const res = await api.shipments.updateShipment(id, {
+            const res = await api.shipments.updateShipment(allotId, {
               currentStatus: "LOADING",
               vehicleDetails: vehicle.vehicle_no,
               driverDetails: `${vehicle.driver_name || vehicle.owner_name} (${vehicle.phone || vehicle.owner_phone})`

@@ -391,11 +391,11 @@ function KanbanColumn({
           </span>
         </div>
 
-        <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0">
+        {/* <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0">
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM18 10a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
-        </button>
+        </button> */}
       </div>
 
       {/* Column Body Container */}

@@ -47,19 +47,16 @@ const getClientById = async (id) => {
  * Create client
  */
 const createClient = async (data, creatorId) => {
-  // Check for duplicate client (by email or name)
+  // Check for duplicate client (by email only)
   const existingClient = await prisma.client.findFirst({
     where: {
-      OR: [
-        { email: data.email },
-        { name: data.name }
-      ],
+      email: data.email,
       deletedAt: null
     }
   });
 
   if (existingClient) {
-    const err = new Error(`A client with this ${existingClient.email === data.email ? 'email' : 'name'} already exists.`);
+    const err = new Error(`A client with this email already exists.`);
     err.statusCode = 400;
     throw err;
   }
@@ -91,20 +88,17 @@ const createClient = async (data, creatorId) => {
  */
 const updateClient = async (id, data, updaterId) => {
   const clientId = parseInt(id, 10);
-  // Check for duplicate client (by email or name) excluding the current client
+  // Check for duplicate client (by email) excluding the current client
   const existingClient = await prisma.client.findFirst({
     where: {
       id: { not: clientId },
-      OR: [
-        { email: data.email },
-        { name: data.name }
-      ],
+      email: data.email,
       deletedAt: null
     }
   });
 
   if (existingClient) {
-    const err = new Error(`A client with this ${existingClient.email === data.email ? 'email' : 'name'} already exists.`);
+    const err = new Error(`A client with this email already exists.`);
     err.statusCode = 400;
     throw err;
   }
@@ -158,32 +152,55 @@ const deleteClient = async (id, updaterId) => {
  * Bulk import clients
  */
 const bulkImportClients = async (clientsArray, updaterId) => {
-  return await prisma.$transaction(async (tx) => {
-    let successCount = 0;
-    for (const data of clientsArray) {
+  let successCount = 0;
+  const errors = [];
+
+  for (const data of clientsArray) {
+    try {
+      // Determine whether to update or create
+      let shouldUpdate = false;
       if (data.id) {
-        if (data.vessels) {
-          await tx.clientVessel.deleteMany({ where: { clientId: data.id } });
-        }
-        await tx.client.update({
-          where: { id: data.id },
-          data: {
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            company: data.company,
-            address: data.address,
-            isActive: data.isActive,
-            updatedById: updaterId,
-            ...(data.vessels && data.vessels.length > 0 && {
-              vessels: {
-                create: data.vessels.map(v => ({ name: v.name, imoNumber: v.imoNumber || null }))
-              }
-            })
+        const existing = await prisma.client.findFirst({
+          where: { id: parseInt(data.id, 10), deletedAt: null }
+        });
+        shouldUpdate = !!existing;
+      }
+
+      if (shouldUpdate) {
+        const clientId = parseInt(data.id, 10);
+        await prisma.$transaction(async (tx) => {
+          if (data.vessels) {
+            await tx.clientVessel.deleteMany({ where: { clientId } });
           }
+          await tx.client.update({
+            where: { id: clientId },
+            data: {
+              name: data.name,
+              email: data.email,
+              phone: data.phone || null,
+              company: data.company || null,
+              address: data.address || null,
+              isActive: data.isActive !== undefined ? data.isActive : true,
+              updatedById: updaterId,
+              ...(data.vessels && data.vessels.length > 0 && {
+                vessels: {
+                  create: data.vessels.map(v => ({ name: v.name, imoNumber: v.imoNumber || null }))
+                }
+              })
+            }
+          });
         });
       } else {
-        await tx.client.create({
+        // Check for email duplicate before creating
+        const duplicate = await prisma.client.findFirst({
+          where: { email: data.email, deletedAt: null }
+        });
+        if (duplicate) {
+          errors.push({ email: data.email, error: 'A client with this email already exists' });
+          continue;
+        }
+
+        await prisma.client.create({
           data: {
             name: data.name,
             email: data.email,
@@ -200,11 +217,16 @@ const bulkImportClients = async (clientsArray, updaterId) => {
           }
         });
       }
+
       successCount++;
+    } catch (err) {
+      errors.push({ email: data.email || null, error: err.message });
     }
-    return { successCount };
-  }, { timeout: 60000 });
+  }
+
+  return { successCount, errors };
 };
+
 
 module.exports = {
   getAllClients,
