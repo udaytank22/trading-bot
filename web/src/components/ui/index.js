@@ -24,6 +24,7 @@ export { default as Button } from "./button";
 export { default as SearchBar } from "./searchBar";
 export { default as Tooltip } from "./tooltip";
 export { default as Select } from "./select";
+export { default as MultiSelectDropdown } from "./multiSelectDropdown";
 export { default as Field } from "./field";
 export { default as DatePicker } from "./datePicker";
 

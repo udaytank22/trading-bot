@@ -98,10 +98,11 @@ export const InquiryDetailsPageSchema3 = [
 
 export const AdminApprovalModalSchema1 = [
   { key: 'srno', label: 'Sr. No.' },
-            { key: "product", label: "Product" },
-                  { key: "costPrice", label: "Cost Price" },
-                  { key: "sellingPrice", label: "Selling Price", className: "text-right" },
-                  { key: "totalValue", label: "Total Value", className: "text-right" },
+  { key: "product", label: "Product" },
+  { key: "supplier", label: "Sourced From" },
+  { key: "costPrice", label: "Cost Price" },
+  { key: "sellingPrice", label: "Selling Price", className: "text-right" },
+  { key: "totalValue", label: "Total Value", className: "text-right" },
 ];
 
 export const RFQModalSchema1 = [

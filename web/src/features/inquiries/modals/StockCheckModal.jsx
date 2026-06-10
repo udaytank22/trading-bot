@@ -1,111 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect, useLayoutEffect } from "react";
-import { createPortal } from "react-dom";
 import { useData } from '@context';
-import { DataTable, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
-
-// Inline MultiSelect component for vendors using createPortal
-const MultiSelectDropdown = ({ options, selectedIds, onChange, placeholder = "Select vendors..." }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-  const menuRef = useRef(null);
-  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
-
-  const updateCoords = () => {
-    if (dropdownRef.current) {
-      const rect = dropdownRef.current.getBoundingClientRect();
-      setCoords({
-        top: rect.bottom,
-        left: rect.left,
-        width: rect.width,
-      });
-    }
-  };
-
-  useLayoutEffect(() => {
-    if (isOpen) {
-      updateCoords();
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    window.addEventListener("scroll", updateCoords, true);
-    window.addEventListener("resize", updateCoords);
-    return () => {
-      window.removeEventListener("scroll", updateCoords, true);
-      window.removeEventListener("resize", updateCoords);
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      const clickedDropdown = dropdownRef.current && dropdownRef.current.contains(event.target);
-      const clickedMenu = menuRef.current && menuRef.current.contains(event.target);
-      if (!clickedDropdown && !clickedMenu) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const selectedNames = options
-    .filter(opt => selectedIds.includes(opt.id))
-    .map(opt => opt.name)
-    .join(", ");
-
-  return (
-    <div className="relative w-full" ref={dropdownRef}>
-      <div
-        onClick={() => setIsOpen(!isOpen)}
-        className="bg-gray-50 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-3 py-2 text-xs cursor-pointer flex justify-between items-center min-w-[180px] hover:border-purple-500 transition-colors"
-      >
-        <span className={`truncate mr-2 ${selectedIds.length === 0 ? 'text-gray-400' : 'text-gray-900 dark:text-white font-medium'}`}>
-          {selectedIds.length === 0 ? placeholder : selectedNames}
-        </span>
-        <svg className={`w-3.5 h-3.5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </div>
-
-      {isOpen && createPortal(
-        <div
-          ref={menuRef}
-          style={{
-            position: "fixed",
-            top: `${coords.top + 4}px`,
-            left: `${coords.left}px`,
-            width: `${Math.max(coords.width, 220)}px`,
-          }}
-          className="z-[999999] bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg shadow-2xl max-h-[240px] overflow-y-auto py-1 animate-in fade-in duration-100"
-        >
-          {options.length === 0 ? (
-            <div className="px-3 py-3 text-xs text-rose-500 italic font-medium">No matching vendors found for this product.</div>
-          ) : (
-            options.map(opt => (
-              <label key={opt.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-[#242830] cursor-pointer text-xs transition-colors">
-                <input
-                  type="checkbox"
-                  checked={selectedIds.includes(opt.id)}
-                  onChange={(e) => {
-                    if (e.target.checked) onChange([...selectedIds, opt.id]);
-                    else onChange(selectedIds.filter(id => id !== opt.id));
-                  }}
-                  className="w-3.5 h-3.5 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
-                />
-                <div className="flex flex-col min-w-0">
-                  <span className="text-gray-900 dark:text-gray-100 font-bold truncate">{opt.name}</span>
-                  <span className="text-[9px] text-gray-500 truncate">{opt.location || opt.address || 'No location'}</span>
-                </div>
-              </label>
-            ))
-          )}
-        </div>,
-        document.body
-      )}
-    </div>
-  );
-};
+import { DataTable, rowStripeClass, ROW_HOVER_CLS, MultiSelectDropdown } from '@components/ui';
 
 const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
   const { suppliersData, productsData } = useData();
@@ -150,6 +45,14 @@ const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
   const handleConfirm = () => {
     const selectedSupplierObjects = suppliersData.filter(s => uniqueSelectedSupplierIds.includes(s.id));
     onConfirm(selectedSupplierObjects);
+  };
+
+  const handleAutoSelectAll = () => {
+    const newSelections = {};
+    productsAvailability.forEach((product, idx) => {
+      newSelections[idx] = product.availableSuppliers.map(s => s.id);
+    });
+    setSelections(newSelections);
   };
 
   const columns = [
@@ -209,6 +112,17 @@ const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
           <p className="text-xs text-gray-500 mt-1">Select the relevant vendors for each product in this inquiry.</p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={handleAutoSelectAll}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-colors border border-purple-700 shadow-sm"
+            title="Auto-select all matching vendors for all products"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+            Select All Vendors
+          </button>
+
           {isManyItems && (
             <button
               onClick={() => setIsFullscreen(!isFullscreen)}
@@ -240,6 +154,7 @@ const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
           renderRow={renderRow}
           emptyMessage="No products found."
           maxHeight="max-h-full"
+          className="h-full"
         />
       </div>
 

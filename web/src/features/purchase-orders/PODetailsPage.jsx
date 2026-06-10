@@ -7,7 +7,7 @@ import { formatINR } from '@services/marginEngine';
 import { StatusBadge, DataTable, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
 import POEmailModal from './modals/POEmailModal';
 import Swal from 'sweetalert2';
-import { generatePOPDF } from './utils/poPdfGenerator';
+import { generatePOPDF, getSourcedSupplierForItem, getSourcedQuoteItemAndSupplier } from './utils/poPdfGenerator';
 
 export default function PODetailsPage() {
   const { id } = useParams();
@@ -105,17 +105,36 @@ export default function PODetailsPage() {
   const poNumber     = po.poNumber    || po.po_id    || '—';
   const customer     = po.client?.name  || po.customer  || '—';
   const supplierName = po.supplier?.name || po.supplier  || '—';
-  const vessel       = po.inquiry?.vessel || po.vessel   || '—';
+  const vessel       = po.inquiry?.vesselName || po.inquiry?.vessel || po.vessel   || '—';
   const poDate       = po.createdAt   || po.date;
-  const items        = po.items       || po.products  || [];
+  
+  const itemsSrc = po.items || po.products || [];
+  const items = itemsSrc.map(item => ({
+    id: item.id,
+    description: item.description || item.product?.name || item.product_name || '',
+    product: item.product,
+    quantity: item.quantity,
+    unitPrice: item.unitPrice || item.unit_price || 0,
+    totalPrice: item.totalPrice || item.total_price || 0,
+    supplier: po.supplier
+  }));
+
+  const columns = [
+    { key: 'srno', label: 'Sr. No.' },
+    { key: "product", label: "Product" },
+    { key: "vendor", label: "Vendor" },
+    { key: "unitPrice", label: "Unit Price" },
+    { key: "quantity", label: "Quantity" },
+    { key: "totalPrice", label: "Total Price", className: "text-right" }
+  ];
 
   // ── Calculations ────────────────────────────────────────────────────
   const subtotal    = items.reduce((sum, item) => {
     const price = parseFloat(item.totalPrice ?? item.total_price ?? 0);
     return sum + (isNaN(price) ? 0 : price);
   }, 0);
-  const totalAmount = parseFloat(po.amount ?? po.total_amount ?? 0) || subtotal;
-  const gstAmount   = Math.max(0, totalAmount - subtotal);
+  const totalAmount = subtotal * 1.18;
+  const gstAmount   = totalAmount - subtotal;
 
   const formatDate = (d) => {
     if (!d) return '—';
@@ -193,26 +212,34 @@ export default function PODetailsPage() {
               </h3>
               <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-[#2a2d36] bg-gray-50/50 dark:bg-[#242830]/30 shadow-inner">
                 <DataTable
-                  columns={PODetailsPageSchema1}
+                  columns={columns}
                   data={items}
                   emptyMessage="No items found."
-                  renderRow={(item, idx) => (
-                    <tr key={idx} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}>
-                      <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{idx + 1}</td>
-                      <td className="px-6 py-4 text-gray-900 dark:text-white font-bold">
-                        {item.product?.name || item.product_name || '—'}
-                      </td>
-                      <td className="px-6 py-4 font-mono text-gray-400">
-                        {formatINR(item.unitPrice || item.unit_price || 0)}
-                      </td>
-                      <td className="px-6 py-4 font-mono text-gray-900 dark:text-white font-medium">
-                        {item.quantity} PCS
-                      </td>
-                      <td className="px-6 py-4 text-right font-mono font-bold text-purple-600 dark:text-purple-400 text-base">
-                        {formatINR(item.totalPrice || item.total_price || 0)}
-                      </td>
-                    </tr>
-                  )}
+                  renderRow={(item, idx) => {
+                    const sourcedSupplier = item.supplier || po.supplier;
+                    return (
+                      <tr key={idx} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}>
+                        <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{idx + 1}</td>
+                        <td className="px-6 py-4 text-gray-900 dark:text-white font-bold">
+                          {item.product?.name || item.product_name || item.description || '—'}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-bold rounded">
+                            {sourcedSupplier?.name || '—'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 font-mono text-gray-400">
+                          {formatINR(item.unitPrice || item.unit_price || 0)}
+                        </td>
+                        <td className="px-6 py-4 font-mono text-gray-900 dark:text-white font-medium">
+                          {item.quantity} PCS
+                        </td>
+                        <td className="px-6 py-4 text-right font-mono font-bold text-purple-600 dark:text-purple-400 text-base">
+                          {formatINR(item.totalPrice || item.total_price || 0)}
+                        </td>
+                      </tr>
+                    );
+                  }}
                 />
               </div>
             </div>
@@ -228,10 +255,6 @@ export default function PODetailsPage() {
                 <div className="flex flex-col bg-gray-50 dark:bg-[#242830]/30 p-4 rounded-xl border border-gray-200 dark:border-[#2a2d36]">
                   <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Customer / Buyer</span>
                   <span className="text-gray-900 dark:text-white font-extrabold text-base mt-1">{customer}</span>
-                </div>
-                <div className="flex flex-col bg-gray-50 dark:bg-[#242830]/30 p-4 rounded-xl border border-gray-200 dark:border-[#2a2d36]">
-                  <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Supplier</span>
-                  <span className="text-gray-900 dark:text-white font-extrabold text-base mt-1">{supplierName}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col bg-gray-50 dark:bg-[#242830]/30 p-3.5 rounded-xl border border-gray-200 dark:border-[#2a2d36]">

@@ -74,10 +74,11 @@ export default function DataTable({
   renderRow,
   emptyMessage = "No data found.",
   maxHeight = "max-h-[600px]",
+  className = "",
 }) {
   return (
     /* Outer wrapper — hides overflow for rounded corners */
-    <div className="w-full overflow-hidden flex flex-col ">
+    <div className={`w-full overflow-hidden flex flex-col ${className}`}>
 
       {/* Scrollable container — both axes, styled scrollbar */}
       <div className={`w-full max-w-full overflow-auto ${maxHeight} custom-scrollbar`}>

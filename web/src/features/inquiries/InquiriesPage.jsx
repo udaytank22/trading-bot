@@ -116,7 +116,7 @@ export default function InquiriesPage() {
   const handleAddInquiry = async (newInquiry) => {
     try {
       const clientsRes = await api.clients.getClients();
-      const client = clientsRes.data?.find(c => c.name === newInquiry.customer);
+      const client = clientsRes.data?.find(c => c.id === Number(newInquiry.customer) || c.name === newInquiry.customer);
       const clientId = client ? client.id : clientsRes.data?.[0]?.id;
       if (!clientId) {
         showToast("Please create a client in settings first.", "error");

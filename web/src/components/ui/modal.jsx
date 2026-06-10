@@ -15,6 +15,7 @@ export default function Modal({
   cancelLabel = "Discard",
   onExcelUpload,
   maxWidthClass = "max-w-7xl",
+  fullscreen = false,
   children,
 }) {
   useEffect(() => {
@@ -49,17 +50,17 @@ export default function Modal({
       />
 
       <div
-        className={`fixed inset-0 z-[101] flex items-center justify-center p-4 ${
+        className={`fixed inset-0 z-[101] flex items-center justify-center ${fullscreen ? "" : "p-4"} ${
           isOpen ? "" : "pointer-events-none"
         }`}
       >
         <form
           onSubmit={handleSubmit}
           className={`
-            w-full ${maxWidthClass} h-full max-h-[92vh]
+            w-full h-full flex flex-col overflow-hidden
+            ${fullscreen ? "w-screen h-screen max-h-screen rounded-none border-none" : `${maxWidthClass} max-h-[92vh] rounded-2xl border ${borderColor}`}
             ${modalBg}
-            rounded-2xl border ${borderColor}
-            shadow-2xl flex flex-col overflow-hidden
+            shadow-2xl
             transition-all duration-300
             ${isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"}
           `}
@@ -67,7 +68,7 @@ export default function Modal({
           {/* HEADER */}
           <div
             className={`
-              px-8 py-3 border-b ${borderColor}
+              ${fullscreen ? "px-6 py-2" : "px-8 py-3"} border-b ${borderColor}
               ${panelBg}
               flex justify-between items-center gap-4
             `}
@@ -143,7 +144,7 @@ export default function Modal({
           {/* FOOTER */}
           <div
             className={`
-              px-8 py-3 border-t ${borderColor}
+              ${fullscreen ? "px-6 py-2" : "px-8 py-3"} border-t ${borderColor}
               ${panelBg}
               flex gap-3 justify-end items-center
             `}

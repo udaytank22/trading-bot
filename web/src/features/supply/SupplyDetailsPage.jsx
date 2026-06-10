@@ -1,5 +1,5 @@
 import { SupplyDetailsPageSchema1 } from '@config/tableSchemas';
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData, useAuth } from '@context';
 import { api } from '@services/api';
@@ -7,6 +7,8 @@ import { formatINR } from '@services/marginEngine';
 import { DataTable, rowStripeClass, ROW_HOVER_CLS, StatusBadge } from '@components/ui';
 import AllotVehicleModal from '@features/employees/modals/AllotVehicleModal';
 import InvoiceEmailModal from '@features/invoices/modals/InvoiceEmailModal';
+import DeliveryChallanViewerModal from './modals/DeliveryChallanViewerModal';
+import { generateDeliveryChallanPDF } from './utils/generateDeliveryChallan';
 import Swal from 'sweetalert2';
 
 const DUMMY_PDF_URL = "/memories/file-sample_150kB.pdf";
@@ -29,8 +31,16 @@ export default function SupplyDetailsPage() {
   // Modals state
   const [allotModalDeal, setAllotModalDeal] = useState(null);
   const [isAllotModalOpen, setIsAllotModalOpen] = useState(false);
+  // Track what the allot modal is being used for: 'loading' or 'final_delivery'
+  const [allotModalMode, setAllotModalMode] = useState('loading');
   const [invoiceModalDeal, setInvoiceModalDeal] = useState(null);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+
+  // Delivery Challan viewer
+  const [challanViewerOpen, setChallanViewerOpen] = useState(false);
+  const [challanPdfUrl, setChallanPdfUrl] = useState('');
+  const [challanNo, setChallanNo] = useState('');
+  const challanBlobRef = useRef(null); // hold URL for cleanup
 
   // Load shipment — id from URL is a string, backend IDs are integers
   useEffect(() => {
@@ -100,6 +110,38 @@ export default function SupplyDetailsPage() {
         }
       } catch (e) {
         console.error("Failed to transition shipment to invoice:", e);
+      }
+      return;
+    }
+
+    // Handle challan received — close inquiry too
+    if (newStatus === "CHALLAN_RECEIVED") {
+      try {
+        const res = await api.shipments.updateShipment(shipmentId, { currentStatus: "CHALLAN_RECEIVED" });
+        if (res.success) {
+          // Close the linked inquiry
+          if (deal.inquiryId) {
+            try {
+              await api.inquiries.closeInquiry(deal.inquiryId);
+            } catch (e) {
+              console.warn("Could not close inquiry:", e);
+            }
+          }
+          refreshAll();
+          setDeal(prev => ({ ...prev, status: "CHALLAN_RECEIVED" }));
+          Swal.fire({
+            title: '✅ Challan Received!',
+            text: 'Signed challan confirmed. Inquiry has been closed.',
+            icon: 'success',
+            confirmButtonColor: '#0d9488',
+            background: '#1a1d23',
+            color: '#fff',
+            timer: 3000,
+            timerProgressBar: true,
+          });
+        }
+      } catch (e) {
+        console.error("Failed to update challan status:", e);
       }
       return;
     }
@@ -186,6 +228,8 @@ export default function SupplyDetailsPage() {
     { id: "LOADING", label: "Loading" },
     { id: "DISPATCHED", label: "Dispatched" },
     { id: "DELIVERED", label: "Delivered" },
+    { id: "OUT_FOR_DELIVERY", label: "Out for Delivery" },
+    { id: "CHALLAN_RECEIVED", label: "Challan Received" },
   ];
 
   const currentStepIdx = useMemo(() => {
@@ -195,6 +239,8 @@ export default function SupplyDetailsPage() {
     if (s === "LOADING") return 1;
     if (s === "DISPATCHED" || s === "IN_TRANSIT") return 2;
     if (s === "DELIVERED") return 3;
+    if (s === "OUT_FOR_DELIVERY") return 4;
+    if (s === "CHALLAN_RECEIVED") return 5;
     return 0;
   }, [deal]);
 
@@ -346,13 +392,60 @@ export default function SupplyDetailsPage() {
               </button>
             )}
 
+            {/* DELIVERED: Allot vehicle for final delivery */}
             {status === "DELIVERED" && (
               <button
-                onClick={() => handleStatusUpdate(deal.id, "SEND_INVOICE")}
-                className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-sm"
+                onClick={() => { setAllotModalDeal(deal); setAllotModalMode('final_delivery'); setIsAllotModalOpen(true); }}
+                className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-orange-600 hover:bg-orange-500 text-white transition-all shadow-sm flex items-center gap-2"
               >
-                Send Invoice
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 17h.01M16 17h.01M3 7h18l-2 9H5L3 7zM3 7l-.75-3H1m6 10a2 2 0 11-4 0 2 2 0 014 0zm12 0a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Allot Vehicle for Delivery
               </button>
+            )}
+
+            {/* OUT_FOR_DELIVERY: Final Delivery + Signed Challan buttons */}
+            {status === "OUT_FOR_DELIVERY" && (
+              <>
+                <button
+                  onClick={async () => {
+                    const result = await Swal.fire({
+                      title: 'Signed Challan Received?',
+                      html: `
+                        <div style="text-align:left;color:#d1d5db;font-size:13px;line-height:1.6">
+                          <p style="margin-bottom:8px">Confirm that the <strong style="color:#f9fafb">signed delivery challan</strong> has been received from the customer.</p>
+                          <p style="color:#9ca3af;font-size:12px">This will mark the inquiry as <strong style="color:#2dd4bf">Closed</strong>.</p>
+                        </div>
+                      `,
+                      icon: 'question',
+                      showCancelButton: true,
+                      confirmButtonColor: '#0d9488',
+                      cancelButtonColor: '#374151',
+                      confirmButtonText: '✅ Yes, Challan Received',
+                      cancelButtonText: 'Not Yet',
+                      background: '#1a1d23',
+                      color: '#fff',
+                    });
+                    if (result.isConfirmed) handleStatusUpdate(deal.id, 'CHALLAN_RECEIVED');
+                  }}
+                  className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-teal-600 hover:bg-teal-500 text-white transition-all shadow-sm flex items-center gap-2"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Signed Challan Received
+                </button>
+              </>
+            )}
+
+            {status === "CHALLAN_RECEIVED" && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-teal-500/10 border border-teal-500/30">
+                <svg className="w-4 h-4 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-xs font-bold text-teal-400 uppercase tracking-wider">Inquiry Closed</span>
+              </div>
             )}
 
             {status === "SHIPPED" && (
@@ -496,6 +589,68 @@ export default function SupplyDetailsPage() {
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Associated Documents</h3>
               {isVehicleAllotted ? (
                 <div className="space-y-3">
+                  {/* ── Delivery Challan (generated on allotment) ── */}
+                  <div className="flex items-center justify-between p-3 bg-teal-500/5 border border-teal-500/20 rounded-xl hover:border-teal-400/40 hover:bg-teal-500/10 transition-all group">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-[10px] flex-shrink-0 bg-teal-500/10 text-teal-500 border border-teal-500/20">
+                        PDF
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-gray-900 dark:text-white text-xs font-bold group-hover:text-teal-600 dark:group-hover:text-teal-300 transition-colors truncate max-w-[140px]">
+                          Delivery Challan
+                        </p>
+                        <p className="text-gray-400 text-[10px] truncate">
+                          {challanNo || `DC-${String(deal.id).padStart(3, '0')}`} · Auto-generated
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      {challanPdfUrl ? (
+                        <>
+                          <button
+                            onClick={() => setChallanViewerOpen(true)}
+                            title="View Delivery Challan"
+                            className="p-1 rounded-lg text-teal-500 bg-teal-500/10 hover:bg-teal-500/20 transition-colors"
+                          >
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </button>
+                          <a
+                            href={challanPdfUrl}
+                            download={`Delivery_Challan_${challanNo || deal.id}.pdf`}
+                            title="Download"
+                            className="p-1 rounded-lg text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors"
+                          >
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                          </a>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            try {
+                              if (challanBlobRef.current) URL.revokeObjectURL(challanBlobRef.current);
+                              const dcNo = `DC-${String(deal.id).padStart(3, '0')}`;
+                              const blobUrl = generateDeliveryChallanPDF(deal, null, dcNo);
+                              challanBlobRef.current = blobUrl;
+                              setChallanPdfUrl(blobUrl);
+                              setChallanNo(dcNo);
+                              setChallanViewerOpen(true);
+                            } catch (e) { console.error(e); }
+                          }}
+                          title="Generate Challan"
+                          className="px-2 py-1 rounded-lg text-[10px] font-bold text-teal-500 bg-teal-500/10 hover:bg-teal-500/20 transition-colors border border-teal-500/20"
+                        >
+                          Generate
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ── Other documents ── */}
                   {documents.map((doc, idx) => (
                     <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-[#242830]/50 border border-gray-200 dark:border-[#2a2d36] rounded-xl hover:border-purple-400/40 hover:bg-purple-500/5 dark:hover:bg-[#242830] transition-all group">
                       <div className="flex items-center gap-3 min-w-0">
@@ -554,21 +709,42 @@ export default function SupplyDetailsPage() {
         deal={allotModalDeal}
         isOpen={isAllotModalOpen}
         onClose={() => setIsAllotModalOpen(false)}
+        modalTitle={allotModalMode === 'final_delivery' ? 'Allot Vehicle for Final Delivery' : 'Allot Vehicle'}
         onAllot={async (allotId, vehicle) => {
           try {
+            // For final delivery (from DELIVERED status): set OUT_FOR_DELIVERY
+            // For initial loading (from ORDER_PLACED status): set LOADING
+            const newStatus = allotModalMode === 'final_delivery' ? 'OUT_FOR_DELIVERY' : 'LOADING';
             const res = await api.shipments.updateShipment(allotId, {
-              currentStatus: "LOADING",
+              currentStatus: newStatus,
               vehicleDetails: vehicle.vehicle_no,
               driverDetails: `${vehicle.driver_name || vehicle.owner_name} (${vehicle.phone || vehicle.owner_phone})`
             });
             if (res.success) {
-              refreshAll();
-              setDeal(prev => ({
-                ...prev,
-                status: "LOADING",
+              const updatedDeal = {
+                ...deal,
+                status: newStatus,
                 vehicleDetails: vehicle.vehicle_no,
                 driverDetails: `${vehicle.driver_name || vehicle.owner_name} (${vehicle.phone || vehicle.owner_phone})`
-              }));
+              };
+              refreshAll();
+              setDeal(updatedDeal);
+
+              // ── Generate Delivery Challan PDF ───────────────────────────────
+              try {
+                // Revoke any previous blob URL to prevent memory leaks
+                if (challanBlobRef.current) URL.revokeObjectURL(challanBlobRef.current);
+
+                const dcNo = `DC-${String(deal.id).padStart(3, '0')}`;
+                const blobUrl = generateDeliveryChallanPDF(updatedDeal, vehicle, dcNo);
+
+                challanBlobRef.current = blobUrl;
+                setChallanPdfUrl(blobUrl);
+                setChallanNo(dcNo);
+                setChallanViewerOpen(true);
+              } catch (pdfErr) {
+                console.error('Failed to generate delivery challan PDF:', pdfErr);
+              }
             }
           } catch (e) {
             console.error("Failed to allot vehicle:", e);
@@ -581,6 +757,14 @@ export default function SupplyDetailsPage() {
         isOpen={isInvoiceModalOpen}
         onClose={() => setIsInvoiceModalOpen(false)}
         onStatusUpdate={handleStatusUpdate}
+      />
+
+      {/* ── Delivery Challan Inline Viewer ── */}
+      <DeliveryChallanViewerModal
+        isOpen={challanViewerOpen}
+        pdfUrl={challanPdfUrl}
+        challanNo={challanNo}
+        onClose={() => setChallanViewerOpen(false)}
       />
     </div>
   );

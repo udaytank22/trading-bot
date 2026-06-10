@@ -1,4 +1,5 @@
 const prisma = require('../../prisma/client');
+const bcrypt = require('bcryptjs');
 
 /**
  * Get all active suppliers
@@ -58,17 +59,37 @@ const createSupplier = async (data, creatorId) => {
     throw err;
   }
 
-  return await prisma.supplier.create({
-    data: {
-      name: data.name,
-      email: data.email,
-      phone: data.phone || null,
-      company: data.company || null,
-      address: data.address || null,
-      categories: data.categories || [],
-      createdById: creatorId,
-      isActive: data.isActive !== undefined ? data.isActive : true
+  return await prisma.$transaction(async (tx) => {
+    const supplier = await tx.supplier.create({
+      data: {
+        name: data.name,
+        email: data.email,
+        phone: data.phone || null,
+        company: data.company || null,
+        address: data.address || null,
+        categories: data.categories || [],
+        createdById: creatorId,
+        isActive: data.isActive !== undefined ? data.isActive : true
+      }
+    });
+
+    const clientRole = await tx.role.findFirst({
+      where: { name: 'Client' }
+    });
+    if (clientRole) {
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash('admin123', salt);
+      await tx.user.create({
+        data: {
+          email: data.email,
+          password: passwordHash,
+          roleId: clientRole.id,
+          isActive: true
+        }
+      });
     }
+
+    return supplier;
   });
 };
 
@@ -92,18 +113,33 @@ const updateSupplier = async (id, data, updaterId) => {
     throw err;
   }
 
-  return await prisma.supplier.update({
-    where: { id: supplierId },
-    data: {
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      company: data.company,
-      address: data.address,
-      categories: data.categories !== undefined ? data.categories : undefined,
-      isActive: data.isActive,
-      updatedById: updaterId
+  const oldSupplier = await prisma.supplier.findUnique({
+    where: { id: supplierId }
+  });
+
+  return await prisma.$transaction(async (tx) => {
+    const updated = await tx.supplier.update({
+      where: { id: supplierId },
+      data: {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        company: data.company,
+        address: data.address,
+        categories: data.categories !== undefined ? data.categories : undefined,
+        isActive: data.isActive,
+        updatedById: updaterId
+      }
+    });
+
+    if (oldSupplier && oldSupplier.email.toLowerCase() !== data.email.toLowerCase()) {
+      await tx.user.updateMany({
+        where: { email: oldSupplier.email },
+        data: { email: data.email }
+      });
     }
+
+    return updated;
   });
 };
 
@@ -159,6 +195,16 @@ const deleteSupplier = async (id, updaterId) => {
       // Delete shipments
       await tx.shipment.deleteMany({
         where: { id: { in: shipmentIds } }
+      });
+    }
+
+    // Delete corresponding user record
+    const supplier = await tx.supplier.findUnique({
+      where: { id }
+    });
+    if (supplier) {
+      await tx.user.deleteMany({
+        where: { email: supplier.email }
       });
     }
 

@@ -16,6 +16,16 @@ const inputClass =
 
 const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
   const { clientsData, employeesData, productsData = [] } = useData();
+  const uniqueUnits = useMemo(() => {
+    const unitsSet = new Set();
+    productsData.forEach(p => {
+      if (p.unit) unitsSet.add(p.unit);
+    });
+    // Add default common units just in case
+    ["pcs", "box", "set", "meter", "kg", "ltr"].forEach(u => unitsSet.add(u));
+    return Array.from(unitsSet).sort();
+  }, [productsData]);
+
   const [selectedProduct, setSelectedProduct] = useState("");
   const [qty, setQty] = useState("");
   const [unit, setUnit] = useState("");
@@ -37,7 +47,7 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
   });
 
   const selectedClientObj = useMemo(() => {
-    return clientsData.find(c => c.name === formData.customer);
+    return clientsData.find(c => c.id === Number(formData.customer) || c.name === formData.customer);
   }, [clientsData, formData.customer]);
 
 
@@ -132,6 +142,20 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
     }));
   };
 
+  const updateProductInList = (index, field, value) => {
+    setFormData(prev => {
+      const updated = [...prev.products];
+      updated[index] = {
+        ...updated[index],
+        [field]: value
+      };
+      return {
+        ...prev,
+        products: updated
+      };
+    });
+  };
+
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
 
@@ -150,37 +174,50 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
       if (data && data.length > 0) {
         const firstRow = data[0];
 
-        setFormData((prev) => ({
-          ...prev,
-          customer: firstRow.Customer || firstRow.customer || prev.customer,
-          vessel: firstRow.Vessel || firstRow.vessel || prev.vessel,
-          imoNumber: firstRow.IMO || firstRow.imoNumber || prev.imoNumber,
-          salesperson:
-            firstRow.Salesperson || firstRow.salesperson || prev.salesperson,
-          currency: firstRow.Currency || firstRow.currency || prev.currency,
-          vesselReference:
-            firstRow.Reference ||
-            firstRow.vesselReference ||
-            prev.vesselReference,
-          validityDate:
-            firstRow.ValidityDate || firstRow.validityDate || prev.validityDate,
-          requestType:
-            firstRow.RequestType || firstRow.requestType || prev.requestType,
-          clientCategory:
-            firstRow.Category || firstRow.category || prev.clientCategory,
-          subCategory:
-            firstRow.SubCategory || firstRow.subCategory || prev.subCategory,
-          products: firstRow.products
-            ? (typeof firstRow.products === "string"
-              ? JSON.parse(firstRow.products)
-              : firstRow.products)
-            : prev.products,
-        }));
+        setFormData((prev) => {
+          const customerVal = firstRow.Customer || firstRow.customer || "";
+          const matchedClient = clientsData.find(c => c.name.toLowerCase() === customerVal.toLowerCase());
+          const customerId = matchedClient ? matchedClient.id : (customerVal || prev.customer);
+
+          const productsList = data.map(row => {
+            const name = row.Product || row.Product_Name || row.product || row.product_name || row.Name || row.name || row.Description || row.description || row.Item || row.item || "";
+            const quantity = parseInt(row.Quantity || row.Qty || row.qty || row.quantity || 1, 10);
+            const unit = row.Unit || row.unit || "pcs";
+            return {
+              product_name: name,
+              quantity: isNaN(quantity) ? 1 : quantity,
+              unit: unit
+            };
+          }).filter(p => p.product_name);
+
+          return {
+            ...prev,
+            customer: customerId,
+            vessel: firstRow.Vessel || firstRow.vessel || prev.vessel,
+            imoNumber: firstRow.IMO || firstRow.imoNumber || prev.imoNumber,
+            salesperson:
+              firstRow.Salesperson || firstRow.salesperson || prev.salesperson,
+            currency: firstRow.Currency || firstRow.currency || prev.currency,
+            vesselReference:
+              firstRow.Reference ||
+              firstRow.vesselReference ||
+              prev.vesselReference,
+            validityDate:
+              firstRow.ValidityDate || firstRow.validityDate || prev.validityDate,
+            requestType:
+              firstRow.RequestType || firstRow.requestType || prev.requestType,
+            clientCategory:
+              firstRow.Category || firstRow.category || prev.clientCategory,
+            subCategory:
+              firstRow.SubCategory || firstRow.subCategory || prev.subCategory,
+            products: productsList.length > 0 ? productsList : prev.products,
+          };
+        });
 
         Swal.fire({
           icon: "success",
           title: "Data Imported",
-          text: "Inquiry fields updated from Excel.",
+          text: "Inquiry fields and products updated from Excel.",
           timer: 1800,
           showConfirmButton: false,
           toast: true,
@@ -226,7 +263,7 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
       submitLabel="Create Inquiry"
       cancelLabel="Cancel"
       onExcelUpload={handleExcelUpload}
-      maxWidthClass="max-w-[86rem]"
+      fullscreen={true}
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-7">
         <div>
@@ -236,8 +273,8 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
             value={formData.customer}
             onChange={(val) => updateField("customer", val)}
             options={clientsData.map((client) => ({
-              value: client.name,
-              label: client.name,
+              value: client.id,
+              label: client.company ? `${client.name} (${client.company})` : `${client.name} (${client.email})`,
             }))}
             className="w-full"
             placeholder="Select customer"
@@ -374,7 +411,10 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
         />
 
         <div className="md:col-span-2 border-t border-gray-200 dark:border-[#2f3441] pt-6 mt-4">
-          <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4 uppercase tracking-wider">Inquiry Items / Products</h3>
+          <div className="flex justify-between">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-4 uppercase tracking-wider">Inquiry Items / Products</h3>
+            <span className="text-sm text-gray-500 dark:text-white mb-4 tracking-wider">{formData.products.length} Items Selected</span>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-6 gap-4 bg-gray-50/50 dark:bg-[#0f1117]/30 p-4 rounded-2xl border border-gray-200 dark:border-[#2f3441] mb-4 items-end">
             <div className="sm:col-span-3">
@@ -382,7 +422,13 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
               <Select
                 variant="form"
                 value={selectedProduct}
-                onChange={(val) => setSelectedProduct(val)}
+                onChange={(val) => {
+                  setSelectedProduct(val);
+                  const prodObj = productsData.find(p => p.name === val);
+                  if (prodObj?.unit) {
+                    setUnit(prodObj.unit);
+                  }
+                }}
                 options={[
                   { value: "", label: "Choose a product" },
                   ...productsData.map(p => ({
@@ -407,13 +453,16 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
             </div>
 
             <div className="sm:col-span-1">
-              <Field
-                label="Unit"
-                type="text"
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Unit</label>
+              <Select
+                variant="form"
                 value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                placeholder="pcs"
-                labelClassName="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
+                onChange={(val) => setUnit(val)}
+                options={uniqueUnits.map(u => ({
+                  value: u,
+                  label: u
+                }))}
+                placeholder="Select unit"
               />
             </div>
 
@@ -428,27 +477,109 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
             </div>
           </div>
 
-          <div className="space-y-2">
-            {formData.products.map((p, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3.5 bg-gray-50 dark:bg-[#1a1d24] border border-gray-200 dark:border-[#2f3441] rounded-xl animate-fade-in">
-                <div>
-                  <span className="text-sm font-bold text-gray-900 dark:text-white">{p.product_name}</span>
-                  <span className="text-xs text-gray-500 ml-3">({p.quantity} {p.unit})</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => removeProductFromInquiry(idx)}
-                  className="text-red-500 hover:text-red-600 text-xs font-bold transition-colors uppercase tracking-wider"
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-            {formData.products.length === 0 && (
-              <div className="text-center py-6 text-sm text-gray-500 italic bg-gray-50/50 dark:bg-[#1a1d24]/50 rounded-xl border border-dashed border-gray-200 dark:border-[#2f3441]">
-                No products added yet. Add at least one product above.
-              </div>
-            )}
+          <div className="border border-gray-250 dark:border-[#2f3441] rounded-xl overflow-hidden bg-white dark:bg-[#181b22]">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[600px] table-fixed">
+                <thead className="bg-gray-55 dark:bg-[#1f222b] border-b border-gray-250 dark:border-[#2f3441]">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 w-[60px]">
+                      S.No.
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200">
+                      Product Name
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 w-[120px]">
+                      Quantity
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 w-[120px]">
+                      Unit
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 w-[80px]">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-[#2f3441]">
+                  {formData.products.map((p, idx) => (
+                    <tr
+                      key={idx}
+                      className="hover:bg-gray-55/30 dark:hover:bg-white/[0.01] transition-colors"
+                    >
+                      <td className="px-4 py-2 text-sm text-gray-500 font-mono">
+                        {idx + 1}
+                      </td>
+                      <td className="px-4 py-2">
+                        <div className="relative z-[11111] overflow-visible">
+                          <Select
+                            variant="form"
+                            value={p.product_name}
+                            onChange={(val) => {
+                              const productObj = productsData.find(prod => prod.name === val);
+                              setFormData(prev => {
+                                const updated = [...prev.products];
+                                updated[idx] = {
+                                  ...updated[idx],
+                                  product_name: val,
+                                  unit: productObj?.unit || updated[idx].unit || "pcs"
+                                };
+                                return { ...prev, products: updated };
+                              });
+                            }}
+                            options={productsData.map(prod => ({
+                              value: prod.name,
+                              label: prod.name
+                            }))}
+                            placeholder="Select product"
+                          />
+                        </div>
+                      </td>
+                      <td className="px-4 py-2">
+                        <input
+                          type="number"
+                          min="1"
+                          value={p.quantity}
+                          onChange={(e) => updateProductInList(idx, "quantity", Math.max(1, parseInt(e.target.value, 10) || 1))}
+                          className="w-full h-[36px] rounded-lg px-3 text-sm bg-white dark:bg-[#0f1117] border border-gray-300 dark:border-[#2f3441] text-gray-900 dark:text-white text-center focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20"
+                        />
+                      </td>
+                      <td className="px-4 py-2">
+                        <div className="relative z-[1111] overflow-visible">
+                          <Select
+                            variant="form"
+                            value={p.unit}
+                            onChange={(val) => updateProductInList(idx, "unit", val)}
+                            options={uniqueUnits.map(u => ({
+                              value: u,
+                              label: u
+                            }))}
+                            placeholder="Select unit"
+                          />
+                        </div>
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        <button
+                          type="button"
+                          onClick={() => removeProductFromInquiry(idx)}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-colors mx-auto"
+                          title="Remove product"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {formData.products.length === 0 && (
+                    <tr>
+                      <td colSpan="5" className="text-center py-8 text-sm text-gray-500 italic bg-gray-55/30 dark:bg-[#1a1d24]/50">
+                        No products added yet. Add at least one product above.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

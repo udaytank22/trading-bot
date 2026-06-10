@@ -224,6 +224,7 @@ model SupplierQuote {
   createdById Int?
   updatedById Int?
   isActive           Boolean             @default(true)
+  isSelected         Boolean             @default(false)
   inquiry            Inquiry             @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
   supplier           Supplier            @relation(fields: [supplierId], references: [id])
   items              SupplierQuoteItem[]
@@ -236,9 +237,11 @@ model SupplierQuoteItem {
   unitPrice       Decimal       @db.Decimal(12, 2)
   quantity        Int
   totalPrice      Decimal       @db.Decimal(12, 2)
+  isSelected      Boolean       @default(false)
   inquiryItem     InquiryItem   @relation(fields: [inquiryItemId], references: [id])
   supplierQuote   SupplierQuote @relation(fields: [supplierQuoteId], references: [id], onDelete: Cascade)
 }
+
 
 model ClientQuotation {
   id Int @id @default(autoincrement())

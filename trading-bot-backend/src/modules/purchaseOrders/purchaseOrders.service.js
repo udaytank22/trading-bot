@@ -13,7 +13,17 @@ const getAllPurchaseOrders = async (query = {}) => {
       include: {
         supplier: true,
         client: true,
-        inquiry: true,
+        inquiry: {
+          include: {
+            items: true,
+            supplierQuotes: {
+              include: {
+                items: true,
+                supplier: true
+              }
+            }
+          }
+        },
         items: {
           include: {
             product: true
@@ -34,7 +44,17 @@ const getAllPurchaseOrders = async (query = {}) => {
       include: {
         supplier: true,
         client: true,
-        inquiry: true,
+        inquiry: {
+          include: {
+            items: true,
+            supplierQuotes: {
+              include: {
+                items: true,
+                supplier: true
+              }
+            }
+          }
+        },
         items: {
           include: {
             product: true
@@ -60,7 +80,17 @@ const getPurchaseOrderById = async (id) => {
     include: {
       supplier: true,
       client: true,
-      inquiry: true,
+      inquiry: {
+        include: {
+          items: true,
+          supplierQuotes: {
+            include: {
+              items: true,
+              supplier: true
+            }
+          }
+        }
+      },
       items: {
         include: {
           product: true

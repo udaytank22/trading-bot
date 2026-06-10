@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Select, Field, Modal } from "@components/ui";
 import { useData } from "@context";
+import { parseExcelFile } from '@utils/excelUtils';
+import Swal from "sweetalert2";
 
 const PRODUCTS = ["Safety Helmet", "Marine Paint", "Engine Oil", "Cables"];
 
@@ -112,8 +114,83 @@ export default function AddPurchaseOrderModal({ isOpen, onClose, onSubmit }) {
     });
   };
 
-  const handleExcelUpload = (e) => {
-    console.log(e.target.files[0]);
+  const handleExcelUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const data = await parseExcelFile(file);
+
+      if (data && data.length > 0) {
+        const firstRow = data[0];
+
+        const productsList = data.map(row => {
+          const prodName = row.Product || row.Product_Name || row.product || row.product_name || row.Name || row.name || "";
+          const desc = row.Description || row.description || row.Details || row.details || "";
+          const qtyVal = parseInt(row.Quantity || row.Qty || row.qty || row.quantity || 1, 10);
+          const priceVal = parseFloat(row.UnitPrice || row.unitPrice || row.Price || row.price || 0);
+          const discVal = parseFloat(row.Discount || row.discount || 0);
+          return {
+            id: Date.now() + Math.random(),
+            product: prodName,
+            description: desc,
+            qty: isNaN(qtyVal) ? 1 : qtyVal,
+            unitPrice: isNaN(priceVal) ? "" : priceVal,
+            discount: isNaN(discVal) ? "" : discVal,
+          };
+        }).filter(p => p.product || p.description);
+
+        setFormData((prev) => {
+          const clientName = firstRow.Customer || firstRow.customer || firstRow.Client || firstRow.client || "";
+          const matchedClient = clientsData.find(c => c.name.toLowerCase() === clientName.toLowerCase() || c.company?.toLowerCase() === clientName.toLowerCase());
+          const clientId = matchedClient ? matchedClient.id : prev.clientId;
+
+          const supplierName = firstRow.Supplier || firstRow.supplier || firstRow.Vendor || firstRow.vendor || "";
+          const matchedSupplier = suppliersData.find(s => s.name.toLowerCase() === supplierName.toLowerCase() || s.company?.toLowerCase() === supplierName.toLowerCase());
+          const supplierId = matchedSupplier ? matchedSupplier.id : prev.supplierId;
+
+          let supplierEmail = firstRow.SupplierEmail || firstRow.supplierEmail || firstRow.Email || firstRow.email || "";
+          let supplierTel = firstRow.SupplierTel || firstRow.supplierTel || firstRow.Phone || firstRow.phone || "";
+          if (matchedSupplier) {
+            supplierEmail = supplierEmail || matchedSupplier.email || "";
+            supplierTel = supplierTel || matchedSupplier.phone || "";
+          }
+
+          return {
+            ...prev,
+            clientId,
+            supplierId,
+            supplierEmail,
+            supplierTel,
+            vessel: firstRow.Vessel || firstRow.vessel || prev.vessel,
+            vesselRef: firstRow.VesselRef || firstRow.vesselRef || firstRow.Reference || firstRow.reference || prev.vesselRef,
+            imoNumber: firstRow.IMO || firstRow.imoNumber || prev.imoNumber,
+            category: firstRow.Category || firstRow.category || prev.category,
+            subcategory: firstRow.Subcategory || firstRow.subcategory || prev.subcategory,
+            currency: firstRow.Currency || firstRow.currency || prev.currency,
+            products: productsList.length > 0 ? productsList : prev.products
+          };
+        });
+
+        Swal.fire({
+          icon: "success",
+          title: "Data Imported",
+          text: "Purchase Order fields and products updated from Excel.",
+          timer: 1800,
+          showConfirmButton: false,
+          toast: true,
+          position: "top-end",
+        });
+      }
+    } catch (error) {
+      console.error("Excel parse error:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Import Failed",
+        text: "Unable to parse the Excel file.",
+      });
+    }
   };
 
   const handleSubmit = (e) => {
@@ -134,6 +211,7 @@ export default function AddPurchaseOrderModal({ isOpen, onClose, onSubmit }) {
       submitLabel="Confirm Purchase Order"
       cancelLabel="Discard"
       onExcelUpload={handleExcelUpload}
+      fullscreen={true}
     >
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-5">
         <div>
@@ -144,7 +222,7 @@ export default function AddPurchaseOrderModal({ isOpen, onClose, onSubmit }) {
             onChange={(val) => updateField("clientId", val)}
             options={clientsData.map((client) => ({
               value: client.id,
-              label: client.name,
+              label: client.company ? `${client.name} (${client.company})` : `${client.name} (${client.email})`,
             }))}
             className="w-full text-gray-900"
             placeholder="Select customer"
@@ -159,7 +237,7 @@ export default function AddPurchaseOrderModal({ isOpen, onClose, onSubmit }) {
             onChange={(val) => updateField("supplierId", val)}
             options={suppliersData.map((supplier) => ({
               value: supplier.id,
-              label: supplier.name,
+              label: supplier.company ? `${supplier.name} (${supplier.company})` : `${supplier.name} (${supplier.email})`,
             }))}
             className="w-full text-gray-900"
             placeholder="Select supplier"

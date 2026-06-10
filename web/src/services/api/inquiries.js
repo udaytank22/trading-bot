@@ -3,24 +3,67 @@ import apiClient from '../apiClient';
 const normalizeInquiry = (inq) => {
   if (!inq) return null;
 
+  // --- Build per-product selected items (multi-supplier) ---
+  // Collect all SupplierQuoteItems that are isSelected=true, keyed by inquiryItemId
+  const selectedItemMap = {}; // inquiryItemId -> { item, quote }
+  if (inq.supplierQuotes && inq.supplierQuotes.length > 0) {
+    for (const quote of inq.supplierQuotes) {
+      for (const item of (quote.items || [])) {
+        if (item.isSelected) {
+          selectedItemMap[item.inquiryItemId] = { item, quote };
+        }
+      }
+    }
+  }
+
+  const hasPerItemSelections = Object.keys(selectedItemMap).length > 0;
+
+  // Fallback: pick the (old-style) single selected quote for backward compatibility
   const latestQuote = inq.supplierQuotes && inq.supplierQuotes.length > 0
-    ? inq.supplierQuotes[0]
+    ? (inq.supplierQuotes.find(q => q.isSelected) || null)
     : null;
 
-  const seller_quote = latestQuote ? {
-    id: latestQuote.id,
-    seller_name: latestQuote.supplier?.name || 'N/A',
-    seller_email: latestQuote.supplier?.email || 'N/A',
-    products: latestQuote.items ? latestQuote.items.map(item => {
-      const inquiryItem = inq.items?.find(ii => ii.id === item.inquiryItemId);
+  // Build seller_quote — now per-product aware
+  let seller_quote = null;
+  if (hasPerItemSelections) {
+    // Multi-supplier mode: each product tracks its own supplier
+    const products = (inq.items || []).map(inquiryItem => {
+      const sel = selectedItemMap[inquiryItem.id];
       return {
-        product_name: inquiryItem ? inquiryItem.description : 'Unknown Product',
-        seller_unit_price: parseFloat(item.unitPrice) || 0,
-        moq: item.quantity,
+        product_name: inquiryItem.description,
+        seller_unit_price: sel ? (parseFloat(sel.item.unitPrice) || 0) : 0,
+        supplier_name: sel ? (sel.quote.supplier?.name || 'N/A') : null,
+        moq: sel ? sel.item.quantity : (inquiryItem.quantity || 1),
         lead_time: 'Ready'
       };
-    }) : []
-  } : null;
+    }).filter(p => p.supplier_name !== null); // only show products that have a selection
+
+    seller_quote = {
+      id: 'multi',
+      seller_name: 'Multiple Suppliers',
+      seller_email: '',
+      is_multi_supplier: true,
+      products
+    };
+  } else if (latestQuote) {
+    // Legacy single-quote mode
+    seller_quote = {
+      id: latestQuote.id,
+      seller_name: latestQuote.supplier?.name || 'N/A',
+      seller_email: latestQuote.supplier?.email || 'N/A',
+      is_multi_supplier: false,
+      products: (latestQuote.items || []).map(item => {
+        const inquiryItem = inq.items?.find(ii => ii.id === item.inquiryItemId);
+        return {
+          product_name: inquiryItem ? inquiryItem.description : 'Unknown Product',
+          seller_unit_price: parseFloat(item.unitPrice) || 0,
+          supplier_name: latestQuote.supplier?.name || 'N/A',
+          moq: item.quantity,
+          lead_time: 'Ready'
+        };
+      })
+    };
+  }
 
   const latestClientQuote = inq.clientQuotations && inq.clientQuotations.length > 0
     ? inq.clientQuotations[0]
@@ -32,12 +75,19 @@ const normalizeInquiry = (inq) => {
     discount_percent: parseFloat(latestClientQuote.discountPercentage) || 0,
     products: latestClientQuote.items ? latestClientQuote.items.map(item => {
       const inquiryItem = inq.items?.find(ii => ii.id === item.inquiryItemId);
-      const quoteItem = latestQuote?.items?.find(qi => qi.inquiryItemId === item.inquiryItemId);
+      // Find the selected supplier quote item for this product
+      const sel = selectedItemMap[item.inquiryItemId];
+      const sellerPrice = sel
+        ? parseFloat(sel.item.unitPrice)
+        : (latestQuote?.items?.find(qi => qi.inquiryItemId === item.inquiryItemId)
+            ? parseFloat(latestQuote.items.find(qi => qi.inquiryItemId === item.inquiryItemId).unitPrice)
+            : 0);
       return {
         product_name: inquiryItem ? inquiryItem.description : 'Unknown Product',
         quantity: item.quantity,
         unit: inquiryItem?.unit || 'MT',
-        seller_unit_price: quoteItem ? parseFloat(quoteItem.unitPrice) : 0,
+        seller_unit_price: sellerPrice,
+        supplier_name: sel ? (sel.quote.supplier?.name || 'N/A') : (latestQuote?.supplier?.name || 'N/A'),
         my_unit_price: parseFloat(item.sellingPrice) || 0,
         total_price: parseFloat(item.totalPrice) || 0,
         margin_percent: parseFloat(latestClientQuote.marginPercentage) || 0,
@@ -58,13 +108,19 @@ const normalizeInquiry = (inq) => {
     margin_percent: my_quote ? my_quote.margin_percent : (inq.margin_percent || 0),
     discount_percent: my_quote ? my_quote.discount_percent : (inq.discount_percent || 0),
     products: inq.items ? inq.items.map(item => {
-      const quoteItem = latestQuote?.items?.find(qi => qi.inquiryItemId === item.id);
+      const sel = selectedItemMap[item.id];
+      const fallbackItem = latestQuote?.items?.find(qi => qi.inquiryItemId === item.id);
       return {
         product_name: item.description,
         quantity: item.quantity,
         unit: item.unit || 'MT',
         specs: item.specs || '',
-        seller_unit_price: quoteItem ? parseFloat(quoteItem.unitPrice) : 0,
+        seller_unit_price: sel
+          ? parseFloat(sel.item.unitPrice)
+          : (fallbackItem ? parseFloat(fallbackItem.unitPrice) : 0),
+        supplier_name: sel
+          ? (sel.quote.supplier?.name || 'N/A')
+          : (latestQuote?.supplier?.name || null),
         category: item.product ? item.product.category : null
       };
     }) : []
@@ -183,6 +239,38 @@ export const confirmDeal = async (id) => {
 
 export const closeInquiry = async (id) => {
   const response = await apiClient.post(`/inquiries/${id}/close`);
+  if (response.data && response.data.success && response.data.data) {
+    response.data.data = normalizeInquiry(response.data.data);
+  }
+  return response.data;
+};
+
+export const closeRFQ = async (id) => {
+  const response = await apiClient.post(`/inquiries/${id}/close-rfq`);
+  if (response.data && response.data.success && response.data.data) {
+    response.data.data = normalizeInquiry(response.data.data);
+  }
+  return response.data;
+};
+
+export const selectSupplierQuote = async (id, quoteId) => {
+  const response = await apiClient.post(`/inquiries/${id}/select-supplier-quote`, { quoteId });
+  if (response.data && response.data.success && response.data.data) {
+    response.data.data = normalizeInquiry(response.data.data);
+  }
+  return response.data;
+};
+
+export const selectSupplierQuoteItem = async (id, quoteItemId) => {
+  const response = await apiClient.post(`/inquiries/${id}/select-supplier-quote-item`, { quoteItemId });
+  if (response.data && response.data.success && response.data.data) {
+    response.data.data = normalizeInquiry(response.data.data);
+  }
+  return response.data;
+};
+
+export const selectSupplierQuoteItems = async (id, selections) => {
+  const response = await apiClient.post(`/inquiries/${id}/select-supplier-quote-items`, { selections });
   if (response.data && response.data.success && response.data.data) {
     response.data.data = normalizeInquiry(response.data.data);
   }
