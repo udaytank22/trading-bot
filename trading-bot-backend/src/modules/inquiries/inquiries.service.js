@@ -14,6 +14,12 @@ const generateInquiryNumber = async () => {
  * Get all inquiries with filtering, sorting, pagination
  */
 const getAllInquiries = async (query = {}) => {
+  try {
+    await autoCloseExpiredRFQs();
+  } catch (err) {
+    console.error("Failed to run autoCloseExpiredRFQs in getAllInquiries:", err.message);
+  }
+
   const { page, pageSize, paginate, status, clientId } = query;
   const where = { deletedAt: null };
 
@@ -94,6 +100,12 @@ const getAllInquiries = async (query = {}) => {
  * Get details for a single inquiry
  */
 const getInquiryById = async (id) => {
+  try {
+    await autoCloseExpiredRFQs();
+  } catch (err) {
+    console.error("Failed to run autoCloseExpiredRFQs in getInquiryById:", err.message);
+  }
+
   return await prisma.inquiry.findFirst({
     where: { id, deletedAt: null },
     include: {
@@ -351,7 +363,369 @@ const submitSupplierQuote = async (id, data, userId) => {
       });
     }
 
-    // Automatically generate Client Quotation
+    // Log in history that supplier quote was received
+    await tx.inquiryStatusHistory.create({
+      data: {
+        inquiryId: id,
+        fromStatus: 'RFQ_SENT',
+        toStatus: 'RFQ_SENT',
+        changedById: userId,
+        remarks: `Received supplier quote from supplier ID: ${data.supplierId}. RFQ remains open.`
+      }
+    });
+
+    return inquiry;
+  });
+};
+
+/**
+ * Manually Close RFQ Action (RFQ_SENT -> TL_REVIEW)
+ */
+const closeRFQ = async (id, userId, remarks = 'RFQ closed manually') => {
+  return await prisma.$transaction(async (tx) => {
+    const inquiry = await tx.inquiry.findUnique({ where: { id } });
+    if (!inquiry || inquiry.currentStatus !== 'RFQ_SENT') {
+      throw new Error(`Inquiry status must be RFQ_SENT. Current: ${inquiry ? inquiry.currentStatus : 'NOT FOUND'}`);
+    }
+
+    // Update status to TL_REVIEW
+    const updated = await tx.inquiry.update({
+      where: { id },
+      data: { currentStatus: 'TL_REVIEW', updatedById: userId }
+    });
+
+    // History
+    await tx.inquiryStatusHistory.create({
+      data: {
+        inquiryId: id,
+        fromStatus: 'RFQ_SENT',
+        toStatus: 'TL_REVIEW',
+        changedById: userId,
+        remarks
+      }
+    });
+
+    return updated;
+  });
+};
+
+/**
+ * Select Supplier Quote ITEM Action (during TL_REVIEW)
+ * Per-product selection: marks ONE SupplierQuoteItem as isSelected for a given inquiryItemId,
+ * deselects all other SupplierQuoteItems for the same inquiryItemId, then rebuilds ClientQuotation
+ * from the currently selected items across ALL supplier quotes.
+ */
+const selectSupplierQuoteItem = async (id, quoteItemId, userId) => {
+  return await prisma.$transaction(async (tx) => {
+    const inquiry = await tx.inquiry.findUnique({
+      where: { id },
+      include: {
+        items: true,
+        supplierQuotes: {
+          include: { items: true }
+        }
+      }
+    });
+
+    if (!inquiry) throw new Error('Inquiry not found');
+    if (inquiry.currentStatus !== 'TL_REVIEW') {
+      throw new Error(`Inquiry must be in TL_REVIEW. Current: ${inquiry.currentStatus}`);
+    }
+
+    // Find the target item
+    const targetItem = await tx.supplierQuoteItem.findUnique({ where: { id: quoteItemId } });
+    if (!targetItem) throw new Error('Supplier quote item not found');
+
+    const inquiryItemId = targetItem.inquiryItemId;
+
+    // Collect all SupplierQuoteItem ids for this inquiryItemId (across all quotes for this inquiry)
+    const allItemIdsForProduct = inquiry.supplierQuotes
+      .flatMap(q => q.items)
+      .filter(i => i.inquiryItemId === inquiryItemId)
+      .map(i => i.id);
+
+    // Deselect all items for this product
+    await tx.supplierQuoteItem.updateMany({
+      where: { id: { in: allItemIdsForProduct } },
+      data: { isSelected: false }
+    });
+
+    // Select the chosen item
+    await tx.supplierQuoteItem.update({
+      where: { id: quoteItemId },
+      data: { isSelected: true }
+    });
+
+    // Now rebuild ClientQuotation from ALL currently selected items across all quotes
+    // Gather the freshly-updated selection
+    const updatedQuotes = await tx.supplierQuote.findMany({
+      where: { inquiryId: id },
+      include: { items: { where: { isSelected: true } }, supplier: true }
+    });
+
+    const selectedItems = updatedQuotes.flatMap(q =>
+      q.items.map(i => ({ ...i, supplier: q.supplier }))
+    );
+
+    // Only rebuild if we have at least one selected item
+    if (selectedItems.length === 0) {
+      return inquiry;
+    }
+
+    // Clear old ClientQuotations
+    const oldCqs = await tx.clientQuotation.findMany({ where: { inquiryId: id } });
+    if (oldCqs.length > 0) {
+      await tx.clientQuotationItem.deleteMany({ where: { clientQuotationId: { in: oldCqs.map(c => c.id) } } });
+      await tx.clientQuotation.deleteMany({ where: { id: { in: oldCqs.map(c => c.id) } } });
+    }
+
+    // Build new ClientQuotation
+    const quoteCount = await tx.clientQuotation.count();
+    const quotationNumber = `QT-${1000 + quoteCount + 1}`;
+
+    const defaultMarginEnv = parseFloat(process.env.DEFAULT_MARGIN) || 15;
+    const minMargin = 10;
+    const roundUpToTen = (num) => Math.ceil(num / 10) * 10;
+    const getMargin = (productName, unitPrice) => {
+      const name = (productName || '').toLowerCase();
+      let margin = defaultMarginEnv;
+      if (['bolt', 'nut', 'screw', 'fastener', 'washer'].some(kw => name.includes(kw))) margin = 18;
+      else if (['pipe', 'rod', 'bar', 'sheet', 'plate'].some(kw => name.includes(kw))) margin = 12;
+      let rule2 = 0;
+      if (unitPrice < 100) rule2 = 25;
+      else if (unitPrice <= 500) rule2 = 18;
+      else if (unitPrice <= 2000) rule2 = 15;
+      else rule2 = 12;
+      return Math.max(margin, rule2);
+    };
+
+    const inquiryItemMap = new Map(inquiry.items.map(item => [item.id, item]));
+    let totalClientAmount = 0;
+    const clientItems = [];
+
+    for (const item of selectedItems) {
+      const dbItem = inquiryItemMap.get(item.inquiryItemId);
+      const description = dbItem ? dbItem.description : '';
+      const unitPrice = parseFloat(item.unitPrice);
+      const qty = parseInt(item.quantity, 10);
+      let finalMargin = getMargin(description, unitPrice);
+      if (qty > 5000) finalMargin -= 4;
+      else if (qty > 1000) finalMargin -= 2;
+      finalMargin = Math.max(finalMargin, minMargin);
+      const sellingPrice = roundUpToTen(unitPrice * (1 + finalMargin / 100));
+      const totalPrice = sellingPrice * qty;
+      totalClientAmount += totalPrice;
+      clientItems.push({ inquiryItemId: item.inquiryItemId, sellingPrice, quantity: qty, totalPrice });
+    }
+
+    const totalSellerCost = selectedItems.reduce((s, i) => s + parseFloat(i.totalPrice || 0), 0);
+    const averageMargin = totalSellerCost > 0 ? ((totalClientAmount - totalSellerCost) / totalSellerCost) * 100 : 0;
+    const taxPercentage = 18;
+    const finalClientAmount = totalClientAmount * 1.18;
+
+    const quotation = await tx.clientQuotation.create({
+      data: {
+        inquiryId: id,
+        quotationNumber,
+        marginPercentage: parseFloat(averageMargin.toFixed(2)),
+        discountPercentage: 0,
+        taxPercentage,
+        totalAmount: totalClientAmount,
+        finalAmount: finalClientAmount,
+        status: 'DRAFT',
+        createdById: userId
+      }
+    });
+
+    await tx.clientQuotationItem.createMany({
+      data: clientItems.map(ci => ({ clientQuotationId: quotation.id, ...ci }))
+    });
+
+    return inquiry;
+  });
+};
+
+/**
+ * Batch version: Select multiple SupplierQuoteItems at once (TL_REVIEW).
+ * selections = [{ quoteItemId: number }, ...]
+ * For each product (inquiryItemId), only one SupplierQuoteItem may be selected.
+ */
+const selectSupplierQuoteItems = async (id, selections, userId) => {
+  return await prisma.$transaction(async (tx) => {
+    const inquiry = await tx.inquiry.findUnique({
+      where: { id },
+      include: {
+        items: true,
+        supplierQuotes: { include: { items: true } }
+      }
+    });
+
+    if (!inquiry) throw new Error('Inquiry not found');
+    if (inquiry.currentStatus !== 'TL_REVIEW') {
+      throw new Error(`Inquiry must be in TL_REVIEW. Current: ${inquiry.currentStatus}`);
+    }
+
+    // Build a map: inquiryItemId -> chosen quoteItemId from the selections
+    const quoteItemIds = selections.map(s => parseInt(s.quoteItemId));
+
+    // Fetch the actual items to get their inquiryItemIds
+    const targetItems = await tx.supplierQuoteItem.findMany({
+      where: { id: { in: quoteItemIds } }
+    });
+
+    const inquiryItemIdToChosenId = new Map();
+    for (const t of targetItems) {
+      inquiryItemIdToChosenId.set(t.inquiryItemId, t.id);
+    }
+
+    // Collect all SupplierQuoteItem ids for the affected products across all quotes
+    const affectedInquiryItemIds = [...inquiryItemIdToChosenId.keys()];
+    const allItemsForProducts = inquiry.supplierQuotes
+      .flatMap(q => q.items)
+      .filter(i => affectedInquiryItemIds.includes(i.inquiryItemId));
+
+    // Deselect all items for the affected products
+    await tx.supplierQuoteItem.updateMany({
+      where: { id: { in: allItemsForProducts.map(i => i.id) } },
+      data: { isSelected: false }
+    });
+
+    // Select the chosen items
+    await tx.supplierQuoteItem.updateMany({
+      where: { id: { in: quoteItemIds } },
+      data: { isSelected: true }
+    });
+
+    // Gather ALL currently selected items (including any that were already selected before)
+    const updatedQuotes = await tx.supplierQuote.findMany({
+      where: { inquiryId: id },
+      include: { items: { where: { isSelected: true } }, supplier: true }
+    });
+
+    const selectedItems = updatedQuotes.flatMap(q =>
+      q.items.map(i => ({ ...i, supplier: q.supplier }))
+    );
+
+    if (selectedItems.length === 0) return inquiry;
+
+    // Clear old ClientQuotations
+    const oldCqs = await tx.clientQuotation.findMany({ where: { inquiryId: id } });
+    if (oldCqs.length > 0) {
+      await tx.clientQuotationItem.deleteMany({ where: { clientQuotationId: { in: oldCqs.map(c => c.id) } } });
+      await tx.clientQuotation.deleteMany({ where: { id: { in: oldCqs.map(c => c.id) } } });
+    }
+
+    // Build new ClientQuotation
+    const quoteCount = await tx.clientQuotation.count();
+    const quotationNumber = `QT-${1000 + quoteCount + 1}`;
+
+    const defaultMarginEnv = parseFloat(process.env.DEFAULT_MARGIN) || 15;
+    const minMargin = 10;
+    const roundUpToTen = (num) => Math.ceil(num / 10) * 10;
+    const getMargin = (productName, unitPrice) => {
+      const name = (productName || '').toLowerCase();
+      let margin = defaultMarginEnv;
+      if (['bolt', 'nut', 'screw', 'fastener', 'washer'].some(kw => name.includes(kw))) margin = 18;
+      else if (['pipe', 'rod', 'bar', 'sheet', 'plate'].some(kw => name.includes(kw))) margin = 12;
+      let rule2 = 0;
+      if (unitPrice < 100) rule2 = 25;
+      else if (unitPrice <= 500) rule2 = 18;
+      else if (unitPrice <= 2000) rule2 = 15;
+      else rule2 = 12;
+      return Math.max(margin, rule2);
+    };
+
+    const inquiryItemMap = new Map(inquiry.items.map(item => [item.id, item]));
+    let totalClientAmount = 0;
+    const clientItems = [];
+
+    for (const item of selectedItems) {
+      const dbItem = inquiryItemMap.get(item.inquiryItemId);
+      const description = dbItem ? dbItem.description : '';
+      const unitPrice = parseFloat(item.unitPrice);
+      const qty = parseInt(item.quantity, 10);
+      let finalMargin = getMargin(description, unitPrice);
+      if (qty > 5000) finalMargin -= 4;
+      else if (qty > 1000) finalMargin -= 2;
+      finalMargin = Math.max(finalMargin, minMargin);
+      const sellingPrice = roundUpToTen(unitPrice * (1 + finalMargin / 100));
+      const totalPrice = sellingPrice * qty;
+      totalClientAmount += totalPrice;
+      clientItems.push({ inquiryItemId: item.inquiryItemId, sellingPrice, quantity: qty, totalPrice });
+    }
+
+    const totalSellerCost = selectedItems.reduce((s, i) => s + parseFloat(i.totalPrice || 0), 0);
+    const averageMargin = totalSellerCost > 0 ? ((totalClientAmount - totalSellerCost) / totalSellerCost) * 100 : 0;
+    const taxPercentage = 18;
+    const finalClientAmount = totalClientAmount * 1.18;
+
+    const quotation = await tx.clientQuotation.create({
+      data: {
+        inquiryId: id,
+        quotationNumber,
+        marginPercentage: parseFloat(averageMargin.toFixed(2)),
+        discountPercentage: 0,
+        taxPercentage,
+        totalAmount: totalClientAmount,
+        finalAmount: finalClientAmount,
+        status: 'DRAFT',
+        createdById: userId
+      }
+    });
+
+    await tx.clientQuotationItem.createMany({
+      data: clientItems.map(ci => ({ clientQuotationId: quotation.id, ...ci }))
+    });
+
+    return inquiry;
+  });
+};
+
+/**
+ * Select Supplier Quote Action (during TL_REVIEW)
+ * Marks isSelected: true, isSelected: false for others, and generates ClientQuotation draft
+ */
+const selectSupplierQuote = async (id, quoteId, userId) => {
+  return await prisma.$transaction(async (tx) => {
+    const inquiry = await tx.inquiry.findUnique({
+      where: { id },
+      include: {
+        items: true,
+        supplierQuotes: true
+      }
+    });
+
+    if (!inquiry) {
+      throw new Error('Inquiry not found');
+    }
+
+    // 1. Mark isSelected
+    await tx.supplierQuote.updateMany({
+      where: { inquiryId: id },
+      data: { isSelected: false }
+    });
+
+    const selectedQuote = await tx.supplierQuote.update({
+      where: { id: quoteId },
+      data: { isSelected: true },
+      include: { items: true }
+    });
+
+    // 2. Clear old ClientQuotation & items for this inquiry
+    const oldClientQuotations = await tx.clientQuotation.findMany({
+      where: { inquiryId: id }
+    });
+    const oldCqIds = oldClientQuotations.map(cq => cq.id);
+    if (oldCqIds.length > 0) {
+      await tx.clientQuotationItem.deleteMany({
+        where: { clientQuotationId: { in: oldCqIds } }
+      });
+      await tx.clientQuotation.deleteMany({
+        where: { id: { in: oldCqIds } }
+      });
+    }
+
+    // 3. Generate new ClientQuotation & items
     const quoteCount = await tx.clientQuotation.count();
     const quotationNumber = `QT-${1000 + quoteCount + 1}`;
 
@@ -392,10 +766,9 @@ const submitSupplierQuote = async (id, data, userId) => {
       return Math.ceil(num / 10) * 10;
     };
 
-    const inquiryItems = await tx.inquiryItem.findMany({ where: { inquiryId: id } });
-    const inquiryItemMap = new Map(inquiryItems.map(item => [item.id, item]));
+    const inquiryItemMap = new Map(inquiry.items.map(item => [item.id, item]));
 
-    for (const item of data.items) {
+    for (const item of selectedQuote.items) {
       const dbItem = inquiryItemMap.get(item.inquiryItemId);
       const description = dbItem ? dbItem.description : '';
       const unitPrice = parseFloat(item.unitPrice);
@@ -421,7 +794,7 @@ const submitSupplierQuote = async (id, data, userId) => {
 
     const taxPercentage = 18;
     const finalClientAmount = totalClientAmount * 1.18;
-    const totalSellerCost = parseFloat(data.quoteAmount) || 0;
+    const totalSellerCost = parseFloat(selectedQuote.quoteAmount) || 0;
     const averageMarginPercent = totalSellerCost > 0 ? ((totalClientAmount - totalSellerCost) / totalSellerCost) * 100 : 0;
 
     const quotation = await tx.clientQuotation.create({
@@ -445,26 +818,62 @@ const submitSupplierQuote = async (id, data, userId) => {
       }))
     });
 
-    // Update status to TL_REVIEW directly
-    const updated = await tx.inquiry.update({
-      where: { id },
-      data: { currentStatus: 'TL_REVIEW', updatedById: userId }
-    });
-
     // History
     await tx.inquiryStatusHistory.create({
       data: {
         inquiryId: id,
-        fromStatus: 'RFQ_SENT',
+        fromStatus: 'TL_REVIEW',
         toStatus: 'TL_REVIEW',
         changedById: userId,
-        remarks: `Received supplier quote from supplier ID: ${data.supplierId}. Bypassed Client Quoting, sent to TL review.`
+        remarks: `Selected supplier quote from supplier ID: ${selectedQuote.supplierId}. Client quotation ${quotationNumber} generated.`
       }
     });
 
-    return updated;
+    return inquiry;
   });
 };
+
+/**
+ * Lazy check to automatically transition RFQs open for more than 3 days to TL_REVIEW
+ */
+async function autoCloseExpiredRFQs() {
+  const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+
+  const openRFQs = await prisma.inquiry.findMany({
+    where: {
+      currentStatus: 'RFQ_SENT',
+      deletedAt: null
+    },
+    include: {
+      statusHistory: {
+        where: { toStatus: 'RFQ_SENT' },
+        orderBy: { createdAt: 'desc' },
+        take: 1
+      }
+    }
+  });
+
+  if (openRFQs.length === 0) return;
+
+  const systemUser = await prisma.user.findFirst({
+    where: { role: { name: 'Super Admin' } }
+  });
+  const systemUserId = systemUser ? systemUser.id : 1;
+
+  for (const inq of openRFQs) {
+    const rfqSentTransition = inq.statusHistory[0];
+    const transitionTime = rfqSentTransition ? new Date(rfqSentTransition.createdAt) : new Date(inq.updatedAt);
+
+    if (transitionTime < threeDaysAgo) {
+      console.log(`Auto-closing expired RFQ for Inquiry ${inq.inquiryNumber}`);
+      try {
+        await closeRFQ(inq.id, systemUserId, 'Automatically closed after 3 days of opening');
+      } catch (err) {
+        console.error(`Failed to auto-close RFQ for Inquiry ${inq.id}:`, err.message);
+      }
+    }
+  }
+}
 
 /**
  * 4. Build Client Quote Action (CLIENT_QUOTING -> TL_REVIEW)
@@ -775,9 +1184,7 @@ const confirmDeal = async (id, data, userId) => {
         supplierQuotes: {
           include: {
             items: true
-          },
-          orderBy: { createdAt: 'desc' },
-          take: 1
+          }
         },
         clientQuotations: {
           orderBy: { createdAt: 'desc' },
@@ -790,108 +1197,171 @@ const confirmDeal = async (id, data, userId) => {
       throw new Error(`Inquiry status must be QUOTE_SENT. Current: ${inquiry ? inquiry.currentStatus : 'NOT FOUND'}`);
     }
 
-    // Get matched supplier
-    const matchedSupplierQuote = inquiry.supplierQuotes[0];
-    const clientQuote = inquiry.clientQuotations[0];
+    const supplierQuotes = inquiry.supplierQuotes || [];
 
-    if (!matchedSupplierQuote) {
+    // Map inquiryItemId -> selected SupplierQuoteItem
+    const selectedItemMapping = new Map();
+
+    for (const item of inquiry.items) {
+      let chosenSqi = null;
+      let chosenQuote = null;
+
+      // Find if any SupplierQuoteItem has isSelected === true for this inquiry item
+      for (const q of supplierQuotes) {
+        const sqi = q.items?.find(sqi => sqi.inquiryItemId === item.id);
+        if (sqi && sqi.isSelected) {
+          chosenSqi = sqi;
+          chosenQuote = q;
+          break;
+        }
+      }
+
+      // If not found, look for a selected quote as a whole
+      if (!chosenSqi) {
+        const selectedQuote = supplierQuotes.find(q => q.isSelected);
+        if (selectedQuote) {
+          const sqi = selectedQuote.items?.find(sqi => sqi.inquiryItemId === item.id);
+          if (sqi) {
+            chosenSqi = sqi;
+            chosenQuote = selectedQuote;
+          }
+        }
+      }
+
+      // Fallback to first available quote item
+      if (!chosenSqi) {
+        for (const q of supplierQuotes) {
+          const sqi = q.items?.find(sqi => sqi.inquiryItemId === item.id);
+          if (sqi) {
+            chosenSqi = sqi;
+            chosenQuote = q;
+            break;
+          }
+        }
+      }
+
+      if (chosenSqi && chosenQuote) {
+        selectedItemMapping.set(item.id, {
+          inquiryItem: item,
+          supplierQuoteItem: chosenSqi,
+          supplierQuote: chosenQuote,
+          supplierId: chosenQuote.supplierId
+        });
+      }
+    }
+
+    if (selectedItemMapping.size === 0) {
       throw new Error('No supplier quotes found for this inquiry. Deal cannot be confirmed.');
     }
 
-    // 1. Create Purchase Order (PO)
-    const poCount = await tx.purchaseOrder.count();
-    const poNumber = `PO-${1000 + poCount + 1}`;
-
-    const po = await tx.purchaseOrder.create({
-      data: {
-        poNumber,
-        supplierId: matchedSupplierQuote.supplierId,
-        clientId: inquiry.clientId,
-        inquiryId: id,
-        status: 'CONFIRMED',
-        amount: matchedSupplierQuote.finalAmount,
-        expectedDeliveryDate: inquiry.expectedDeliveryDate,
-        emailStatus: 'SENT',
-        createdById: userId
+    // Group by supplierId
+    const supplierGroups = new Map();
+    for (const [itemId, mapped] of selectedItemMapping.entries()) {
+      const { supplierId } = mapped;
+      if (!supplierGroups.has(supplierId)) {
+        supplierGroups.set(supplierId, []);
       }
-    });
+      supplierGroups.get(supplierId).push(mapped);
+    }
 
-    // Link items to PO
-    const inquiryItems = inquiry.items || [];
+    const basePoCount = await tx.purchaseOrder.count();
+    const baseShCount = await tx.shipment.count();
+    let poIndex = 0;
+    let shIndex = 0;
 
-    for (const item of inquiryItems) {
-      let productId = item.productId;
-      if (!productId) {
-        // Try to find product by description (matching the name)
-        let product = await tx.product.findFirst({
-          where: { name: item.description, deletedAt: null }
-        });
-        if (!product) {
-          // Create product on the fly
-          const skuCount = await tx.product.count();
-          const sku = `SKU-${1000 + skuCount + 1}`;
-          product = await tx.product.create({
-            data: {
-              name: item.description,
-              sku,
-              category: "General",
-              unit: item.unit || "PCS",
-              sellingPrice: matchedSupplierQuote.quoteAmount.toNumber() / inquiryItems.length, // estimate
-              purchasePrice: matchedSupplierQuote.quoteAmount.toNumber() / inquiryItems.length, // estimate
-            }
-          });
-        }
-        productId = product.id;
-      }
+    for (const [supplierId, groupItems] of supplierGroups.entries()) {
+      const poNumber = `PO-${1000 + basePoCount + poIndex + 1}`;
+      poIndex++;
 
-      // Find matching supplier quote item to get actual unit price
-      const sqItem = matchedSupplierQuote.items?.find(sqi => sqi.inquiryItemId === item.id);
-      const unitPrice = sqItem ? parseFloat(sqItem.unitPrice) : (item.quantity > 0 ? (matchedSupplierQuote.quoteAmount.toNumber() / item.quantity) : 0);
-      const totalPrice = sqItem ? (unitPrice * item.quantity) : (matchedSupplierQuote.quoteAmount.toNumber() / inquiryItems.length);
+      const poAmount = groupItems.reduce((sum, item) => sum + parseFloat(item.supplierQuoteItem.totalPrice || 0), 0);
 
-      await tx.purchaseOrderItem.create({
+      const po = await tx.purchaseOrder.create({
         data: {
+          poNumber,
+          supplierId,
+          clientId: inquiry.clientId,
+          inquiryId: id,
+          status: 'CONFIRMED',
+          amount: poAmount,
+          expectedDeliveryDate: inquiry.expectedDeliveryDate,
+          emailStatus: 'SENT',
+          createdById: userId
+        }
+      });
+
+      for (const mapped of groupItems) {
+        const item = mapped.inquiryItem;
+        const sqItem = mapped.supplierQuoteItem;
+
+        let productId = item.productId;
+        if (!productId) {
+          let product = await tx.product.findFirst({
+            where: { name: item.description, deletedAt: null }
+          });
+          if (!product) {
+            const skuCount = await tx.product.count();
+            const sku = `SKU-${1000 + skuCount + 1}`;
+            product = await tx.product.create({
+              data: {
+                name: item.description,
+                sku,
+                category: "General",
+                unit: item.unit || "PCS",
+                sellingPrice: parseFloat(sqItem.totalPrice) / item.quantity,
+                purchasePrice: parseFloat(sqItem.unitPrice),
+              }
+            });
+          }
+          productId = product.id;
+        }
+
+        const unitPrice = parseFloat(sqItem.unitPrice);
+        const totalPrice = parseFloat(sqItem.totalPrice);
+
+        await tx.purchaseOrderItem.create({
+          data: {
+            purchaseOrderId: po.id,
+            productId,
+            description: item.description,
+            quantity: item.quantity,
+            unitPrice,
+            totalPrice
+          }
+        });
+      }
+
+      // Create Shipment for this PO
+      const shipmentNumber = `SH-${1000 + baseShCount + shIndex + 1}`;
+      shIndex++;
+
+      await tx.shipment.create({
+        data: {
+          shipmentNumber,
+          inquiryId: id,
           purchaseOrderId: po.id,
-          productId,
-          description: item.description,
-          quantity: item.quantity,
-          unitPrice,
-          totalPrice
+          supplierId,
+          clientId: inquiry.clientId,
+          cargoDetails: groupItems.map(m => `${m.inquiryItem.description} (x${m.inquiryItem.quantity})`).join(', '),
+          currentStatus: 'PENDING',
+          createdById: userId
         }
       });
     }
 
-    // 2. Create Supply Shipment
-    const shCount = await tx.shipment.count();
-    const shipmentNumber = `SH-${1000 + shCount + 1}`;
-
-    await tx.shipment.create({
-      data: {
-        shipmentNumber,
-        inquiryId: id,
-        purchaseOrderId: po.id,
-        supplierId: matchedSupplierQuote.supplierId,
-        clientId: inquiry.clientId,
-        cargoDetails: inquiryItems.map(i => `${i.description} (x${i.quantity})`).join(', '),
-        currentStatus: 'PENDING',
-        createdById: userId
-      }
-    });
-
-    // 3. Update status
+    // 3. Update status of the inquiry
     const updated = await tx.inquiry.update({
       where: { id },
       data: { currentStatus: 'CONFIRMED', updatedById: userId }
     });
 
-    // 4. History
+    // 4. History log
     await tx.inquiryStatusHistory.create({
       data: {
         inquiryId: id,
         fromStatus: 'QUOTE_SENT',
         toStatus: 'CONFIRMED',
         changedById: userId,
-        remarks: 'Deal confirmed. Spawned Purchase Order and Supply Shipment logistics.'
+        remarks: `Deal confirmed. Generated ${poIndex} Purchase Order(s) and Shipment(s) for the selected vendors.`
       }
     });
 
@@ -941,6 +1411,10 @@ module.exports = {
   stockCheck,
   sendRFQ,
   submitSupplierQuote,
+  closeRFQ,
+  selectSupplierQuoteItem,
+  selectSupplierQuoteItems,
+  selectSupplierQuote,
   submitClientQuote,
   teamLeadApprove,
   adminApprove,

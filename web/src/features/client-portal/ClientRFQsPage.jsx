@@ -65,9 +65,14 @@ export default function ClientRFQsPage() {
         setInvoicesData(mappedInvoices);
       }
 
-      // Auto-select first supplier if available
+      // Auto-select first supplier or matching supplier if available
       if (suppliersRes.data && suppliersRes.data.length > 0) {
-        setSelectedSupplierId(suppliersRes.data[0].id);
+        const matched = suppliersRes.data.find(s => s.email.toLowerCase() === currentUser?.email?.toLowerCase());
+        if (matched) {
+          setSelectedSupplierId(matched.id);
+        } else {
+          setSelectedSupplierId(suppliersRes.data[0].id);
+        }
       }
     } catch (err) {
       console.error("Error loading client portal data:", err);
@@ -87,16 +92,36 @@ export default function ClientRFQsPage() {
     loadData();
   }, []);
 
-  // Filter inquiries that are in RFQ_SENT status or any status after it, containing the selected supplier
+  const matchedSupplier = useMemo(() => {
+    return suppliers.find(s => s.email.toLowerCase() === currentUser?.email?.toLowerCase());
+  }, [suppliers, currentUser]);
+
+  const currentSupplier = useMemo(() => {
+    return suppliers.find(s => s.id === selectedSupplierId);
+  }, [suppliers, selectedSupplierId]);
+
+  // Get allotted items for an inquiry
+  const getAllottedItems = (inq, supplier) => {
+    if (!inq || !inq.items || !supplier) return [];
+    return inq.items.filter(item => {
+      const itemCategory = item.product?.category || "General";
+      return (supplier.categories || []).some(
+        cat => cat.toLowerCase() === itemCategory.toLowerCase()
+      );
+    });
+  };
+
+  // Filter inquiries that are in RFQ_SENT status or any status after it, containing the selected supplier and allotted items
   const activeRFQs = useMemo(() => {
-    if (!selectedSupplierId) return [];
+    if (!selectedSupplierId || !currentSupplier) return [];
     const nonPortalStatuses = ["PENDING", "RFQ_READY", "CONFIRMED", "CLOSED"];
     return inquiries.filter(
       (inq) =>
         !nonPortalStatuses.includes(inq.status) &&
-        inq.suppliers?.some((s) => s.supplierId === selectedSupplierId)
+        inq.suppliers?.some((s) => s.supplierId === selectedSupplierId) &&
+        getAllottedItems(inq, currentSupplier).length > 0
     );
-  }, [inquiries, selectedSupplierId]);
+  }, [inquiries, selectedSupplierId, currentSupplier]);
 
   // Filter shipments with ORDER_PLACED or DISPATCHED status for the selected supplier
   const activeOrders = useMemo(() => {
@@ -107,6 +132,12 @@ export default function ClientRFQsPage() {
         ship.supplierId === selectedSupplierId
     );
   }, [shipments, selectedSupplierId]);
+
+  // Filter invoices belonging to the active supplier
+  const filteredInvoices = useMemo(() => {
+    if (!selectedSupplierId) return [];
+    return invoicesData.filter(inv => inv.shipment?.supplierId === selectedSupplierId);
+  }, [invoicesData, selectedSupplierId]);
 
   // Handle selected inquiry change to reset prices
   const handleSelectInquiry = (inq) => {
@@ -122,11 +153,12 @@ export default function ClientRFQsPage() {
 
   // Price calculations
   const totals = useMemo(() => {
-    if (!selectedInquiry || !selectedInquiry.items) {
+    if (!selectedInquiry || !selectedInquiry.items || !currentSupplier) {
       return { subtotal: 0, tax: 0, total: 0 };
     }
     let subtotal = 0;
-    selectedInquiry.items.forEach((item) => {
+    const allotted = getAllottedItems(selectedInquiry, currentSupplier);
+    allotted.forEach((item) => {
       const unitPrice = parseFloat(prices[item.id]) || 0;
       subtotal += unitPrice * item.quantity;
     });
@@ -136,7 +168,7 @@ export default function ClientRFQsPage() {
       tax,
       total: subtotal + tax,
     };
-  }, [selectedInquiry, prices]);
+  }, [selectedInquiry, prices, currentSupplier]);
 
   const handlePriceChange = (itemId, val) => {
     setPrices((prev) => ({
@@ -146,25 +178,28 @@ export default function ClientRFQsPage() {
   };
 
   const isFormValid = useMemo(() => {
-    if (!selectedInquiry || !selectedInquiry.items) return false;
-    return selectedInquiry.items.every(
+    if (!selectedInquiry || !selectedInquiry.items || !currentSupplier) return false;
+    const allotted = getAllottedItems(selectedInquiry, currentSupplier);
+    if (allotted.length === 0) return false;
+    return allotted.every(
       (item) => parseFloat(prices[item.id]) > 0
     );
-  }, [selectedInquiry, prices]);
+  }, [selectedInquiry, prices, currentSupplier]);
 
   const handleSubmitQuote = async (e) => {
     e.preventDefault();
-    if (!isFormValid || !selectedInquiry) return;
+    if (!isFormValid || !selectedInquiry || !currentSupplier) return;
 
     setSubmitting(true);
     try {
+      const allotted = getAllottedItems(selectedInquiry, currentSupplier);
       const payload = {
         supplierId: selectedSupplierId,
         quoteAmount: totals.subtotal,
         taxAmount: totals.tax,
         finalAmount: totals.total,
         validityDate: new Date(validityDate).toISOString(),
-        items: selectedInquiry.items.map((item) => {
+        items: allotted.map((item) => {
           const unitPrice = parseFloat(prices[item.id]);
           return {
             inquiryItemId: item.id,
@@ -315,7 +350,7 @@ export default function ClientRFQsPage() {
             <div className="bg-white dark:bg-[#1a1d23] rounded-2xl p-6 border border-gray-200 dark:border-[#2a2d33] shadow-sm">
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Quote Unit Prices</h3>
               <div className="space-y-4">
-                {selectedInquiry.items?.map((item) => (
+                {getAllottedItems(selectedInquiry, currentSupplier).map((item) => (
                   <div
                     key={item.id}
                     className="p-5 bg-gray-55/35 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-2xl space-y-3"
@@ -497,10 +532,6 @@ export default function ClientRFQsPage() {
                 <div>
                   <span className="text-[10px] font-bold text-gray-400 dark:text-gray-550 uppercase tracking-widest block">Client Name</span>
                   <span className="text-sm font-bold text-gray-800 dark:text-white mt-1 block">{viewingQuoteInquiry.buyer_name}</span>
-                </div>
-                <div className="border-t border-gray-100 dark:border-[#2a2d33]/80 pt-3">
-                  <span className="text-[10px] font-bold text-gray-400 dark:text-gray-550 uppercase tracking-widest block">Vessel / Reference</span>
-                  <span className="text-sm font-bold text-gray-805 dark:text-gray-205 mt-1 block">{viewingQuoteInquiry.vessel_name || "—"}</span>
                 </div>
                 <div className="border-t border-gray-100 dark:border-[#2a2d33]/80 pt-3">
                   <span className="text-[10px] font-bold text-gray-400 dark:text-gray-550 uppercase tracking-widest block">Quote Validity</span>
@@ -785,25 +816,36 @@ export default function ClientRFQsPage() {
           <p className="text-xs text-gray-500 mt-1">Submit product unit prices for requested inquiries.</p>
         </div>
 
-        {/* Supplier Profile Selector */}
-        <div className="flex items-center gap-3">
-          <label className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-            Active Supplier Profile:
-          </label>
-          <Select
-            variant="settings"
-            value={selectedSupplierId}
-            onChange={(val) => {
-              setSelectedSupplierId(val);
-              setSelectedInquiry(null);
-            }}
-            options={suppliers.map((s) => ({
-              value: s.id,
-              label: s.name,
-            }))}
-            className="min-w-[200px]"
-          />
-        </div>
+        {/* Supplier Profile Info / Selector */}
+        {matchedSupplier ? (
+          <div className="flex items-center gap-2.5 bg-purple-500/10 border border-purple-550/20 px-4 py-2 rounded-xl">
+            <span className="text-xs font-semibold text-gray-400 dark:text-gray-550 uppercase tracking-wider">
+              Supplier Profile:
+            </span>
+            <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
+              {matchedSupplier.company ? `${matchedSupplier.name} (${matchedSupplier.company})` : matchedSupplier.name}
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <label className="text-xs font-semibold text-gray-400 dark:text-gray-550 uppercase tracking-wider">
+              Active Supplier Profile:
+            </label>
+            <Select
+              variant="settings"
+              value={selectedSupplierId}
+              onChange={(val) => {
+                setSelectedSupplierId(val);
+                setSelectedInquiry(null);
+              }}
+              options={suppliers.map((s) => ({
+                value: s.id,
+                label: s.company ? `${s.name} (${s.company})` : `${s.name} (${s.email})`,
+              }))}
+              className="min-w-[200px]"
+            />
+          </div>
+        )}
       </div>
 
       {/* Tab Switcher */}
@@ -874,69 +916,74 @@ export default function ClientRFQsPage() {
                   columns={ClientRFQsPageSchema2}
                   data={activeRFQs}
                   emptyMessage="No pending RFQs found for this supplier profile."
-                  renderRow={(inq, idx) => (
-                    <tr
-                      key={inq.inquiry_id}
-                      className={`border-b border-gray-100 dark:border-[#2a2d33] transition-colors ${inq.status === "RFQ_SENT"
-                        ? "hover:bg-gray-55/40 dark:hover:bg-white/[0.01] cursor-pointer"
-                        : "opacity-85"
-                        }`}
-                      onClick={() => inq.status === "RFQ_SENT" && handleSelectInquiry(inq)}
-                    >
-                      <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + idx + 1}</td>
-                      <td className="px-6 py-4 font-mono font-bold text-sm text-gray-900 dark:text-white">
-                        {inq.inquiry_id}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="font-bold text-gray-800 dark:text-white text-sm">{inq.buyer_name}</span>
-                          <span className="text-[10px] text-gray-400">{inq.buyer_email}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                        {inq.vessel_name || "—"}
-                      </td>
-                      <td className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                        {inq.products?.length || 0}
-                      </td>
-                      <td className="px-6 py-4 text-xs text-gray-500">
-                        {inq.date_received ? new Date(inq.date_received).toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric"
-                        }) : "—"}
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <StatusBadge status={inq.status} />
-                      </td>
-                      <td className="px-6 py-4 text-right flex justify-end gap-2">
-                        {inq.status === "RFQ_SENT" ? (
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                          >
-                            Enter Prices
-                          </Button>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex px-2.5 py-1 text-xs font-semibold rounded-lg bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">
-                              Quoted
-                            </span>
+                  renderRow={(inq, idx) => {
+                    const hasAlreadyQuoted = inq.supplierQuotes?.some(q => q.supplierId === selectedSupplierId);
+                    return (
+                      <tr
+                        key={inq.inquiry_id}
+                        className={`border-b border-gray-100 dark:border-[#2a2d33] transition-colors ${inq.status === "RFQ_SENT" && !hasAlreadyQuoted
+                          ? "hover:bg-gray-55/40 dark:hover:bg-white/[0.01] cursor-pointer"
+                          : "opacity-85"
+                          }`}
+                        onClick={() => inq.status === "RFQ_SENT" && !hasAlreadyQuoted && handleSelectInquiry(inq)}
+                      >
+                        <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + idx + 1}</td>
+                        <td className="px-6 py-4 font-mono font-bold text-sm text-gray-900 dark:text-white">
+                          {inq.inquiry_id}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-gray-800 dark:text-white text-sm">{inq.buyer_name}</span>
+                            <span className="text-[10px] text-gray-400">{inq.buyer_email}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+                          {inq.vessel_name || "—"}
+                        </td>
+                        <td className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+                          {getAllottedItems(inq, currentSupplier).length}
+                        </td>
+                        <td className="px-6 py-4 text-xs text-gray-500">
+                          {inq.date_received ? new Date(inq.date_received).toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric"
+                          }) : "—"}
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <StatusBadge status={inq.status} />
+                        </td>
+                        <td className="px-6 py-4 text-right flex justify-end gap-2">
+                          {inq.status === "RFQ_SENT" && !hasAlreadyQuoted ? (
                             <Button
                               variant="secondary"
                               size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setViewingQuoteInquiry(inq);
-                              }}
                             >
-                              View Quote
+                              Enter Prices
                             </Button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  )}
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex px-2.5 py-1 text-xs font-semibold rounded-lg bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">
+                                Quoted
+                              </span>
+                              {inq.supplierQuotes?.some(q => q.supplierId === selectedSupplierId) && (
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setViewingQuoteInquiry(inq);
+                                  }}
+                                >
+                                  View Quote
+                                </Button>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  }}
                 />
               </div>
             </div>
@@ -1008,7 +1055,7 @@ export default function ClientRFQsPage() {
             <div className="overflow-x-auto flex-1">
               <DataTable
                 columns={ClientRFQsPageSchema4}
-                data={invoicesData}
+                data={filteredInvoices}
                 emptyMessage="No invoices found."
                 renderRow={(inv, idx) => (
                   <tr key={inv.id} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}>

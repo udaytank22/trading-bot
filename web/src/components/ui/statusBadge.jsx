@@ -82,6 +82,10 @@ const STATUS_STYLES = {
     "bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/25",
   DELIVERED:
     "bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/25",
+  OUT_FOR_DELIVERY:
+    "bg-orange-50 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-500/25",
+  CHALLAN_RECEIVED:
+    "bg-teal-50 dark:bg-teal-500/20 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-500/25",
 
   // ── Employee / Account statuses ────────────────────────────────────────────
   Active:
@@ -116,7 +120,9 @@ const STATUS_LABELS = {
   IN_TRANSIT:   "In Transit",
   ORDERED:      "Ordered",
   ORDER_PLACED: "Order Placed",
-  DISPATCHED:   "Dispatched"
+  DISPATCHED:   "Dispatched",
+  OUT_FOR_DELIVERY: "Out for Delivery",
+  CHALLAN_RECEIVED: "Challan Received"
 };
 
 // ─── Fallback style for unknown statuses ───────────────────────────────────────

@@ -36,5 +36,9 @@ router.post('/:id/final-verify', checkPermission('inquiries', 'approve'), asyncW
 router.post('/:id/client-decision', checkPermission('inquiries', 'approve'), validate(validateClientDecision), asyncWrapper(controller.clientDecision));
 router.post('/:id/confirm-deal', checkPermission('inquiries', 'approve'), asyncWrapper(controller.confirmDeal));
 router.post('/:id/close', checkPermission('inquiries', 'approve'), asyncWrapper(controller.close));
+router.post('/:id/close-rfq', checkPermission('inquiries', 'approve'), asyncWrapper(controller.closeRFQ));
+router.post('/:id/select-supplier-quote', checkPermission('inquiries', 'approve'), asyncWrapper(controller.selectSupplierQuote));
+router.post('/:id/select-supplier-quote-item', checkPermission('inquiries', 'approve'), asyncWrapper(controller.selectSupplierQuoteItem));
+router.post('/:id/select-supplier-quote-items', checkPermission('inquiries', 'approve'), asyncWrapper(controller.selectSupplierQuoteItems));
 
 module.exports = router;

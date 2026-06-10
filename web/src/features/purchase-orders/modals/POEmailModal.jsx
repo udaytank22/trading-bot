@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { formatINR } from '@services/marginEngine';
-import { generatePOPDF } from "../utils/poPdfGenerator";
+import { generatePOPDF, getSourcedSupplierForItem, getSourcedQuoteItemAndSupplier } from "../utils/poPdfGenerator";
 
 export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -58,6 +58,14 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
 
   if (!isOpen || !po) return null;
 
+  const poNumber = po.poNumber || po.po_id || '—';
+  const supplierName = po.supplier?.name || po.supplier || "Supplier";
+  const supplierEmail = po.supplier?.email || `${supplierName.toLowerCase().replace(/\s/g, ".")}@trademind.com`;
+  const clientName = po.client?.name || po.customer || "Client";
+  const vesselName = po.inquiry?.vesselName || po.inquiry?.vessel || po.vessel || '—';
+
+  const itemsList = po.items || po.products || [];
+
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
       {/* Backdrop */}
@@ -92,7 +100,7 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
               Email Sent Successfully!
             </h2>
             <p className="text-gray-400">
-              Status updated to Ordered for {po.po_id}
+              Status updated to Ordered for {poNumber}
             </p>
           </div>
         ) : /* ── PDF VIEWER PANEL ── */
@@ -141,7 +149,7 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
                 </div>
                 <a
                   href={pdfUrl}
-                  download={`${po.po_id}_Document.pdf`}
+                  download={`${poNumber}_Document.pdf`}
                   className="flex items-center gap-1.5 text-xs font-bold text-purple-500 bg-purple-500/10 px-2.5 py-1 rounded-full border border-purple-500/20 hover:bg-purple-500/20 transition-colors"
                 >
                   <svg
@@ -205,9 +213,7 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
                       To:
                     </span>
                     <span className="font-bold">
-                      {po.customer} &lt;
-                      {po.customer.toLowerCase().replace(/\s/g, ".")}
-                      @trademind.com&gt;
+                      {supplierName} &lt;{supplierEmail}&gt;
                     </span>
                   </div>
                   <div className="flex text-sm">
@@ -215,7 +221,7 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
                       Subject:
                     </span>
                     <span className="font-bold">
-                      Official Purchase Order - {po.po_id}
+                      Official Purchase Order - {poNumber}
                     </span>
                   </div>
                 </div>
@@ -226,10 +232,10 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
                   contentEditable={isEditing}
                   suppressContentEditableWarning
                 >
-                  <p>Dear {po.customer},</p>
+                  <p>Dear {supplierName},</p>
                   <p>
                     We are pleased to place the following Purchase Order for the
-                    upcoming requirements on vessel <strong>{po.vessel}</strong>
+                    upcoming requirements on vessel <strong>{vesselName}</strong>
                     .
                   </p>
                   <p>
@@ -251,12 +257,18 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-150 bg-white">
-                          {po.products.map((p, i) => (
+                          {itemsList.map((p, i) => (
                             <tr key={i} className="hover:bg-gray-50/40 transition-colors">
-                              <td className="px-4 py-2 font-medium text-gray-900">{p.product_name}</td>
+                              <td className="px-4 py-2 font-medium text-gray-900">
+                                {p.description || p.product?.name || p.product_name || '—'}
+                              </td>
                               <td className="px-4 py-2 text-center text-gray-600 font-mono">{p.quantity} PCS</td>
-                              <td className="px-4 py-2 text-right text-gray-600 font-mono">{formatINR(p.unit_price || p.my_unit_price || 0)}</td>
-                              <td className="px-4 py-2 text-right font-semibold text-purple-600 font-mono">{formatINR(p.total_price || 0)}</td>
+                              <td className="px-4 py-2 text-right text-gray-600 font-mono">
+                                {formatINR(p.unitPrice || p.unit_price || p.my_unit_price || 0)}
+                              </td>
+                              <td className="px-4 py-2 text-right font-semibold text-purple-600 font-mono">
+                                {formatINR(p.totalPrice || p.total_price || p.total_my_price || 0)}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -308,7 +320,7 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
                     {/* File info */}
                     <div className="flex-1 min-w-0 pr-2">
                       <p className="text-[12px] font-bold text-gray-700 group-hover:text-purple-600 transition-colors">
-                        {po.po_id}_Document.pdf
+                        {poNumber}_Document.pdf
                       </p>
                       <p className="text-[10px] text-gray-500 uppercase tracking-widest">
                         {pdfSize} • PDF Document
@@ -344,7 +356,7 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
                       {/* Download button — stops propagation so card click isn't fired */}
                       <a
                         href={pdfUrl}
-                        download={`${po.po_id}_Document.pdf`}
+                        download={`${poNumber}_Document.pdf`}
                         onClick={(e) => e.stopPropagation()}
                         title="Download PDF"
                         className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors"

@@ -400,6 +400,104 @@ const close = async (req, res) => {
   return sendSuccess(res, 'Inquiry closed successfully', fullInquiry);
 };
 
+/**
+ * Close RFQ manually action handler
+ */
+const closeRFQ = async (req, res) => {
+  const updated = await service.closeRFQ(req.params.id, req.user.id);
+
+  await createAuditLog({
+    userId: req.user.id,
+    module: 'inquiries',
+    action: 'status change',
+    recordId: updated.id,
+    newValue: updated,
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent']
+  });
+
+  await notifyAdmins({
+    title: 'RFQ Closed',
+    message: `Inquiry ${updated.inquiryNumber} RFQ has been closed manually.`,
+    type: 'inquiry',
+    relatedModule: 'inquiries',
+    relatedRecordId: updated.id
+  });
+
+  const fullInquiry = await service.getInquiryById(updated.id);
+  return sendSuccess(res, 'RFQ manually closed successfully', fullInquiry);
+};
+
+/**
+ * Select supplier quote action handler
+ */
+const selectSupplierQuote = async (req, res) => {
+  const updated = await service.selectSupplierQuote(req.params.id, req.body.quoteId, req.user.id);
+
+  await createAuditLog({
+    userId: req.user.id,
+    module: 'inquiries',
+    action: 'update',
+    recordId: updated.id,
+    newValue: updated,
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent']
+  });
+
+  const fullInquiry = await service.getInquiryById(updated.id);
+  return sendSuccess(res, 'Supplier quote selected successfully', fullInquiry);
+};
+
+/**
+ * Select a specific supplier quote ITEM (per-product selection)
+ */
+const selectSupplierQuoteItem = async (req, res) => {
+  const { id } = req.params;
+  const { quoteItemId } = req.body;
+  if (!quoteItemId) {
+    return res.status(400).json({ success: false, message: 'quoteItemId is required' });
+  }
+  const result = await service.selectSupplierQuoteItem(parseInt(id), parseInt(quoteItemId), req.user.id);
+
+  await createAuditLog({
+    userId: req.user.id,
+    module: 'inquiries',
+    action: 'update',
+    recordId: parseInt(id),
+    newValue: { quoteItemId },
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent']
+  });
+
+  const fullInquiry = await service.getInquiryById(parseInt(id));
+  return sendSuccess(res, 'Product sourcing selection updated', fullInquiry);
+};
+
+/**
+ * Batch: confirm all checkbox selections at once
+ */
+const selectSupplierQuoteItems = async (req, res) => {
+  const { id } = req.params;
+  const { selections } = req.body;
+  if (!selections || !Array.isArray(selections) || selections.length === 0) {
+    return res.status(400).json({ success: false, message: 'selections array is required' });
+  }
+  await service.selectSupplierQuoteItems(parseInt(id), selections, req.user.id);
+
+  await createAuditLog({
+    userId: req.user.id,
+    module: 'inquiries',
+    action: 'update',
+    recordId: parseInt(id),
+    newValue: { selections },
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent']
+  });
+
+  const fullInquiry = await service.getInquiryById(parseInt(id));
+  return sendSuccess(res, 'Sourcing selections confirmed', fullInquiry);
+};
+
 module.exports = {
   getInquiries,
   getInquiry,
@@ -417,5 +515,9 @@ module.exports = {
   finalVerify,
   clientDecision,
   confirmDeal,
-  close
+  close,
+  closeRFQ,
+  selectSupplierQuote,
+  selectSupplierQuoteItem,
+  selectSupplierQuoteItems
 };

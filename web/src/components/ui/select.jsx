@@ -39,6 +39,7 @@ export default function Select({
   placeholder = "Select...",
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const dropdownRef = useRef(null);
   const menuRef = useRef(null);
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
@@ -61,7 +62,10 @@ export default function Select({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      setSearchTerm("");
+      return;
+    }
 
     window.addEventListener("scroll", updateCoords, true);
     window.addEventListener("resize", updateCoords);
@@ -93,6 +97,10 @@ export default function Select({
 
   const baseBtnCls =
     "flex items-center justify-between w-full border focus:outline-none focus:border-purple-500 cursor-pointer transition-colors text-left";
+
+  const filteredOptions = options.filter((opt) =>
+    (opt.label || "").toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -129,29 +137,50 @@ export default function Select({
               left: `${coords.left}px`,
               width: `${coords.width}px`,
             }}
-            className="z-[999999] min-w-[120px] mt-1 bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg shadow-lg max-h-[150px] overflow-y-auto py-1"
+            className="z-[999999] min-w-[150px] mt-1 bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-lg shadow-lg max-h-[220px] overflow-hidden flex flex-col py-1"
           >
-            {options.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                role="option"
-                aria-selected={value === opt.value}
-                onClick={() => {
-                  onChange(opt.value);
-                  setIsOpen(false);
-                }}
-                className={[
-                  "w-full text-left px-3 py-2 font-medium transition-colors",
-                  itemTextSize,
-                  value === opt.value
-                    ? "bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400"
-                    : "text-gray-900 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#242830]",
-                ].join(" ")}
-              >
-                {opt.label}
-              </button>
-            ))}
+            {/* Search filter input */}
+            <div className="px-2 py-1.5 border-b border-gray-100 dark:border-[#2a2d33] flex-shrink-0">
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onClick={(e) => e.stopPropagation()} // Prevent closing dropdown on click
+                className="w-full h-8 px-2.5 text-xs rounded-md bg-gray-50 dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d33] text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:border-purple-500 transition-colors"
+                autoFocus
+              />
+            </div>
+
+            {/* Options list */}
+            <div className="flex-1 overflow-y-auto max-h-[165px]">
+              {filteredOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="option"
+                  aria-selected={value === opt.value}
+                  onClick={() => {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  }}
+                  className={[
+                    "w-full text-left px-3 py-2 font-medium transition-colors block truncate",
+                    itemTextSize,
+                    value === opt.value
+                      ? "bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400"
+                      : "text-gray-900 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#242830]",
+                  ].join(" ")}
+                >
+                  {opt.label}
+                </button>
+              ))}
+              {filteredOptions.length === 0 && (
+                <div className="px-3 py-3 text-xs text-gray-400 text-center italic">
+                  No matches found
+                </div>
+              )}
+            </div>
           </div>,
           document.body
         )}

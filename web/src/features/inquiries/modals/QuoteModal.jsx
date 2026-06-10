@@ -30,12 +30,12 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
   const isTLReview = deal?.status === "TL_REVIEW";
 
   const calculations = useMemo(() => {
-    if (!isTLReview || !deal?.seller_quote?.products) return null;
+    if (!isTLReview || !deal?.seller_quote?.products || deal.seller_quote.products.length === 0) return null;
 
     let totalSellerCost = 0;
-    deal.seller_quote.products.forEach((sqp, idx) => {
-      const quantity = deal.products?.[idx]?.quantity || 1;
-      totalSellerCost += (sqp.seller_unit_price || 0) * quantity;
+    deal.seller_quote.products.forEach((sqp) => {
+      const qty = sqp.moq || 1;
+      totalSellerCost += (sqp.seller_unit_price || 0) * qty;
     });
 
     const marginVal = parseFloat(margin) || 0;
@@ -128,23 +128,57 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
         }}
         className="p-6 space-y-6"
       >
-        {isTLReview && (
-          <div className="space-y-4">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Base Quoted Prices (Supplier)</h3>
-            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-1 ${isPageMode ? "" : "max-h-[300px] overflow-y-auto custom-scrollbar"}`}>
-              {deal?.seller_quote?.products?.map((p, idx) => {
-                const quantity = deal.products?.[idx]?.quantity || 0;
-                const unit = deal.products?.[idx]?.unit || "pcs";
-                return (
-                  <div key={idx} className="flex flex-col bg-gray-100 dark:bg-[#0c0e12] p-3 rounded-xl border border-gray-200 dark:border-[#2a2d33]">
-                    <div className="flex justify-between items-start mb-1 gap-2">
-                      <span className="text-xs text-gray-400 font-medium truncate" title={p.product_name}>{p.product_name}</span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 shrink-0">Qty: {quantity} {unit}</span>
-                    </div>
-                    <span className="text-sm font-mono font-bold text-gray-900 dark:text-white font-semibold">₹ {new Intl.NumberFormat('en-IN').format(p.seller_unit_price || 0)}</span>
-                  </div>
-                );
-              })}
+        {isTLReview && deal?.seller_quote?.products && deal.seller_quote.products.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex justify-between items-center flex-wrap gap-2">
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Base Quoted Prices (Supplier)</h3>
+              {deal.seller_quote.is_multi_supplier ? (
+                <span className="px-2 py-0.5 bg-purple-500/10 text-purple-650 dark:text-purple-400 text-[10px] font-bold rounded">
+                  Multi-Supplier Sourcing
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 bg-purple-500/10 text-purple-650 dark:text-purple-400 text-[10px] font-bold rounded">
+                  Using: {deal.seller_quote.seller_name}
+                </span>
+              )}
+            </div>
+
+            {/* Products table */}
+            <div className="rounded-xl border border-gray-200 dark:border-[#2a2d33] overflow-hidden">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-gray-50 dark:bg-[#0c0e12] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider border-b border-gray-200 dark:border-[#2a2d33]">
+                    <th className="px-4 py-2.5 text-left">Product</th>
+                    <th className="px-4 py-2.5 text-left">Supplier</th>
+                    <th className="px-4 py-2.5 text-center">Qty</th>
+                    <th className="px-4 py-2.5 text-right">Unit Price</th>
+                    <th className="px-4 py-2.5 text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deal.seller_quote.products.map((p, idx) => {
+                    const qty = p.moq || 1;
+                    const rowTotal = (p.seller_unit_price || 0) * qty;
+                    return (
+                      <tr key={idx} className="border-b border-gray-100 dark:border-[#2a2d33]/50 last:border-0 hover:bg-gray-50 dark:hover:bg-[#0c0e12]/50 transition-colors">
+                        <td className="px-4 py-2.5 font-semibold text-gray-800 dark:text-gray-200">{p.product_name}</td>
+                        <td className="px-4 py-2.5">
+                          <span className="px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9px] font-bold rounded uppercase tracking-wider">
+                            {p.supplier_name || deal.seller_quote.seller_name}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 font-mono text-center text-gray-600 dark:text-gray-400">{qty}</td>
+                        <td className="px-4 py-2.5 font-mono text-right text-gray-700 dark:text-gray-300">
+                          ₹ {new Intl.NumberFormat('en-IN').format(p.seller_unit_price || 0)}
+                        </td>
+                        <td className="px-4 py-2.5 font-mono text-right font-bold text-gray-900 dark:text-white">
+                          ₹ {new Intl.NumberFormat('en-IN').format(rowTotal)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
         )}

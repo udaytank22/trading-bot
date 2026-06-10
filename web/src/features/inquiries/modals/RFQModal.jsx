@@ -1,6 +1,5 @@
-import { RFQModalSchema1 } from '@config/tableSchemas';
 import React, { useState, useMemo } from "react";
-import { DataTable, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
+import { DataTable, rowStripeClass } from '@components/ui';
 import { useData } from '@context';
 
 const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
@@ -38,7 +37,7 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
   };
 
   const content = (
-    <div className={`${isPageMode ? 'w-full bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden' : 'bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden'} animate-in zoom-in-95 duration-200`}>
+    <div className={`${isPageMode ? 'w-full bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden' : 'bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl shadow-2xl overflow-hidden'} animate-in zoom-in-95 duration-200`}>
       {!isPageMode && (
         <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
           <div className="flex items-center gap-4">
@@ -53,6 +52,7 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Please verify the vendors and their assigned products before sending the RFQ emails. This list was automatically generated based on the suppliers you selected in the Stock Check step.
           </p>
+
           <div className="border border-gray-200 dark:border-[#2a2d33] rounded-2xl overflow-hidden bg-gray-100 dark:bg-[#0c0e12]">
             <DataTable
               columns={[

@@ -38,6 +38,57 @@ function drawRupeeSymbol(doc, x, y, size = 2.4) {
   doc.setDrawColor(prevDrawColor);
 }
 
+export function getSourcedQuoteItemAndSupplier(inquiryItem, po) {
+  if (!po || !po.inquiry || !po.inquiry.supplierQuotes) {
+    return null;
+  }
+  const supplierQuotes = po.inquiry.supplierQuotes || [];
+
+  // 1. Look for explicit item selection
+  for (const q of supplierQuotes) {
+    const sqi = q.items?.find(sqi => sqi.inquiryItemId === inquiryItem.id);
+    if (sqi && sqi.isSelected) {
+      return { sqi, supplier: q.supplier };
+    }
+  }
+
+  // 2. Look for whole quote selection
+  const selectedQuote = supplierQuotes.find(q => q.isSelected);
+  if (selectedQuote) {
+    const sqi = selectedQuote.items?.find(sqi => sqi.inquiryItemId === inquiryItem.id);
+    if (sqi) {
+      return { sqi, supplier: selectedQuote.supplier };
+    }
+  }
+
+  // 3. Fallback to the first available quote item
+  for (const q of supplierQuotes) {
+    const sqi = q.items?.find(sqi => sqi.inquiryItemId === inquiryItem.id);
+    if (sqi) {
+      return { sqi, supplier: q.supplier };
+    }
+  }
+
+  return null;
+}
+
+export function getSourcedSupplierForItem(item, po) {
+  if (!po || !po.inquiry || !po.inquiry.items) {
+    return po?.supplier || null;
+  }
+
+  const productName = item.description || item.product?.name || item.product_name || '';
+  const inquiryItem = po.inquiry.items.find(
+    ii => ii.description === productName
+  );
+  if (!inquiryItem) {
+    return po?.supplier || null;
+  }
+
+  const resolved = getSourcedQuoteItemAndSupplier(inquiryItem, po);
+  return resolved?.supplier || po?.supplier || null;
+}
+
 export function generatePOPDF(po) {
   const doc = new jsPDF('p', 'mm', 'a4');
   
@@ -95,10 +146,10 @@ export function generatePOPDF(po) {
   doc.text('DATE', 148, 38);
   doc.text('PO #', 148, 44);
 
-  const formattedDate = new Date(po.date).toLocaleDateString('en-GB');
+  const formattedDate = new Date(po.createdAt || po.date).toLocaleDateString('en-GB');
   doc.setFont('Helvetica', 'bold');
   doc.text(formattedDate, 172, 38);
-  doc.text(po.po_id || '[123456]', 172, 44);
+  doc.text(po.poNumber || po.po_id || '[123456]', 172, 44);
 
   // 4. Vendor / Ship To boxes
   // VENDOR Header Bar
@@ -113,12 +164,12 @@ export function generatePOPDF(po) {
   doc.setFont('Helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(80, 80, 80);
-  doc.text('[Company Name]', 14, 83);
-  doc.text('[Contact or Department]', 14, 88);
-  doc.text('[Street Address]', 14, 93);
-  doc.text('[City, ST ZIP]', 14, 98);
-  doc.text('Phone: (000) 000-0000', 14, 103);
-  doc.text('Fax: (000) 000-0000', 14, 108);
+  doc.text(po.supplier?.name || po.supplier || '[Company Name]', 14, 83);
+  doc.text(po.supplier?.email || '[Email]', 14, 88);
+  doc.text(po.supplier?.phone || '[Phone]', 14, 93);
+  doc.text(po.supplier?.address || '[Address]', 14, 98);
+  doc.text('', 14, 103);
+  doc.text('', 14, 108);
 
   // SHIP TO Header Bar
   doc.setFillColor(greenColor[0], greenColor[1], greenColor[2]);
@@ -132,11 +183,11 @@ export function generatePOPDF(po) {
   doc.setFont('Helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(80, 80, 80);
-  doc.text(po.customer || '[Name]', 120, 83);
-  doc.text('[Company Name]', 120, 88);
-  doc.text('[Street Address]', 120, 93);
-  doc.text('[City, ST ZIP]', 120, 98);
-  doc.text('[Phone]', 120, 103);
+  doc.text(po.client?.name || po.customer || '[Name]', 120, 83);
+  doc.text(po.client?.company || '[Company Name]', 120, 88);
+  doc.text(po.client?.address || '[Street Address]', 120, 93);
+  doc.text(po.client?.email || '[Email]', 120, 98);
+  doc.text(po.client?.phone || '[Phone]', 120, 103);
 
   // 5. Requisitioner Bar
   doc.setFillColor(greenColor[0], greenColor[1], greenColor[2]);
@@ -166,14 +217,15 @@ export function generatePOPDF(po) {
   doc.text('Origin Port', 96, 126.2);
   doc.text('Prepaid & Added', 128, 126.2);
 
-  // 6. Items Table
+  const itemsList = po.items || po.products || [];
+
   // Prepare Table Data
-  const tableBody = (po.products || []).map((p, idx) => [
+  const tableBody = itemsList.map((p, idx) => [
     `ITEM-${100 + idx}`,
-    p.product_name,
+    p.description || p.product?.name || p.product_name || '—',
     p.quantity.toString(),
-    formatNumberINR(p.unit_price || p.my_unit_price || 0),
-    formatNumberINR(p.total_price || 0)
+    formatNumberINR(p.unitPrice || p.unit_price || p.my_unit_price || 0),
+    formatNumberINR(p.totalPrice || p.total_price || p.total_my_price || 0)
   ]);
 
   // If table body is short, pad it to make it look like a nice blank PO form
@@ -223,9 +275,9 @@ export function generatePOPDF(po) {
     footerStartY = 15;
   }
 
-  const subtotal = po.products?.reduce((sum, item) => sum + (item.total_price || 0), 0) || 0;
-  const totalAmount = po.total_amount || po.amount || (subtotal * 1.18);
-  const gstAmount = Math.max(0, totalAmount - subtotal);
+  const subtotal = itemsList.reduce((sum, item) => sum + parseFloat(item.totalPrice ?? item.total_price ?? 0), 0) || 0;
+  const totalAmount = subtotal * 1.18;
+  const gstAmount = totalAmount - subtotal;
 
   // Right block (Financials)
   doc.setFont('Helvetica', 'normal');
