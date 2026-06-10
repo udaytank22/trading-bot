@@ -2,8 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
-import { ScaledSheet } from 'react-native-size-matters';
-import { View, ScrollView, Alert } from 'react-native';
+import { View, ScrollView, Alert, StyleSheet } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
@@ -122,7 +121,7 @@ export const InquiryDetailScreen = () => {
   const handleStockConfirm = () => {
     const supplier = suppliersData.find(s => s.id === selectedSupplierId);
     if (!supplier) return;
-    
+
     const updatedInq = {
       ...inquiry,
       status: 'RFQ_READY',
@@ -138,7 +137,7 @@ export const InquiryDetailScreen = () => {
         }))
       }
     };
-    
+
     updateInquiry(updatedInq);
     updateInquiryStatus(inquiry.inquiry_id, 'RFQ_READY');
     setActiveSheet('NONE');
@@ -167,7 +166,7 @@ export const InquiryDetailScreen = () => {
   const handleCostConfirm = () => {
     const cost = parseFloat(costPriceInput) || 0;
     if (!inquiry.seller_quote) return;
-    
+
     const updatedInq = {
       ...inquiry,
       status: 'TL_REVIEW',
@@ -189,7 +188,7 @@ export const InquiryDetailScreen = () => {
   const handleMarginConfirm = () => {
     const mPct = parseFloat(marginInput) || 0;
     const dPct = parseFloat(discountInput) || 0;
-    
+
     if (!inquiry.seller_quote) return;
 
     // Use Margin Engine
@@ -292,11 +291,11 @@ export const InquiryDetailScreen = () => {
         </AppCard>
 
         {/* Requirements Card */}
-        <AppCard variant="glass" style={styles.appCard2}>
+        <AppCard style={styles.appCard2}>
           <AppText variant="h3" style={styles.appText30}>
             Buyer Requirements
           </AppText>
-          
+
           {inquiry.products.map((p, idx) => (
             <View key={idx} style={[styles.view9, theme === 'dark' && styles.view9Dark]}>
               <View style={styles.view8}>
@@ -316,7 +315,7 @@ export const InquiryDetailScreen = () => {
 
         {/* Sourcing Cost Card */}
         {inquiry.seller_quote ? (
-          <AppCard variant="glass" style={styles.appCard1}>
+          <AppCard style={styles.appCard1}>
             <AppText variant="h3" style={styles.appText26}>
               Supplier Pricing Details
             </AppText>
@@ -339,7 +338,7 @@ export const InquiryDetailScreen = () => {
 
         {/* Quote Calculation Card */}
         {inquiry.my_quote ? (
-          <AppCard variant="glass" style={styles.appCard}>
+          <AppCard style={styles.appCard}>
             <AppText variant="h3" style={styles.appText23}>
               Margin Calculation Summary
             </AppText>
@@ -362,7 +361,7 @@ export const InquiryDetailScreen = () => {
                 </View>
               </View>
             ))}
-            
+
             <View style={styles.view4}>
               <AppText variant="bodySemibold" style={styles.appText18}>Total Final Quote</AppText>
               <AppText variant="h2" style={[styles.appText17, theme === 'dark' && styles.appText17Dark]}>
@@ -391,7 +390,7 @@ export const InquiryDetailScreen = () => {
         <AppText variant="body" style={styles.appText16}>
           Select potential suppliers to check stock availability for requirements.
         </AppText>
-        
+
         <AppDropdown
           label="Sourcing Supplier"
           value={selectedSupplierId}
@@ -415,14 +414,14 @@ export const InquiryDetailScreen = () => {
         <AppText variant="body" style={styles.appText15}>
           A Request for Quote will be sent to the sourcing supplier.
         </AppText>
-        
+
         <View style={[styles.view3, theme === 'dark' && styles.view3Dark]}>
           <AppText variant="captionSemibold" style={styles.appText14}>To:</AppText>
           <AppText variant="bodySemibold" style={styles.appText13}>{inquiry.seller_quote?.seller_name} ({inquiry.seller_quote?.seller_email})</AppText>
-          
+
           <AppText variant="captionSemibold" style={styles.appText12}>Subject:</AppText>
           <AppText variant="bodySemibold" style={styles.appText11}>RFQ Request - Inquiry #{inquiry.inquiry_id}</AppText>
-          
+
           <AppText variant="captionSemibold" style={styles.appText10}>Items:</AppText>
           <AppText variant="body">{inquiry.products.map(p => `${p.product_name} x ${p.quantity}`).join(', ')}</AppText>
         </View>
@@ -443,7 +442,7 @@ export const InquiryDetailScreen = () => {
         <AppText variant="body" style={styles.appText9}>
           Enter the cost price per unit quoted by the supplier.
         </AppText>
-        
+
         <AppInput
           label="Unit Cost Price (USD)"
           keyboardType="numeric"
@@ -467,7 +466,7 @@ export const InquiryDetailScreen = () => {
         <AppText variant="body" style={styles.appText8}>
           Apply markup margins and bulk discounts. Margin engine calculations will automatically apply.
         </AppText>
-        
+
         <AppInput
           label="Profit Margin Markup (%)"
           keyboardType="numeric"
@@ -498,18 +497,18 @@ export const InquiryDetailScreen = () => {
         <AppText variant="body" style={styles.appText7}>
           Approve or reject the profit margins set by Sourcing.
         </AppText>
-        
+
         <View style={[styles.view2, theme === 'dark' && styles.view2Dark]}>
           <AppText variant="captionSemibold" style={styles.appText6}>Total Sourced Cost:</AppText>
           <AppText variant="bodySemibold" style={styles.appText5}>
             {formatUSD(inquiry.seller_quote?.products.reduce((sum, p) => sum + (p.seller_unit_price * (inquiry.products[0]?.quantity || 1)), 0))}
           </AppText>
-          
+
           <AppText variant="captionSemibold" style={styles.appText4}>Total Client Quote:</AppText>
           <AppText variant="bodySemibold" style={[styles.appText3, theme === 'dark' && styles.appText3Dark]}>
             {formatUSD(inquiry.my_quote?.products.reduce((sum, p) => sum + p.total_price, 0))}
           </AppText>
-          
+
           <AppText variant="captionSemibold" style={styles.appText2}>Estimated Profit Yield:</AppText>
           <AppText variant="bodySemibold" style={styles.appText1}>
             {formatUSD(
@@ -569,38 +568,38 @@ export const InquiryDetailScreen = () => {
   );
 };
 
-const styles = ScaledSheet.create({
+const styles = StyleSheet.create({
   appButton: {
-    marginTop: '16@ms',
+    marginTop: 16,
   },
   appButton1: {
-    marginTop: '16@ms',
+    marginTop: 16,
   },
   appButton2: {
-    marginTop: '16@ms',
+    marginTop: 16,
   },
   appButton3: {
-    marginTop: '16@ms',
-    marginBottom: '32@ms',
+    marginTop: 16,
+    marginBottom: 32,
   },
   appButton4: {
-    marginTop: '16@ms',
+    marginTop: 16,
   },
   appCard: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
     borderLeftWidth: 4,
   },
   appCard1: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
   },
   appCard2: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
   },
   appCard3: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
   },
   appText: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
   },
   appText1: {
     color: '#10b981',
@@ -609,22 +608,22 @@ const styles = ScaledSheet.create({
     color: '#9ca3af',
   },
   appText11: {
-    marginBottom: '8@ms',
+    marginBottom: 8,
   },
   appText12: {
     color: '#9ca3af',
   },
   appText13: {
-    marginBottom: '8@ms',
+    marginBottom: 8,
   },
   appText14: {
     color: '#9ca3af',
   },
   appText15: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
   },
   appText16: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
   },
   appText17: {
     color: '#7c3aed',
@@ -653,18 +652,18 @@ const styles = ScaledSheet.create({
   },
   appText22: {
     color: '#9ca3af',
-    marginBottom: '12@ms',
+    marginBottom: 12,
   },
   appText22Dark: {
     color: '#6b7280',
   },
   appText23: {
     fontWeight: 'bold',
-    marginBottom: '4@ms',
+    marginBottom: 4,
   },
   appText24: {
     flex: 1,
-    marginRight: '8@ms',
+    marginRight: 8,
     color: '#374151',
   },
   appText24Dark: {
@@ -672,17 +671,17 @@ const styles = ScaledSheet.create({
   },
   appText25: {
     color: '#9ca3af',
-    marginBottom: '12@ms',
+    marginBottom: 12,
   },
   appText25Dark: {
     color: '#6b7280',
   },
   appText26: {
     fontWeight: 'bold',
-    marginBottom: '4@ms',
+    marginBottom: 4,
   },
   appText27: {
-    marginTop: '4@ms',
+    marginTop: 4,
     color: '#6b7280',
   },
   appText28: {
@@ -693,19 +692,19 @@ const styles = ScaledSheet.create({
   },
   appText29: {
     flex: 1,
-    paddingRight: '8@ms',
+    paddingRight: 8,
   },
   appText3: {
     color: '#7c3aed',
-    marginBottom: '8@ms',
+    marginBottom: 8,
   },
   appText30: {
     fontWeight: 'bold',
-    marginBottom: '12@ms',
+    marginBottom: 12,
   },
   appText31: {
     color: '#374151',
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText31Dark: {
     color: '#d1d5db',
@@ -715,7 +714,7 @@ const styles = ScaledSheet.create({
   },
   appText33: {
     color: '#1f2937',
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText33Dark: {
     color: '#eef2f6',
@@ -725,7 +724,7 @@ const styles = ScaledSheet.create({
   },
   appText35: {
     color: '#1f2937',
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText35Dark: {
     color: '#eef2f6',
@@ -735,7 +734,7 @@ const styles = ScaledSheet.create({
   },
   appText37: {
     color: '#1f2937',
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText37Dark: {
     color: '#e5e7eb',
@@ -757,19 +756,19 @@ const styles = ScaledSheet.create({
     color: '#9ca3af',
   },
   appText5: {
-    marginBottom: '8@ms',
+    marginBottom: 8,
   },
   appText6: {
     color: '#9ca3af',
   },
   appText7: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
   },
   appText8: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
   },
   appText9: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
   },
   safeAreaView: {
     flex: 1,
@@ -789,8 +788,8 @@ const styles = ScaledSheet.create({
   },
   scrollView: {
     flex: 1,
-    paddingHorizontal: '16@ms',
-    paddingVertical: '12@ms',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   style: {
     width: '48%',
@@ -805,7 +804,7 @@ const styles = ScaledSheet.create({
     width: '48%',
   },
   style4: {
-    marginTop: '16@ms',
+    marginTop: 16,
   },
   view: {
     flexDirection: 'row',
@@ -829,25 +828,25 @@ const styles = ScaledSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '12@ms',
+    marginBottom: 12,
   },
   view2: {
-    padding: '16@ms',
+    padding: 16,
     backgroundColor: '#eef2f6',
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    borderRadius: '12@ms',
-    marginBottom: '16@ms',
+    borderRadius: 12,
+    marginBottom: 16,
   },
   view2Dark: {
     backgroundColor: 'rgba(255, 255, 255, 0.02)',
     borderColor: 'rgba(255, 255, 255, 0.04)',
   },
   view3: {
-    padding: '16@ms',
+    padding: 16,
     backgroundColor: '#eef2f6',
-    borderRadius: '12@ms',
-    marginBottom: '16@ms',
+    borderRadius: 12,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
@@ -856,8 +855,8 @@ const styles = ScaledSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.04)',
   },
   view4: {
-    marginTop: '16@ms',
-    paddingTop: '12@ms',
+    marginTop: 16,
+    paddingTop: 12,
     borderTopWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -866,10 +865,10 @@ const styles = ScaledSheet.create({
   view5: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: '6@ms',
+    marginTop: 6,
   },
   view6: {
-    paddingBottom: '12@ms',
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderColor: '#f3f4f6',
   },
@@ -880,7 +879,7 @@ const styles = ScaledSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: '8@ms',
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderColor: '#f3f4f6',
   },
@@ -892,8 +891,8 @@ const styles = ScaledSheet.create({
     justifyContent: 'space-between',
   },
   view9: {
-    paddingBottom: '12@ms',
-    marginBottom: '12@ms',
+    paddingBottom: 12,
+    marginBottom: 12,
     borderBottomWidth: 1,
     borderColor: '#f3f4f6',
   },

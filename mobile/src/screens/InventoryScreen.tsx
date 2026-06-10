@@ -2,8 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
-import { ScaledSheet } from 'react-native-size-matters';
-import { View, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { View, FlatList, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
 import AppCard from '../components/common/AppCard';
@@ -266,50 +265,50 @@ export const InventoryScreen = () => {
   );
 };
 
-const styles = ScaledSheet.create({
+const styles = StyleSheet.create({
   appButton: {
-    marginTop: '16@ms',
+    marginTop: 16,
   },
   appButton1: {
-    height: '34.0@vs',
-    paddingHorizontal: '14@ms',
+    height: 34.0,
+    paddingHorizontal: 14,
   },
   appCard: {
-    marginBottom: '12@ms',
-    padding: '16@ms',
+    marginBottom: 12,
+    padding: 16,
   },
   appText: {
     textAlign: 'center',
-    fontSize: '14@ms',
+    fontSize: 14,
     color: '#6b7280',
   },
   appText1: {
-    fontSize: '11@ms',
+    fontSize: 11,
     fontWeight: 'bold',
     color: '#ef4444',
   },
   appText2: {
-    fontSize: '11@ms',
+    fontSize: 11,
     fontWeight: 'bold',
     color: '#7c3aed',
   },
   appText3: {
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText4: {
     color: '#9ca3af',
   },
   appText5: {
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText6: {
     color: '#9ca3af',
   },
   appText7: {
-    fontSize: '16@ms',
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#111827',
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText7Dark: {
     color: '#ffffff',
@@ -318,7 +317,7 @@ const styles = ScaledSheet.create({
     fontFamily: 'monospace',
     color: '#7c3aed',
     fontWeight: 'bold',
-    fontSize: '12@ms',
+    fontSize: 12,
   },
   appText8Dark: {
     color: '#c084fc',
@@ -331,33 +330,33 @@ const styles = ScaledSheet.create({
     backgroundColor: '#0c0e12',
   },
   style: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
   },
   touchableOpacity: {
-    paddingHorizontal: '14@ms',
-    paddingVertical: '6@ms',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderWidth: 1,
-    borderRadius: '12@ms',
+    borderRadius: 12,
   },
   touchableOpacity1: {
-    paddingHorizontal: '14@ms',
-    paddingVertical: '6@ms',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderWidth: 1,
     borderColor: 'rgba(243, 232, 255, 0.5)',
-    borderRadius: '12@ms',
-    marginRight: '8@ms',
+    borderRadius: 12,
+    marginRight: 8,
   },
   touchableOpacity1Dark: {
     backgroundColor: 'rgba(59, 7, 100, 0.2)',
   },
   view: {
-    marginTop: '32@ms',
+    marginTop: 32,
   },
   view1: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    paddingTop: '8@ms',
-    marginTop: '4@ms',
+    paddingTop: 8,
+    marginTop: 4,
   },
   view2: {
     alignItems: 'flex-end',
@@ -366,10 +365,10 @@ const styles = ScaledSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: '8@ms',
+    paddingVertical: 8,
     borderTopWidth: 1,
     borderColor: '#eef2f6',
-    marginTop: '8@ms',
+    marginTop: 8,
   },
   view3Dark: {
     borderColor: 'rgba(255, 255, 255, 0.04)',
@@ -378,11 +377,11 @@ const styles = ScaledSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: '8@ms',
+    marginBottom: 8,
   },
   view5: {
     flex: 1,
-    padding: '16@ms',
+    padding: 16,
   },
 });
 

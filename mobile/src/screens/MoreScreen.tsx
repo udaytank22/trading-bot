@@ -2,8 +2,7 @@ import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
-import { ScaledSheet } from 'react-native-size-matters';
-import { View, TouchableOpacity, ScrollView } from 'react-native';
+import { View, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
@@ -13,39 +12,6 @@ import AppAvatar from '../components/common/AppAvatar';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import AppButton from '../components/common/AppButton';
-
-interface MenuItemProps {
-  title: string;
-  desc: string;
-  icon: string;
-  onPress: () => void;
-}
-
-const MenuItem = ({ title, desc, icon, onPress }: MenuItemProps) => {
-  const theme = useAppStore((state) => state.theme);
-  return (
-    <TouchableOpacity 
-      onPress={onPress}
-      activeOpacity={0.8}
-      style={styles.touchableOpacity2}
-    >
-      <AppCard variant="glass" style={styles.appCard2}>
-        <View style={[styles.view2, theme === 'dark' && styles.view2Dark]}>
-          <AppText style={styles.appText8}>{icon}</AppText>
-        </View>
-        
-        <View>
-          <AppText variant="bodySemibold" style={[styles.appText7, theme === 'dark' && styles.appText7Dark]} numberOfLines={1}>
-            {title}
-          </AppText>
-          <AppText variant="caption" style={styles.appText6} numberOfLines={1}>
-            {desc}
-          </AppText>
-        </View>
-      </AppCard>
-    </TouchableOpacity>
-  );
-};
 
 export const MoreScreen = () => {
   const theme = useAppStore((state) => state.theme);
@@ -77,50 +43,9 @@ export const MoreScreen = () => {
           </View>
         </AppCard>
 
-        {/* Modular Grid */}
-        <AppText variant="h3" style={styles.appText2}>Administration & Finance</AppText>
-        <View style={styles.view}>
-          <MenuItem 
-            title="Purchase Orders" 
-            desc="Manage buyer PO contracts" 
-            icon="📄" 
-            onPress={() => navigation.navigate('PurchaseOrders')} 
-          />
-          <MenuItem 
-            title="Invoices" 
-            desc="Billings & draft invoices" 
-            icon="💰" 
-            onPress={() => navigation.navigate('MainTabs', { screen: 'Invoices' })} 
-          />
-          <MenuItem 
-            title="Inventory" 
-            desc="Stock levels & warehouse A/B" 
-            icon="📦" 
-            onPress={() => navigation.navigate('Inventory')} 
-          />
-          <MenuItem 
-            title="Employees" 
-            desc="Team directory & roles" 
-            icon="👥" 
-            onPress={() => navigation.navigate('Employees')} 
-          />
-          <MenuItem 
-            title="Bank Accounts" 
-            desc="Liquid cash balances" 
-            icon="🏦" 
-            onPress={() => navigation.navigate('Accounts')} 
-          />
-          <MenuItem 
-            title="Settings & Defaults" 
-            desc="Margins & defaults setup" 
-            icon="⚙️" 
-            onPress={() => navigation.navigate('Settings')} 
-          />
-        </View>
-
         {/* Secondary lists */}
         <AppCard variant="glass" style={[styles.appCard, theme === 'dark' && styles.appCardDark]}>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => navigation.navigate('Profile')}
             style={[styles.touchableOpacity1, theme === 'dark' && styles.touchableOpacity1Dark]}
           >
@@ -128,7 +53,7 @@ export const MoreScreen = () => {
             <AppText style={styles.appText1}>➔</AppText>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => navigation.navigate('Notifications')}
             style={[styles.touchableOpacity, theme === 'dark' && styles.touchableOpacityDark]}
           >
@@ -138,9 +63,9 @@ export const MoreScreen = () => {
         </AppCard>
 
         {/* Logout */}
-        <AppButton 
-          title="Sign Out" 
-          variant="danger" 
+        <AppButton
+          title="Sign Out"
+          variant="danger"
           onPress={handleLogout}
           style={styles.appButton}
         />
@@ -149,15 +74,15 @@ export const MoreScreen = () => {
   );
 };
 
-const styles = ScaledSheet.create({
+const styles = StyleSheet.create({
   appButton: {
-    marginTop: '24@ms',
-    borderRadius: '16@ms',
-    height: '46.0@vs',
+    marginTop: 24,
+    borderRadius: 16,
+    height: 46.0,
   },
   appCard: {
-    marginTop: '8@ms',
-    padding: '4@ms',
+    marginTop: 8,
+    padding: 4,
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: '#eef2f6',
@@ -165,12 +90,12 @@ const styles = ScaledSheet.create({
   appCard1: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: '20@ms',
-    padding: '16@ms',
+    marginBottom: 20,
+    padding: 16,
   },
   appCard2: {
-    padding: '16@ms',
-    height: '115.0@vs',
+    padding: 16,
+    height: 115.0,
     justifyContent: 'space-between',
   },
   appCardDark: {
@@ -184,17 +109,17 @@ const styles = ScaledSheet.create({
   },
   appText2: {
     fontWeight: 'bold',
-    marginBottom: '14@ms',
-    marginLeft: '4@ms',
+    marginBottom: 14,
+    marginLeft: 4,
   },
   appText3: {
     color: '#6b7280',
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText4: {
-    fontSize: '12@ms',
+    fontSize: 12,
     fontWeight: '600',
-    marginTop: '2@ms',
+    marginTop: 2,
     letterSpacing: 0.5,
     color: '#7c3aed',
   },
@@ -205,12 +130,12 @@ const styles = ScaledSheet.create({
     fontWeight: '800',
   },
   appText6: {
-    fontSize: '10@ms',
+    fontSize: 10,
     color: '#4b5563',
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText7: {
-    fontSize: '14@ms',
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#111827',
   },
@@ -218,7 +143,7 @@ const styles = ScaledSheet.create({
     color: '#ffffff',
   },
   appText8: {
-    fontSize: '16@ms',
+    fontSize: 16,
   },
   safeAreaView: {
     flex: 1,
@@ -229,27 +154,27 @@ const styles = ScaledSheet.create({
   },
   scrollView: {
     flex: 1,
-    padding: '16@ms',
+    padding: 16,
   },
   touchableOpacity: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '14@ms',
+    padding: 14,
     backgroundColor: '#f3f4f6',
-    borderBottomLeftRadius: '12@ms',
-    borderBottomRightRadius: '12@ms',
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
   },
   touchableOpacity1: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '14@ms',
+    padding: 14,
     borderBottomWidth: 1,
     borderColor: '#f3f4f6',
     backgroundColor: '#f3f4f6',
-    borderTopLeftRadius: '12@ms',
-    borderTopRightRadius: '12@ms',
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
   },
   touchableOpacity1Dark: {
     borderColor: 'rgba(255, 255, 255, 0.03)',
@@ -257,7 +182,7 @@ const styles = ScaledSheet.create({
   },
   touchableOpacity2: {
     width: '48%',
-    marginBottom: '16@ms',
+    marginBottom: 16,
   },
   touchableOpacityDark: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -268,13 +193,13 @@ const styles = ScaledSheet.create({
     justifyContent: 'space-between',
   },
   view1: {
-    marginLeft: '16@ms',
+    marginLeft: 16,
     flex: 1,
   },
   view2: {
-    width: '36@s',
-    height: '36@vs',
-    borderRadius: '12@ms',
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     backgroundColor: '#f3e8ff',
     alignItems: 'center',
     justifyContent: 'center',

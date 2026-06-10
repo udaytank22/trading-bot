@@ -11,6 +11,7 @@ interface AppButtonProps extends TouchableOpacityProps {
   disabled?: boolean;
   icon?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
 }
 
 export const AppButton: React.FC<AppButtonProps> = ({
@@ -20,6 +21,7 @@ export const AppButton: React.FC<AppButtonProps> = ({
   disabled = false,
   icon,
   style,
+  textStyle,
   ...props
 }) => {
   const theme = useAppStore((state) => state.theme);
@@ -89,7 +91,7 @@ export const AppButton: React.FC<AppButtonProps> = ({
       ) : (
         <View style={styles.view1}>
           {icon && <View style={styles.view}>{icon}</View>}
-          <AppText style={getTextStyle()}>{title}</AppText>
+          <AppText style={[getTextStyle(), textStyle]}>{title}</AppText>
         </View>
       )}
     </TouchableOpacity>

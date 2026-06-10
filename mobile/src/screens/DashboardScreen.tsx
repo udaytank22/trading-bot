@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets, SafeAreaProvider } from 'react-native-safe-area-context';
+import { View, ScrollView, TouchableOpacity, RefreshControl, Animated, Modal, Dimensions, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
@@ -12,6 +12,63 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import Icon from 'react-native-vector-icons/Feather';
 import { s, vs, ms } from 'react-native-size-matters';
+
+const { width: WINDOW_WIDTH } = Dimensions.get('window');
+const SIDEBAR_WIDTH = WINDOW_WIDTH * 0.75;
+
+interface SidebarItemProps {
+  title: string;
+  desc: string;
+  icon: string;
+  onPress: () => void;
+  isDark: boolean;
+}
+
+const SidebarItem = ({ title, desc, icon, onPress, isDark }: SidebarItemProps) => {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: vs(12),
+        paddingHorizontal: s(16),
+        borderBottomWidth: 1,
+        borderBottomColor: isDark ? 'rgba(255,255,255,0.05)' : '#f3f4f6',
+      }}
+    >
+      <View style={{
+        width: s(36),
+        height: s(36),
+        borderRadius: ms(10),
+        backgroundColor: isDark ? 'rgba(139,92,246,0.15)' : '#f3e8ff',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: s(12),
+      }}>
+        <AppText style={{ fontSize: ms(16) }}>{icon}</AppText>
+      </View>
+      <View style={{ flex: 1 }}>
+        <AppText style={{
+          fontSize: ms(14),
+          fontWeight: '700',
+          color: isDark ? '#ffffff' : '#111827',
+        }}>
+          {title}
+        </AppText>
+        <AppText style={{
+          fontSize: ms(11),
+          color: isDark ? '#9ca3af' : '#6b7280',
+          marginTop: vs(1),
+        }}>
+          {desc}
+        </AppText>
+      </View>
+      <Icon name="chevron-right" size={16} color={isDark ? '#4b5563' : '#d1d5db'} />
+    </TouchableOpacity>
+  );
+};
 
 // ─── Quick Action Button ──────────────────────────────────────────────────────
 
@@ -170,6 +227,7 @@ const InquiryRow = ({ inq, onPress, isDark }: any) => (
 
 export const DashboardScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const insets = useSafeAreaInsets();
   const {
     currentUser,
     inquiriesData,
@@ -181,6 +239,25 @@ export const DashboardScreen = () => {
 
   const isDark = theme === 'dark';
   const [refreshing, setRefreshing] = React.useState(false);
+  const [sidebarVisible, setSidebarVisible] = React.useState(false);
+  const slideAnim = React.useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
+
+  const openSidebar = () => {
+    setSidebarVisible(true);
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const closeSidebar = () => {
+    Animated.timing(slideAnim, {
+      toValue: -SIDEBAR_WIDTH,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => setSidebarVisible(false));
+  };
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
@@ -233,8 +310,11 @@ export const DashboardScreen = () => {
         paddingVertical: vs(12),
         backgroundColor: bgColor,
       }}>
-        {/* Left: Avatar + Title */}
+        {/* Left: Menu button + Avatar + Title */}
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={openSidebar} style={{ marginRight: s(12), padding: s(2) }}>
+            <Icon name="menu" size={22} color={isDark ? '#e5e7eb' : '#374151'} />
+          </TouchableOpacity>
           <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={{ marginRight: s(10) }}>
             <AppAvatar name={currentUser?.name || 'Admin'} size="sm" showStatus={true} />
           </TouchableOpacity>
@@ -428,8 +508,189 @@ export const DashboardScreen = () => {
           </View>
         </View>
       </ScrollView>
+
+      {/* ── Sidebar Drawer Modal ── */}
+      <Modal
+        visible={sidebarVisible}
+        transparent={true}
+        animationType="none"
+        onRequestClose={closeSidebar}
+      >
+        <SafeAreaProvider>
+          <View style={styles.modalOverlay}>
+            {/* Transparent Backdrop */}
+            <TouchableOpacity
+              style={styles.backdrop}
+              activeOpacity={1}
+              onPress={closeSidebar}
+            />
+
+            {/* Sidebar Panel */}
+            <Animated.View style={[
+              styles.sidebarContainer,
+              { transform: [{ translateX: slideAnim }] },
+              isDark ? styles.sidebarDark : styles.sidebarLight
+            ]}>
+              <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
+                {/* Header */}
+                <View style={[
+                  styles.sidebarHeader,
+                  isDark ? styles.headerDark : styles.headerLight
+                ]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: s(8) }}>
+                    <AppAvatar name={currentUser?.name || 'Admin'} size="md" />
+                    <View style={{ marginLeft: s(12), flex: 1 }}>
+                      <AppText style={{
+                        fontSize: ms(16),
+                        fontWeight: '800',
+                        color: isDark ? '#ffffff' : '#111827',
+                      }} numberOfLines={1}>
+                        {currentUser?.name || 'Administrator'}
+                      </AppText>
+                      <AppText style={{
+                        fontSize: ms(12),
+                        color: isDark ? '#c084fc' : '#7c3aed',
+                        fontWeight: '600',
+                      }} numberOfLines={1}>
+                        {currentUser?.role || 'System Manager'}
+                      </AppText>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity onPress={closeSidebar} style={styles.closeBtn}>
+                    <Icon name="x" size={20} color={isDark ? '#e5e7eb' : '#374151'} />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Menu Options */}
+                <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+                  <SidebarItem
+                    title="Purchase Orders"
+                    desc="Manage buyer PO contracts"
+                    icon="📄"
+                    isDark={isDark}
+                    onPress={() => {
+                      closeSidebar();
+                      navigation.navigate('PurchaseOrders');
+                    }}
+                  />
+                  <SidebarItem
+                    title="Invoices"
+                    desc="Billings & draft invoices"
+                    icon="💰"
+                    isDark={isDark}
+                    onPress={() => {
+                      closeSidebar();
+                      navigation.navigate('MainTabs', { screen: 'Invoices' });
+                    }}
+                  />
+                  <SidebarItem
+                    title="Inventory"
+                    desc="Stock levels & warehouse A/B"
+                    icon="📦"
+                    isDark={isDark}
+                    onPress={() => {
+                      closeSidebar();
+                      navigation.navigate('Inventory');
+                    }}
+                  />
+                  <SidebarItem
+                    title="Employees"
+                    desc="Team directory & roles"
+                    icon="👥"
+                    isDark={isDark}
+                    onPress={() => {
+                      closeSidebar();
+                      navigation.navigate('Employees');
+                    }}
+                  />
+                  <SidebarItem
+                    title="Bank Accounts"
+                    desc="Liquid cash balances"
+                    icon="🏦"
+                    isDark={isDark}
+                    onPress={() => {
+                      closeSidebar();
+                      navigation.navigate('Accounts');
+                    }}
+                  />
+                  <SidebarItem
+                    title="Settings & Defaults"
+                    desc="Margins & defaults setup"
+                    icon="⚙️"
+                    isDark={isDark}
+                    onPress={() => {
+                      closeSidebar();
+                      navigation.navigate('Settings');
+                    }}
+                  />
+                </ScrollView>
+
+                {/* Bottom Brand */}
+                <View style={{
+                  padding: ms(16),
+                  borderTopWidth: 1,
+                  borderTopColor: isDark ? 'rgba(255,255,255,0.05)' : '#f3f4f6',
+                  alignItems: 'center',
+                }}>
+                  <AppText style={{ fontSize: ms(11), color: isDark ? '#4b5563' : '#9ca3af' }}>
+                    TradeMind v1.0.0
+                  </AppText>
+                </View>
+              </SafeAreaView>
+            </Animated.View>
+          </View>
+        </SafeAreaProvider>
+      </Modal>
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+  },
+  sidebarContainer: {
+    width: SIDEBAR_WIDTH,
+    height: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 4, height: 0 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 16,
+  },
+  sidebarLight: {
+    backgroundColor: '#ffffff',
+  },
+  sidebarDark: {
+    backgroundColor: '#12141c',
+  },
+  sidebarHeader: {
+    padding: ms(16),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+  },
+  headerLight: {
+    borderBottomColor: '#f3f4f6',
+  },
+  headerDark: {
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  closeBtn: {
+    padding: ms(8),
+    borderRadius: ms(20),
+  },
+});
 
 export default DashboardScreen;

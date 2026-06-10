@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ScaledSheet } from 'react-native-size-matters';
-import { View, FlatList, TouchableOpacity, ScrollView } from 'react-native';
+import { View, FlatList, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 
@@ -258,6 +257,7 @@ export const InquiriesScreen = () => {
             variant="primary"
             onPress={() => setIsAddModalOpen(true)}
             style={styles.style2}
+            textStyle={{ fontSize: 15 }}
           />
         }
       />
@@ -371,15 +371,15 @@ export const InquiriesScreen = () => {
   );
 };
 
-const styles = ScaledSheet.create({
+const styles = StyleSheet.create({
   appButton: {
-    marginTop: '16@ms',
+    marginTop: 16,
   },
   appCard: {
-    padding: '16@ms',
+    padding: 16,
     borderWidth: 1,
     borderColor: '#f3f4f6',
-    borderRadius: '12@ms',
+    borderRadius: 12,
     backgroundColor: '#ffffff',
   },
   appCardDark: {
@@ -388,27 +388,27 @@ const styles = ScaledSheet.create({
   },
   appHeader: {
     backgroundColor: '#ffffff',
-    paddingHorizontal: '16@ms',
+    paddingHorizontal: 16,
   },
   appHeaderDark: {
     backgroundColor: '#12141c',
   },
   appText: {
     textAlign: 'center',
-    fontSize: '14@ms',
+    fontSize: 14,
     color: '#6b7280',
   },
   appText1: {
     color: '#4F46E5',
     fontWeight: 'bold',
-    fontSize: '18@ms',
+    fontSize: 18,
   },
   appText1Dark: {
     color: '#818cf8',
   },
   appText2: {
     color: '#111827',
-    fontSize: '13@ms',
+    fontSize: 13,
     fontWeight: 'bold',
   },
   appText2Dark: {
@@ -416,47 +416,47 @@ const styles = ScaledSheet.create({
   },
   appText3: {
     color: '#9ca3af',
-    fontSize: '11@ms',
-    marginBottom: '4@ms',
+    fontSize: 11,
+    marginBottom: 4,
   },
   appText3Dark: {
     color: '#6b7280',
   },
   appText4: {
     color: '#374151',
-    fontSize: '13@ms',
+    fontSize: 13,
   },
   appText4Dark: {
     color: '#d1d5db',
   },
   appText5: {
     color: '#9ca3af',
-    fontSize: '11@ms',
-    marginBottom: '4@ms',
+    fontSize: 11,
+    marginBottom: 4,
   },
   appText5Dark: {
     color: '#6b7280',
   },
   appText6: {
     color: '#111827',
-    fontSize: '15@ms',
+    fontSize: 15,
     fontWeight: 'bold',
-    marginTop: '4@ms',
+    marginTop: 4,
   },
   appText6Dark: {
     color: '#ffffff',
   },
   appText7: {
     color: '#6b7280',
-    marginTop: '2@ms',
-    fontSize: '11@ms',
+    marginTop: 2,
+    fontSize: 11,
   },
   appText7Dark: {
     color: '#9ca3af',
   },
   appText8: {
     color: '#4F46E5',
-    fontSize: '11@ms',
+    fontSize: 11,
     fontWeight: 'bold',
     letterSpacing: 0.5,
   },
@@ -471,36 +471,37 @@ const styles = ScaledSheet.create({
     backgroundColor: '#0c0e12',
   },
   scrollView: {
-    paddingHorizontal: '16@ms',
-    paddingVertical: '12@ms',
-    gap: '24@ms',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 24,
   },
   style: {
-    paddingTop: '16@ms',
-    paddingBottom: '96@ms',
+    paddingTop: 16,
+    paddingBottom: 96,
   },
   style1: {
     backgroundColor: '#f8f9fc',
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    height: '50.0@vs',
+    height: 40.0,
   },
   style1Dark: {
     backgroundColor: '#161920',
     borderColor: 'rgba(255, 255, 255, 0.05)',
   },
   style2: {
-    height: '38.0@vs',
-    paddingHorizontal: '20@ms',
-    borderRadius: '9999@ms',
+    height: 25,
+    paddingVertical: 0,
+    paddingHorizontal: 20,
+    borderRadius: 9999,
     backgroundColor: '#A855F7',
   },
   style3: {
-    marginBottom: '12@ms',
-    marginHorizontal: '16@ms',
+    marginBottom: 12,
+    marginHorizontal: 16,
   },
   view: {
-    marginTop: '32@ms',
+    marginTop: 32,
   },
   view1: {
     backgroundColor: '#ffffff',
@@ -510,20 +511,21 @@ const styles = ScaledSheet.create({
   },
   view2: {
     backgroundColor: '#ffffff',
-    paddingHorizontal: '16@ms',
-    paddingVertical: '12@ms',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 4,
   },
   view2Dark: {
     backgroundColor: '#12141c',
   },
   view3: {
-    width: '32@s',
-    height: '32@vs',
-    borderRadius: '9999@ms',
+    width: 30,
+    height: 30,
+    borderRadius: 9999,
     backgroundColor: '#1e293b',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: '10@ms',
+    marginRight: 10,
   },
   view3Dark: {
     backgroundColor: '#1f2937',
@@ -534,17 +536,17 @@ const styles = ScaledSheet.create({
   },
   view5: {
     alignItems: 'flex-end',
-    paddingLeft: '8@ms',
+    paddingLeft: 8,
   },
   view6: {
     flex: 1,
-    paddingRight: '8@ms',
+    paddingRight: 8,
   },
   view7: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: '12@ms',
-    paddingTop: '12@ms',
+    marginTop: 12,
+    paddingTop: 12,
     borderTopWidth: 1,
     borderColor: '#f3f4f6',
   },
@@ -555,24 +557,24 @@ const styles = ScaledSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: '12@ms',
+    marginBottom: 12,
   },
   tabButton: {
-    paddingVertical: '8@ms',
-    borderRadius: '9999@ms',
+    paddingVertical: 8,
+    borderRadius: 9999,
     justifyContent: 'center',
     alignItems: 'center',
   },
   tabButtonSelected: {
-    paddingHorizontal: '28@ms',
+    paddingHorizontal: 28,
     backgroundColor: '#4648D4',
   },
   tabButtonUnselected: {
-    paddingHorizontal: '12@ms',
+    paddingHorizontal: 12,
     backgroundColor: 'transparent',
   },
   tabText: {
-    fontSize: '15@ms',
+    fontSize: 15,
   },
   tabTextSelected: {
     color: '#ffffff',

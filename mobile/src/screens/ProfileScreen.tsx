@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
-import { ScaledSheet } from 'react-native-size-matters';
-import { View, ScrollView, Alert } from 'react-native';
+import { View, ScrollView, Alert, StyleSheet } from 'react-native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
 import AppCard from '../components/common/AppCard';
@@ -22,17 +21,21 @@ export const ProfileScreen = () => {
 
   const handleSave = () => {
     if (!name.trim()) return;
-    
+
     const updatedUser = {
       ...currentUser,
       name: name.trim(),
       phone: phone.trim(),
       email: email.trim()
     };
-    
+
     login(updatedUser);
     Alert.alert('Saved', 'Profile settings updated successfully.');
   };
+
+  function logout(): ((event: import("react-native").GestureResponderEvent) => void) | undefined {
+    throw new Error('Function not implemented.');
+  }
 
   return (
     <SafeAreaView style={[styles.safeAreaView, theme === 'dark' && styles.safeAreaViewDark]}>
@@ -81,7 +84,7 @@ export const ProfileScreen = () => {
           <AppText variant="bodySemibold" style={[styles.appText4, theme === 'dark' && styles.appText4Dark]}>
             TradeMind Global Ltd
           </AppText>
-          
+
           <View style={[styles.view1, theme === 'dark' && styles.view1Dark]}>
             <AppText variant="captionSemibold" style={styles.appText3}>Default Profit Margin</AppText>
             <AppText variant="bodySemibold" style={[styles.appText2, theme === 'dark' && styles.appText2Dark]}>15%</AppText>
@@ -98,21 +101,29 @@ export const ProfileScreen = () => {
           onPress={handleSave}
           style={styles.appButton}
         />
+        <AppButton
+          title="logout"
+          variant="danger"
+          onPress={
+            logout()
+          }
+          style={styles.appButton}
+        />
       </ScrollView>
     </SafeAreaView>
   );
 };
 
-const styles = ScaledSheet.create({
+const styles = StyleSheet.create({
   appButton: {
-    borderRadius: '16@ms',
+    borderRadius: 16,
   },
   appCard: {
-    marginBottom: '24@ms',
-    padding: '16@ms',
+    marginBottom: 24,
+    padding: 16,
   },
   appCard1: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
   },
   appText: {
     color: '#10b981',
@@ -130,10 +141,10 @@ const styles = ScaledSheet.create({
     color: '#9ca3af',
   },
   appText4: {
-    fontSize: '16@ms',
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#111827',
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText4Dark: {
     color: '#ffffff',
@@ -142,16 +153,16 @@ const styles = ScaledSheet.create({
     color: '#9ca3af',
   },
   appText6: {
-    fontSize: '12@ms',
+    fontSize: 12,
     letterSpacing: 0.5,
     color: '#8b5cf6',
-    marginTop: '4@ms',
+    marginTop: 4,
   },
   appText6Dark: {
     color: '#c084fc',
   },
   appText7: {
-    marginTop: '12@ms',
+    marginTop: 12,
     fontWeight: '800',
   },
   safeAreaView: {
@@ -163,13 +174,13 @@ const styles = ScaledSheet.create({
   },
   scrollView: {
     flex: 1,
-    padding: '16@ms',
+    padding: 16,
   },
   view: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: '10@ms',
+    paddingVertical: 10,
     borderTopWidth: 1,
     borderColor: '#f3f4f6',
   },
@@ -177,17 +188,17 @@ const styles = ScaledSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: '10@ms',
+    paddingVertical: 10,
     borderTopWidth: 1,
     borderColor: '#f3f4f6',
-    marginTop: '12@ms',
+    marginTop: 12,
   },
   view1Dark: {
     borderColor: 'rgba(255, 255, 255, 0.04)',
   },
   view2: {
     alignItems: 'center',
-    marginBottom: '24@ms',
+    marginBottom: 24,
   },
   viewDark: {
     borderColor: 'rgba(255, 255, 255, 0.04)',

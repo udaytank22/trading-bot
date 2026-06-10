@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 
-import { ScaledSheet } from 'react-native-size-matters';
-import { View, FlatList, Alert } from 'react-native';
+import { View, FlatList, Alert, StyleSheet } from 'react-native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
 import AppCard from '../components/common/AppCard';
@@ -229,23 +228,23 @@ export const AccountsScreen = () => {
   );
 };
 
-const styles = ScaledSheet.create({
+const styles = StyleSheet.create({
   appButton: {
-    marginTop: '16@ms',
+    marginTop: 16,
   },
   appButton1: {
-    height: '34.0@vs',
-    paddingHorizontal: '14@ms',
+    height: 34.0,
+    paddingHorizontal: 14,
   },
   appCard: {
-    marginBottom: '14@ms',
-    padding: '16@ms',
+    marginBottom: 14,
+    padding: 16,
   },
   appCard1: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
     backgroundColor: '#8b5cf6',
     borderColor: 'transparent',
-    padding: '20@ms',
+    padding: 20,
   },
   appCard1Dark: {
     backgroundColor: '#7c3aed',
@@ -255,17 +254,17 @@ const styles = ScaledSheet.create({
     color: '#7c3aed',
   },
   appText1: {
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText2: {
     color: '#9ca3af',
   },
   appText3: {
     color: '#6b7280',
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText4: {
-    fontSize: '16@ms',
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#111827',
   },
@@ -274,24 +273,24 @@ const styles = ScaledSheet.create({
   },
   appText5: {
     fontWeight: 'bold',
-    marginBottom: '12@ms',
-    marginLeft: '4@ms',
+    marginBottom: 12,
+    marginLeft: 4,
   },
   appText6: {
     color: 'rgba(255, 255, 255, 0.60)',
-    fontSize: '10@ms',
-    marginTop: '6@ms',
+    fontSize: 10,
+    marginTop: 6,
     fontWeight: '500',
   },
   appText7: {
     color: '#ffffff',
-    fontSize: '30@ms',
+    fontSize: 30,
     fontWeight: '800',
-    marginTop: '4@ms',
+    marginTop: 4,
   },
   appText8: {
     color: 'rgba(255, 255, 255, 0.70)',
-    fontSize: '12@ms',
+    fontSize: 12,
     fontWeight: '600',
     letterSpacing: 0.5,
   },
@@ -309,20 +308,20 @@ const styles = ScaledSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
-    paddingTop: '12@ms',
+    paddingTop: 12,
     borderTopWidth: 1,
     borderColor: '#f3f4f6',
-    marginTop: '4@ms',
+    marginTop: 4,
   },
   view1: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: '12@ms',
+    marginBottom: 12,
   },
   view2: {
     flex: 1,
-    padding: '16@ms',
+    padding: 16,
   },
   viewDark: {
     borderColor: 'rgba(255, 255, 255, 0.04)',

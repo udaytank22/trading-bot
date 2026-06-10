@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
-import { ScaledSheet } from 'react-native-size-matters';
-import { View, FlatList, TouchableOpacity } from 'react-native';
+import { View, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAppStore } from '../store/appStore';
 import AppText from '../components/common/AppText';
@@ -119,20 +118,20 @@ export const InvoicesScreen = () => {
   );
 };
 
-const styles = ScaledSheet.create({
+const styles = StyleSheet.create({
   contentContainer: {
-    padding: '16@ms',
+    padding: 16,
   },
   appCard: {
-    padding: '16@ms',
+    padding: 16,
   },
   appText: {
     textAlign: 'center',
-    fontSize: '14@ms',
+    fontSize: 14,
     color: '#6b7280',
   },
   appText1: {
-    marginTop: '8@ms',
+    marginTop: 8,
     color: '#8b5cf6',
     fontWeight: 'bold',
   },
@@ -141,17 +140,17 @@ const styles = ScaledSheet.create({
   },
   appText2: {
     color: '#6b7280',
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText3: {
-    marginTop: '4@ms',
+    marginTop: 4,
   },
   appText4: {
     fontFamily: 'monospace',
     color: '#7c3aed',
     fontWeight: 'bold',
-    fontSize: '12@ms',
-    marginRight: '8@ms',
+    fontSize: 12,
+    marginRight: 8,
   },
   appText4Dark: {
     color: '#c084fc',
@@ -164,14 +163,14 @@ const styles = ScaledSheet.create({
     backgroundColor: '#0c0e12',
   },
   style: {
-    marginBottom: '14@ms',
+    marginBottom: 14,
   },
   view: {
-    marginTop: '32@ms',
+    marginTop: 32,
   },
   view1: {
-    marginTop: '16@ms',
-    paddingTop: '12@ms',
+    marginTop: 16,
+    paddingTop: 12,
     borderTopWidth: 1,
     borderColor: '#f3f4f6',
   },
@@ -187,7 +186,7 @@ const styles = ScaledSheet.create({
   },
   view4: {
     flex: 1,
-    paddingRight: '8@ms',
+    paddingRight: 8,
   },
   view5: {
     flexDirection: 'row',
