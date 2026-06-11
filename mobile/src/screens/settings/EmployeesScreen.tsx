@@ -3,17 +3,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 import { View, FlatList, TouchableOpacity, Alert, StyleSheet } from 'react-native';
-import { useAppStore } from '../store/appStore';
-import AppText from '../components/common/AppText';
-import AppCard from '../components/common/AppCard';
-import AppHeader from '../components/layout/AppHeader';
-import AppSearch from '../components/inputs/AppSearch';
-import AppButton from '../components/common/AppButton';
-import AppModal from '../components/modals/AppModal';
-import AppInput from '../components/inputs/AppInput';
-import AppDropdown from '../components/inputs/AppDropdown';
-import AppAvatar from '../components/common/AppAvatar';
-import { Employee } from '../data/users';
+import { useAppStore } from '../../store/appStore';
+import AppText from '../../components/common/AppText';
+import AppCard from '../../components/common/AppCard';
+import AppHeader from '../../components/layout/AppHeader';
+import AppSearch from '../../components/inputs/AppSearch';
+import AppButton from '../../components/common/AppButton';
+import AppModal from '../../components/modals/AppModal';
+import AppInput from '../../components/inputs/AppInput';
+import AppDropdown from '../../components/inputs/AppDropdown';
+import AppAvatar from '../../components/common/AppAvatar';
+import { Employee } from '../../data/users';
 
 export const EmployeesScreen = () => {
   const theme = useAppStore((state) => state.theme);

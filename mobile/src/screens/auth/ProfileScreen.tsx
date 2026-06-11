@@ -3,13 +3,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 import { View, ScrollView, Alert, StyleSheet } from 'react-native';
-import { useAppStore } from '../store/appStore';
-import AppText from '../components/common/AppText';
-import AppCard from '../components/common/AppCard';
-import AppHeader from '../components/layout/AppHeader';
-import AppAvatar from '../components/common/AppAvatar';
-import AppInput from '../components/inputs/AppInput';
-import AppButton from '../components/common/AppButton';
+import { useAppStore } from '../../store/appStore';
+import AppText from '../../components/common/AppText';
+import AppCard from '../../components/common/AppCard';
+import AppHeader from '../../components/layout/AppHeader';
+import AppAvatar from '../../components/common/AppAvatar';
+import AppInput from '../../components/inputs/AppInput';
+import AppButton from '../../components/common/AppButton';
 
 export const ProfileScreen = () => {
   const theme = useAppStore((state) => state.theme);

@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 
 import { View, FlatList, Alert, StyleSheet } from 'react-native';
-import { useAppStore } from '../store/appStore';
-import AppText from '../components/common/AppText';
-import AppCard from '../components/common/AppCard';
-import AppHeader from '../components/layout/AppHeader';
-import AppButton from '../components/common/AppButton';
-import AppModal from '../components/modals/AppModal';
-import AppInput from '../components/inputs/AppInput';
-import AppBadge from '../components/common/AppBadge';
+import { useAppStore } from '../../store/appStore';
+import AppText from '../../components/common/AppText';
+import AppCard from '../../components/common/AppCard';
+import AppHeader from '../../components/layout/AppHeader';
+import AppButton from '../../components/common/AppButton';
+import AppModal from '../../components/modals/AppModal';
+import AppInput from '../../components/inputs/AppInput';
+import AppBadge from '../../components/common/AppBadge';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export const AccountsScreen = () => {

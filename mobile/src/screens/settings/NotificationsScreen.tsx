@@ -3,10 +3,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 import { View, FlatList, StyleSheet } from 'react-native';
-import { useAppStore } from '../store/appStore';
-import AppText from '../components/common/AppText';
-import AppCard from '../components/common/AppCard';
-import AppHeader from '../components/layout/AppHeader';
+import { useAppStore } from '../../store/appStore';
+import AppText from '../../components/common/AppText';
+import AppCard from '../../components/common/AppCard';
+import AppHeader from '../../components/layout/AppHeader';
 
 export const NotificationsScreen = () => {
   const theme = useAppStore((state) => state.theme);

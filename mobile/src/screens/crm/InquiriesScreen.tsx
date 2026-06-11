@@ -4,19 +4,19 @@ import { View, FlatList, TouchableOpacity, ScrollView, StyleSheet } from 'react-
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Feather';
 
-import { useAppStore } from '../store/appStore';
-import AppText from '../components/common/AppText';
-import AppCard from '../components/common/AppCard';
-import AppHeader from '../components/layout/AppHeader';
-import AppSearch from '../components/inputs/AppSearch';
-import AppStatusBadge from '../components/common/AppStatusBadge';
-import AppButton from '../components/common/AppButton';
-import AppModal from '../components/modals/AppModal';
-import AppInput from '../components/inputs/AppInput';
-import { formatDateString } from '../utils/marginEngine';
+import { useAppStore } from '../../store/appStore';
+import AppText from '../../components/common/AppText';
+import AppCard from '../../components/common/AppCard';
+import AppHeader from '../../components/layout/AppHeader';
+import AppSearch from '../../components/inputs/AppSearch';
+import AppStatusBadge from '../../components/common/AppStatusBadge';
+import AppButton from '../../components/common/AppButton';
+import AppModal from '../../components/modals/AppModal';
+import AppInput from '../../components/inputs/AppInput';
+import { formatDateString } from '../../utils/marginEngine';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/types';
-import { Inquiry } from '../data/activities';
+import { RootStackParamList } from '../../navigation/types';
+import { Inquiry } from '../../data/activities';
 
 type TabFilter = 'ALL' | 'PENDING_SOURCING' | 'UNDER_REVIEW' | 'ACTIVE';
 

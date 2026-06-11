@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Dimensions } from 'react-native';
+import Toast from 'react-native-toast-message';
+import { View, Dimensions, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useAppStore } from '../../store/appStore';
 import AppText from './AppText';
-import { ScaledSheet } from 'react-native-size-matters';
+import { colors, spacing, scale, typography } from '../../theme';
 
 const { width } = Dimensions.get('window');
 
@@ -80,56 +81,64 @@ export const toastConfig = {
   ),
 };
 
-const styles = ScaledSheet.create({
+export const showToast = (type: 'success' | 'error' | 'info', message: string, title?: string) => {
+  Toast.show({
+    type,
+    text1: title || (type === 'error' ? 'Error' : type === 'success' ? 'Success' : 'Info'),
+    text2: message,
+  });
+};
+
+const styles = StyleSheet.create({
   toastContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     width: width * 0.9,
-    padding: '12@ms',
-    borderRadius: '16@ms',
+    padding: spacing.md,
+    borderRadius: spacing.borderRadiusLg,
     borderWidth: 1.5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 4,
-    marginTop: '10@ms',
+    marginTop: scale(10),
   },
   toastLight: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: colors.light.surface,
   },
   toastDark: {
-    backgroundColor: 'rgba(18, 20, 28, 0.95)',
+    backgroundColor: colors.dark.surface,
   },
   iconWrapper: {
-    width: '36@ms',
-    height: '36@ms',
-    borderRadius: '18@ms',
+    width: scale(36),
+    height: scale(36),
+    borderRadius: scale(18),
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: '12@ms',
+    marginRight: spacing.md,
   },
   textWrapper: {
     flex: 1,
     justifyContent: 'center',
   },
   titleText: {
-    fontSize: '13@ms',
-    marginBottom: '2@ms',
+    fontSize: typography.body,
+    marginBottom: scale(2),
   },
   messageText: {
-    fontSize: '11@ms',
+    fontSize: typography.caption,
   },
   textLight: {
-    color: '#1f2937',
+    color: colors.light.text,
   },
   textDark: {
-    color: '#f3f4f6',
+    color: colors.dark.text,
   },
   descLight: {
-    color: '#6b7280',
+    color: colors.light.textSecondary,
   },
   descDark: {
-    color: '#9ca3af',
+    color: colors.dark.textSecondary,
   },
 });

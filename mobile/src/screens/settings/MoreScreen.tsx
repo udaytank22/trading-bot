@@ -4,14 +4,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { View, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useAppStore } from '../store/appStore';
-import AppText from '../components/common/AppText';
-import AppCard from '../components/common/AppCard';
-import AppHeader from '../components/layout/AppHeader';
-import AppAvatar from '../components/common/AppAvatar';
+import { useAppStore } from '../../store/appStore';
+import AppText from '../../components/common/AppText';
+import AppCard from '../../components/common/AppCard';
+import AppHeader from '../../components/layout/AppHeader';
+import AppAvatar from '../../components/common/AppAvatar';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/types';
-import AppButton from '../components/common/AppButton';
+import { RootStackParamList } from '../../navigation/types';
+import AppButton from '../../components/common/AppButton';
 
 export const MoreScreen = () => {
   const theme = useAppStore((state) => state.theme);
