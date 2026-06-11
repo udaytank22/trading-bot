@@ -18,12 +18,12 @@ const BADGE_MAP: Record<string, BadgeVariant> = {
   PENDING: {
     bg: { light: '#fff7ed', dark: 'rgba(251,191,36,0.15)' },
     text: { light: '#b45309', dark: '#fbbf24' },
-    label: 'Pending',
+    label: 'Datasheet',
   },
   RFQ_SENT: {
     bg: { light: '#eff6ff', dark: 'rgba(96,165,250,0.15)' },
     text: { light: '#1d4ed8', dark: '#60a5fa' },
-    label: 'RFQ Sent',
+    label: 'RFQ sent',
   },
   RFQ_RECEIVED: {
     bg: { light: '#f5f3ff', dark: 'rgba(167,139,250,0.15)' },
@@ -43,7 +43,7 @@ const BADGE_MAP: Record<string, BadgeVariant> = {
   QUOTE_SENT: {
     bg: { light: '#ecfdf5', dark: 'rgba(52,211,153,0.15)' },
     text: { light: '#065f46', dark: '#34d399' },
-    label: 'Quote Sent',
+    label: 'Quoted',
   },
   TL_REVIEW: {
     bg: { light: '#fff7ed', dark: 'rgba(251,191,36,0.15)' },
@@ -58,7 +58,12 @@ const BADGE_MAP: Record<string, BadgeVariant> = {
   EMPLOYEE_VERIFY: {
     bg: { light: '#fff7ed', dark: 'rgba(251,191,36,0.15)' },
     text: { light: '#b45309', dark: '#fbbf24' },
-    label: 'Verify',
+    label: 'Employee Verify',
+  },
+  CLIENT_FINAL_APPROVAL: {
+    bg: { light: '#ecfdf5', dark: 'rgba(52,211,153,0.15)' },
+    text: { light: '#065f46', dark: '#34d399' },
+    label: 'Client Final Approval',
   },
   CONFIRMED: {
     bg: { light: '#ecfdf5', dark: 'rgba(52,211,153,0.15)' },

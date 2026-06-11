@@ -56,9 +56,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 const userInfo = response.data;
 
                 await AsyncStorage.setItem('userInfo', JSON.stringify(userInfo));
-                await saveAuthToken(userInfo.api_token);
+                await saveAuthToken(userInfo.accessToken);
+                if (userInfo.refreshToken) {
+                    await AsyncStorage.setItem('refreshToken', userInfo.refreshToken);
+                }
                 setUserInfo(userInfo); // Assuming `setUserInfo` is in scope
-                setUserToken(userInfo.api_token);
+                setUserToken(userInfo.accessToken);
             } else {
                 setLoginError(response.message); // Assuming `setLoginError` is in scope
                 // showToast('error', response.message);
@@ -94,6 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setUserToken(null);
         setUserInfo(null);
         await clearAuthToken();
+        await AsyncStorage.removeItem('refreshToken');
         await AsyncStorage.removeItem('userInfo');
         setIsLoading(false);
         setLoginError('');

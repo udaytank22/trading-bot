@@ -3,10 +3,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Config from 'react-native-config';
 import { API_ENDPOINTS } from './apiService';
 import axiosRetry from 'axios-retry';
+import { Platform } from 'react-native';
+
+let apiBaseUrl = Config.API_BASEURL;
+if (Platform.OS === 'android' && apiBaseUrl?.includes('localhost')) {
+    apiBaseUrl = apiBaseUrl.replace('localhost', '10.0.2.2');
+}
 
 const PUBLIC_API_ROUTES = [API_ENDPOINTS.AUTH.LOGIN];
 const apiClient = axios.create({
-    baseURL: Config.API_BASEURL, // API base URL from environment config
+    baseURL: apiBaseUrl, // API base URL from environment config
     timeout: 5000 * 10,
     headers: {
         Accept: 'application/json',
@@ -52,16 +58,88 @@ apiClient.interceptors.request.use(
     },
 );
 
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+    failedQueue.forEach(prom => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+
+    failedQueue = [];
+};
+
 // Response interceptor for error handling
 apiClient.interceptors.response.use(
     response => {
+        console.log(response, 'response');
         // Return the successful response
         return response;
     },
     error => {
+        const originalRequest = error.config;
+        
         if (error.response) {
             // Server responded with a status other than 2xx
             const { status, data } = error.response;
+
+            if (status === 401 && !originalRequest._retry) {
+                if (isRefreshing) {
+                    return new Promise(function(resolve, reject) {
+                        failedQueue.push({ resolve, reject });
+                    }).then(token => {
+                        originalRequest.headers['Authorization'] = 'Bearer ' + token;
+                        return apiClient(originalRequest);
+                    }).catch(err => {
+                        return Promise.reject(err);
+                    });
+                }
+
+                originalRequest._retry = true;
+                isRefreshing = true;
+
+                return new Promise(async (resolve, reject) => {
+                    try {
+                        const refreshToken = await AsyncStorage.getItem('refreshToken');
+                        if (!refreshToken) {
+                            throw new Error('No refresh token available');
+                        }
+                        
+                        // Using a standard axios request to avoid looping with interceptors
+                        const response = await axios.post(`${apiBaseUrl}/auth/refresh`, { refreshToken });
+                        
+                        // Backend usually returns { success: true, data: { accessToken, refreshToken } }
+                        // Or if directly in data: { accessToken, refreshToken }
+                        const newAccessToken = response.data.data ? response.data.data.accessToken : response.data.accessToken;
+                        const newRefreshToken = response.data.data ? response.data.data.refreshToken : response.data.refreshToken;
+                        
+                        if (newAccessToken) {
+                            await saveAuthToken(newAccessToken);
+                        }
+                        if (newRefreshToken) {
+                            await AsyncStorage.setItem('refreshToken', newRefreshToken);
+                        }
+                        
+                        apiClient.defaults.headers.common['Authorization'] = 'Bearer ' + newAccessToken;
+                        originalRequest.headers['Authorization'] = 'Bearer ' + newAccessToken;
+                        
+                        processQueue(null, newAccessToken);
+                        resolve(apiClient(originalRequest));
+                    } catch (err) {
+                        processQueue(err, null);
+                        console.error('Refresh token failed:', err);
+                        await AsyncStorage.removeItem('authToken');
+                        await AsyncStorage.removeItem('refreshToken');
+                        reject(error); // Reject with original 401 error
+                    } finally {
+                        isRefreshing = false;
+                    }
+                });
+            }
 
             switch (status) {
                 case 400:
@@ -72,6 +150,7 @@ apiClient.interceptors.response.use(
                         'Unauthorized: Token is invalid or expired. Redirecting to login.',
                     );
                     AsyncStorage.removeItem('authToken');
+                    AsyncStorage.removeItem('refreshToken');
                     // Add logic to navigate to the login screen if needed
                     break;
                 case 403:
@@ -114,6 +193,7 @@ apiClient.interceptors.response.use(
 // Generalized API methods
 export const apiGet = async (url: string, params = {}) => {
     try {
+        console.log(`GET Request to: ${apiClient.defaults.baseURL}${url}`);
         const response = await apiClient.get(url, { params });
         return response.data;
     } catch (error) {
@@ -124,8 +204,6 @@ export const apiGet = async (url: string, params = {}) => {
 
 export const apiPost = async (url: string, data = {}) => {
     try {
-        console.log(`POST Request to: ${apiClient.defaults.baseURL}${url}`);
-        console.log('Request Data:', data);
         const response = await apiClient.post(url, data);
         return response.data;
     } catch (error) {

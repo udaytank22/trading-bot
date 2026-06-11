@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, FlatList, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -17,6 +17,7 @@ import { formatDateString } from '../../utils/marginEngine';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
 import { Inquiry } from '../../data/activities';
+import { getInquiriesList } from '../../services/inquiry/inquieryServices';
 
 type TabFilter = 'ALL' | 'PENDING_SOURCING' | 'UNDER_REVIEW' | 'ACTIVE';
 
@@ -53,10 +54,34 @@ const TabButton = ({ tab, label, activeTab, onPress }: TabButtonProps) => {
 export const InquiriesScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { inquiriesData, addInquiry, theme } = useAppStore();
+  const { theme } = useAppStore();
+  const [inquiriesData, setInquiriesData] = useState<Inquiry[]>([]);
 
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<TabFilter>('ALL');
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Fetch from server
+  const fetchInquiries = useCallback(async () => {
+    try {
+      const data = await getInquiriesList();
+      if (data && Array.isArray(data)) {
+        setInquiriesData(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch inquiries:', error);
+    }
+  }, [setInquiriesData]);
+
+  useEffect(() => {
+    fetchInquiries();
+  }, [fetchInquiries]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchInquiries();
+    setRefreshing(false);
+  };
 
   // Add Inquiry Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -71,7 +96,7 @@ export const InquiriesScreen = () => {
     let result = inquiriesData.filter(inq => {
       // 1. Tab segment filter
       if (activeTab === 'PENDING_SOURCING') {
-        if (!['PENDING', 'RFQ_SENT', 'TL_REVIEW'].includes(inq.status))
+        if (!['PENDING', 'RFQ_SENT', 'RFQ_RECEIVED'].includes(inq.status))
           return false;
       } else if (activeTab === 'UNDER_REVIEW') {
         if (
@@ -85,7 +110,7 @@ export const InquiriesScreen = () => {
           return false;
       } else if (activeTab === 'ACTIVE') {
         if (
-          !['QUOTE_SENT', 'CLIENT_FINAL_APPROVAL', 'CONFIRMED'].includes(
+          !['CLIENT_QUOTING', 'QUOTE_SENT', 'CLIENT_FINAL_APPROVAL', 'CONFIRMED'].includes(
             inq.status,
           )
         )
@@ -142,7 +167,7 @@ export const InquiriesScreen = () => {
       my_quote: null,
     };
 
-    addInquiry(tempInquiry);
+    setInquiriesData(prev => [tempInquiry, ...prev]);
 
     // reset form
     setNewCustomer('');
@@ -311,6 +336,8 @@ export const InquiriesScreen = () => {
         keyExtractor={item => item.inquiry_id}
         renderItem={renderInquiryCard}
         contentContainerStyle={styles.style}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         ListEmptyComponent={
           <View style={styles.view}>
             <AppText
