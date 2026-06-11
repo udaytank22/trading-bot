@@ -4,7 +4,7 @@ import { Button } from '@components/ui';
 import { api } from '@services/api';
 
 
-export default function AllotVehicleModal({ deal, isOpen, onClose, onAllot }) {
+export default function AllotVehicleModal({ deal, isOpen, onClose, onAllot, modalTitle = 'Allot Vehicle' }) {
   const [selectedVehicleId, setSelectedVehicleId] = useState("");
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -128,7 +128,7 @@ export default function AllotVehicleModal({ deal, isOpen, onClose, onAllot }) {
         <div className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
           <div>
             <h2 className="text-gray-900 dark:text-white text-[16px] font-bold tracking-wide">
-              Allot the Vehicle
+              {modalTitle}
             </h2>
             <p className="text-gray-500 dark:text-gray-400 text-[11px] mt-0.5 uppercase tracking-widest font-semibold">
               Shipment: {deal.shipmentNumber || deal.inquiry_id}

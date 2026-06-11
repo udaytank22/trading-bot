@@ -304,15 +304,6 @@ export default function SupplyViewModal({
                     </button>
                   )}
 
-                  {deal.status === "DELIVERED" && (
-                    <button
-                      onClick={() => onStatusUpdate(deal.inquiry_id, "SEND_INVOICE")}
-                      className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-indigo-600 hover:bg-indigo-550 text-white transition-all shadow-sm shadow-indigo-600/10"
-                    >
-                      Send Invoice
-                    </button>
-                  )}
-
                   {deal.status === "SHIPPED" && (
                     <button
                       onClick={() => onStatusUpdate(deal.inquiry_id, "SUPPLY")}

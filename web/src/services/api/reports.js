@@ -9,7 +9,7 @@ const normalizeInquiry = (inq) => {
     buyer_email: inq.client ? inq.client.email : (inq.buyer_email || 'N/A'),
     status: inq.currentStatus || inq.status,
     products: inq.items ? inq.items.map(item => ({
-      product_name: item.description,
+      product_name: item.product?.name || item.description || 'Unknown Product',
       quantity: item.quantity,
       unit: item.unit || 'MT',
       specs: item.specs || ''

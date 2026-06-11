@@ -20,11 +20,24 @@ const getAllInquiries = async (query = {}) => {
     console.error("Failed to run autoCloseExpiredRFQs in getAllInquiries:", err.message);
   }
 
-  const { page, pageSize, paginate, status, clientId } = query;
+  const { page, pageSize, paginate, status, statuses, clientId, search } = query;
   const where = { deletedAt: null };
+
+  if (search) {
+    where.OR = [
+      { inquiryNumber: { contains: search, mode: 'insensitive' } },
+      { vesselName: { contains: search, mode: 'insensitive' } },
+      { client: { name: { contains: search, mode: 'insensitive' } } }
+    ];
+  }
 
   if (status) {
     where.currentStatus = status;
+  }
+
+  if (statuses) {
+    const statusArray = statuses.split(',').map(s => s.trim());
+    where.currentStatus = { in: statusArray };
   }
 
   if (clientId) {
@@ -42,7 +55,8 @@ const getAllInquiries = async (query = {}) => {
         assignedEmployee: { select: { id: true, email: true } },
         assignedTeamLead: { select: { id: true, email: true } },
         statusHistory: { orderBy: { createdAt: 'desc' } },
-        clientQuotations: { include: { items: true } }
+        clientQuotations: { include: { items: true } },
+        invoices: { select: { id: true, status: true } }
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -85,7 +99,8 @@ const getAllInquiries = async (query = {}) => {
         include: {
           items: true
         }
-      }
+      },
+      invoices: { select: { id: true, status: true } }
     },
     orderBy: { createdAt: 'desc' },
     skip,
@@ -148,6 +163,20 @@ const getInquiryById = async (id) => {
           approvedBy: { select: { id: true, email: true } }
         },
         orderBy: { createdAt: 'desc' }
+      },
+      purchaseOrders: {
+        include: {
+          supplier: true,
+          items: true,
+          shipments: {
+            include: { invoices: true }
+          }
+        }
+      },
+      invoices: {
+        include: {
+          shipment: { include: { supplier: true } }
+        }
       }
     }
   });

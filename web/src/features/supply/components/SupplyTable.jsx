@@ -16,16 +16,17 @@ import {
   StatusBadge,
   Tooltip,
   Button,
+  DateCell,
 } from '@components/ui';
 
 // ─── Column definitions ─────────────────────────────────────────────────────────
 const COLUMNS = [
   { key: "sr_no",       label: "#",           className: "w-10 text-center" },
-  { key: "shipment_no", label: "Shipment No." },
-  { key: "supplier",    label: "Supplier" },
-  { key: "cargo",       label: "Cargo" },
-  { key: "quantity",    label: "Quantity",    hidden: "hidden lg:table-cell" },
-  { key: "destination", label: "Destination", hidden: "hidden xl:table-cell" },
+  { key: "order_id",    label: "Order ID" },
+  { key: "customer",    label: "Customer" },
+  { key: "vessel",      label: "Vessel",      hidden: "hidden lg:table-cell" },
+  { key: "products",    label: "Products" },
+  { key: "date",        label: "Date",        hidden: "hidden xl:table-cell" },
   { key: "status",      label: "Status" },
   { key: "actions",     label: "Actions",     className: "text-right" },
 ];
@@ -46,47 +47,53 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
     >
       <td className="px-4 md:px-6 py-4 text-center text-gray-500 text-sm font-medium">{idx + 1}</td>
 
-      {/* ── Shipment Number ─────────────────────────────────────────── */}
-      <td className="px-4 md:px-6 py-4 text-sm text-gray-400 font-mono">
+      {/* ── Order ID (monospace) ─────────────────────────────────────────── */}
+      <td className="px-3 md:px-6 py-4 font-mono text-gray-400 text-[12px] break-words">
         <Tooltip content={item.shipmentNumber || `SH-${item.id}`}>
           <span className="cursor-default">{item.shipmentNumber || `SH-${item.id}`}</span>
         </Tooltip>
       </td>
 
-      {/* ── Supplier name ───────────────────────────────────────────── */}
-      <td className="px-4 md:px-6 py-4">
-        <div className="flex flex-col">
-          <Tooltip content={item.supplier}>
-            <span className="text-gray-900 dark:text-white font-semibold text-sm cursor-default">
-              {item.supplier}
+      {/* ── Customer name ───────────────────────────────────────────── */}
+      <td className="px-3 md:px-6 py-4">
+        <Tooltip content={item.customer || item.supplier}>
+          <span className="text-gray-900 dark:text-white font-bold text-sm cursor-default">
+            {item.customer || item.supplier}
+          </span>
+        </Tooltip>
+      </td>
+
+      {/* ── Vessel name ───────────────────────────────────────────────── */}
+      <td className="px-3 md:px-6 py-4 hidden lg:table-cell">
+        <Tooltip content={item.vessel || item.destination}>
+          <span className="text-gray-600 dark:text-gray-300 text-sm font-medium cursor-default">
+            {item.vessel || item.destination}
+          </span>
+        </Tooltip>
+      </td>
+
+      {/* ── First product + "+N more" badge ───────────────────────────── */}
+      <td className="px-3 md:px-6 py-4">
+        <div className="flex flex-col gap-1">
+          <Tooltip content={item.products?.map((p) => p.product_name).join(", ") || item.cargo}>
+            <span className="text-gray-600 dark:text-gray-300 text-sm cursor-default">
+              {item.products?.[0]?.product_name || item.cargo}
             </span>
           </Tooltip>
-          {item.buyer_email && (
-            <Tooltip content={item.buyer_email}>
-              <span className="text-gray-500 text-[11px] break-all cursor-default">
-                {item.buyer_email}
+          {item.products && item.products.length > 1 && (
+            <Tooltip content={item.products.map((p) => p.product_name).join(", ")}>
+              <span className="inline-block w-fit px-2 py-[2px] bg-gray-100 dark:bg-gray-700/60 text-gray-600 dark:text-gray-300 text-[10px] font-bold rounded-lg cursor-default border border-gray-200 dark:border-none">
+                +{item.products.length - 1} more
               </span>
             </Tooltip>
           )}
         </div>
       </td>
 
-      {/* ── Cargo description ─────────────────────────────────────────── */}
-      <td className="px-4 md:px-6 py-4 text-sm text-gray-600 dark:text-gray-300 max-w-[250px]">
-        <Tooltip content={item.cargo}>
-          <span className="cursor-default truncate block">{item.cargo}</span>
-        </Tooltip>
-      </td>
-
-      {/* ── Quantity (hidden on mobile) ────────────────────────────────── */}
-      <td className="px-4 md:px-6 py-4 text-sm text-gray-600 dark:text-gray-300 hidden lg:table-cell">
-        <span>{item.quantity || '—'}</span>
-      </td>
-
-      {/* ── Destination (hidden on tablet) ────────────────────────────── */}
-      <td className="px-4 md:px-6 py-4 text-sm text-gray-600 dark:text-gray-300 hidden xl:table-cell">
-        <Tooltip content={item.destination}>
-          <span className="cursor-default">{item.destination}</span>
+      {/* ── Date (hidden on small screens) ────────────────────────────── */}
+      <td className="px-3 md:px-6 py-4 hidden xl:table-cell">
+        <Tooltip content={new Date(item.date).toLocaleString("en-GB")}>
+          <DateCell isoString={item.date} />
         </Tooltip>
       </td>
 
@@ -100,7 +107,7 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
         <div className="flex flex-col md:flex-row justify-end gap-2">
 
 
-          {item.status === "LOADING" && (
+          {!item.isGrouped && item.status === "LOADING" && (
             <Button
               variant="secondary"
               size="sm"
@@ -115,7 +122,7 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
             </Button>
           )}
 
-          {item.status === "LOADING" && (
+          {!item.isGrouped && item.status === "LOADING" && (
             <Button
               variant="secondary"
               size="sm"
@@ -126,7 +133,7 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
             </Button>
           )}
 
-          {(item.status === "IN_TRANSIT" || item.status === "DISPATCHED") && (
+          {!item.isGrouped && (item.status === "IN_TRANSIT" || item.status === "DISPATCHED") && (
             <Button
               variant="secondary"
               size="sm"
@@ -137,16 +144,7 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
             </Button>
           )}
 
-          {item.status === "DELIVERED" && (
-            <Button
-              variant="secondary"
-              size="sm"
-              className="border-indigo-500/40 text-indigo-400 hover:bg-indigo-500/10"
-              onClick={() => onStatusUpdate(item.id, "SEND_INVOICE")}
-            >
-              Send Invoice
-            </Button>
-          )}
+
 
           <Button
             variant="secondary"
@@ -157,7 +155,7 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
             View
           </Button>
 
-          {item.status === "SHIPPED" && (
+          {!item.isGrouped && item.status === "SHIPPED" && (
             <Button
               variant="secondary"
               size="sm"

@@ -5,10 +5,11 @@ import { useData, useAuth } from '@context';
 import { api } from '@services/api';
 import { formatINR } from '@services/marginEngine';
 import { DataTable, rowStripeClass, ROW_HOVER_CLS, StatusBadge } from '@components/ui';
+import GroupedSupplyDetails from './components/GroupedSupplyDetails';
 import AllotVehicleModal from '@features/employees/modals/AllotVehicleModal';
-import InvoiceEmailModal from '@features/invoices/modals/InvoiceEmailModal';
 import DeliveryChallanViewerModal from './modals/DeliveryChallanViewerModal';
 import { generateDeliveryChallanPDF } from './utils/generateDeliveryChallan';
+import { generateGatePassPDF } from './utils/generateGatePass';
 import Swal from 'sweetalert2';
 
 const DUMMY_PDF_URL = "/memories/file-sample_150kB.pdf";
@@ -27,14 +28,13 @@ export default function SupplyDetailsPage() {
   const [showPdf, setShowPdf] = useState(false);
   const [pdfLabel, setPdfLabel] = useState("");
   const [pdfUrl, setPdfUrl] = useState("");
+  const [documents, setDocuments] = useState([]);
 
   // Modals state
   const [allotModalDeal, setAllotModalDeal] = useState(null);
   const [isAllotModalOpen, setIsAllotModalOpen] = useState(false);
   // Track what the allot modal is being used for: 'loading' or 'final_delivery'
   const [allotModalMode, setAllotModalMode] = useState('loading');
-  const [invoiceModalDeal, setInvoiceModalDeal] = useState(null);
-  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
 
   // Delivery Challan viewer
   const [challanViewerOpen, setChallanViewerOpen] = useState(false);
@@ -44,26 +44,75 @@ export default function SupplyDetailsPage() {
 
   // Load shipment — id from URL is a string, backend IDs are integers
   useEffect(() => {
-    const numId = parseInt(id, 10);
-    const found = supplyData.find(item => item.id === numId || item.id === id);
-    if (found) {
-      setDeal({
-        ...found,
-        status: found.currentStatus || found.status
-      });
+    if (typeof id === 'string' && id.startsWith('inq-')) {
+      const inqId = parseInt(id.replace('inq-', ''), 10);
+      const groupShipments = supplyData.filter(item => item.inquiryId === inqId);
+      if (groupShipments.length > 0) {
+        const STATUS_RANK = {
+          'ORDER PLACED': 1,
+          'ORDERED': 1,
+          'PENDING': 1,
+          'VEHICLE_ALLOTTED': 2,
+          'LOADING': 2,
+          'DISPATCHED': 3,
+          'IN_TRANSIT': 3,
+          'DELIVERED': 4,
+          'OUT_FOR_DELIVERY': 5,
+          'DELIVERED_TO_VESSEL': 6,
+          'DELIVERED TO VESSEL': 6,
+          'CHALLAN_RECEIVED': 7
+        };
+        const RANK_TO_STATUS = {
+          1: 'ORDER PLACED',
+          2: 'VEHICLE_ALLOTTED',
+          3: 'DISPATCHED',
+          4: 'DELIVERED',
+          5: 'OUT_FOR_DELIVERY',
+          6: 'DELIVERED_TO_VESSEL',
+          7: 'CHALLAN_RECEIVED'
+        };
+
+        let minRank = Infinity;
+        groupShipments.forEach(s => {
+          const st = s.currentStatus || s.status;
+          const rank = STATUS_RANK[st?.toUpperCase()] || 1;
+          if (rank < minRank) minRank = rank;
+        });
+        const aggregateStatus = minRank !== Infinity ? RANK_TO_STATUS[minRank] : (groupShipments[0].currentStatus || groupShipments[0].status);
+
+        setDeal({
+          isGrouped: true,
+          id: id,
+          shipmentNumber: groupShipments[0].inquiry?.inquiryNumber ? `ORD-${groupShipments[0].inquiry.inquiryNumber}` : `ORD-${inqId}`,
+          client: groupShipments[0].client,
+          inquiry: groupShipments[0].inquiry,
+          subShipments: groupShipments,
+          status: aggregateStatus,
+          date: groupShipments[0].createdAt
+        });
+      }
     } else {
-      setLoading(true);
-      api.shipments.getShipment(id)
-        .then(res => {
-          if (res.success && res.data) {
-            setDeal({
-              ...res.data,
-              status: res.data.currentStatus || res.data.status
-            });
-          }
-        })
-        .catch(err => console.error('Failed to fetch shipment details:', err))
-        .finally(() => setLoading(false));
+      const numId = parseInt(id, 10);
+      const found = supplyData.find(item => item.id === numId || item.id === id);
+      if (found) {
+        setDeal({
+          ...found,
+          status: found.currentStatus || found.status
+        });
+      } else {
+        setLoading(true);
+        api.shipments.getShipment(id)
+          .then(res => {
+            if (res.success && res.data) {
+              setDeal({
+                ...res.data,
+                status: res.data.currentStatus || res.data.status
+              });
+            }
+          })
+          .catch(err => console.error('Failed to fetch shipment details:', err))
+          .finally(() => setLoading(false));
+      }
     }
   }, [id, supplyData]);
 
@@ -76,41 +125,58 @@ export default function SupplyDetailsPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [showPdf]);
 
+  // Generate documents dynamically
+  useEffect(() => {
+    let urlsToRevoke = [];
+    const docList = [];
+
+    if (deal?.purchaseOrder?.attachment) {
+      docList.push({
+        name: `Purchase Order (${deal.purchaseOrder.poNumber})`,
+        type: "PDF",
+        size: "Generated PO Document",
+        url: deal.purchaseOrder.attachment,
+      });
+    }
+
+    const s = deal?.status || deal?.currentStatus;
+    const isVehicleAllotted = s && s !== "ORDER_PLACED" && s !== "ORDER PLACED" && s !== "PENDING";
+
+    if (isVehicleAllotted) {
+      try {
+        const vehicle = {
+          vehicle_no: deal.vehicleDetails?.split('(')[0]?.trim() || deal.vehicleDetails || 'Multiple/External',
+          driver_name: deal.driverDetails?.split('(')[0]?.trim() || deal.driverDetails || 'Multiple/External'
+        };
+
+        const dcNo = `DC-${String(deal.id).padStart(3, '0')}`;
+        const challanUrl = generateDeliveryChallanPDF(deal, vehicle, dcNo);
+        urlsToRevoke.push(challanUrl);
+
+        const gpNo = `GP-${String(deal.id).padStart(3, '0')}`;
+        const gatePassUrl = generateGatePassPDF(deal, vehicle, gpNo);
+        urlsToRevoke.push(gatePassUrl);
+
+        docList.push({ name: "Delivery Challan", type: "PDF", size: "Auto-generated", url: challanUrl });
+        docList.push({ name: "Gate Pass", type: "PDF", size: "Auto-generated", url: gatePassUrl });
+        
+        // Push any actual documents stored in DB if needed (mocked here if we had them)
+      } catch (e) {
+        console.error("Error generating PDFs", e);
+      }
+    }
+
+    setDocuments(docList);
+
+    return () => {
+      urlsToRevoke.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [deal]);
+
   const handleStatusUpdate = async (shipmentId, newStatus) => {
     if (newStatus === "SUPPLY") {
       const res = await api.shipments.updateShipment(shipmentId, { currentStatus: "SUPPLY" });
       if (res.success) refreshAll();
-      return;
-    }
-    if (newStatus === "SEND_INVOICE") {
-      setInvoiceModalDeal(deal);
-      setIsInvoiceModalOpen(true);
-      return;
-    }
-    if (newStatus === "INVOICE_SENT") {
-      try {
-        const res = await api.shipments.updateShipment(shipmentId, { currentStatus: "DELIVERED" });
-        if (res.success) {
-          const invoicePayload = {
-            clientId: deal.clientId,
-            inquiryId: deal.inquiryId,
-            shipmentId: deal.id,
-            subtotal: 1000.00,
-            status: 'SENT',
-            items: deal.purchaseOrder?.items?.map(p => ({
-              description: p.product?.name || p.description || 'Product',
-              quantity: p.quantity || 1,
-              unitPrice: Number(p.unitPrice) || 1000.00,
-              totalPrice: Number(p.totalPrice) || 1000.00
-            })) || []
-          };
-          await api.invoices.createInvoice(invoicePayload);
-          refreshAll();
-          setDeal(prev => ({ ...prev, status: "DELIVERED" }));
-        }
-      } catch (e) {
-        console.error("Failed to transition shipment to invoice:", e);
-      }
       return;
     }
 
@@ -154,6 +220,40 @@ export default function SupplyDetailsPage() {
       }
     } catch (e) {
       console.error("Failed to update shipment status:", e);
+    }
+  };
+
+  const handleGroupChallanReceived = async () => {
+    try {
+      const promises = deal.subShipments.map(sub => 
+        api.shipments.updateShipment(sub.id, { currentStatus: "DELIVERED_TO_VESSEL" })
+      );
+      await Promise.all(promises);
+
+      // Do NOT close inquiry yet. It will be closed from the invoices tab when hard copy is received.
+      
+      refreshAll();
+      const updatedDeal = { ...deal };
+      updatedDeal.subShipments = updatedDeal.subShipments.map(s => ({
+        ...s,
+        status: 'DELIVERED_TO_VESSEL',
+        currentStatus: 'DELIVERED_TO_VESSEL'
+      }));
+      updatedDeal.status = 'DELIVERED_TO_VESSEL';
+      setDeal(updatedDeal);
+
+      Swal.fire({
+        title: '✅ Challan Signed!',
+        text: 'The vessel has signed the challan. Ready for invoicing.',
+        icon: 'success',
+        confirmButtonColor: '#0d9488',
+        background: '#1a1d23',
+        color: '#fff',
+        timer: 3000,
+        timerProgressBar: true,
+      });
+    } catch (e) {
+      console.error("Failed to update group challan status:", e);
     }
   };
 
@@ -204,43 +304,26 @@ export default function SupplyDetailsPage() {
     ? `${deal.supplier.name} (${deal.supplier.phone || "—"})`
     : "—";
 
-  const documents = useMemo(() => {
-    const docList = [];
-    if (deal?.purchaseOrder?.attachment) {
-      docList.push({
-        name: `Purchase Order (${deal.purchaseOrder.poNumber})`,
-        type: "PDF",
-        size: "Generated PO Document",
-        url: deal.purchaseOrder.attachment,
-      });
-    }
-    docList.push(
-      { name: "Delivery Challan", type: "PDF", size: "1.2 MB", url: DUMMY_PDF_URL },
-      { name: "Gate Pass (Entry)", type: "PDF", size: "850 KB", url: DUMMY_PDF_URL },
-      { name: "Vehicle Registration (RC)", type: "IMG", size: "2.4 MB", url: DUMMY_PDF_URL },
-      { name: "Driver Identity / License", type: "IMG", size: "1.8 MB", url: DUMMY_PDF_URL }
-    );
-    return docList;
-  }, [deal]);
-
   const steps = [
     { id: "ORDER_PLACED", label: "Order Placed" },
-    { id: "LOADING", label: "Loading" },
+    { id: "VEHICLE_ALLOTTED", label: "Vehicle Allotted" },
     { id: "DISPATCHED", label: "Dispatched" },
     { id: "DELIVERED", label: "Delivered" },
     { id: "OUT_FOR_DELIVERY", label: "Out for Delivery" },
-    { id: "CHALLAN_RECEIVED", label: "Challan Received" },
+    { id: "DELIVERED_TO_VESSEL", label: "Challan Signed" },
+    { id: "CHALLAN_RECEIVED", label: "Hard Copy Received" },
   ];
 
   const currentStepIdx = useMemo(() => {
     if (!deal) return 0;
     const s = deal.status || deal.currentStatus;
     if (s === "PENDING" || s === "ORDER_PLACED") return 0;
-    if (s === "LOADING") return 1;
+    if (s === "VEHICLE_ALLOTTED" || s === "LOADING") return 1;
     if (s === "DISPATCHED" || s === "IN_TRANSIT") return 2;
     if (s === "DELIVERED") return 3;
     if (s === "OUT_FOR_DELIVERY") return 4;
-    if (s === "CHALLAN_RECEIVED") return 5;
+    if (s === "DELIVERED_TO_VESSEL") return 5;
+    if (s === "CHALLAN_RECEIVED") return 6;
     return 0;
   }, [deal]);
 
@@ -254,6 +337,108 @@ export default function SupplyDetailsPage() {
 
   const status = deal.status || deal.currentStatus;
   const isVehicleAllotted = status !== "ORDER_PLACED" && status !== "DISPATCHED";
+
+  if (deal.isGrouped) {
+    return (
+      <div className="relative">
+        <GroupedSupplyDetails 
+          deal={deal}
+          formatINR={formatINR}
+          setAllotModalDeal={setAllotModalDeal}
+          setAllotModalMode={setAllotModalMode}
+          setIsAllotModalOpen={setIsAllotModalOpen}
+          handleStatusUpdate={handleStatusUpdate}
+          handleGroupChallanReceived={handleGroupChallanReceived}
+          documents={documents}
+          handleViewPDF={(doc) => {
+            setPdfUrl(doc.url);
+            setPdfLabel(doc.name);
+            setShowPdf(true);
+          }}
+        />
+        {/* Modals are rendered below in SupplyDetailsPage */}
+        {/* Modals */}
+        <AllotVehicleModal
+          deal={allotModalDeal}
+          isOpen={isAllotModalOpen}
+          onClose={() => setIsAllotModalOpen(false)}
+          modalTitle={(allotModalMode === 'final_delivery' || allotModalMode === 'group_final_delivery') ? 'Allot Vehicle for Final Delivery' : 'Allot Vehicle'}
+          onAllot={async (allotId, vehicle) => {
+            try {
+              if (allotModalMode === 'group_final_delivery') {
+                const promises = deal.subShipments.map(sub => 
+                  api.shipments.updateShipment(sub.id, {
+                    currentStatus: 'VEHICLE_ALLOTTED',
+                    vehicleDetails: vehicle.vehicle_no,
+                    driverDetails: `${vehicle.driver_name || vehicle.owner_name} (${vehicle.phone || vehicle.owner_phone})`
+                  })
+                );
+                await Promise.all(promises);
+                
+                refreshAll();
+                const updatedDeal = { ...deal };
+                updatedDeal.subShipments = updatedDeal.subShipments.map(s => ({
+                  ...s,
+                  status: 'VEHICLE_ALLOTTED',
+                  currentStatus: 'VEHICLE_ALLOTTED',
+                  vehicleDetails: vehicle.vehicle_no,
+                  driverDetails: `${vehicle.driver_name || vehicle.owner_name} (${vehicle.phone || vehicle.owner_phone})`
+                }));
+                updatedDeal.status = 'VEHICLE_ALLOTTED';
+                setDeal(updatedDeal);
+              } else {
+                // For grouped view, update specific subShipment locally
+                const newStatus = allotModalMode === 'final_delivery' ? 'OUT_FOR_DELIVERY' : 'LOADING';
+                const res = await api.shipments.updateShipment(allotId, {
+                  currentStatus: newStatus,
+                  vehicleDetails: vehicle.vehicle_no,
+                  driverDetails: `${vehicle.driver_name || vehicle.owner_name} (${vehicle.phone || vehicle.owner_phone})`
+                });
+                if (res.success) {
+                  const updatedDeal = { ...deal };
+                  const subIndex = updatedDeal.subShipments.findIndex(s => s.id === allotId);
+                  if (subIndex > -1) {
+                    updatedDeal.subShipments[subIndex] = {
+                      ...updatedDeal.subShipments[subIndex],
+                      status: newStatus,
+                      currentStatus: newStatus,
+                      vehicleDetails: vehicle.vehicle_no,
+                      driverDetails: `${vehicle.driver_name || vehicle.owner_name} (${vehicle.phone || vehicle.owner_phone})`
+                    };
+                  }
+                  refreshAll();
+                  setDeal(updatedDeal);
+
+                  // Generate Challan PDF for single sub-shipment
+                  try {
+                    if (challanBlobRef.current) URL.revokeObjectURL(challanBlobRef.current);
+                    const dcNo = `DC-${String(allotId).padStart(3, '0')}`;
+                    const blobUrl = generateDeliveryChallanPDF(updatedDeal.subShipments[subIndex], vehicle, dcNo);
+                    challanBlobRef.current = blobUrl;
+                    setChallanPdfUrl(blobUrl);
+                    setChallanNo(dcNo);
+                    setChallanViewerOpen(true);
+                  } catch (pdfErr) {
+                    console.error('Failed to generate delivery challan PDF:', pdfErr);
+                  }
+                }
+              }
+            } catch (e) {
+
+              console.error("Failed to allot vehicle:", e);
+            }
+          }}
+        />
+
+        <DeliveryChallanViewerModal
+          isOpen={challanViewerOpen}
+          pdfUrl={challanPdfUrl}
+          challanNo={challanNo}
+          onClose={() => setChallanViewerOpen(false)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full animate-in fade-in duration-300 pb-6">
@@ -750,13 +935,6 @@ export default function SupplyDetailsPage() {
             console.error("Failed to allot vehicle:", e);
           }
         }}
-      />
-
-      <InvoiceEmailModal
-        deal={invoiceModalDeal}
-        isOpen={isInvoiceModalOpen}
-        onClose={() => setIsInvoiceModalOpen(false)}
-        onStatusUpdate={handleStatusUpdate}
       />
 
       {/* ── Delivery Challan Inline Viewer ── */}

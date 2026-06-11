@@ -16,6 +16,7 @@ router.get('/:id/pdf', checkPermission('invoices', 'read'), asyncWrapper(control
 router.get('/:id/preview', checkPermission('invoices', 'read'), asyncWrapper(controller.previewInvoice));
 router.post('/', checkPermission('invoices', 'create'), validate(validateCreateInvoice), asyncWrapper(controller.createInvoice));
 router.post('/generate/shipment/:shipmentId', checkPermission('invoices', 'create'), asyncWrapper(controller.generateInvoiceFromShipment));
+router.post('/generate/inquiry', checkPermission('invoices', 'create'), asyncWrapper(controller.createInvoiceFromInquiry));
 router.post('/:id/send', checkPermission('invoices', 'create'), asyncWrapper(controller.sendInvoiceEmail));
 router.put('/:id', checkPermission('invoices', 'update'), validate(validateUpdateInvoice), asyncWrapper(controller.updateInvoice));
 router.delete('/:id', checkPermission('invoices', 'delete'), asyncWrapper(controller.deleteInvoice));

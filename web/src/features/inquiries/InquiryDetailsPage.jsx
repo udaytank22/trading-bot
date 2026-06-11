@@ -15,6 +15,7 @@ import QuoteModal from './modals/QuoteModal';
 import VerificationModal from './modals/VerificationModal';
 import AdminApprovalModal from './modals/AdminApprovalModal';
 import MultiEmailPreviewModal from './modals/MultiEmailPreviewModal';
+import EmailPreviewModal from './modals/EmailPreviewModal';
 
 export default function InquiryDetailsPage() {
   const { id } = useParams();
@@ -36,6 +37,7 @@ export default function InquiryDetailsPage() {
   // pendingSelections: { [inquiryItemId]: { quoteItemId, supplierName, quoteId } }
   const [pendingSelections, setPendingSelections] = useState({});
   const [isConfirmingSource, setIsConfirmingSource] = useState(false);
+  const [isEmailPreviewModalOpen, setIsEmailPreviewModalOpen] = useState(false);
 
   const toggleQuoteExpand = (quoteId) => {
     setExpandedQuotes(prev => ({ ...prev, [quoteId]: !prev[quoteId] }));
@@ -126,22 +128,8 @@ export default function InquiryDetailsPage() {
   };
 
   const handleVerifyConfirm = async () => {
-    const confirmed = await confirmAction(
-      "Confirm Verification",
-      "Are you sure you want to verify and dispatch the quotation to the client? This process cannot be reverted."
-    );
-    if (!confirmed) return;
-    try {
-      const res = await api.inquiries.finalVerify(deal.id);
-      if (res.success) {
-        refreshAll();
-        setActiveTab("overview");
-        Swal.fire({ icon: 'success', title: 'Verified', text: 'Quotation verified and sent to client.', background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
-      }
-    } catch (err) {
-      console.error(err);
-      Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to verify quotation.', background: '#1a1d23', color: '#fff' });
-    }
+    setIsEmailPreviewModalOpen(true);
+    setActiveTab("overview");
   };
 
   const handleAdminConfirm = async (adjustedData) => {
@@ -634,42 +622,6 @@ export default function InquiryDetailsPage() {
           </div>
         </div>
 
-        {/* STEPPER TIMELINE */}
-        {/* <div className="bg-white dark:bg-[#1e2028] rounded-xl p-5 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
-          <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3 px-1">
-            Sourcing Milestone Progress
-          </div>
-          <div className="overflow-x-auto w-full custom-scrollbar pb-1">
-            <div className="relative flex items-start pt-1 pb-2 min-w-[720px]">
-              <div
-                className="absolute left-[40px] h-[2px] bg-gray-200 dark:bg-[#2a2d36] -z-10"
-                style={{ top: "12px", width: `${(steps.length - 1) * 80}px` }}
-              />
-              <div
-                className="absolute left-[40px] h-[2px] bg-purple-500 -z-10 transition-all duration-350"
-                style={{ top: "12px", width: `${currentStepIdx * 80}px` }}
-              />
-              {steps.map((step, idx) => {
-                const isActive = idx <= currentStepIdx;
-                const isCurrent = idx === currentStepIdx;
-                return (
-                  <div key={step.id} className="flex flex-col items-center w-[80px] flex-shrink-0">
-                    <div className="h-4 flex items-center justify-center">
-                      <div className={`w-3.5 h-3.5 rounded-full border-2 bg-white dark:bg-[#1e2028] z-10 transition-all duration-300 flex items-center justify-center
-                        ${isActive ? "border-purple-500 shadow" : "border-gray-300 dark:border-gray-600"}`}>
-                        {isActive && <div className={`w-1.5 h-1.5 rounded-full bg-purple-500 ${isCurrent ? "animate-pulse" : ""}`} />}
-                      </div>
-                    </div>
-                    <span className={`text-[8px] mt-2 font-bold uppercase tracking-wider text-center max-w-[76px] leading-tight select-none
-                      ${isCurrent ? "text-purple-500 font-extrabold" : isActive ? "text-purple-550/80 dark:text-purple-400/80" : "text-gray-500"}`}>
-                      {step.label}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div> */}
 
         {/* TABS SELECTOR */}
         {canPerformAction && actionConfig && (
@@ -793,8 +745,8 @@ export default function InquiryDetailsPage() {
                         >
                           {isConfirmingSource ? (
                             <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                             </svg>
                           ) : (
                             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -840,11 +792,10 @@ export default function InquiryDetailsPage() {
                       return (
                         <div
                           key={quote.id}
-                          className={`p-4 rounded-xl border transition-all duration-200 ${
-                            quotePendingCount > 0
-                              ? 'bg-purple-500/5 border-purple-500/40 shadow-sm'
-                              : 'bg-gray-50/50 dark:bg-[#242830]/30 border-gray-250 dark:border-[#2a2d36] hover:border-gray-300 dark:hover:border-gray-700'
-                          }`}
+                          className={`p-4 rounded-xl border transition-all duration-200 ${quotePendingCount > 0
+                            ? 'bg-purple-500/5 border-purple-500/40 shadow-sm'
+                            : 'bg-gray-50/50 dark:bg-[#242830]/30 border-gray-250 dark:border-[#2a2d36] hover:border-gray-300 dark:hover:border-gray-700'
+                            }`}
                         >
                           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div className="flex-1">
@@ -914,13 +865,12 @@ export default function InquiryDetailsPage() {
                                         <tr
                                           key={item.id || idx}
                                           onClick={canSelectQuote ? () => handleCheckboxToggle(item, quote) : undefined}
-                                          className={`border-b border-gray-100 dark:border-[#2a2d36]/50 last:border-0 transition-colors ${
-                                            isChecked
-                                              ? 'bg-emerald-500/5 dark:bg-emerald-500/10'
-                                              : pickedElsewhere
-                                                ? 'opacity-40'
-                                                : canSelectQuote ? 'hover:bg-purple-500/5 cursor-pointer' : ''
-                                          }`}
+                                          className={`border-b border-gray-100 dark:border-[#2a2d36]/50 last:border-0 transition-colors ${isChecked
+                                            ? 'bg-emerald-500/5 dark:bg-emerald-500/10'
+                                            : pickedElsewhere
+                                              ? 'opacity-40'
+                                              : canSelectQuote ? 'hover:bg-purple-500/5 cursor-pointer' : ''
+                                            }`}
                                         >
                                           {canSelectQuote && (
                                             <td className="px-4 py-3 w-10" onClick={e => e.stopPropagation()}>
@@ -1005,6 +955,89 @@ export default function InquiryDetailsPage() {
                   </div>
                 )}
               </div>
+
+              {/* PO and Invoice Details */}
+              {(deal.purchaseOrders?.length > 0 || deal.invoices?.length > 0) && (
+                <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Post-Confirmation Documents</h3>
+
+                  <div className="space-y-6">
+                    {/* Purchase Orders */}
+                    {deal.purchaseOrders?.length > 0 && (
+                      <div>
+                        <h4 className="text-[11px] font-bold text-gray-900 dark:text-white uppercase mb-3 flex items-center gap-2">
+                          <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                          </svg>
+                          Purchase Orders
+                        </h4>
+                        <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-[#2a2d36]">
+                          <table className="w-full text-left border-collapse text-xs">
+                            <thead>
+                              <tr className="bg-gray-50 dark:bg-[#242830] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider border-b border-gray-200 dark:border-[#2a2d36]">
+                                <th className="px-4 py-2.5">PO Number</th>
+                                <th className="px-4 py-2.5">Supplier</th>
+                                <th className="px-4 py-2.5">Status</th>
+                                <th className="px-4 py-2.5 text-right">Amount</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {deal.purchaseOrders.map((po) => (
+                                <tr key={po.id} className="border-b border-gray-100 dark:border-[#2a2d36]/50 last:border-0 hover:bg-gray-50/50 dark:hover:bg-[#242830]/50">
+                                  <td className="px-4 py-3 font-mono font-semibold text-purple-600 dark:text-purple-400">
+                                    <button onClick={() => navigate(`/purchase-orders/${po.id}`)} className="hover:underline">{po.poNumber}</button>
+                                  </td>
+                                  <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">{po.supplier?.name || 'N/A'}</td>
+                                  <td className="px-4 py-3"><StatusBadge status={po.status} /></td>
+                                  <td className="px-4 py-3 font-mono font-bold text-gray-900 dark:text-white text-right">{formatINR(po.amount)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Invoices */}
+                    {deal.invoices?.length > 0 && (
+                      <div>
+                        <h4 className="text-[11px] font-bold text-gray-900 dark:text-white uppercase mb-3 flex items-center gap-2">
+                          <svg className="w-3.5 h-3.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          Client Invoices & Payments
+                        </h4>
+                        <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-[#2a2d36]">
+                          <table className="w-full text-left border-collapse text-xs">
+                            <thead>
+                              <tr className="bg-gray-50 dark:bg-[#242830] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider border-b border-gray-200 dark:border-[#2a2d36]">
+                                <th className="px-4 py-2.5">Invoice #</th>
+                                <th className="px-4 py-2.5">Status</th>
+                                <th className="px-4 py-2.5 text-right">Total</th>
+                                <th className="px-4 py-2.5 text-right">Paid</th>
+                                <th className="px-4 py-2.5 text-right">Pending</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {deal.invoices.map((inv) => (
+                                <tr key={inv.id} className="border-b border-gray-100 dark:border-[#2a2d36]/50 last:border-0 hover:bg-gray-50/50 dark:hover:bg-[#242830]/50">
+                                  <td className="px-4 py-3 font-mono font-semibold text-purple-600 dark:text-purple-400">
+                                    <button onClick={() => navigate(`/invoices/${inv.id}`)} className="hover:underline">{inv.invoiceNumber}</button>
+                                  </td>
+                                  <td className="px-4 py-3"><StatusBadge status={inv.status} /></td>
+                                  <td className="px-4 py-3 font-mono font-bold text-gray-900 dark:text-white text-right">{formatINR(inv.total)}</td>
+                                  <td className="px-4 py-3 font-mono font-bold text-emerald-500 text-right">{formatINR(inv.paidAmount)}</td>
+                                  <td className="px-4 py-3 font-mono font-bold text-red-500 text-right">{formatINR(inv.pendingAmount)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
             </div>
 
@@ -1189,6 +1222,17 @@ export default function InquiryDetailsPage() {
         stagedRFQs={pendingRFQs}
         inquiryDeal={currentDealWithLocalQuote}
         onStatusUpdate={() => { }}
+      />
+
+      <EmailPreviewModal
+        isOpen={isEmailPreviewModalOpen}
+        onClose={() => setIsEmailPreviewModalOpen(false)}
+        deal={currentDealWithLocalQuote}
+        initialEmailType="QUOTE"
+        onStatusUpdate={() => {
+          refreshAll();
+          setActiveTab("overview");
+        }}
       />
 
       {isTableFullscreen && (

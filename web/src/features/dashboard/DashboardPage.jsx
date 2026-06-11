@@ -224,6 +224,14 @@ export default function DashboardPage() {
                     <td className="px-4 py-2.5 text-gray-500 font-medium">
                       {formatDateString(inq.createdAt)}
                     </td>
+                    <td className="px-4 py-2.5 text-right">
+                      <button
+                        onClick={() => navigate(`/inquiries/${inq.id}`)}
+                        className="text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 font-semibold text-xs tracking-wide transition-colors"
+                      >
+                        View
+                      </button>
+                    </td>
                   </tr>
                 )}
               />

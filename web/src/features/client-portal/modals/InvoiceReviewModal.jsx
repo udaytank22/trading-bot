@@ -55,7 +55,7 @@ export default function InvoiceReviewModal({ isOpen, onClose, previewData, onSen
   const handleSend = async () => {
     setSendState("sending");
     try {
-      const res = await api.invoices.sendInvoiceEmail(previewData.invoice.id, { subject, body });
+      const res = await api.invoices.sendInvoiceEmail(previewData.invoice.id, { subject, body, toEmail: client.email });
       if (res.success) {
         if (res.data?.emailPreviewUrl) {
           console.log("Email Preview URL:", res.data.emailPreviewUrl);

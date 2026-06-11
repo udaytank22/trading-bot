@@ -78,12 +78,16 @@ const STATUS_STYLES = {
     "bg-indigo-50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/25",
   LOADING:
     "bg-purple-50 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-500/25",
+  VEHICLE_ALLOTTED:
+    "bg-purple-50 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-500/25",
   IN_TRANSIT:
     "bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/25",
   DELIVERED:
     "bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/25",
   OUT_FOR_DELIVERY:
     "bg-orange-50 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-500/25",
+  DELIVERED_TO_VESSEL:
+    "bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/25",
   CHALLAN_RECEIVED:
     "bg-teal-50 dark:bg-teal-500/20 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-500/25",
 
@@ -94,6 +98,8 @@ const STATUS_STYLES = {
     "bg-gray-100 dark:bg-gray-500/10 text-gray-600 dark:text-gray-500 border-gray-200 dark:border-gray-500/20",
 
   // ── Invoice statuses ──────────────────────────────────────────────────────
+  PENDING_INVOICE:
+    "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20",
   SENT:
     "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/20",
   PAID:
@@ -120,9 +126,12 @@ const STATUS_LABELS = {
   IN_TRANSIT:   "In Transit",
   ORDERED:      "Ordered",
   ORDER_PLACED: "Order Placed",
+  VEHICLE_ALLOTTED: "Vehicle Allotted",
   DISPATCHED:   "Dispatched",
   OUT_FOR_DELIVERY: "Out for Delivery",
-  CHALLAN_RECEIVED: "Challan Received"
+  DELIVERED_TO_VESSEL: "Delivered To Vessel",
+  CHALLAN_RECEIVED: "Challan Received",
+  PENDING_INVOICE: "Pending Invoice"
 };
 
 // ─── Fallback style for unknown statuses ───────────────────────────────────────
