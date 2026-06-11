@@ -131,13 +131,41 @@ const generateInvoiceFromShipment = async (req, res) => {
     return sendError(res, err.message || 'Failed to generate invoice', [], 500);
   }
 };
+
+/**
+ * Generate invoice from inquiry (grouped orders)
+ */
+const createInvoiceFromInquiry = async (req, res) => {
+  try {
+    const inquiryId = req.body.inquiryId;
+    if (!inquiryId) return sendError(res, 'inquiryId is required', [], 400);
+
+    const result = await service.generateInvoiceFromInquiry(inquiryId, req.user.id);
+
+    await createAuditLog({
+      userId: req.user.id,
+      module: 'invoices',
+      action: 'create',
+      recordId: result.invoice.id,
+      newValue: result.invoice,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent']
+    });
+
+    return sendSuccess(res, 'Invoice generated successfully', result, 201);
+  } catch (err) {
+    console.error('Invoice generation error:', err);
+    return sendError(res, err.message || 'Failed to generate invoice', [], 500);
+  }
+};
+
 /**
  * Send drafted invoice email
  */
 const sendInvoiceEmail = async (req, res) => {
   try {
-    const { subject, body } = req.body;
-    const result = await service.sendInvoiceEmailAPI(req.params.id, subject, body, req.user.id);
+    const { subject, body, toEmail } = req.body;
+    const result = await service.sendInvoiceEmailAPI(req.params.id, subject, body, req.user.id, toEmail);
 
     await createAuditLog({
       userId: req.user.id,
@@ -200,6 +228,7 @@ module.exports = {
   updateInvoice,
   deleteInvoice,
   generateInvoiceFromShipment,
+  createInvoiceFromInquiry,
   sendInvoiceEmail,
   downloadInvoicePdf,
   previewInvoice

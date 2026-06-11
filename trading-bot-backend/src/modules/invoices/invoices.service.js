@@ -8,10 +8,53 @@ const { sendInvoiceEmail } = require('../../utils/email.service');
  * Get all invoices (filtered for clients)
  */
 const getAllInvoices = async (user, query = {}) => {
-  const { page, pageSize, paginate } = query;
+  const { page, pageSize, paginate, search, statuses, excludeStatuses, inquiryId } = query;
   const whereClause = { deletedAt: null };
   if (user && user.role === 'Client') {
     whereClause.clientId = user.id;
+  }
+  if (inquiryId) {
+    const parsedInquiryId = parseInt(inquiryId, 10);
+    if (whereClause.OR) {
+        whereClause.AND = [
+            { OR: whereClause.OR },
+            { OR: [{ inquiryId: parsedInquiryId }, { shipment: { purchaseOrder: { inquiryId: parsedInquiryId } } }] }
+        ];
+        delete whereClause.OR;
+    } else {
+        whereClause.OR = [
+          { inquiryId: parsedInquiryId },
+          { shipment: { purchaseOrder: { inquiryId: parsedInquiryId } } }
+        ];
+    }
+  }
+
+  if (search) {
+    const searchOr = [
+      { invoiceNumber: { contains: search, mode: 'insensitive' } },
+      { client: { name: { contains: search, mode: 'insensitive' } } },
+      { shipment: { cargoDetails: { contains: search, mode: 'insensitive' } } }
+    ];
+    if (whereClause.OR) {
+        whereClause.AND = whereClause.AND || [];
+        whereClause.AND.push({ OR: whereClause.OR });
+        whereClause.AND.push({ OR: searchOr });
+        delete whereClause.OR;
+    } else {
+        whereClause.OR = searchOr;
+    }
+  }
+
+  if (statuses) {
+    whereClause.status = { in: statuses.split(',') };
+  }
+
+  if (excludeStatuses) {
+    if (whereClause.status) {
+      whereClause.status.notIn = excludeStatuses.split(',');
+    } else {
+      whereClause.status = { notIn: excludeStatuses.split(',') };
+    }
   }
 
   if (paginate === 'false') {
@@ -20,7 +63,7 @@ const getAllInvoices = async (user, query = {}) => {
       include: {
         client: true,
         inquiry: true,
-        shipment: true,
+        shipment: { include: { supplier: true, purchaseOrder: true } },
         items: true,
         payments: true
       },
@@ -38,7 +81,7 @@ const getAllInvoices = async (user, query = {}) => {
       include: {
         client: true,
         inquiry: true,
-        shipment: true,
+        shipment: { include: { supplier: true, purchaseOrder: true } },
         items: true,
         payments: true
       },
@@ -61,7 +104,7 @@ const getInvoiceById = async (id) => {
     include: {
       client: true,
       inquiry: true,
-      shipment: true,
+      shipment: { include: { supplier: true } },
       items: true,
       payments: {
         include: {
@@ -132,7 +175,7 @@ const createInvoice = async (data, creatorId) => {
 const updateInvoice = async (id, data, updaterId) => {
   return await prisma.$transaction(async (tx) => {
     const old = await tx.invoice.findUnique({
-      where: { id }
+      where: { id: parseInt(id) }
     });
 
     if (!old) {
@@ -146,6 +189,7 @@ const updateInvoice = async (id, data, updaterId) => {
     if (data.status) updateData.status = data.status;
     if (data.dueDate) updateData.dueDate = new Date(data.dueDate);
     if (data.invoiceDate) updateData.invoiceDate = new Date(data.invoiceDate);
+    if (data.paymentDetails !== undefined) updateData.paymentDetails = data.paymentDetails;
 
     const sub = data.subtotal !== undefined ? parseFloat(data.subtotal) : old.subtotal.toNumber();
     const txVal = data.tax !== undefined ? parseFloat(data.tax) : old.tax.toNumber();
@@ -160,18 +204,18 @@ const updateInvoice = async (id, data, updaterId) => {
     updateData.pendingAmount = total - old.paidAmount.toNumber();
 
     const invoice = await tx.invoice.update({
-      where: { id },
+      where: { id: parseInt(id) },
       data: updateData
     });
 
     if (data.items && data.items.length > 0) {
       await tx.invoiceItem.deleteMany({
-        where: { invoiceId: id }
+        where: { invoiceId: parseInt(id) }
       });
 
       await tx.invoiceItem.createMany({
         data: data.items.map((item) => ({
-          invoiceId: id,
+          invoiceId: parseInt(id),
           description: item.description || '',
           quantity: parseInt(item.quantity, 10),
           unitPrice: parseFloat(item.unitPrice),
@@ -180,8 +224,37 @@ const updateInvoice = async (id, data, updaterId) => {
       });
     }
 
+    // Check if we should close the inquiry
+    if (data.status === 'PAID') {
+      let relatedInquiryId = old.inquiryId;
+      if (!relatedInquiryId && old.shipmentId) {
+        const shipment = await tx.shipment.findUnique({ where: { id: old.shipmentId } });
+        if (shipment) relatedInquiryId = shipment.inquiryId;
+      }
+      
+      if (relatedInquiryId) {
+        const allInvoices = await tx.invoice.findMany({
+          where: {
+            OR: [
+              { inquiryId: relatedInquiryId },
+              { shipment: { inquiryId: relatedInquiryId } }
+            ],
+            isActive: true
+          }
+        });
+        
+        const allPaid = allInvoices.length > 0 && allInvoices.every(inv => inv.status === 'PAID');
+        if (allPaid) {
+          await tx.inquiry.update({
+            where: { id: relatedInquiryId },
+            data: { currentStatus: 'CLOSED' }
+          });
+        }
+      }
+    }
+
     return await tx.invoice.findUnique({
-      where: { id },
+      where: { id: parseInt(id) },
       include: {
         client: true,
         items: true
@@ -193,9 +266,10 @@ const updateInvoice = async (id, data, updaterId) => {
 /**
  * Soft delete invoice
  */
+// Restart server to load new prisma client
 const deleteInvoice = async (id, updaterId) => {
   return await prisma.invoice.update({
-    where: { id },
+    where: { id: parseInt(id) },
     data: {
       deletedAt: new Date(),
       isActive: false,
@@ -240,7 +314,8 @@ const generateInvoiceFromShipment = async (shipmentId, creatorId) => {
 
   // 3. Create or fetch invoice in DB
   let invoice = await prisma.invoice.findFirst({
-    where: { shipmentId: shipment.id }
+    where: { shipmentId: shipment.id },
+    include: { items: true, client: true }
   });
 
   if (!invoice) {
@@ -295,6 +370,101 @@ const generateInvoiceFromShipment = async (shipmentId, creatorId) => {
 };
 
 /**
+ * Generate invoice from inquiry (for grouped orders / full deals)
+ */
+const generateInvoiceFromInquiry = async (inquiryId, creatorId) => {
+  // 1. Fetch inquiry with client quotation
+  const inquiry = await prisma.inquiry.findUnique({
+    where: { id: inquiryId },
+    include: {
+      client: true,
+      clientQuotations: {
+        include: { items: true }
+      }
+    }
+  });
+
+  if (!inquiry) throw new Error('Inquiry not found');
+  if (!inquiry.clientQuotations || inquiry.clientQuotations.length === 0) {
+    throw new Error('No client quotation linked to this inquiry');
+  }
+
+  const quotation = inquiry.clientQuotations[0];
+
+  // 2. Calculate totals
+  let subtotal = 0;
+  const items = quotation.items.map(qItem => {
+    const total = parseFloat(qItem.totalPrice);
+    subtotal += total;
+    return {
+      description: `Product from Inquiry ${inquiry.inquiryNumber}`, // Usually we'd map to actual product name but let's keep it simple or fetch item details if needed.
+      quantity: qItem.quantity,
+      unitPrice: qItem.sellingPrice,
+      totalPrice: qItem.totalPrice
+    };
+  });
+
+  const tax = subtotal * 0.18; // 18% tax
+  const total = subtotal + tax;
+
+  // 3. Create or fetch invoice in DB
+  let invoice = await prisma.invoice.findFirst({
+    where: { inquiryId: inquiry.id },
+    include: { items: true, client: true }
+  });
+
+  if (!invoice) {
+    const invoiceData = {
+      clientId: inquiry.clientId,
+      inquiryId: inquiry.id,
+      subtotal,
+      tax,
+      total,
+      status: 'DRAFT',
+      items
+    };
+    invoice = await createInvoice(invoiceData, creatorId);
+  }
+
+  // 4. Generate PDF
+  const templatePath = path.join(__dirname, '../../utils/templates/invoice.ejs');
+
+  // Convert Decimals to numbers for rendering
+  const renderData = {
+    invoice: {
+      invoiceNumber: invoice.invoiceNumber,
+      invoiceDate: new Date(invoice.invoiceDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+      poNumber: inquiry.referenceNumber || inquiry.inquiryNumber || 'N/A',
+      subtotal: parseFloat(invoice.subtotal),
+      tax: parseFloat(invoice.tax),
+      total: parseFloat(invoice.total)
+    },
+    client: inquiry.client,
+    items: invoice.items ? invoice.items.map(i => ({ ...i, unitPrice: parseFloat(i.unitPrice), totalPrice: parseFloat(i.totalPrice) })) : items.map(i => ({ ...i, unitPrice: parseFloat(i.unitPrice), totalPrice: parseFloat(i.totalPrice) }))
+  };
+
+  const html = await ejs.renderFile(templatePath, renderData);
+
+  const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  const page = await browser.newPage();
+  await page.setContent(html, { waitUntil: 'networkidle0' });
+  const pdfUint8Array = await page.pdf({ format: 'A4', printBackground: true });
+  await browser.close();
+
+  const pdfBase64 = Buffer.from(pdfUint8Array).toString('base64');
+
+  const defaultEmailSubject = `Your Invoice ${invoice.invoiceNumber}`;
+  const defaultEmailBody = `Dear Client,\n\nPlease find attached the invoice ${invoice.invoiceNumber} for your recent order.\n\nThank you for your business!`;
+
+  return { 
+    invoice,
+    pdfBase64,
+    defaultEmailSubject,
+    defaultEmailBody
+  };
+};
+
+/**
  * Helper to generate PDF buffer for an invoice
  */
 const generateInvoicePdfBuffer = async (invoiceId) => {
@@ -303,6 +473,7 @@ const generateInvoicePdfBuffer = async (invoiceId) => {
     include: {
       client: true,
       items: true,
+      inquiry: true,
       shipment: {
         include: { purchaseOrder: true }
       }
@@ -316,7 +487,7 @@ const generateInvoicePdfBuffer = async (invoiceId) => {
     invoice: {
       invoiceNumber: invoice.invoiceNumber,
       invoiceDate: new Date(invoice.invoiceDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
-      poNumber: invoice.shipment?.purchaseOrder?.poNumber,
+      poNumber: invoice.shipment?.purchaseOrder?.poNumber || invoice.inquiry?.referenceNumber || invoice.inquiry?.inquiryNumber || 'N/A',
       subtotal: parseFloat(invoice.subtotal),
       tax: parseFloat(invoice.tax),
       total: parseFloat(invoice.total)
@@ -338,7 +509,7 @@ const generateInvoicePdfBuffer = async (invoiceId) => {
 /**
  * Send the drafted invoice to the client via email
  */
-const sendInvoiceEmailAPI = async (invoiceId, emailSubject, emailBody, updaterId) => {
+const sendInvoiceEmailAPI = async (invoiceId, emailSubject, emailBody, updaterId, toEmail) => {
   const { pdfBuffer, invoice } = await generateInvoicePdfBuffer(invoiceId);
 
   // Send Email with custom body if provided
@@ -362,7 +533,7 @@ const sendInvoiceEmailAPI = async (invoiceId, emailSubject, emailBody, updaterId
 
     const info = await transporter.sendMail({
       from: '"TradeMind ERP" <billing@trademind.com>',
-      to: invoice.client.email,
+      to: toEmail || invoice.client.email,
       subject: emailSubject || `Your Invoice ${invoice.invoiceNumber}`,
       text: emailBody || `Please find attached the invoice ${invoice.invoiceNumber} for your recent order.`,
       html: `<p>${(emailBody || '').replace(/\n/g, '<br/>')}</p>`,
@@ -396,6 +567,7 @@ module.exports = {
   updateInvoice,
   deleteInvoice,
   generateInvoiceFromShipment,
+  generateInvoiceFromInquiry,
   sendInvoiceEmailAPI,
   generateInvoicePdfBuffer
 };

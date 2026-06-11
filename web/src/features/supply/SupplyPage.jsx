@@ -6,7 +6,6 @@ import { usePaginatedFetch } from '@hooks/usePaginatedFetch';
 import ContactModal from '@features/accounts/modals/ContactModal';
 import AddSupplyModal from './modals/AddSupplyModal';
 import AllotVehicleModal from '@features/employees/modals/AllotVehicleModal';
-import InvoiceEmailModal from '@features/invoices/modals/InvoiceEmailModal';
 import SupplyTable from './components/SupplyTable';
 
 import { PageToolbar, Pagination } from '@components/ui';
@@ -74,23 +73,108 @@ export default function SupplyPage() {
   const [allotModalDeal, setAllotModalDeal] = useState(null);
   const [isAllotModalOpen, setIsAllotModalOpen] = useState(false);
 
-  // Invoice Email modal state
-  const [invoiceModalDeal, setInvoiceModalDeal] = useState(null);
-  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+
 
   // Add supply modal state — TODO: wire to AddSupplyModal when implemented
   // Declared here to prevent the "Add Supply" button from crashing (BUG-01 fix)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const mappedSupply = useMemo(() => {
-    return (supplyData || []).map(item => ({
-      ...item,
-      supplier: item.supplier?.name || item.supplier || 'Unknown Supplier',
-      cargo: item.cargoDetails || item.cargo || 'Cargo',
-      destination: item.inquiry?.vessel || item.client?.name || item.destination || '—',
-      status: item.currentStatus || item.status || '—',
-      date: item.createdAt || item.date
-    }));
+    const groups = {};
+    const singles = [];
+
+    (supplyData || []).forEach(item => {
+      if (item.inquiryId) {
+        if (!groups[item.inquiryId]) {
+          groups[item.inquiryId] = {
+            ...item,
+            id: `inq-${item.inquiryId}`,
+            isGrouped: true,
+            shipmentNumber: item.inquiry?.inquiryNumber ? `ORD-${item.inquiry.inquiryNumber}` : `ORD-${item.inquiryId}`,
+            supplier: '',
+            cargo: '',
+            destination: item.inquiry?.vesselName || item.inquiry?.vessel || item.client?.name || item.destination || '—',
+            status: item.currentStatus || item.status || '—',
+            date: item.createdAt || item.date,
+            subShipments: []
+          };
+        }
+        
+        const group = groups[item.inquiryId];
+        group.subShipments.push(item);
+        
+        const suppliers = Array.from(new Set(group.subShipments.map(s => s.supplier?.name || s.supplier || 'Unknown')));
+        group.supplier = suppliers.join(', ');
+        
+        group.customer = group.subShipments[0]?.client?.name || group.subShipments[0]?.inquiry?.customer || '—';
+        group.vessel = group.subShipments[0]?.inquiry?.vesselName || group.subShipments[0]?.inquiry?.vessel || group.subShipments[0]?.destination || '—';
+        
+        const cargoItems = new Set();
+        group.subShipments.forEach(s => {
+          if (s.purchaseOrder?.items) {
+             s.purchaseOrder.items.forEach(i => cargoItems.add(i.product?.name || i.description || 'Product'));
+          } else if (s.cargoDetails) {
+             cargoItems.add(s.cargoDetails);
+          } else if (s.cargo) {
+             cargoItems.add(s.cargo);
+          }
+        });
+        group.products = Array.from(cargoItems).map(name => ({ product_name: name }));
+        group.cargo = Array.from(cargoItems).join(', ') || 'Cargo';
+        
+      } else {
+        singles.push({
+          ...item,
+          supplier: item.supplier?.name || item.supplier || 'Unknown Supplier',
+          customer: item.client?.name || item.inquiry?.customer || '—',
+          vessel: item.inquiry?.vesselName || item.inquiry?.vessel || item.destination || '—',
+          cargo: item.cargoDetails || item.cargo || 'Cargo',
+          products: [{ product_name: item.cargoDetails || item.cargo || 'Cargo' }],
+          destination: item.inquiry?.vesselName || item.inquiry?.vessel || item.client?.name || item.destination || '—',
+          status: item.currentStatus || item.status || '—',
+          date: item.createdAt || item.date
+        });
+      }
+    });
+
+    const STATUS_RANK = {
+      'ORDER PLACED': 1,
+      'ORDERED': 1,
+      'PENDING': 1,
+      'VEHICLE_ALLOTTED': 2,
+      'LOADING': 2,
+      'DISPATCHED': 3,
+      'DELIVERED': 4,
+      'OUT_FOR_DELIVERY': 5,
+      'DELIVERED_TO_VESSEL': 6,
+      'DELIVERED TO VESSEL': 6,
+      'CHALLAN_RECEIVED': 7
+    };
+    const RANK_TO_STATUS = {
+      1: 'ORDER PLACED',
+      2: 'VEHICLE_ALLOTTED',
+      3: 'DISPATCHED',
+      4: 'DELIVERED',
+      5: 'OUT_FOR_DELIVERY',
+      6: 'DELIVERED_TO_VESSEL',
+      7: 'CHALLAN_RECEIVED'
+    };
+
+    const groupValues = Object.values(groups);
+    groupValues.forEach(group => {
+      let minRank = Infinity;
+      group.subShipments.forEach(s => {
+        const st = s.currentStatus || s.status;
+        const rank = STATUS_RANK[st?.toUpperCase()] || 1;
+        if (rank < minRank) minRank = rank;
+      });
+
+      if (minRank !== Infinity) {
+        group.status = RANK_TO_STATUS[minRank];
+      }
+    });
+
+    return [...groupValues, ...singles].sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [supplyData]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
@@ -99,43 +183,6 @@ export default function SupplyPage() {
       const res = await api.shipments.updateShipment(id, { currentStatus: "SUPPLY" });
       if (res.success) {
         refresh();
-      }
-      return;
-    }
-    if (newStatus === "SEND_INVOICE") {
-      const deal = supplyData.find((d) => d.inquiry_id === id);
-      if (deal) {
-        setInvoiceModalDeal(deal);
-        setIsInvoiceModalOpen(true);
-      }
-      return;
-    }
-
-    if (newStatus === "INVOICE_SENT") {
-      const deal = supplyData.find((d) => d.inquiry_id === id);
-      if (deal) {
-        try {
-          const res = await api.shipments.updateShipment(id, { currentStatus: "DELIVERED" });
-          if (res.success) {
-            const invoicePayload = {
-              clientId: deal.clientId,
-              inquiryId: deal.inquiryId,
-              shipmentId: deal.id,
-              subtotal: 1000.00,
-              status: 'SENT',
-              items: deal.products?.map(p => ({
-                description: p.product_name || 'Product',
-                quantity: p.quantity || 1,
-                unitPrice: p.price || 1000.00,
-                totalPrice: (p.quantity || 1) * (p.price || 1000.00)
-              })) || []
-            };
-            await api.invoices.createInvoice(invoicePayload);
-            refresh();
-          }
-        } catch (e) {
-          console.error("Failed to transition shipment to invoice:", e);
-        }
       }
       return;
     }
@@ -238,13 +285,7 @@ export default function SupplyPage() {
         }}
       />
 
-      {/* Invoice Email Modal */}
-      <InvoiceEmailModal
-        deal={invoiceModalDeal}
-        isOpen={isInvoiceModalOpen}
-        onClose={() => setIsInvoiceModalOpen(false)}
-        onStatusUpdate={handleStatusUpdate}
-      />
+
 
       {/* Add Supply Modal */}
       <AddSupplyModal

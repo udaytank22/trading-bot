@@ -49,20 +49,59 @@ export default function PurchaseOrdersPage() {
   });
 
   const mappedPOs = useMemo(() => {
-    return (purchaseOrdersData || []).map(po => ({
-      ...po,
-      po_id: po.poNumber,
-      total_amount: parseFloat(po.amount || 0),
-      customer: po.client?.name || 'Unknown',
-      vessel: po.inquiry?.vesselName || 'N/A',
-      date: po.createdAt,
-      products: po.items?.map(item => ({
-        product_name: item.description,
-        quantity: item.quantity,
-        unit_price: parseFloat(item.unitPrice || 0),
-        total_price: parseFloat(item.totalPrice || 0)
-      })) || []
-    }));
+    const groups = {};
+    const singles = [];
+
+    (purchaseOrdersData || []).forEach(po => {
+      if (po.inquiryId) {
+        if (!groups[po.inquiryId]) {
+          groups[po.inquiryId] = {
+            ...po,
+            id: `inq-${po.inquiryId}`,
+            isGrouped: true,
+            po_id: po.inquiry?.inquiryNumber ? `ORD-${po.inquiry.inquiryNumber}` : `ORD-${po.inquiryId}`,
+            total_amount: 0,
+            customer: po.client?.name || 'Unknown',
+            vessel: po.inquiry?.vesselName || 'N/A',
+            date: po.createdAt,
+            products: [],
+            subPOs: [],
+            status: po.status
+          };
+        }
+        const group = groups[po.inquiryId];
+        group.total_amount += parseFloat(po.amount || 0);
+        group.subPOs.push(po);
+        if (po.items) {
+          po.items.forEach(item => {
+            group.products.push({
+              product_name: item.description,
+              quantity: item.quantity,
+              unit_price: parseFloat(item.unitPrice || 0),
+              total_price: parseFloat(item.totalPrice || 0),
+              supplier: po.supplier?.name
+            });
+          });
+        }
+      } else {
+        singles.push({
+          ...po,
+          po_id: po.poNumber,
+          total_amount: parseFloat(po.amount || 0),
+          customer: po.client?.name || 'Unknown',
+          vessel: po.inquiry?.vesselName || 'N/A',
+          date: po.createdAt,
+          products: po.items?.map(item => ({
+            product_name: item.description,
+            quantity: item.quantity,
+            unit_price: parseFloat(item.unitPrice || 0),
+            total_price: parseFloat(item.totalPrice || 0)
+          })) || []
+        });
+      }
+    });
+
+    return [...Object.values(groups), ...singles].sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [purchaseOrdersData]);
 
   const handleAddPO = async (newPO) => {
@@ -145,8 +184,12 @@ export default function PurchaseOrdersPage() {
               navigate(`/purchase-orders/${po.id}`);
             }}
             onOrder={(po) => {
-              setSelectedPO(po);
-              setIsEmailModalOpen(true);
+              if (po.isGrouped) {
+                navigate(`/purchase-orders/${po.id}`);
+              } else {
+                setSelectedPO(po);
+                setIsEmailModalOpen(true);
+              }
             }}
           />
         ) : (

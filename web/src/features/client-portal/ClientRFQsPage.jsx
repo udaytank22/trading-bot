@@ -111,24 +111,35 @@ export default function ClientRFQsPage() {
     });
   };
 
-  // Filter inquiries that are in RFQ_SENT status or any status after it, containing the selected supplier and allotted items
+  // Filter inquiries to show active RFQs and quoted history
   const activeRFQs = useMemo(() => {
     if (!selectedSupplierId || !currentSupplier) return [];
-    const nonPortalStatuses = ["PENDING", "RFQ_READY", "CONFIRMED", "CLOSED"];
-    return inquiries.filter(
-      (inq) =>
-        !nonPortalStatuses.includes(inq.status) &&
-        inq.suppliers?.some((s) => s.supplierId === selectedSupplierId) &&
-        getAllottedItems(inq, currentSupplier).length > 0
-    );
+    const preRFQStatuses = ["PENDING", "RFQ_READY"];
+    return inquiries.filter((inq) => {
+      if (preRFQStatuses.includes(inq.status)) return false;
+      const isAssignedSupplier = inq.suppliers?.some((s) => s.supplierId === selectedSupplierId);
+      if (!isAssignedSupplier) return false;
+      if (getAllottedItems(inq, currentSupplier).length === 0) return false;
+
+      const hasQuoted = inq.supplierQuotes?.some((q) => q.supplierId === selectedSupplierId);
+      const isClosedOrConfirmed = ["CONFIRMED", "CLOSED", "ORDERED", "ORDER_PLACED"].includes(inq.status);
+      
+      if (isClosedOrConfirmed) {
+        return hasQuoted;
+      }
+      return true;
+    });
   }, [inquiries, selectedSupplierId, currentSupplier]);
 
-  // Filter shipments with ORDER_PLACED or DISPATCHED status for the selected supplier
   const activeOrders = useMemo(() => {
     if (!selectedSupplierId) return [];
+    const validStatuses = [
+      "ORDER_PLACED", "ORDERED", "VEHICLE_ALLOTTED", "LOADING", "DISPATCHED", "IN_TRANSIT", 
+      "OUT_FOR_DELIVERY", "DELIVERED", "DELIVERED_TO_VESSEL", "DELIVERED TO VESSEL", "CHALLAN_RECEIVED"
+    ];
     return shipments.filter(
       (ship) =>
-        (ship.currentStatus === "ORDER_PLACED" || ship.currentStatus === "DISPATCHED") &&
+        validStatuses.includes(ship.currentStatus) &&
         ship.supplierId === selectedSupplierId
     );
   }, [shipments, selectedSupplierId]);
@@ -138,6 +149,14 @@ export default function ClientRFQsPage() {
     if (!selectedSupplierId) return [];
     return invoicesData.filter(inv => inv.shipment?.supplierId === selectedSupplierId);
   }, [invoicesData, selectedSupplierId]);
+
+  const getSupplierDisplayStatus = (status) => {
+    const postDispatchStatuses = ["IN_TRANSIT", "OUT_FOR_DELIVERY", "DELIVERED", "DELIVERED_TO_VESSEL", "DELIVERED TO VESSEL", "CHALLAN_RECEIVED"];
+    if (postDispatchStatuses.includes(status)) {
+      return "DISPATCHED";
+    }
+    return status;
+  };
 
   // Handle selected inquiry change to reset prices
   const handleSelectInquiry = (inq) => {
@@ -224,6 +243,38 @@ export default function ClientRFQsPage() {
     }
   };
 
+  const handleViewPDF = (url) => {
+    if (!url) return;
+    if (url.startsWith('data:')) {
+      try {
+        const parts = url.split(';base64,');
+        const contentType = parts[0].split(':')[1] || 'application/pdf';
+        const b64 = parts[1];
+        
+        const byteCharacters = atob(b64);
+        const byteArrays = [];
+        for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+          const slice = byteCharacters.slice(offset, offset + 512);
+          const byteNumbers = new Array(slice.length);
+          for (let i = 0; i < slice.length; i++) {
+            byteNumbers[i] = slice.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          byteArrays.push(byteArray);
+        }
+        
+        const blob = new Blob(byteArrays, { type: contentType });
+        const blobUrl = URL.createObjectURL(blob);
+        window.open(blobUrl, '_blank');
+        return;
+      } catch (err) {
+        console.error("Error converting base64 to blob:", err);
+      }
+    }
+    // Fallback or normal URL
+    window.open(url, '_blank');
+  };
+
   const handleDispatchOrder = async () => {
     if (!selectedOrder) return;
     try {
@@ -255,13 +306,17 @@ export default function ClientRFQsPage() {
     }
   };
 
-  const handleGenerateInvoice = async () => {
-    if (!selectedOrder) return;
+  const handleGenerateInvoice = async (ship = null) => {
+    const targetOrder = (ship && ship.id) ? ship : selectedOrder;
+    if (!targetOrder) return;
     setGeneratingInvoice(true);
     try {
-      const res = await api.invoices.generateInvoiceFromShipment(selectedOrder.id);
+      const res = await api.invoices.generateInvoiceFromShipment(targetOrder.id);
       if (res.success) {
-        setPreviewData(res.data);
+        setPreviewData({
+          ...res.data,
+          client: targetOrder.client || res.data.client || res.data.invoice?.client
+        });
       }
     } catch (e) {
       console.error("Failed to generate invoice draft:", e);
@@ -339,7 +394,7 @@ export default function ClientRFQsPage() {
           </div>
           <div className="text-right">
             <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider block">Client</span>
-            <span className="text-gray-950 dark:text-white font-bold text-sm">{selectedInquiry.buyer_name}</span>
+            <span className="text-gray-950 dark:text-white font-bold text-sm">TradeMind</span>
           </div>
         </div>
 
@@ -531,7 +586,7 @@ export default function ClientRFQsPage() {
 
                 <div>
                   <span className="text-[10px] font-bold text-gray-400 dark:text-gray-550 uppercase tracking-widest block">Client Name</span>
-                  <span className="text-sm font-bold text-gray-800 dark:text-white mt-1 block">{viewingQuoteInquiry.buyer_name}</span>
+                  <span className="text-sm font-bold text-gray-800 dark:text-white mt-1 block">TradeMind</span>
                 </div>
                 <div className="border-t border-gray-100 dark:border-[#2a2d33]/80 pt-3">
                   <span className="text-[10px] font-bold text-gray-400 dark:text-gray-550 uppercase tracking-widest block">Quote Validity</span>
@@ -610,7 +665,7 @@ export default function ClientRFQsPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <StatusBadge status={selectedOrder.currentStatus} />
+            <StatusBadge status={getSupplierDisplayStatus(selectedOrder.currentStatus)} />
             {selectedOrder.currentStatus === "ORDER_PLACED" && (
               <button
                 onClick={handleDispatchOrder}
@@ -619,9 +674,9 @@ export default function ClientRFQsPage() {
                 Mark Dispatched
               </button>
             )}
-            {selectedOrder.currentStatus === "DISPATCHED" && (
+            {(selectedOrder.currentStatus === "DISPATCHED" || selectedOrder.currentStatus === "DELIVERED" || selectedOrder.currentStatus === "DELIVERED_TO_VESSEL" || selectedOrder.currentStatus === "DELIVERED TO VESSEL" || selectedOrder.currentStatus === "CHALLAN_RECEIVED") && (
               <button
-                onClick={handleGenerateInvoice}
+                onClick={() => handleGenerateInvoice()}
                 disabled={generatingInvoice}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/10 disabled:opacity-50"
               >
@@ -691,11 +746,11 @@ export default function ClientRFQsPage() {
 
               <div>
                 <span className="text-[10px] font-bold text-gray-400 dark:text-gray-550 uppercase tracking-widest block">Customer</span>
-                <span className="text-sm font-bold text-gray-850 dark:text-white mt-1 block">{selectedOrder.client?.name || "Unknown"}</span>
+                <span className="text-sm font-bold text-gray-850 dark:text-white mt-1 block">TradeMind</span>
               </div>
               <div className="border-t border-gray-100 dark:border-[#2a2d33]/80 pt-3">
                 <span className="text-[10px] font-bold text-gray-400 dark:text-gray-550 uppercase tracking-widest block">Client Email</span>
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-1 block">{selectedOrder.client?.email || "—"}</span>
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-1 block">contact@trademind.com</span>
               </div>
               <div className="border-t border-gray-100 dark:border-[#2a2d33]/80 pt-3">
                 <span className="text-[10px] font-bold text-gray-400 dark:text-gray-550 uppercase tracking-widest block">Destination</span>
@@ -729,7 +784,7 @@ export default function ClientRFQsPage() {
                 {selectedOrder.purchaseOrder?.attachment && (
                   <div className="pt-2">
                     <button
-                      onClick={() => setShowPOModal(true)}
+                      onClick={() => handleViewPDF(selectedOrder.purchaseOrder.attachment)}
                       className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-550 text-white text-xs font-bold transition-all shadow-md shadow-purple-650/10 flex items-center justify-center gap-2"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -744,58 +799,6 @@ export default function ClientRFQsPage() {
             )}
           </div>
         </div>
-
-        {/* PO Document Viewer Modal */}
-        {showPOModal && selectedOrder.purchaseOrder?.attachment && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <div
-              className="fixed inset-0 bg-black/70 animate-in fade-in duration-300"
-              onClick={() => setShowPOModal(false)}
-            />
-
-            {/* Modal Container */}
-            <div className="relative w-full max-w-5xl h-[85vh] bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl shadow-2xl flex flex-col z-10 animate-in zoom-in-95 duration-200 overflow-hidden">
-              {/* Header */}
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] bg-white dark:bg-[#1a1d23] flex items-center justify-between flex-shrink-0">
-                <div className="flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <span className="font-mono text-gray-950 dark:text-white text-base font-bold">
-                    PO Document — {selectedOrder.purchaseOrder?.poNumber || selectedOrder.purchaseOrderId}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <a
-                    href={selectedOrder.purchaseOrder.attachment}
-                    download={`PO_${selectedOrder.purchaseOrder?.poNumber || 'document'}.pdf`}
-                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-550 text-white text-xs font-bold transition-all shadow-sm"
-                  >
-                    Download
-                  </a>
-                  <button
-                    onClick={() => setShowPOModal(false)}
-                    className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              {/* PDF Iframe */}
-              <div className="flex-1 bg-gray-100 dark:bg-[#1f2028] p-4 flex items-center justify-center overflow-hidden">
-                <iframe
-                  src={selectedOrder.purchaseOrder.attachment}
-                  title="PO Document PDF"
-                  className="w-full h-full border border-gray-300 dark:border-[#2a2d36] rounded-xl shadow-lg"
-                />
-              </div>
-            </div>
-          </div>
-        )}
 
         <InvoiceReviewModal
           isOpen={!!previewData}
@@ -933,13 +936,11 @@ export default function ClientRFQsPage() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-col">
-                            <span className="font-bold text-gray-800 dark:text-white text-sm">{inq.buyer_name}</span>
-                            <span className="text-[10px] text-gray-400">{inq.buyer_email}</span>
+                            <span className="font-bold text-gray-800 dark:text-white text-sm">TradeMind</span>
+                            <span className="text-[10px] text-gray-400">contact@trademind.com</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                          {inq.vessel_name || "—"}
-                        </td>
+
                         <td className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
                           {getAllottedItems(inq, currentSupplier).length}
                         </td>
@@ -951,7 +952,19 @@ export default function ClientRFQsPage() {
                           }) : "—"}
                         </td>
                         <td className="px-6 py-4 text-sm">
-                          <StatusBadge status={inq.status} />
+                          {["CONFIRMED", "CLOSED"].includes(inq.status) ? (
+                            (() => {
+                              const myQuote = inq.supplierQuotes?.find(q => q.supplierId === selectedSupplierId);
+                              const isOrdered = myQuote?.isSelected || shipments.some(s => (s.inquiryId === inq.id || s.inquiryId === inq.inquiry_id) && s.supplierId === selectedSupplierId);
+                              if (isOrdered) {
+                                return <span className="inline-flex px-2.5 py-1 text-xs font-semibold rounded-lg bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 uppercase tracking-wider">Ordered</span>;
+                              } else {
+                                return <span className="inline-flex px-2.5 py-1 text-xs font-semibold rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 uppercase tracking-wider">Rejected</span>;
+                              }
+                            })()
+                          ) : (
+                            <StatusBadge status={inq.status} />
+                          )}
                         </td>
                         <td className="px-6 py-4 text-right flex justify-end gap-2">
                           {inq.status === "RFQ_SENT" && !hasAlreadyQuoted ? (
@@ -963,20 +976,27 @@ export default function ClientRFQsPage() {
                             </Button>
                           ) : (
                             <div className="flex items-center gap-2">
-                              <span className="inline-flex px-2.5 py-1 text-xs font-semibold rounded-lg bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">
-                                Quoted
-                              </span>
-                              {inq.supplierQuotes?.some(q => q.supplierId === selectedSupplierId) && (
-                                <Button
-                                  variant="secondary"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setViewingQuoteInquiry(inq);
-                                  }}
-                                >
-                                  View Quote
-                                </Button>
+                              {hasAlreadyQuoted && (
+                                <>
+                                  <span className="inline-flex px-2.5 py-1 text-xs font-semibold rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                                    Quoted
+                                  </span>
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setViewingQuoteInquiry(inq);
+                                    }}
+                                  >
+                                    View Quote
+                                  </Button>
+                                </>
+                              )}
+                              {!hasAlreadyQuoted && inq.status !== "RFQ_SENT" && (
+                                <span className="inline-flex px-2.5 py-1 text-xs font-semibold rounded-lg bg-gray-500/10 text-gray-600 dark:text-gray-400 border border-gray-500/20">
+                                  Missed
+                                </span>
                               )}
                             </div>
                           )}
@@ -1017,8 +1037,8 @@ export default function ClientRFQsPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col">
-                          <span className="font-bold text-gray-800 dark:text-white text-sm">{ship.client?.name || "Unknown"}</span>
-                          <span className="text-[10px] text-gray-400">{ship.client?.email}</span>
+                          <span className="font-bold text-gray-800 dark:text-white text-sm">TradeMind</span>
+                          <span className="text-[10px] text-gray-400">contact@trademind.com</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300 truncate max-w-[200px]" title={ship.cargoDetails}>
@@ -1032,9 +1052,21 @@ export default function ClientRFQsPage() {
                         }) : "—"}
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        <StatusBadge status={ship.currentStatus} />
+                        <StatusBadge status={getSupplierDisplayStatus(ship.currentStatus)} />
                       </td>
                       <td className="px-6 py-4 text-right flex justify-end gap-2">
+                        {(ship.currentStatus === "DISPATCHED" || ship.currentStatus === "DELIVERED" || ship.currentStatus === "DELIVERED_TO_VESSEL" || ship.currentStatus === "DELIVERED TO VESSEL" || ship.currentStatus === "CHALLAN_RECEIVED") && (
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleGenerateInvoice(ship);
+                            }}
+                          >
+                            Raise Invoice
+                          </Button>
+                        )}
                         <Button
                           variant="secondary"
                           size="sm"
@@ -1080,6 +1112,26 @@ export default function ClientRFQsPage() {
                     </td>
                     <td className="px-6 py-4 text-sm whitespace-nowrap">
                       <StatusBadge status={inv.invoice_status} />
+                      {inv.invoice_status === 'PAID' && inv.paymentDetails && (
+                        <div className="mt-2 flex flex-col gap-1.5">
+                          <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 w-max shadow-sm">
+                            <svg className="w-3 h-3 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            <span className="text-[10px] font-bold text-green-700 dark:text-green-400">
+                              {inv.paymentDetails.method}
+                            </span>
+                          </div>
+                          {inv.paymentDetails.reference && (
+                            <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-gray-50 dark:bg-[#1e2028] border border-gray-200 dark:border-[#2a2d36] w-max shadow-sm">
+                              <span className="text-[9px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-bold">Ref</span>
+                              <span className="text-[10px] font-mono font-bold text-gray-700 dark:text-gray-300">
+                                {inv.paymentDetails.reference}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">
@@ -1093,7 +1145,10 @@ export default function ClientRFQsPage() {
                                 setGeneratingInvoice(true);
                                 const res = await api.invoices.previewInvoice(inv.id);
                                 if (res?.success && res?.data) {
-                                  setPreviewData(res.data);
+                                  setPreviewData({
+                                    ...res.data,
+                                    client: inv.client || res.data.client || res.data.invoice?.client
+                                  });
                                 }
                               } catch (e) {
                                 console.error("Failed to preview invoice:", e);

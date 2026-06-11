@@ -1,6 +1,7 @@
 import { InvoicesPageSchema1 } from '@config/tableSchemas';
 import { useAuth, useUI, useData } from '@context';
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from '@services/api';
 import { usePaginatedFetch } from '@hooks/usePaginatedFetch';
 
@@ -9,20 +10,38 @@ import { PageToolbar, Pagination, Button, StatusBadge, DataTable, rowStripeClass
 export default function InvoicesPage() {
     const { accountsData } = useData();
 
+    const navigate = useNavigate();
     const [search, setSearch] = useState("");
     const [paymentModalInvoice, setPaymentModalInvoice] = useState(null);
     const [paymentForm, setPaymentForm] = useState({ amount: "", date: "", reference: "", bankAccountId: "", paymentMode: "Bank Transfer" });
 
     const {
-        data: invoicesData,
+        data: inquiriesData,
         meta,
         loading,
         handlePageChange,
         handlePageSizeChange,
         refresh
-    } = usePaginatedFetch(api.invoices.getInvoices, 1, 10, {
+    } = usePaginatedFetch(api.inquiries.getInquiries, 1, 10, {
         search
     });
+
+    const mappedInvoices = useMemo(() => {
+        return (inquiriesData || []).map(inq => {
+            const hasInvoices = inq.invoices && inq.invoices.length > 0;
+            return {
+                id: `inq-${inq.id}`,
+                inquiryId: inq.id,
+                isGrouped: hasInvoices,
+                invoiceNumber: `INQ-${inq.inquiryNumber}`,
+                clientName: inq.client?.name || 'Unknown',
+                vesselName: inq.vesselName || 'N/A',
+                invoiceDate: inq.createdAt,
+                status: hasInvoices ? 'GROUPED' : 'PENDING',
+                invoices: inq.invoices || []
+            };
+        });
+    }, [inquiriesData]);
 
     const handleSend = async (id) => {
         try {
@@ -98,63 +117,44 @@ export default function InvoicesPage() {
                 searchPlaceholder="Search invoices by ID, buyer or cargo..."
             />
 
-            <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg">
+            <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg mt-4">
                 <DataTable
                     columns={InvoicesPageSchema1}
-                    data={invoicesData || []}
+                    data={mappedInvoices}
                     emptyMessage="No invoices found"
                     renderRow={(inv, idx) => (
                         <tr key={inv.id} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}>
                             <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{((meta.currentPage ? meta.currentPage : 1) - 1) * (meta.pageSize ? meta.pageSize : 10) + idx + 1}</td>
                             <td className="px-4 py-3 font-mono text-gray-500">{inv.invoiceNumber || inv.id}</td>
-                            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{inv.client?.name || 'Unknown Buyer'}</td>
-                            <td className="px-4 py-3 text-sm truncate max-w-[250px]" title={inv.shipment?.cargoDetails || 'General Cargo'}>{inv.shipment?.cargoDetails || 'General Cargo'}</td>
-                            <td className="px-4 py-3">{inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleString() : '-'}</td>
+                            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{inv.clientName}</td>
+                            <td className="px-4 py-3 text-sm truncate max-w-[250px]" title={inv.vesselName}>{inv.vesselName}</td>
+                            <td className="px-4 py-3">{inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleString('en-GB') : '-'}</td>
                             <td className="px-4 py-3">
-                                <StatusBadge status={inv.status || 'N/A'} />
+                                {inv.isGrouped ? (
+                                    <span className="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-700 text-xs font-bold uppercase tracking-wide">
+                                        {inv.invoices.length} {inv.invoices.length === 1 ? 'Invoice' : 'Invoices'}
+                                    </span>
+                                ) : (
+                                    <span className="px-3 py-1.5 rounded-lg bg-orange-500/10 text-orange-700 text-xs font-bold uppercase tracking-wide">
+                                        Pending Invoice
+                                    </span>
+                                )}
                             </td>
                             <td className="px-4 py-3 text-right">
                                 <div className="flex items-center justify-end gap-2">
-                                    <button
-                                        onClick={() => handleDownloadPdf(inv.id, inv.invoiceNumber || inv.id)}
-                                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-purple-500/40 px-3 py-1.5 text-xs font-bold text-purple-400 hover:bg-purple-500/10"
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        className="border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
+                                        onClick={() => navigate(`/invoices/${inv.inquiryId}`)}
                                     >
-                                        Download
-                                    </button>
-
-                                    {inv.status !== 'SENT' && inv.status !== 'PAID' && (
-                                        <Button
-                                            variant="secondary"
-                                            size="sm"
-                                            className="border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10"
-                                            onClick={() => handleSend(inv.id)}
-                                        >
-                                            Send Invoice
-                                        </Button>
-                                    )}
-
-                                    {inv.status === 'SENT' && (
-                                        <Button
-                                            variant="secondary"
-                                            size="sm"
-                                            className="border-blue-500/40 text-blue-500 hover:bg-blue-500/10"
-                                            onClick={() => openPaymentModal(inv)}
-                                        >
-                                            Mark Paid
-                                        </Button>
-                                    )}
-
-                                    {inv.status === 'PAID' && (
-                                        <span className="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-700 text-xs font-bold uppercase tracking-wide">
-                                            Paid
-                                        </span>
-                                    )}
+                                        View
+                                    </Button>
                                 </div>
                             </td>
                         </tr>
                     )}
                 />
-
                 <div className="p-4 border-t border-gray-200 dark:border-[#2a2d33]">
                     <Pagination
                         currentPage={meta.currentPage}

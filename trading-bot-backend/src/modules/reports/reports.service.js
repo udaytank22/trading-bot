@@ -61,7 +61,12 @@ const getDashboardStats = async () => {
     take: 5,
     orderBy: { createdAt: 'desc' },
     include: {
-      client: true
+      client: true,
+      items: {
+        include: {
+          product: true
+        }
+      }
     }
   });
 

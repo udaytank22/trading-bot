@@ -105,7 +105,7 @@ export function generateDeliveryChallanPDF(deal, vehicle, challanNo) {
   const billY = headerY + 60;
 
   // Left: Bill To
-  const clientName  = deal?.client?.name   || deal?.buyer_name || '—';
+  const clientName  = deal?.client?.name   || deal?.inquiry?.customer || deal?.buyer_name || '—';
   const clientAddr  = deal?.client?.address || '—';
   const clientPhone = deal?.client?.phone   || '—';
 
@@ -140,10 +140,23 @@ export function generateDeliveryChallanPDF(deal, vehicle, challanNo) {
   rowRight('Challan Type:',   'Delivery Challan',                  billY + 53);
 
   // ── Items Table ───────────────────────────────────────────────────────────────
-  const items = deal?.purchaseOrder?.items || [];
+  let items = deal?.purchaseOrder?.items || [];
+  if (items.length === 0 && deal?.subShipments) {
+      deal.subShipments.forEach(sub => {
+          if (sub.purchaseOrder?.items) {
+              items = items.concat(sub.purchaseOrder.items);
+          } else if (sub.cargoDetails) {
+              items.push({
+                  description: sub.cargoDetails,
+                  quantity: sub.quantity || 1,
+                  unitPrice: 0
+              });
+          }
+      });
+  }
 
   const tableRows = items.map((item, idx) => {
-    const unitPrice  = Number(item.unitPrice)  || 0;
+    const unitPrice  = Number(item.unitPrice || item.unit_price)  || 0;
     const qty        = item.quantity            || 1;
     const taxable    = unitPrice * qty;
     const cgstRate   = 9;

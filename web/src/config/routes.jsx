@@ -8,6 +8,7 @@ const InquiriesPage = React.lazy(() => import('@features/inquiries/InquiriesPage
 const SupplyPage = React.lazy(() => import('@features/supply/SupplyPage'));
 const PurchaseOrdersPage = React.lazy(() => import('@features/purchase-orders/PurchaseOrdersPage'));
 const InvoicesPage = React.lazy(() => import('@features/invoices/InvoicesPage'));
+const InvoiceDetailsPage = React.lazy(() => import('@features/invoices/InvoiceDetailsPage'));
 const EmployeesPage = React.lazy(() => import('@features/employees/EmployeesPage'));
 const AccountPage = React.lazy(() => import('@features/accounts/AccountPage'));
 const InventoryPage = React.lazy(() => import('@features/inventory/InventoryPage'));
@@ -39,6 +40,7 @@ export const PROTECTED_ROUTES = [
   { path: '/purchase-orders', element: <PurchaseOrdersPage /> },
   { path: '/purchase-orders/:id', element: <PODetailsPage /> },
   { path: '/invoices', element: <InvoicesPage /> },
+  { path: '/invoices/:id', element: <InvoiceDetailsPage /> },
   { path: '/employees', element: <EmployeesPage /> },
   { path: '/accounts', element: <AccountPage /> },
   { path: '/inventory', element: <InventoryPage /> },
