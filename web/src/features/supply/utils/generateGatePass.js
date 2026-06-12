@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 /**
  * Generates a Gate Pass PDF and returns a Blob URL.
@@ -115,7 +115,7 @@ export function generateGatePassPDF(deal, vehicle, gatePassNo) {
 
   const tableStartY = fieldY + 110;
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: tableStartY,
     margin: { left: 40, right: 40 },
     head: [[

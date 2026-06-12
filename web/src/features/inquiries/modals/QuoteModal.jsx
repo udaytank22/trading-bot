@@ -72,7 +72,7 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
         }
         setNarrative(row.Narrative || row.narrative || row.Notes || row.notes || "");
         Swal.fire({
-          icon: 'success',
+          toast: true, position: 'top-end', icon: 'success',
           title: 'Data Imported',
           text: 'Quote details filled from Excel.',
           timer: 2000,

@@ -106,7 +106,7 @@ export default function AddEmployeeModal({
       }));
 
       Swal.fire({
-        icon: "success",
+        toast: true, position: 'top-end', icon: 'success',
         title: "Imported",
         text: "Excel imported successfully",
         toast: true,

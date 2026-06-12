@@ -85,7 +85,7 @@ export default function InvoiceDetailsPage() {
       if (res.success) {
         setInvoices(prev => prev.map(inv => inv.id === invoiceId ? { ...inv, status: "SENT" } : inv));
         Swal.fire({
-          icon: 'success',
+          toast: true, position: 'top-end', icon: 'success',
           title: 'Sent',
           text: 'Invoice marked as sent.',
           background: '#1a1d23',

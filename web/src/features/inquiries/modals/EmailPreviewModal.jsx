@@ -5,64 +5,101 @@ import { CONFIG } from '@/config.js';
 import Swal from 'sweetalert2';
 
 export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOpen, onClose, onStatusUpdate }) {
-  const [activeTab, setActiveTab] = useState(initialEmailType);
   const [isEditing, setIsEditing] = useState(false);
   const [sendState, setSendState] = useState('idle'); // 'idle', 'sending', 'success'
   const bodyRef = useRef(null);
+
+  const isRFQ = initialEmailType === 'RFQ';
+
+  const selectedSuppliers = React.useMemo(() => {
+    if (!deal) return [];
+    
+    if (deal.supplierQuotes && deal.supplierQuotes.length > 0) {
+      const suppliers = [];
+      deal.supplierQuotes.forEach(quote => {
+        const selectedItems = (quote.items || []).filter(item => item.isSelected);
+        if (selectedItems.length > 0) {
+          suppliers.push({
+            id: quote.supplierId || quote.id,
+            name: quote.supplier?.name || quote.supplier_name || 'Unknown',
+            email: quote.supplier?.email || quote.seller_email || 'supplier@tbd.com',
+            items: selectedItems.map(si => {
+               const origItem = deal.items?.find(ii => ii.id === si.inquiryItemId) || {};
+               return {
+                 product_name: origItem.description || si.product_name,
+                 quantity: origItem.quantity || si.quantity,
+                 unit: origItem.unit || si.unit,
+                 specs: origItem.specs || si.specs,
+               }
+            })
+          });
+        }
+      });
+      if (suppliers.length > 0) return suppliers;
+    }
+
+    return [{
+      id: 'default',
+      name: deal.seller_quote?.seller_name || 'Valued Supplier',
+      email: deal.seller_quote?.seller_email || 'supplier@tbd.com',
+      items: deal.products || []
+    }];
+  }, [deal]);
 
   useEffect(() => {
     if (isOpen) {
       setSendState('idle');
       setIsEditing(false);
-      setActiveTab(initialEmailType);
     }
-  }, [isOpen, initialEmailType]);
+  }, [isOpen]);
 
   const handleSend = async () => {
     const result = await Swal.fire({
-      title: "Send Email?",
-      text: "This process cannot be reverted.",
+      title: "Send Emails?",
+      text: "This will send the PO to the suppliers and the Quotation to the buyer. This process cannot be reverted.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#10b981",
       cancelButtonColor: "#ef4444",
-      confirmButtonText: "Yes, send now",
+      confirmButtonText: "Yes, send all",
       cancelButtonText: "Cancel",
       background: "#1a1d23",
       color: "#fff"
     });
+
     if (!result.isConfirmed) return;
 
     setSendState('sending');
     const sendPromise = (async () => {
-      if (activeTab === 'RFQ') {
-        await api.inquiries.sendRFQ(deal.id);
-        if (onStatusUpdate) onStatusUpdate(deal.inquiry_id, 'RFQ_SENT');
-      } else {
-        await api.inquiries.finalVerify(deal.id);
+      try {
+        await Promise.all([
+          api.inquiries.sendRFQ(deal.id),
+          api.inquiries.finalVerify(deal.id)
+        ]);
         if (onStatusUpdate) onStatusUpdate(deal.inquiry_id, 'CLIENT_FINAL_APPROVAL');
+      } catch (error) {
+        console.error("Failed to send emails:", error);
+        throw error;
       }
     })();
-
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 20000));
-
-    try {
-      await Promise.race([sendPromise, timeoutPromise]);
-
-      setSendState('success');
-      setTimeout(() => {
-        onClose();
-      }, 3000);
-
-    } catch (err) {
-      setSendState('idle'); // Revert state so they can try again
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: 'Failed to send. Please try again.' }));
-    }
+    toast.promise(sendPromise, {
+      loading: 'Dispatching emails...',
+      success: () => {
+        setSendState('success');
+        setTimeout(() => {
+          onClose();
+        }, 3000);
+        return 'Emails have been successfully dispatched.';
+      },
+      error: (err) => {
+        setSendState('idle');
+        return 'Failed to dispatch emails.';
+      }
+    });
   };
 
   if (!isOpen || !deal) return null;
 
-  const isRFQ = activeTab === 'RFQ';
   const formatCurrency = formatINR;
 
   return (
@@ -92,109 +129,131 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
               </button>
             </div>
 
-            {/* Tab Switcher */}
-            <div className="px-6 flex gap-7 border-b border-gray-200 dark:border-[#2a2d33] flex-shrink-0 bg-gray-50 dark:bg-[#1a1d23]">
-              <button
-                className={`py-3 text-[13px] font-bold tracking-wide relative hover:text-gray-900 dark:hover:text-white transition-colors ${activeTab === 'RFQ' ? 'text-purple-600 dark:text-white' : 'text-gray-500'}`}
-                onClick={() => setActiveTab('RFQ')}
-              >
-                RFQ to Seller
-                {activeTab === 'RFQ' && <div className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-purple-500 rounded-t" />}
-              </button>
-              <button
-                className={`py-3 text-[13px] font-bold tracking-wide relative hover:text-gray-900 dark:hover:text-white transition-colors ${activeTab === 'QUOTE' ? 'text-purple-600 dark:text-white' : 'text-gray-500'}`}
-                onClick={() => setActiveTab('QUOTE')}
-              >
-                Quote to Buyer
-                {activeTab === 'QUOTE' && <div className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-purple-500 rounded-t" />}
-              </button>
-            </div>
-
             {/* Email Preview Area - Scrollable */}
             <div className="flex-1 overflow-y-auto p-6 bg-gray-100 dark:bg-[#0c0e12] custom-scrollbar">
-              <div className={`bg-white dark:bg-[#1e2028] rounded-xl overflow-hidden shadow-sm transition-all border ${isEditing ? 'border-blue-500 shadow-blue-500/20' : 'border-gray-200 dark:border-[#2a2d33]'}`}>
+              {/* Vendor Emails */}
+              <>
+                  {selectedSuppliers.map((supp, idx) => (
+                    <div key={idx} className={`bg-white dark:bg-[#1e2028] rounded-xl overflow-hidden shadow-sm transition-all border mb-6 ${isEditing ? 'border-blue-500 shadow-blue-500/20' : 'border-gray-200 dark:border-[#2a2d33]'}`}>
+                      <div className="bg-gray-50 dark:bg-[#242830]/30 px-6 py-3 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                          <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Draft for {supp.name}</span>
+                        </div>
+                      </div>
+                      
+                      {/* Meta Attributes */}
+                      <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] space-y-2 bg-gray-50/30 dark:bg-[#242830]/20">
+                        <div className="flex items-center text-[13px]">
+                          <span className="w-20 text-gray-400 font-bold uppercase tracking-wider text-[10px]">From:</span>
+                          <span className="text-gray-900 dark:text-gray-100 font-bold">purchasing@trademind.com</span>
+                        </div>
+                        <div className="flex items-center text-[13px]">
+                          <span className="w-20 text-gray-400 font-bold uppercase tracking-wider text-[10px]">To:</span>
+                          <span className="text-gray-900 dark:text-gray-100 font-semibold">{supp.email}</span>
+                        </div>
+                        <div className="flex items-center text-[13px]">
+                          <span className="w-20 text-gray-400 font-bold uppercase tracking-wider text-[10px]">Subject:</span>
+                          <span className="text-gray-900 dark:text-white font-bold">Request for Quotation - Ref: {deal.inquiry_id}</span>
+                        </div>
+                      </div>
 
-                {/* Meta Attributes */}
-                <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] bg-gray-50/50 dark:bg-[#242830]/30 space-y-2">
-                  <div className="flex items-center text-[13px]">
-                    <span className="w-20 text-gray-400 font-bold uppercase tracking-wider text-[10px]">From:</span>
-                    <span className="text-gray-900 dark:text-gray-100 font-bold">purchasing@trademind.com</span>
-                  </div>
-                  <div className="flex items-center text-[13px]">
-                    <span className="w-20 text-gray-400 font-bold uppercase tracking-wider text-[10px]">To:</span>
-                    <span className="text-gray-900 dark:text-gray-100 font-semibold">{isRFQ ? (deal.seller_quote?.seller_email || 'supplier@tbd.com') : deal.buyer_email}</span>
-                  </div>
-                  <div className="flex items-center text-[13px]">
-                    <span className="w-20 text-gray-400 font-bold uppercase tracking-wider text-[10px]">Subject:</span>
-                    <span className="text-gray-900 dark:text-white font-bold">{isRFQ ? `Request for Quotation - Ref: ${deal.inquiry_id}` : `Quotation Details - Ref: ${deal.inquiry_id}`}</span>
-                  </div>
-                </div>
+                      {/* Main Body */}
+                      <div
+                        className="p-6 text-gray-800 dark:text-gray-300 leading-[1.7] text-[13px] focus:outline-none min-h-[200px]"
+                        contentEditable={isEditing}
+                        suppressContentEditableWarning={true}
+                      >
+                        <p className="mb-5 font-medium">Dear {supp.name},</p>
+                        <p className="mb-5">
+                          We hope this email finds you well. We are currently sourcing products for an upcoming requirement.
+                          Please review the items requested below and provide your best wholesale quotation including unit prices, minimum order quantities, and estimated lead times.
+                        </p>
+                        <table className="w-full border-collapse border border-gray-200 dark:border-[#2a2d33] my-6 text-[12px] text-gray-900 dark:text-white shadow-sm font-sans">
+                          <thead>
+                            <tr className="bg-gray-50 dark:bg-[#0c0e12] text-gray-500 dark:text-gray-400 tracking-wide text-left">
+                              <th className="p-3 border border-gray-200 dark:border-[#2a2d33] font-bold">Product</th>
+                              <th className="p-3 border border-gray-200 dark:border-[#2a2d33] text-center font-bold">Qty</th>
+                              <th className="p-3 border border-gray-200 dark:border-[#2a2d33] font-bold">Specs</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {supp.items.map((p, i) => (
+                              <tr key={i} className="hover:bg-gray-50/50">
+                                <td className="p-3 border border-gray-200 dark:border-[#2a2d33] font-medium">{p.product_name}</td>
+                                <td className="p-3 border border-gray-200 dark:border-[#2a2d33] text-center font-mono font-medium">{p.quantity} {p.unit}</td>
+                                <td className="p-3 border border-gray-200 dark:border-[#2a2d33] text-gray-500 text-[11px] leading-snug">{p.specs}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        <p className="mt-7 mb-8 font-medium">Looking forward to receiving your prompt response soon.</p>
+                        <div className="text-[12px] font-bold tracking-wide text-gray-800 dark:text-gray-200 border-t border-gray-200 dark:border-[#2a2d33] pt-4 mt-8 inline-block select-none">
+                          TradeMind Sourcing Team<br />
+                          <span className="text-gray-500 font-medium mt-1 inline-block">contact@trademind.com | +91-9876543210</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </>
 
-                {/* Main Body */}
-                <div
-                  ref={bodyRef}
-                  className="p-6 text-gray-800 dark:text-gray-300 leading-[1.7] text-[13px] focus:outline-none min-h-[200px]"
-                  contentEditable={isEditing}
-                  suppressContentEditableWarning={true}
-                >
-                  <p className="mb-5 font-medium">
-                    Dear {isRFQ ? (deal.seller_quote?.seller_name || 'Valued Supplier') : deal.buyer_name.split(' ')[0]},
-                  </p>
+                {/* Buyer Email */}
+                <div className={`bg-white dark:bg-[#1e2028] rounded-xl overflow-hidden shadow-sm transition-all border ${isEditing ? 'border-blue-500 shadow-blue-500/20' : 'border-gray-200 dark:border-[#2a2d33]'}`}>
+                  {/* Meta Attributes */}
+                  <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] bg-gray-50/50 dark:bg-[#242830]/30 space-y-2">
+                    <div className="flex items-center text-[13px]">
+                      <span className="w-20 text-gray-400 font-bold uppercase tracking-wider text-[10px]">From:</span>
+                      <span className="text-gray-900 dark:text-gray-100 font-bold">purchasing@trademind.com</span>
+                    </div>
+                    <div className="flex items-center text-[13px]">
+                      <span className="w-20 text-gray-400 font-bold uppercase tracking-wider text-[10px]">To:</span>
+                      <span className="text-gray-900 dark:text-gray-100 font-semibold">{deal.buyer_email}</span>
+                    </div>
+                    <div className="flex items-center text-[13px]">
+                      <span className="w-20 text-gray-400 font-bold uppercase tracking-wider text-[10px]">Subject:</span>
+                      <span className="text-gray-900 dark:text-white font-bold">Quotation Details - Ref: {deal.inquiry_id}</span>
+                    </div>
+                  </div>
 
-                  {isRFQ ? (
-                    <p className="mb-5">
-                      We hope this email finds you well. We are currently sourcing products for an upcoming requirement.
-                      Please review the items requested below and provide your best wholesale quotation including unit prices, minimum order quantities, and estimated lead times.
+                  {/* Main Body */}
+                  <div
+                    ref={bodyRef}
+                    className="p-6 text-gray-800 dark:text-gray-300 leading-[1.7] text-[13px] focus:outline-none min-h-[200px]"
+                    contentEditable={isEditing}
+                    suppressContentEditableWarning={true}
+                  >
+                    <p className="mb-5 font-medium">
+                      Dear {deal.buyer_name.split(' ')[0]},
                     </p>
-                  ) : (
+
                     <p className="mb-5">
                       Thank you for your recent inquiry! We are pleased to offer the following quotation for the requested items. Our team ensures the highest quality standards, resulting in pristine compliance for B2B channels.
                     </p>
-                  )}
 
-                  <table className="w-full border-collapse border border-gray-200 dark:border-[#2a2d33] my-6 text-[12px] text-gray-900 dark:text-white shadow-sm font-sans">
-                    <thead>
-                      <tr className="bg-gray-50 dark:bg-[#0c0e12] text-gray-500 dark:text-gray-400 tracking-wide text-left">
-                        <th className="p-3 border border-gray-200 dark:border-[#2a2d33] font-bold">Product</th>
-                        {isRFQ ? (
-                          <>
-                            <th className="p-3 border border-gray-200 dark:border-[#2a2d33] text-center font-bold">Qty</th>
-                            <th className="p-3 border border-gray-200 dark:border-[#2a2d33] font-bold">Specs</th>
-                          </>
-                        ) : (
-                          <>
-                            <th className="p-3 border border-gray-200 dark:border-[#2a2d33] text-right font-bold">Unit Price</th>
-                            <th className="p-3 border border-gray-200 dark:border-[#2a2d33] text-center font-bold">Qty</th>
-                            <th className="p-3 border border-gray-200 dark:border-[#2a2d33] text-right font-bold w-[25%]">Total</th>
-                          </>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {deal.products.map((p, i) => {
-                        let myQuoteProd = deal.my_quote?.products?.[i] || deal.calculated_my_quote?.products?.[i];
-                        return (
-                          <tr key={i} className="hover:bg-gray-50/50">
-                            <td className="p-3 border border-gray-200 dark:border-[#2a2d33] font-medium">{p.product_name}</td>
-                            {isRFQ ? (
-                              <>
-                                <td className="p-3 border border-gray-200 dark:border-[#2a2d33] text-center font-mono font-medium">{p.quantity} {p.unit}</td>
-                                <td className="p-3 border border-gray-200 dark:border-[#2a2d33] text-gray-500 text-[11px] leading-snug">{p.specs}</td>
-                              </>
-                            ) : (
-                              <>
-                                <td className="p-3 border border-gray-200 dark:border-[#2a2d33] text-right font-mono font-medium">{myQuoteProd ? formatCurrency(myQuoteProd.my_unit_price) : 'TBD'}</td>
-                                <td className="p-3 border border-gray-200 dark:border-[#2a2d33] text-center font-mono font-medium">{p.quantity} {p.unit}</td>
-                                <td className="p-3 border border-gray-200 dark:border-[#2a2d33] text-right font-mono font-bold">{myQuoteProd ? formatCurrency(myQuoteProd.total_my_price || myQuoteProd.total_price) : 'TBD'}</td>
-                              </>
-                            )}
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
+                    <table className="w-full border-collapse border border-gray-200 dark:border-[#2a2d33] my-6 text-[12px] text-gray-900 dark:text-white shadow-sm font-sans">
+                      <thead>
+                        <tr className="bg-gray-50 dark:bg-[#0c0e12] text-gray-500 dark:text-gray-400 tracking-wide text-left">
+                          <th className="p-3 border border-gray-200 dark:border-[#2a2d33] font-bold">Product</th>
+                          <th className="p-3 border border-gray-200 dark:border-[#2a2d33] text-right font-bold">Unit Price</th>
+                          <th className="p-3 border border-gray-200 dark:border-[#2a2d33] text-center font-bold">Qty</th>
+                          <th className="p-3 border border-gray-200 dark:border-[#2a2d33] text-right font-bold w-[25%]">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {deal.products.map((p, i) => {
+                          let myQuoteProd = deal.my_quote?.products?.find(mqp => mqp.product_name === p.product_name) || deal.calculated_my_quote?.products?.find(mqp => mqp.product_name === p.product_name);
+                          return (
+                            <tr key={i} className="hover:bg-gray-50/50">
+                              <td className="p-3 border border-gray-200 dark:border-[#2a2d33] font-medium">{p.product_name}</td>
+                              <td className="p-3 border border-gray-200 dark:border-[#2a2d33] text-right font-mono font-medium">{myQuoteProd ? formatCurrency(myQuoteProd.my_unit_price) : 'TBD'}</td>
+                              <td className="p-3 border border-gray-200 dark:border-[#2a2d33] text-center font-mono font-medium">{p.quantity} {p.unit}</td>
+                              <td className="p-3 border border-gray-200 dark:border-[#2a2d33] text-right font-mono font-bold">{myQuoteProd ? formatCurrency(myQuoteProd.total_my_price || myQuoteProd.total_price) : 'TBD'}</td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
 
-                  {!isRFQ && (
                     <div className="mb-6 bg-gray-50 dark:bg-[#242830] p-5 border-l-[3px] border-purple-500 rounded-r shadow-sm">
                       <p className="font-bold text-[12px] mb-2.5 uppercase tracking-wider text-gray-800 dark:text-gray-200">Payment Terms</p>
                       <ul className="list-disc pl-5 text-[12px] text-gray-600 dark:text-gray-400 space-y-1.5 font-medium">
@@ -203,21 +262,17 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
                         <li>Price validity runs strictly 15 days from the date of quotation formulation.</li>
                       </ul>
                     </div>
-                  )}
 
-                  <p className="mt-7 mb-8 font-medium">
-                    {isRFQ
-                      ? 'Looking forward to receiving your prompt response soon.'
-                      : 'We look forward to serving you. Please let us know if you need any clarifications on the enclosed proposal.'
-                    }
-                  </p>
+                    <p className="mt-7 mb-8 font-medium">
+                      We look forward to serving you. Please let us know if you need any clarifications on the enclosed proposal.
+                    </p>
 
-                  <div className="text-[12px] font-bold tracking-wide text-gray-800 dark:text-gray-200 border-t border-gray-200 dark:border-[#2a2d33] pt-4 mt-8 inline-block select-none">
-                    TradeMind Sourcing Team<br />
-                    <span className="text-gray-500 font-medium mt-1 inline-block">contact@trademind.com | +91-9876543210</span>
+                    <div className="text-[12px] font-bold tracking-wide text-gray-800 dark:text-gray-200 border-t border-gray-200 dark:border-[#2a2d33] pt-4 mt-8 inline-block select-none">
+                      TradeMind Sourcing Team<br />
+                      <span className="text-gray-500 font-medium mt-1 inline-block">contact@trademind.com | +91-9876543210</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
               {/* Edit Mode Handlers */}
               <div className="mt-5 flex justify-end">

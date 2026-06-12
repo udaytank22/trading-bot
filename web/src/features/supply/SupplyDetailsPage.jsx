@@ -163,6 +163,11 @@ export default function SupplyDetailsPage() {
         // Push any actual documents stored in DB if needed (mocked here if we had them)
       } catch (e) {
         console.error("Error generating PDFs", e);
+        Swal.fire({
+          title: "PDF Generation Error",
+          text: e.message || String(e),
+          icon: "error"
+        });
       }
     }
 
@@ -198,7 +203,7 @@ export default function SupplyDetailsPage() {
           Swal.fire({
             title: '✅ Challan Received!',
             text: 'Signed challan confirmed. Inquiry has been closed.',
-            icon: 'success',
+            toast: true, position: 'top-end', icon: 'success',
             confirmButtonColor: '#0d9488',
             background: '#1a1d23',
             color: '#fff',
@@ -245,7 +250,7 @@ export default function SupplyDetailsPage() {
       Swal.fire({
         title: '✅ Challan Signed!',
         text: 'The vessel has signed the challan. Ready for invoicing.',
-        icon: 'success',
+        toast: true, position: 'top-end', icon: 'success',
         confirmButtonColor: '#0d9488',
         background: '#1a1d23',
         color: '#fff',
@@ -341,6 +346,40 @@ export default function SupplyDetailsPage() {
   if (deal.isGrouped) {
     return (
       <div className="relative">
+        {/* ── Inline PDF Viewer overlay ── */}
+        {showPdf && (
+          <div className="absolute inset-0 z-50 flex flex-col bg-white dark:bg-[#1e2028] rounded-2xl overflow-hidden border border-gray-200 dark:border-[#2a2d36] min-h-[70vh] shadow-2xl">
+            <div className="px-4 py-3 border-b border-gray-200 dark:border-[#2a2d36] bg-gray-50 dark:bg-[#1a1d23] flex items-center justify-between flex-shrink-0">
+              <button
+                onClick={() => setShowPdf(false)}
+                className="flex items-center gap-2 text-sm font-bold text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Supply Details
+              </button>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-red-500 bg-red-500/10 px-2.5 py-1 rounded-full border border-red-500/20">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  {pdfLabel}
+                </div>
+                <a href={pdfUrl} download={pdfLabel} className="flex items-center gap-1.5 text-xs font-bold text-purple-500 bg-purple-500/10 px-2.5 py-1 rounded-full border border-purple-500/20 hover:bg-purple-500/20 transition-colors">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download
+                </a>
+              </div>
+            </div>
+            <div className="flex-1 overflow-hidden bg-gray-100 dark:bg-[#0c0e12]">
+              <iframe src={pdfUrl} title="Document Preview" className="w-full h-full border-0" />
+            </div>
+          </div>
+        )}
+
         <GroupedSupplyDetails 
           deal={deal}
           formatINR={formatINR}

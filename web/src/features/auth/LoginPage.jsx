@@ -1,4 +1,4 @@
-import { useAuth, useUI, useData } from '@context';
+import { useAuth } from '@context';
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, Lock, Eye, EyeOff, Zap } from "lucide-react";
@@ -52,16 +52,16 @@ const LoginPage = () => {
 
   return (
     <div className="h-screen w-full grid grid-cols-1 md:grid-cols-2 bg-[#f8f9fd] dark:bg-[#070913] overflow-hidden transition-colors duration-300 relative">
-      
+
       {/* Left Column - Form */}
       <div className="h-full flex flex-col justify-center items-center px-6 sm:px-12 md:px-16 lg:px-24 py-6 z-10 bg-gradient-to-br from-[#f3f6fc] to-[#e6ecf8] relative overflow-hidden">
-        
+
         {/* Subtle background glow matching illustration colors */}
         <div className="absolute -top-40 -left-40 w-96 h-96 bg-[#00d2ff]/10 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-[#4f46e5]/10 rounded-full blur-[120px] pointer-events-none" />
 
         <div className="w-full max-w-md space-y-8 z-10">
-          
+
           {/* Header */}
           <div className="text-center space-y-3">
             <h1 className="text-4xl font-black tracking-wider text-slate-800 uppercase">
@@ -83,7 +83,7 @@ const LoginPage = () => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
-            
+
             {/* Username Input */}
             <div className="relative group">
               <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-[#2563eb] transition-colors">
@@ -146,9 +146,9 @@ const LoginPage = () => {
 
       {/* Right Column - Full-Screen Illustration */}
       <div className="hidden md:block relative w-full h-full bg-[#070913] overflow-hidden select-none">
-        <img 
-          src="/erp_illustration.png" 
-          alt="Trading ERP Dashboard" 
+        <img
+          src="/erp_illustration.png"
+          alt="Trading ERP Dashboard"
           className="w-full h-full object-cover object-center"
         />
       </div>

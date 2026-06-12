@@ -26,7 +26,7 @@ export default function PaymentModal({ isOpen, onClose, invoiceId, onSuccess }) 
       });
       if (res.success) {
         Swal.fire({
-          icon: 'success',
+          toast: true, position: 'top-end', icon: 'success',
           title: 'Paid',
           text: 'Invoice marked as paid.',
           background: '#1a1d23',

@@ -65,7 +65,7 @@ apiClient.interceptors.response.use(
       else if (method === 'delete') title = 'Entry Deleted Successfully';
 
       Swal.fire({
-        icon: 'success',
+        toast: true, position: 'top-end', icon: 'success',
         title: title,
         text: text,
         toast: true,
@@ -150,8 +150,9 @@ apiClient.interceptors.response.use(
 
     // Only show error alert if it's not a first 401 (which is handled by silent token refresh above)
     const isFirst401 = error.response && error.response.status === 401 && !originalRequest?._retry && !originalRequest?.url?.includes('/auth/login') && !originalRequest?.url?.includes('/auth/refresh');
+    const isLoginRequest = originalRequest?.url?.includes('/auth/login');
     
-    if (!isFirst401) {
+    if (!isFirst401 && !isLoginRequest) {
       const isDark = document.documentElement.classList.contains('dark');
       const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'An unexpected error occurred';
       

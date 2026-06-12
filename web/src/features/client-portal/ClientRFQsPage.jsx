@@ -123,7 +123,7 @@ export default function ClientRFQsPage() {
 
       const hasQuoted = inq.supplierQuotes?.some((q) => q.supplierId === selectedSupplierId);
       const isClosedOrConfirmed = ["CONFIRMED", "CLOSED", "ORDERED", "ORDER_PLACED"].includes(inq.status);
-      
+
       if (isClosedOrConfirmed) {
         return hasQuoted;
       }
@@ -134,7 +134,7 @@ export default function ClientRFQsPage() {
   const activeOrders = useMemo(() => {
     if (!selectedSupplierId) return [];
     const validStatuses = [
-      "ORDER_PLACED", "ORDERED", "VEHICLE_ALLOTTED", "LOADING", "DISPATCHED", "IN_TRANSIT", 
+      "ORDER_PLACED", "ORDERED", "VEHICLE_ALLOTTED", "LOADING", "DISPATCHED", "IN_TRANSIT",
       "OUT_FOR_DELIVERY", "DELIVERED", "DELIVERED_TO_VESSEL", "DELIVERED TO VESSEL", "CHALLAN_RECEIVED"
     ];
     return shipments.filter(
@@ -250,7 +250,7 @@ export default function ClientRFQsPage() {
         const parts = url.split(';base64,');
         const contentType = parts[0].split(':')[1] || 'application/pdf';
         const b64 = parts[1];
-        
+
         const byteCharacters = atob(b64);
         const byteArrays = [];
         for (let offset = 0; offset < byteCharacters.length; offset += 512) {
@@ -262,7 +262,7 @@ export default function ClientRFQsPage() {
           const byteArray = new Uint8Array(byteNumbers);
           byteArrays.push(byteArray);
         }
-        
+
         const blob = new Blob(byteArrays, { type: contentType });
         const blobUrl = URL.createObjectURL(blob);
         window.open(blobUrl, '_blank');
@@ -281,7 +281,7 @@ export default function ClientRFQsPage() {
       const res = await api.shipments.updateShipment(selectedOrder.id, { currentStatus: "DISPATCHED" });
       if (res.success) {
         Swal.fire({
-          icon: 'success',
+          toast: true, position: 'top-end', icon: 'success',
           title: 'Order Dispatched',
           text: 'The shipment status has been updated to Dispatched.',
           background: '#1a1d23',

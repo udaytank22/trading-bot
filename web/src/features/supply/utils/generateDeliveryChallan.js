@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 /**
  * Generates a Delivery Challan PDF and returns a Blob URL.
@@ -181,7 +181,7 @@ export function generateDeliveryChallanPDF(deal, vehicle, challanNo) {
 
   const tableStartY = billY + 75;
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: tableStartY,
     margin: { left: 24, right: 24 },
     head: [[

@@ -129,7 +129,7 @@ export default function AddDocumentModal({
         }));
 
         Swal.fire({
-          icon: "success",
+          toast: true, position: 'top-end', icon: 'success',
           title: "Data Imported",
           text: "Document details filled from Excel",
           toast: true,

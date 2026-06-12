@@ -75,7 +75,7 @@ export default function PODetailsPage() {
       const doc = generatePOPDF(po);
       doc.save(`PO_${po?.poNumber || po?.po_id || 'order'}.pdf`);
       Swal.fire({
-        icon: 'success',
+        toast: true, position: 'top-end', icon: 'success',
         title: 'PDF Downloaded',
         text: 'Purchase order document downloaded successfully.',
         background: '#1a1d23',

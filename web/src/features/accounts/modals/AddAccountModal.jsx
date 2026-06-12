@@ -110,7 +110,7 @@ export default function AddAccountModal({
         }));
 
         Swal.fire({
-          icon: "success",
+          toast: true, position: 'top-end', icon: 'success',
           title: "Data Imported",
           text: "Form filled from Excel.",
           timer: 2000,

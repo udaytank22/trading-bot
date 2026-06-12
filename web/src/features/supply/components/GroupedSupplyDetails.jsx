@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StatusBadge, DataTable, rowStripeClass, ROW_HOVER_CLS, Button } from '@components/ui';
+import Swal from 'sweetalert2';
 
 export default function GroupedSupplyDetails({
   deal,
@@ -81,7 +82,8 @@ export default function GroupedSupplyDetails({
     { key: 'vendor', label: 'Vendor' },
     { key: 'vehicle', label: 'Vehicle' },
     { key: 'driver', label: 'Driver' },
-    { key: 'status', label: 'Status' }
+    { key: 'status', label: 'Status' },
+    { key: 'actions', label: '' }
   ];
 
   return (
@@ -107,34 +109,44 @@ export default function GroupedSupplyDetails({
           <div className="flex items-center gap-3">
             <StatusBadge status={deal.status} />
             {deal.status === "DELIVERED" && (
-              <button
+              <Button
+                variant="primary"
+                size="md"
                 onClick={() => {
                   setAllotModalDeal(deal);
                   setAllotModalMode("group_final_delivery");
                   setIsAllotModalOpen(true);
                 }}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                </svg>
                 Allot Final Vehicle
-              </button>
+              </Button>
             )}
             {(deal.status === "VEHICLE_ALLOTTED" || deal.status === "LOADING") && (
               <button
-                onClick={() => {
-                  if (confirm("Mark this cargo as dispatched?")) {
+                onClick={async () => {
+                  const result = await Swal.fire({
+                    title: 'Mark as Dispatched?',
+                    text: 'Mark this cargo as dispatched?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#2563eb',
+                    cancelButtonColor: '#374151',
+                    confirmButtonText: 'Yes, Dispatch',
+                    cancelButtonText: 'Cancel',
+                    background: '#1a1d23',
+                    color: '#fff',
+                  });
+                  if (result.isConfirmed) {
                     // Update all subshipments to OUT_FOR_DELIVERY
                     deal.subShipments.forEach(sub => handleStatusUpdate(sub.id, "OUT_FOR_DELIVERY"));
                     // We also need to update the grouped deal status
                     handleStatusUpdate(deal.id, "OUT_FOR_DELIVERY");
                   }
                 }}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-blue-500 hover:bg-blue-600 text-white shadow-blue-500/20"
+                className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-purple-600 hover:bg-purple-500 text-white transition-all shadow-sm flex items-center gap-2"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
                 Mark Dispatched
               </button>
@@ -197,6 +209,32 @@ export default function GroupedSupplyDetails({
                     </td>
                     <td className="px-6 py-4">
                       <StatusBadge status={shipmentStatus} />
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      {(shipmentStatus === "IN_TRANSIT" || shipmentStatus === "DISPATCHED") && (
+                        <button
+                          onClick={async () => {
+                            const result = await Swal.fire({
+                              title: 'Mark as Delivered?',
+                              text: `Mark shipment SH-${shipment.id} as delivered?`,
+                              icon: 'question',
+                              showCancelButton: true,
+                              confirmButtonColor: '#2563eb',
+                              cancelButtonColor: '#374151',
+                              confirmButtonText: 'Yes, Delivered',
+                              cancelButtonText: 'Cancel',
+                              background: '#1a1d23',
+                              color: '#fff',
+                            });
+                            if (result.isConfirmed) {
+                              handleStatusUpdate(shipment.id, "DELIVERED");
+                            }
+                          }}
+                          className="px-3 py-1.5 rounded-lg text-[10px] uppercase tracking-wider font-bold bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-sm"
+                        >
+                          Mark Delivered
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );

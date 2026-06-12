@@ -49,12 +49,12 @@ export function RightDrawer({ isOpen, title, onClose, children, isFullScreen }) 
   );
 }
 
-export function CenterModal({ isOpen, title, onClose, children }) {
+export function CenterModal({ isOpen, title, onClose, children, className = "max-w-[95vw] xl:max-w-[1400px]" }) {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-6">
       <div className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-[95vw] xl:max-w-[1400px] bg-white dark:bg-[#1a1d23] shadow-2xl rounded-3xl overflow-hidden border border-gray-200 dark:border-[#2a2d33]">
+      <div className={`relative w-full bg-white dark:bg-[#1a1d23] shadow-2xl rounded-3xl overflow-hidden border border-gray-200 dark:border-[#2a2d33] ${className}`}>
         <div className="px-6 py-4 border-b border-gray-100 dark:border-[#2a2d33] flex items-center justify-between bg-gray-50 dark:bg-[#1a1d23]">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">

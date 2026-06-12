@@ -215,7 +215,7 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
         });
 
         Swal.fire({
-          icon: "success",
+          toast: true, position: 'top-end', icon: 'success',
           title: "Data Imported",
           text: "Inquiry fields and products updated from Excel.",
           timer: 1800,

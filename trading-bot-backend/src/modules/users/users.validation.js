@@ -12,8 +12,10 @@ const validateCreateUser = {
     if (!body.password || typeof body.password !== 'string' || body.password.length < 6) {
       errors.push('Password is required and must be at least 6 characters');
     }
-    if (!body.roleId || typeof body.roleId !== 'string') {
+    if (!body.roleId) {
       errors.push('roleId is required');
+    } else if (typeof body.roleId !== 'string' && typeof body.roleId !== 'number') {
+      errors.push('roleId must be a string or number');
     }
     return errors;
   }
