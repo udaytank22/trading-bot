@@ -53,34 +53,6 @@ const processQueue = (error, token = null) => {
 
 apiClient.interceptors.response.use(
   (response) => {
-    // Show success toast on mutations (POST, PUT, PATCH, DELETE)
-    const method = response.config?.method?.toLowerCase();
-    if (['post', 'put', 'patch', 'delete'].includes(method)) {
-      const isDark = document.documentElement.classList.contains('dark');
-      let title = 'Success';
-      let text = response.data?.message || 'Operation completed successfully';
-      
-      if (method === 'post') title = 'Entry Created Successfully';
-      else if (method === 'put' || method === 'patch') title = 'Entry Updated Successfully';
-      else if (method === 'delete') title = 'Entry Deleted Successfully';
-
-      Swal.fire({
-        toast: true, position: 'top-end', icon: 'success',
-        title: title,
-        text: text,
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-        background: isDark ? '#1a1d23' : '#ffffff',
-        color: isDark ? '#ffffff' : '#111827',
-        iconColor: '#10B981',
-        customClass: {
-          popup: 'border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-lg font-sans',
-        }
-      });
-    }
     return response;
   },
   async (error) => {
@@ -151,26 +123,11 @@ apiClient.interceptors.response.use(
     // Only show error alert if it's not a first 401 (which is handled by silent token refresh above)
     const isFirst401 = error.response && error.response.status === 401 && !originalRequest?._retry && !originalRequest?.url?.includes('/auth/login') && !originalRequest?.url?.includes('/auth/refresh');
     const isLoginRequest = originalRequest?.url?.includes('/auth/login');
-    
+
     if (!isFirst401 && !isLoginRequest) {
-      const isDark = document.documentElement.classList.contains('dark');
-      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'An unexpected error occurred';
-      
-      Swal.fire({
-        icon: 'error',
-        title: 'Error Occurred',
-        text: errorMessage,
-        background: isDark ? '#1a1d23' : '#ffffff',
-        color: isDark ? '#ffffff' : '#111827',
-        confirmButtonColor: '#3B82F6',
-        customClass: {
-          popup: 'bg-white dark:bg-[#1a1d23] text-gray-900 dark:text-white rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-2xl font-sans',
-          title: 'text-xl font-bold text-gray-900 dark:text-white',
-          htmlContainer: 'text-gray-500 dark:text-gray-400 font-medium',
-          confirmButton: 'px-6 py-2.5 rounded-xl font-bold transition-all border-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-[#1a1d23] bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/20 focus:ring-blue-500',
-        },
-        buttonsStyling: false
-      });
+      // Components handle their own errors and show specific toasts.
+      // We removed the global Swal.fire to prevent overriding specific component error toasts.
+      console.error('API Error:', error.response?.data?.message || error.message);
     }
 
     return Promise.reject(error);

@@ -1,3 +1,4 @@
+import { TOAST_MESSAGES } from '../../../constants/toastMessages';
 import React, { useState, useMemo } from 'react';
 import { Select, DataTable, rowStripeClass, ROW_HOVER_CLS, Pagination, ExcelImportModal } from '@components/ui';
 import { confirmAction } from '@utils/swal';
@@ -143,16 +144,16 @@ export default function ClientsTab() {
         const res = await api.clients.bulkImportClients(clientsToImport);
         if (res.success) {
           refresh();
-          showToast(`Successfully processed ${res.data?.successCount || clientsToImport.length} rows. ${failCount} failed due to missing fields.`, 'success');
+          showToast(TOAST_MESSAGES.SETTINGS.IMPORT.SUCCESS(res.data?.successCount || clientsToImport.length, failCount), 'success');
         } else {
-          showToast(`Failed to import data.`, 'error');
+          showToast(TOAST_MESSAGES.COMMON.IMPORT_FAILED, 'error');
         }
       } catch (err) {
         console.error(err);
-        showToast(`Error importing data.`, 'error');
+        showToast(TOAST_MESSAGES.COMMON.IMPORT_ERROR, 'error');
       }
     } else {
-      showToast(`No valid rows to import. ${failCount} failed.`, 'info');
+      showToast(TOAST_MESSAGES.SETTINGS.IMPORT.NO_VALID_ROWS(failCount), 'info');
     }
   };
 

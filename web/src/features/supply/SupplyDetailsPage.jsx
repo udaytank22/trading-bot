@@ -203,7 +203,7 @@ export default function SupplyDetailsPage() {
           Swal.fire({
             title: '✅ Challan Received!',
             text: 'Signed challan confirmed. Inquiry has been closed.',
-            toast: true, position: 'top-end', icon: 'success',
+            toast: true, showConfirmButton: false, position: 'top-end', icon: 'success',
             confirmButtonColor: '#0d9488',
             background: '#1a1d23',
             color: '#fff',
@@ -250,7 +250,7 @@ export default function SupplyDetailsPage() {
       Swal.fire({
         title: '✅ Challan Signed!',
         text: 'The vessel has signed the challan. Ready for invoicing.',
-        toast: true, position: 'top-end', icon: 'success',
+        toast: true, showConfirmButton: false, position: 'top-end', icon: 'success',
         confirmButtonColor: '#0d9488',
         background: '#1a1d23',
         color: '#fff',

@@ -33,6 +33,9 @@ export default function InvoiceDetailsPage() {
 
       if (inqRes.success && inqRes.data) {
         setInquiryData(inqRes.data);
+        if (inqRes.data.status === 'CHALLAN_RECEIVED' || inqRes.data.currentStatus === 'CHALLAN_RECEIVED') {
+          setChallanConfirmed(true);
+        }
       }
 
       if (invRes.success && invRes.data) {
@@ -200,7 +203,21 @@ export default function InvoiceDetailsPage() {
                       color: '#fff'
                     }).then((result) => {
                       if (result.isConfirmed) {
-                        setChallanConfirmed(true);
+                        api.inquiries.updateInquiry(id, { currentStatus: 'CHALLAN_RECEIVED' })
+                          .then(() => {
+                            setChallanConfirmed(true);
+                            fetchData();
+                          })
+                          .catch(err => {
+                            console.error('Failed to update status', err);
+                            Swal.fire({
+                              icon: 'error',
+                              title: 'Error',
+                              text: 'Failed to update challan status.',
+                              background: '#1a1d23',
+                              color: '#fff',
+                            });
+                          });
                       }
                     });
                   }}
@@ -413,7 +430,7 @@ export default function InvoiceDetailsPage() {
                       >
                         Download PDF
                       </Button>
-                      {inv.status !== "SENT" && (
+                      {inv.status !== "SENT" && inv.status !== "PAID" && (
                         <Button
                           variant="primary"
                           size="sm"
@@ -443,7 +460,7 @@ export default function InvoiceDetailsPage() {
             </div>
           )}
         </div>
-        
+
         {clientInvoice?.status === 'PAID' && clientInvoice?.paymentDetails && (
           <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Payment Details</h3>
@@ -478,7 +495,7 @@ export default function InvoiceDetailsPage() {
           fetchData();
         }}
       />
-      
+
       <PaymentModal
         isOpen={!!paymentTargetId}
         onClose={() => setPaymentTargetId(null)}

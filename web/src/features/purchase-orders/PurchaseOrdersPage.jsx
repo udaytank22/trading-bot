@@ -1,3 +1,4 @@
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 import { api } from '@services/api';
 /**
  * @file PurchaseOrdersPage.jsx
@@ -123,14 +124,14 @@ export default function PurchaseOrdersPage() {
 
       const res = await api.purchaseOrders.createPurchaseOrder(payload);
       if (res.success) {
-        showToast("Purchase order created successfully", "success");
+        showToast(TOAST_MESSAGES.PURCHASE_ORDERS.CREATED, "success");
         refresh();
       } else {
-        showToast(res.message || "Failed to create purchase order", "error");
+        showToast(res.message || TOAST_MESSAGES.PURCHASE_ORDERS.CREATE_ERROR, "error");
       }
     } catch (e) {
       console.error(e);
-      showToast("An error occurred while saving purchase order", "error");
+      showToast(TOAST_MESSAGES.PURCHASE_ORDERS.SAVE_ERROR, "error");
     }
   };
 

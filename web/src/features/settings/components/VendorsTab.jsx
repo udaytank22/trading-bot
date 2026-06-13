@@ -1,3 +1,4 @@
+import { TOAST_MESSAGES } from '../../../constants/toastMessages';
 import React, { useState, useMemo, useEffect } from 'react';
 import { Select, DataTable, rowStripeClass, ROW_HOVER_CLS, Pagination, ExcelImportModal } from '@components/ui';
 import { confirmAction } from '@utils/swal';
@@ -48,7 +49,7 @@ export default function VendorsTab() {
       const res = await api.users.updateUser(user.id, { isActive: activate });
       if (res.success || res.id) {
         Swal.fire({
-          toast: true, position: 'top-end', icon: 'success', title: activate ? 'Access Reactivated' : 'Access Revoked', showConfirmButton: false, timer: 2000,
+          toast: true, position: 'top-end', icon: 'success', title: activate ? TOAST_MESSAGES.SETTINGS.VENDORS.ACCESS_REACTIVATED : TOAST_MESSAGES.SETTINGS.VENDORS.ACCESS_REVOKED, showConfirmButton: false, timer: 2000,
           background: document.documentElement.classList.contains('dark') ? '#1a1d23' : '#ffffff', color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
         });
         setVendorUser({ ...vendorUser, isActive: activate });
@@ -178,22 +179,22 @@ export default function VendorsTab() {
         const res = await api.suppliers.bulkImportSuppliers(suppliersToImport);
         if (res.success) {
           refresh();
-          showToast(`Successfully processed ${res.data?.successCount || suppliersToImport.length} rows. ${failCount} failed due to missing fields.`, 'success');
+          showToast(TOAST_MESSAGES.SETTINGS.IMPORT.SUCCESS(res.data?.successCount || suppliersToImport.length, failCount), 'success');
         } else {
-          showToast(`Failed to import data.`, 'error');
+          showToast(TOAST_MESSAGES.COMMON.IMPORT_FAILED, 'error');
         }
       } catch (err) {
         console.error(err);
-        showToast(`Error importing data.`, 'error');
+        showToast(TOAST_MESSAGES.COMMON.IMPORT_ERROR, 'error');
       }
     } else {
-      showToast(`No valid rows to import. ${failCount} failed.`, 'info');
+      showToast(TOAST_MESSAGES.SETTINGS.IMPORT.NO_VALID_ROWS(failCount), 'info');
     }
   };
 
   const handleGrantAccess = (vendor) => {
     if (!vendor.email) {
-      showToast('Vendor must have an email address.', 'warning');
+      showToast(TOAST_MESSAGES.SETTINGS.VENDORS.REQUIRE_EMAIL, 'warning');
       return;
     }
     setGrantAccessVendor(vendor);
@@ -203,7 +204,7 @@ export default function VendorsTab() {
 
   const submitGrantAccess = async () => {
     if (!grantPassword || grantPassword.length < 6) {
-      showToast('Password must be at least 6 characters.', 'warning');
+      showToast(TOAST_MESSAGES.AUTH.PASSWORD_MIN_LENGTH, 'warning');
       return;
     }
 

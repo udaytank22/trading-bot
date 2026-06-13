@@ -37,7 +37,13 @@ const getAllInquiries = async (query = {}) => {
 
   if (statuses) {
     const statusArray = statuses.split(',').map(s => s.trim());
-    where.currentStatus = { in: statusArray };
+    if (!where.AND) where.AND = [];
+    where.AND.push({
+      OR: [
+        { currentStatus: { in: statusArray } },
+        { invoices: { some: {} } }
+      ]
+    });
   }
 
   if (clientId) {
@@ -250,18 +256,24 @@ const createInquiry = async (data, creatorId) => {
  * Update basic details (not status)
  */
 const updateInquiry = async (id, data, updaterId) => {
+  const updateData = {
+    vesselName: data.vesselName,
+    imoNumber: data.imoNumber,
+    referenceNumber: data.referenceNumber,
+    assignedEmployeeId: data.assignedEmployeeId,
+    assignedTeamLeadId: data.assignedTeamLeadId,
+    expectedDeliveryDate: data.expectedDeliveryDate ? new Date(data.expectedDeliveryDate) : undefined,
+    remarks: data.remarks,
+    updatedById: updaterId
+  };
+
+  if (data.currentStatus !== undefined) {
+    updateData.currentStatus = data.currentStatus;
+  }
+
   return await prisma.inquiry.update({
     where: { id },
-    data: {
-      vesselName: data.vesselName,
-      imoNumber: data.imoNumber,
-      referenceNumber: data.referenceNumber,
-      assignedEmployeeId: data.assignedEmployeeId,
-      assignedTeamLeadId: data.assignedTeamLeadId,
-      expectedDeliveryDate: data.expectedDeliveryDate ? new Date(data.expectedDeliveryDate) : undefined,
-      remarks: data.remarks,
-      updatedById: updaterId
-    }
+    data: updateData
   });
 };
 

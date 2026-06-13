@@ -9,8 +9,8 @@ export function useToast(duration = 2500) {
   const [toast, setToast] = useState({ message: null, type: 'success' });
 
   const showToast = useCallback((message, type = 'success') => {
-    // Prevent duplicate toast if SweetAlert (global success/error) is already visible
-    if (Swal.isVisible()) return;
+    // No longer need to check Swal.isVisible() since global Swal toasts were removed.
+    // This allows showToast to run even if a Swal confirmation dialog is closing.
 
     setToast({ message, type });
     setTimeout(() => setToast({ message: null, type }), duration);

@@ -219,9 +219,7 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
           title: "Data Imported",
           text: "Inquiry fields and products updated from Excel.",
           timer: 1800,
-          showConfirmButton: false,
-          toast: true,
-          position: "top-end",
+          showConfirmButton: false
         });
       }
     } catch (error) {

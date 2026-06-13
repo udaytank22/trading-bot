@@ -9,32 +9,53 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
   const [sendState, setSendState] = useState('idle'); // 'idle', 'sending', 'success'
   const bodyRef = useRef(null);
 
+  const handleDownloadPDF = () => {
+    import('../utils/quotePdfGenerator.js').then(({ generateQuotePDF }) => {
+      const doc = generateQuotePDF(deal);
+      doc.save(`Quotation_${deal.inquiry_id}.pdf`);
+    });
+  };
+
+  const handleViewPDF = () => {
+    import('../utils/quotePdfGenerator.js').then(({ generateQuotePDF }) => {
+      const doc = generateQuotePDF(deal);
+      const pdfBlobUrl = doc.output('bloburl');
+      window.open(pdfBlobUrl, '_blank');
+    });
+  };
+
   const isRFQ = initialEmailType === 'RFQ';
 
   const selectedSuppliers = React.useMemo(() => {
     if (!deal) return [];
     
     if (deal.supplierQuotes && deal.supplierQuotes.length > 0) {
-      const suppliers = [];
+      const supplierMap = new Map();
       deal.supplierQuotes.forEach(quote => {
         const selectedItems = (quote.items || []).filter(item => item.isSelected);
         if (selectedItems.length > 0) {
-          suppliers.push({
-            id: quote.supplierId || quote.id,
-            name: quote.supplier?.name || quote.supplier_name || 'Unknown',
-            email: quote.supplier?.email || quote.seller_email || 'supplier@tbd.com',
-            items: selectedItems.map(si => {
-               const origItem = deal.items?.find(ii => ii.id === si.inquiryItemId) || {};
-               return {
-                 product_name: origItem.description || si.product_name,
-                 quantity: origItem.quantity || si.quantity,
-                 unit: origItem.unit || si.unit,
-                 specs: origItem.specs || si.specs,
-               }
-            })
+          const id = quote.supplierId || quote.id;
+          const name = quote.supplier?.name || quote.supplier_name || 'Unknown';
+          const email = quote.supplier?.email || quote.seller_email || 'supplier@tbd.com';
+          
+          if (!supplierMap.has(email)) {
+            supplierMap.set(email, { id, name, email, items: [] });
+          }
+
+          const mappedItems = selectedItems.map(si => {
+             const origItem = deal.items?.find(ii => ii.id === si.inquiryItemId) || {};
+             return {
+               product_name: origItem.description || si.product_name,
+               quantity: origItem.quantity || si.quantity,
+               unit: origItem.unit || si.unit,
+               specs: origItem.specs || si.specs,
+             }
           });
+          
+          supplierMap.get(email).items.push(...mappedItems);
         }
       });
+      const suppliers = Array.from(supplierMap.values());
       if (suppliers.length > 0) return suppliers;
     }
 
@@ -54,48 +75,46 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
   }, [isOpen]);
 
   const handleSend = async () => {
-    const result = await Swal.fire({
-      title: "Send Emails?",
-      text: "This will send the PO to the suppliers and the Quotation to the buyer. This process cannot be reverted.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#10b981",
-      cancelButtonColor: "#ef4444",
-      confirmButtonText: "Yes, send all",
-      cancelButtonText: "Cancel",
-      background: "#1a1d23",
-      color: "#fff"
-    });
-
-    if (!result.isConfirmed) return;
-
     setSendState('sending');
-    const sendPromise = (async () => {
-      try {
-        await Promise.all([
-          api.inquiries.sendRFQ(deal.id),
-          api.inquiries.finalVerify(deal.id)
-        ]);
+    try {
+      if (isRFQ) {
+        await api.inquiries.sendRFQ(deal.id);
+        if (onStatusUpdate) onStatusUpdate(deal.inquiry_id, 'RFQ_SENT');
+      } else {
+        await api.inquiries.finalVerify(deal.id);
         if (onStatusUpdate) onStatusUpdate(deal.inquiry_id, 'CLIENT_FINAL_APPROVAL');
-      } catch (error) {
-        console.error("Failed to send emails:", error);
-        throw error;
       }
-    })();
-    toast.promise(sendPromise, {
-      loading: 'Dispatching emails...',
-      success: () => {
-        setSendState('success');
-        setTimeout(() => {
-          onClose();
-        }, 3000);
-        return 'Emails have been successfully dispatched.';
-      },
-      error: (err) => {
-        setSendState('idle');
-        return 'Failed to dispatch emails.';
-      }
-    });
+      
+      setSendState('success');
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Emails have been successfully dispatched.',
+        showConfirmButton: false,
+        timer: 3000,
+        background: '#1a1d23',
+        color: '#fff'
+      });
+      
+      setTimeout(() => {
+        onClose();
+      }, 500);
+
+    } catch (error) {
+      console.error("Failed to send emails:", error);
+      setSendState('idle');
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'error',
+        title: 'Failed to dispatch emails.',
+        showConfirmButton: false,
+        timer: 3000,
+        background: '#1a1d23',
+        color: '#fff'
+      });
+    }
   };
 
   if (!isOpen || !deal) return null;
@@ -132,7 +151,8 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
             {/* Email Preview Area - Scrollable */}
             <div className="flex-1 overflow-y-auto p-6 bg-gray-100 dark:bg-[#0c0e12] custom-scrollbar">
               {/* Vendor Emails */}
-              <>
+              {isRFQ && (
+                <>
                   {selectedSuppliers.map((supp, idx) => (
                     <div key={idx} className={`bg-white dark:bg-[#1e2028] rounded-xl overflow-hidden shadow-sm transition-all border mb-6 ${isEditing ? 'border-blue-500 shadow-blue-500/20' : 'border-gray-200 dark:border-[#2a2d33]'}`}>
                       <div className="bg-gray-50 dark:bg-[#242830]/30 px-6 py-3 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center">
@@ -196,8 +216,10 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
                     </div>
                   ))}
                 </>
+              )}
 
-                {/* Buyer Email */}
+              {/* Buyer Email */}
+              {!isRFQ && (
                 <div className={`bg-white dark:bg-[#1e2028] rounded-xl overflow-hidden shadow-sm transition-all border ${isEditing ? 'border-blue-500 shadow-blue-500/20' : 'border-gray-200 dark:border-[#2a2d33]'}`}>
                   {/* Meta Attributes */}
                   <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] bg-gray-50/50 dark:bg-[#242830]/30 space-y-2">
@@ -272,7 +294,37 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
                       <span className="text-gray-500 font-medium mt-1 inline-block">contact@trademind.com | +91-9876543210</span>
                     </div>
                   </div>
+
+                  {/* Attachment Section */}
+                  <div className="px-6 py-4 border-t border-gray-200 dark:border-[#2a2d33] bg-gray-50/50 dark:bg-[#242830]/30 select-none">
+                    <p className="font-bold text-[11px] mb-2 uppercase tracking-wider text-gray-500 dark:text-gray-400">Attachments (1)</p>
+                    <div className="flex items-center gap-3 p-3 border border-gray-200 dark:border-[#2a2d33] rounded-xl w-max bg-white dark:bg-[#1a1d23] hover:shadow-sm transition-all">
+                      <div className="w-10 h-10 bg-red-50 dark:bg-red-500/10 rounded-lg flex items-center justify-center border border-red-100 dark:border-red-500/20">
+                        <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="flex flex-col pr-4">
+                        <span className="text-[13px] font-bold text-gray-900 dark:text-white">Quotation_{deal.inquiry_id}.pdf</span>
+                        <span className="text-[11px] text-gray-500 font-medium">System Generated • Contains all pricing details</span>
+                      </div>
+                      <div className="flex items-center gap-2 pl-4 border-l border-gray-200 dark:border-[#2a2d33]">
+                        <button onClick={handleViewPDF} className="p-1.5 text-gray-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded transition-colors" title="View PDF">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                        <button onClick={handleDownloadPDF} className="p-1.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded transition-colors" title="Download PDF">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              )}
 
               {/* Edit Mode Handlers */}
               <div className="mt-5 flex justify-end">

@@ -1,3 +1,4 @@
+import { TOAST_MESSAGES } from '../../../constants/toastMessages';
 import React, { useState } from 'react';
 import { useToast } from '@hooks/useToast';
 import { confirmAction } from '@utils/swal';
@@ -217,7 +218,7 @@ export default function RolePermissionsTab() {
       next[role] = defaults[role];
       return next;
     });
-    showToast(`${role} access reset to default`, 'success');
+    showToast(TOAST_MESSAGES.SETTINGS.ROLES.ROLE_RESET(role), 'success');
   };
 
   const handleResetAll = async () => {
@@ -229,12 +230,12 @@ export default function RolePermissionsTab() {
     if (!isConfirmed) return;
 
     setPermissions(getDefaultPermissions());
-    showToast('All role permissions reset to default', 'success');
+    showToast(TOAST_MESSAGES.SETTINGS.ROLES.ALL_RESET, 'success');
   };
 
   const handleSaveChanges = () => {
     localStorage.setItem('erp_role_permissions', JSON.stringify(permissions));
-    showToast('Permissions saved successfully!', 'success');
+    showToast(TOAST_MESSAGES.SETTINGS.ROLES.SAVED, 'success');
   };
 
   const getAllowedModulesCount = (role) => {

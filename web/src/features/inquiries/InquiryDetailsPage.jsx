@@ -1,3 +1,4 @@
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 import { InquiryDetailsPageSchema1, InquiryDetailsPageSchema2, InquiryDetailsPageSchema3 } from '@config/tableSchemas';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -119,7 +120,7 @@ export default function InquiryDetailsPage() {
       if (res.success) {
         refreshAll();
         setActiveTab("overview");
-        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Stock Check Recorded', text: 'Suppliers linked successfully.', background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.STOCK_CHECK, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
       }
     } catch (err) {
       console.error(err);
@@ -168,7 +169,7 @@ export default function InquiryDetailsPage() {
       if (res.success) {
         refreshAll();
         setActiveTab("overview");
-        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Approved', text: 'Quotation approved by Admin.', background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.QUOTE_APPROVED, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
       }
     } catch (err) {
       console.error(err);
@@ -209,7 +210,7 @@ export default function InquiryDetailsPage() {
         if (res.success) {
           refreshAll();
           setActiveTab("overview");
-          Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Submitted', text: 'Prices quoted. Sent to Team Lead for review.', background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
+          Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.QUOTE_SUBMITTED_TL, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
         }
       } else if (deal.status === "TL_REVIEW") {
         const confirmed = await confirmAction(
@@ -256,7 +257,7 @@ export default function InquiryDetailsPage() {
         if (res.success) {
           refreshAll();
           setActiveTab("overview");
-          Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Submitted', text: 'Margin approved. Sent for Admin approval.', background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
+          Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.MARGIN_APPROVED, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
         }
       }
     } catch (err) {
@@ -296,7 +297,7 @@ export default function InquiryDetailsPage() {
         if (res.success) {
           refreshAll();
           setActiveTab("overview");
-          Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Accepted', text: 'Deal approved.', background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
+          Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.DEAL_ACCEPTED, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
         }
       } else if (result.dismiss === Swal.DismissReason.cancel) {
         const res = await api.inquiries.clientDecision(deal.id, false);
@@ -320,7 +321,7 @@ export default function InquiryDetailsPage() {
       if (res.success) {
         refreshAll();
         setActiveTab("overview");
-        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Deal Confirmed', text: 'Deal moved to Supply.', background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.DEAL_CONFIRMED, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
       }
     } catch (err) {
       console.error(err);
@@ -339,7 +340,7 @@ export default function InquiryDetailsPage() {
       if (res.success) {
         refreshAll();
         setActiveTab("overview");
-        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'RFQ Closed', text: 'Inquiry is now in TL Review.', background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.RFQ_CLOSED, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
       }
     } catch (err) {
       console.error(err);
@@ -363,7 +364,7 @@ export default function InquiryDetailsPage() {
       const res = await api.inquiries.selectSupplierQuote(deal.id, quoteId);
       if (res.success) {
         setDeal(res.data);
-        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Quote Selected', text: 'Supplier quote selected and client quote updated.', background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.QUOTE_SELECTED, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
       }
     } catch {
       Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to select supplier quote.', background: '#1a1d23', color: '#fff' });
@@ -460,7 +461,7 @@ export default function InquiryDetailsPage() {
         // Collapse all expanded quote cards and switch to Review Margin tab
         setExpandedQuotes({});
         setActiveTab('action');
-        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Sourcing Confirmed!', text: 'Client quotation has been updated.', background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 2000 });
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.SOURCING_CONFIRMED, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 2000 });
       }
     } catch {
       Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to confirm sourcing selections.', background: '#1a1d23', color: '#fff' });

@@ -173,13 +173,12 @@ export default function AddPurchaseOrderModal({ isOpen, onClose, onSubmit }) {
         });
 
         Swal.fire({
-          toast: true, position: 'top-end', icon: 'success',
+           icon: 'success',
           title: "Data Imported",
           text: "Purchase Order fields and products updated from Excel.",
           timer: 1800,
           showConfirmButton: false,
-          toast: true,
-          position: "top-end",
+          
         });
       }
     } catch (error) {

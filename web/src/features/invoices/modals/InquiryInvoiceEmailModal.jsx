@@ -4,7 +4,7 @@ import { api } from '../../../services/api';
 export default function InquiryInvoiceEmailModal({ inquiry, isOpen, onClose, onStatusUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
   const [sendState, setSendState] = useState('idle'); // 'idle' | 'sending' | 'success'
-  const [showPdf, setShowPdf]     = useState(false);
+  const [showPdf, setShowPdf] = useState(false);
   const [pdfUrl, setPdfUrl] = useState('');
   const [pdfSize, setPdfSize] = useState('Generating...');
   const [subject, setSubject] = useState('');
@@ -18,7 +18,7 @@ export default function InquiryInvoiceEmailModal({ inquiry, isOpen, onClose, onS
       setSendState('idle');
       setIsEditing(false);
       setShowPdf(false);
-      
+
       // Default subject if API hasn't loaded yet
       setSubject(`Invoice for Inquiry: ${inquiry.inquiryNumber}`);
 
@@ -29,7 +29,7 @@ export default function InquiryInvoiceEmailModal({ inquiry, isOpen, onClose, onS
             const previewData = res.data;
             setInvoiceId(previewData.invoice.id);
             setSubject(`Invoice for Inquiry: ${inquiry.inquiryNumber}`);
-            
+
             // Set body from API or fallback
             if (previewData.defaultEmailBody) {
               setBody(previewData.defaultEmailBody);
@@ -37,7 +37,7 @@ export default function InquiryInvoiceEmailModal({ inquiry, isOpen, onClose, onS
                 bodyRef.current.innerHTML = previewData.defaultEmailBody.replace(/\n/g, '<br/>');
               }
             }
-            
+
             try {
               const byteCharacters = atob(previewData.pdfBase64);
               const byteNumbers = new Array(byteCharacters.length);
@@ -73,13 +73,13 @@ export default function InquiryInvoiceEmailModal({ inquiry, isOpen, onClose, onS
   const handleSend = async () => {
     setSendState('sending');
     if (!invoiceId) {
-       // If it hasn't loaded, just fallback
-       setTimeout(() => {
-         setSendState('success');
-         if (onStatusUpdate) onStatusUpdate(inquiry.id, 'INVOICE_SENT');
-         setTimeout(() => onClose(), 2500);
-       }, 2000);
-       return;
+      // If it hasn't loaded, just fallback
+      setTimeout(() => {
+        setSendState('success');
+        if (onStatusUpdate) onStatusUpdate(inquiry.id, 'INVOICE_SENT');
+        setTimeout(() => onClose(), 2500);
+      }, 2000);
+      return;
     }
 
     try {
@@ -117,7 +117,7 @@ export default function InquiryInvoiceEmailModal({ inquiry, isOpen, onClose, onS
             <p className="text-blue-400 text-sm font-bold tracking-wide uppercase bg-blue-500/10 px-4 py-2 rounded-lg">Status updated to Invoice Sent</p>
           </div>
 
-        /* ── PDF VIEWER PANEL ── */
+          /* ── PDF VIEWER PANEL ── */
         ) : showPdf ? (
           <div className="flex flex-col flex-1 h-full" style={{ minHeight: 0 }}>
             {/* PDF viewer header */}
@@ -174,7 +174,7 @@ export default function InquiryInvoiceEmailModal({ inquiry, isOpen, onClose, onS
             </div>
           </div>
 
-        /* ── EMAIL COMPOSE VIEW ── */
+          /* ── EMAIL COMPOSE VIEW ── */
         ) : (
           <>
             {/* Modal Header */}
@@ -206,9 +206,9 @@ export default function InquiryInvoiceEmailModal({ inquiry, isOpen, onClose, onS
                 <div className="flex items-center py-3 border-b border-gray-300">
                   <span className="w-20 text-gray-400 font-bold font-sans text-[12px] uppercase tracking-wider">Subject:</span>
                   {isEditing ? (
-                    <input 
-                      type="text" 
-                      value={subject} 
+                    <input
+                      type="text"
+                      value={subject}
                       onChange={e => setSubject(e.target.value)}
                       className="flex-1 border-b border-gray-200 focus:border-blue-500 outline-none px-1 py-1 font-bold text-gray-800"
                     />
@@ -225,7 +225,7 @@ export default function InquiryInvoiceEmailModal({ inquiry, isOpen, onClose, onS
                   suppressContentEditableWarning={true}
                 >
                   <p className="mb-5 font-medium">Dear {inquiry.client?.name},</p>
-                  
+
                   <p className="mb-5">
                     We hope this email finds you well. Following the successful delivery of your shipment, we are pleased to share the final tax invoice for your records.
                   </p>
@@ -251,7 +251,7 @@ export default function InquiryInvoiceEmailModal({ inquiry, isOpen, onClose, onS
 
                   {/* ── PDF Attachment Card ── */}
                   <div
-                    onClick={() => setShowPdf(true)}
+                    onClick={() => window.open(pdfUrl, '_blank')}
                     contentEditable={false}
                     className="my-8 p-4 bg-gray-50 border border-gray-200 rounded-xl flex items-center gap-4 group cursor-pointer hover:border-purple-400 hover:shadow-md hover:shadow-purple-500/10 transition-all select-none w-fit"
                   >

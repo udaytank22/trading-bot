@@ -1,3 +1,4 @@
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 import { useAuth, useUI, useData } from '@context';
 import { api } from '@services/api';
 import React, { useState, useMemo } from "react";
@@ -138,14 +139,14 @@ export default function DocumentsPage() {
       try {
         const res = await api.documents.deleteDocument(id);
         if (res.success) {
-          showToast("Document deleted successfully", "success");
+          showToast(TOAST_MESSAGES.DOCUMENTS.DELETED, "success");
           refreshAll();
         } else {
-          showToast(res.message || "Failed to delete document", "error");
+          showToast(res.message || TOAST_MESSAGES.DOCUMENTS.DELETE_ERROR, "error");
         }
       } catch (e) {
         console.error(e);
-        showToast("An error occurred while deleting document", "error");
+        showToast(TOAST_MESSAGES.DOCUMENTS.DELETE_SYSTEM_ERROR, "error");
       }
     }
   };
@@ -169,23 +170,23 @@ export default function DocumentsPage() {
       if (documentToEdit) {
         const res = await api.documents.updateDocument(documentToEdit.id, payload);
         if (res.success) {
-          showToast("Document updated successfully", "success");
+          showToast(TOAST_MESSAGES.DOCUMENTS.UPDATED, "success");
           refreshAll();
         } else {
-          showToast(res.message || "Failed to update document", "error");
+          showToast(res.message || TOAST_MESSAGES.DOCUMENTS.UPDATE_ERROR, "error");
         }
       } else {
         const res = await api.documents.createDocument(payload);
         if (res.success) {
-          showToast("Document added successfully", "success");
+          showToast(TOAST_MESSAGES.DOCUMENTS.ADDED, "success");
           refreshAll();
         } else {
-          showToast(res.message || "Failed to add document", "error");
+          showToast(res.message || TOAST_MESSAGES.DOCUMENTS.ADD_ERROR, "error");
         }
       }
     } catch (e) {
       console.error(e);
-      showToast("An error occurred while saving document", "error");
+      showToast(TOAST_MESSAGES.DOCUMENTS.SAVE_ERROR, "error");
     }
   };
 

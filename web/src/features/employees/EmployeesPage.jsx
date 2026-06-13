@@ -1,3 +1,4 @@
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 import { useAuth, useUI, useData } from '@context';
 import { api } from '@services/api';
 /**
@@ -94,23 +95,23 @@ export default function EmployeesPage() {
       if (employeeToEdit) {
         const res = await api.employees.updateEmployee(employeeToEdit.id, payload);
         if (res.success) {
-          showToast("Employee updated successfully", "success");
+          showToast(TOAST_MESSAGES.EMPLOYEES.UPDATED, "success");
           refresh();
         } else {
-          showToast(res.message || "Failed to update employee", "error");
+          showToast(res.message || TOAST_MESSAGES.EMPLOYEES.UPDATE_ERROR, "error");
         }
       } else {
         const res = await api.employees.createEmployee(payload);
         if (res.success) {
-          showToast("New employee registered", "success");
+          showToast(TOAST_MESSAGES.EMPLOYEES.REGISTERED, "success");
           refresh();
         } else {
-          showToast(res.message || "Failed to register employee", "error");
+          showToast(res.message || TOAST_MESSAGES.EMPLOYEES.REGISTER_ERROR, "error");
         }
       }
     } catch (e) {
       console.error(e);
-      showToast("An error occurred while saving employee details", "error");
+      showToast(TOAST_MESSAGES.EMPLOYEES.SAVE_ERROR, "error");
     }
     // Reset modal state after save
     setIsModalOpen(false);
@@ -129,14 +130,14 @@ export default function EmployeesPage() {
       try {
         const res = await api.employees.deleteEmployee(id);
         if (res.success) {
-          showToast("Employee record deleted", "success");
+          showToast(TOAST_MESSAGES.EMPLOYEES.DELETED, "success");
           refresh();
         } else {
-          showToast(res.message || "Failed to delete employee", "error");
+          showToast(res.message || TOAST_MESSAGES.EMPLOYEES.DELETE_ERROR, "error");
         }
       } catch (e) {
         console.error(e);
-        showToast("An error occurred while deleting employee", "error");
+        showToast(TOAST_MESSAGES.EMPLOYEES.DELETE_SYSTEM_ERROR, "error");
       }
     }
   };

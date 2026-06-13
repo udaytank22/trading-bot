@@ -1,3 +1,4 @@
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 import { useAuth, useUI, useData } from '@context';
 import { api } from '@services/api';
 /**
@@ -90,10 +91,10 @@ export default function AccountPage() {
       try {
         const res = await api.bankAccounts.deleteBankAccount(id);
         if (res.success) {
-          showToast("Account deleted successfully", "success");
+          showToast(TOAST_MESSAGES.ACCOUNTS.DELETED, "success");
           refreshAll();
         } else {
-          showToast(res.message || "Failed to delete bank account", "error");
+          showToast(res.message || TOAST_MESSAGES.ACCOUNTS.DELETE_ERROR, "error");
         }
       } catch (e) {
         console.error(e);

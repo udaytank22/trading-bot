@@ -1,3 +1,4 @@
+import { TOAST_MESSAGES } from '../../../constants/toastMessages';
 import React, { useState, useMemo } from 'react';
 import { DataTable, rowStripeClass, ROW_HOVER_CLS, Pagination, ExcelImportModal } from '@components/ui';
 import { confirmAction } from '@utils/swal';
@@ -72,10 +73,10 @@ export default function ProductsTab() {
       }
       setIsFormOpen(false);
       setEditItem(null);
-      showToast(editItem ? 'Product updated successfully!' : 'Product added successfully!', 'success');
+      showToast(editItem ? TOAST_MESSAGES.SETTINGS.PRODUCTS.UPDATED : TOAST_MESSAGES.SETTINGS.PRODUCTS.ADDED, 'success');
     } catch (e) {
       console.error('Failed to save product:', e);
-      showToast(e.response?.data?.message || 'Failed to save product', 'error');
+      showToast(e.response?.data?.message || TOAST_MESSAGES.SETTINGS.PRODUCTS.SAVE_ERROR, 'error');
     }
   };
 
@@ -146,7 +147,7 @@ export default function ProductsTab() {
     }
 
     refreshAll();
-    showToast(`Successfully processed ${successCount} rows. ${failCount} failed.`, failCount > 0 ? 'info' : 'success');
+    showToast(TOAST_MESSAGES.SETTINGS.IMPORT.PARTIAL(successCount, failCount), failCount > 0 ? 'info' : 'success');
   };
 
   return (

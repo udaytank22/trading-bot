@@ -1,3 +1,4 @@
+import { TOAST_MESSAGES } from '../../../constants/toastMessages';
 import React, { useState, useEffect } from 'react';
 import { mockSettings } from '@data/mockSettings';
 import { refreshConfig } from '@/config.js';
@@ -40,10 +41,10 @@ export default function GeneralSettingsTab() {
   const handleSave = async () => {
     const margin = Number(formData.default_margin_percent);
     if (isNaN(margin) || margin < 1 || margin > 100) {
-      showToast('Margin must be between 1 and 100.', 'error'); return;
+      showToast(TOAST_MESSAGES.SETTINGS.GENERAL.MARGIN_ERROR, 'error'); return;
     }
     if (!EMAIL_REGEX.test(formData.business_email) || !EMAIL_REGEX.test(formData.seller_email)) {
-      showToast('Please enter a valid email address.', 'error'); return;
+      showToast(TOAST_MESSAGES.COMMON.INVALID_EMAIL, 'error'); return;
     }
     localStorage.setItem('settings', JSON.stringify({
       businessName: formData.business_name,
@@ -53,7 +54,7 @@ export default function GeneralSettingsTab() {
       defaultMargin: formData.default_margin_percent,
     }));
     await refreshConfig();
-    showToast('Settings saved!', 'success');
+    showToast(TOAST_MESSAGES.SETTINGS.GENERAL.SAVED, 'success');
   };
 
   const handleReset = async () => {
@@ -67,7 +68,7 @@ export default function GeneralSettingsTab() {
     localStorage.removeItem('settings');
     setFormData(DEFAULT_FORM);
     await refreshConfig();
-    showToast('Settings reset to defaults', 'success');
+    showToast(TOAST_MESSAGES.SETTINGS.GENERAL.RESET, 'success');
   };
 
   return (

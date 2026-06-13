@@ -322,6 +322,7 @@ const generateInvoiceFromShipment = async (shipmentId, creatorId) => {
     const invoiceData = {
       clientId: shipment.clientId,
       shipmentId: shipment.id,
+      inquiryId: shipment.purchaseOrder?.inquiryId || shipment.inquiryId,
       subtotal,
       tax,
       total,
@@ -379,7 +380,13 @@ const generateInvoiceFromInquiry = async (inquiryId, creatorId) => {
     include: {
       client: true,
       clientQuotations: {
-        include: { items: true }
+        include: { 
+          items: {
+            include: {
+              inquiryItem: true
+            }
+          } 
+        }
       }
     }
   });
@@ -397,7 +404,7 @@ const generateInvoiceFromInquiry = async (inquiryId, creatorId) => {
     const total = parseFloat(qItem.totalPrice);
     subtotal += total;
     return {
-      description: `Product from Inquiry ${inquiry.inquiryNumber}`, // Usually we'd map to actual product name but let's keep it simple or fetch item details if needed.
+      description: qItem.inquiryItem?.description || `Product from Inquiry ${inquiry.inquiryNumber}`,
       quantity: qItem.quantity,
       unitPrice: qItem.sellingPrice,
       totalPrice: qItem.totalPrice
@@ -409,7 +416,7 @@ const generateInvoiceFromInquiry = async (inquiryId, creatorId) => {
 
   // 3. Create or fetch invoice in DB
   let invoice = await prisma.invoice.findFirst({
-    where: { inquiryId: inquiry.id },
+    where: { inquiryId: inquiry.id, shipmentId: null },
     include: { items: true, client: true }
   });
 
@@ -424,6 +431,9 @@ const generateInvoiceFromInquiry = async (inquiryId, creatorId) => {
       items
     };
     invoice = await createInvoice(invoiceData, creatorId);
+  } else if (invoice.status === 'DRAFT') {
+    // Update the draft invoice with the latest items to ensure it matches the quotation
+    invoice = await updateInvoice(invoice.id, { subtotal, tax, total, items }, creatorId);
   }
 
   // 4. Generate PDF

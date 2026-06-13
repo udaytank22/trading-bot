@@ -23,7 +23,8 @@ export default function InvoicesPage() {
         handlePageSizeChange,
         refresh
     } = usePaginatedFetch(api.inquiries.getInquiries, 1, 10, {
-        search
+        search,
+        statuses: 'CHALLAN_RECEIVED,CLOSED'
     });
 
     const mappedInvoices = useMemo(() => {
@@ -131,9 +132,18 @@ export default function InvoicesPage() {
                             <td className="px-4 py-3">{inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleString('en-GB') : '-'}</td>
                             <td className="px-4 py-3">
                                 {inv.isGrouped ? (
-                                    <span className="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-700 text-xs font-bold uppercase tracking-wide">
-                                        {inv.invoices.length} {inv.invoices.length === 1 ? 'Invoice' : 'Invoices'}
-                                    </span>
+                                    inv.invoices.every(i => i.status === 'PAID') ? (
+                                        <div className="flex items-center gap-2">
+                                            <StatusBadge status="PAID" />
+                                            <span className="text-xs text-gray-500 font-medium">
+                                                ({inv.invoices.length} Invoices)
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <span className="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-700 text-xs font-bold uppercase tracking-wide">
+                                            {inv.invoices.length} {inv.invoices.length === 1 ? 'Invoice' : 'Invoices'}
+                                        </span>
+                                    )
                                 ) : (
                                     <span className="px-3 py-1.5 rounded-lg bg-orange-500/10 text-orange-700 text-xs font-bold uppercase tracking-wide">
                                         Pending Invoice

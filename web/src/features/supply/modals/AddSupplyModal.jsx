@@ -83,7 +83,7 @@ export default function AddSupplyModal({ isOpen, onClose, onSubmit }) {
         }));
 
         Swal.fire({
-          toast: true, position: 'top-end', icon: 'success',
+           icon: 'success',
           title: "Data Imported",
           text: "Supply details filled from Excel",
           toast: true,

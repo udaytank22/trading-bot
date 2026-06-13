@@ -1,3 +1,4 @@
+import { TOAST_MESSAGES } from '../../constants/toastMessages';
 import { useAuth } from '@context';
 /**
  * @file InquiriesPage.jsx
@@ -119,7 +120,7 @@ export default function InquiriesPage() {
       const client = clientsRes.data?.find(c => c.id === Number(newInquiry.customer) || c.name === newInquiry.customer);
       const clientId = client ? client.id : clientsRes.data?.[0]?.id;
       if (!clientId) {
-        showToast("Please create a client in settings first.", "error");
+        showToast(TOAST_MESSAGES.INQUIRIES.REQUIRE_CLIENT, "error");
         return;
       }
 
@@ -146,11 +147,11 @@ export default function InquiriesPage() {
 
       if (res.success) {
         loadData(true);
-        showToast("New inquiry created successfully", "success");
+        showToast(TOAST_MESSAGES.INQUIRIES.CREATED, "success");
       }
     } catch (err) {
       console.error(err);
-      showToast("Failed to create inquiry", "error");
+      showToast(TOAST_MESSAGES.INQUIRIES.CREATE_ERROR, "error");
     }
   };
 
