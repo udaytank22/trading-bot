@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export function usePaginatedFetch(fetchFunction, initialPage = 1, initialPageSize = 10, additionalParams = {}) {
   const [data, setData] = useState([]);
@@ -34,9 +34,18 @@ export function usePaginatedFetch(fetchFunction, initialPage = 1, initialPageSiz
     }
   }, [fetchFunction, additionalParams, meta.currentPage, meta.pageSize]);
 
+  const paramsString = JSON.stringify(additionalParams);
+  const isMounted = useRef(false);
+
   useEffect(() => {
-    fetchData(initialPage, initialPageSize);
-  }, []); // Run once on mount, then driven by UI interactions
+    if (isMounted.current) {
+      setMeta(prev => ({ ...prev, currentPage: 1 }));
+      fetchData(1, meta.pageSize);
+    } else {
+      isMounted.current = true;
+      fetchData(initialPage, initialPageSize);
+    }
+  }, [paramsString, fetchFunction]);
 
   const handlePageChange = (newPage) => {
     setMeta(prev => ({ ...prev, currentPage: newPage }));
