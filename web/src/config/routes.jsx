@@ -23,6 +23,7 @@ const ClientRFQsPage = React.lazy(() => import('@features/client-portal/ClientRF
 const InquiryDetailsPage = React.lazy(() => import('@features/inquiries/InquiryDetailsPage'));
 const PODetailsPage = React.lazy(() => import('@features/purchase-orders/PODetailsPage'));
 const SupplyDetailsPage = React.lazy(() => import('@features/supply/SupplyDetailsPage'));
+const ReportsPage = React.lazy(() => import('@features/reports/ReportsPage'));
 
 /** Public routes (no auth required) */
 export const PUBLIC_ROUTES = [
@@ -51,4 +52,5 @@ export const PROTECTED_ROUTES = [
   { path: '/inbox', element: <InboxPage /> },
   { path: '/settings', element: <SettingsPage /> },
   { path: '/profile', element: <ProfilePage /> },
+  { path: '/reports', element: <ReportsPage /> },
 ];

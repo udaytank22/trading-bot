@@ -1,7 +1,8 @@
 import { InventoryPageSchema1 } from '@config/tableSchemas';
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { confirmAction } from '@utils/swal';
 import { PageToolbar, Select, DataTable, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
+import { fetchInventory, createInventoryItem, updateInventoryItem, deleteInventoryItem, moveStock } from '../../api/inventory';
 
 const inputCls =
   "w-full bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-[36px] px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-all shadow-sm focus:ring-1 focus:ring-purple-500/50";
@@ -62,10 +63,23 @@ function RightDrawer({ isOpen, title, onClose, children }) {
 }
 
 function ViewDetails({ item, onClose }) {
+  const details = {
+    "SKU": item.sku,
+    "Item Name": item.itemName,
+    "Category": item.category || 'N/A',
+    "Unit": item.unit || 'N/A',
+    "Selling Price": `$${parseFloat(item.sellingPrice).toFixed(2)}`,
+    "Purchase Price": `$${parseFloat(item.purchasePrice).toFixed(2)}`,
+    "Min Stock Level": item.minimumStockLevel,
+    "Status": item.status,
+    "Total Quantity": item.stocks?.reduce((acc, st) => acc + st.quantity, 0) || 0,
+    "Warehouse Locations": item.stocks?.map(s => `${s.warehouse?.name} (${s.quantity})`).join(', ') || 'None'
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 flex flex-col gap-4">
-        {Object.entries(item).map(([key, value]) => (
+        {Object.entries(details).map(([key, value]) => (
           <div
             key={key}
             className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 border-b border-gray-50 dark:border-[#2a2d33]/50 pb-3 last:border-0 last:pb-0"
@@ -86,14 +100,29 @@ function ViewDetails({ item, onClose }) {
 function InventoryForm({ initialData, onSave, onClose }) {
   const [formData, setFormData] = useState(
     initialData || {
-      name: "",
+      itemName: "",
+      sku: "",
       category: "",
-      quantity: "",
-      price: "",
-      location: "",
-      status: "In Stock",
+      unit: "pcs",
+      quantity: "", // Only used for creation initial stock
+      warehouseId: "1001", // Default Port Warehouse Alpha
+      sellingPrice: "",
+      purchasePrice: "",
+      minimumStockLevel: "5",
+      status: "ACTIVE",
     },
   );
+
+  useEffect(() => {
+    if (initialData) {
+      const totalQty = initialData.stocks?.reduce((acc, st) => acc + st.quantity, 0) || 0;
+      setFormData(prev => ({
+        ...prev,
+        quantity: totalQty,
+        warehouseId: initialData.stocks?.[0]?.warehouseId || "1001"
+      }));
+    }
+  }, [initialData]);
 
   const set = (key) => (e) =>
     setFormData((prev) => ({
@@ -108,9 +137,19 @@ function InventoryForm({ initialData, onSave, onClose }) {
           <input
             type="text"
             className={inputCls}
-            value={formData.name}
-            onChange={set("name")}
+            value={formData.itemName}
+            onChange={set("itemName")}
             placeholder="e.g. Copper Wire"
+          />
+        </Field>
+
+        <Field label="SKU">
+          <input
+            type="text"
+            className={inputCls}
+            value={formData.sku}
+            onChange={set("sku")}
+            placeholder="e.g. CW-001"
           />
         </Field>
 
@@ -124,33 +163,45 @@ function InventoryForm({ initialData, onSave, onClose }) {
           />
         </Field>
 
-        <Field label="Quantity">
+        <Field label="Unit">
+          <input
+            type="text"
+            className={inputCls}
+            value={formData.unit}
+            onChange={set("unit")}
+            placeholder="e.g. kg, pcs, liters"
+          />
+        </Field>
+
+        <Field label="Selling Price">
+          <input
+            type="number"
+            step="0.01"
+            className={inputCls}
+            value={formData.sellingPrice}
+            onChange={set("sellingPrice")}
+            placeholder="e.g. 45.00"
+          />
+        </Field>
+
+        <Field label="Purchase Price">
+          <input
+            type="number"
+            step="0.01"
+            className={inputCls}
+            value={formData.purchasePrice}
+            onChange={set("purchasePrice")}
+            placeholder="e.g. 30.00"
+          />
+        </Field>
+
+        <Field label="Min Stock Level">
           <input
             type="number"
             className={inputCls}
-            value={formData.quantity}
-            onChange={set("quantity")}
-            placeholder="e.g. 150"
-          />
-        </Field>
-
-        <Field label="Unit Price">
-          <input
-            type="text"
-            className={inputCls}
-            value={formData.price}
-            onChange={set("price")}
-            placeholder="e.g. $45.00"
-          />
-        </Field>
-
-        <Field label="Location / Warehouse">
-          <input
-            type="text"
-            className={inputCls}
-            value={formData.location}
-            onChange={set("location")}
-            placeholder="e.g. Warehouse A"
+            value={formData.minimumStockLevel}
+            onChange={set("minimumStockLevel")}
+            placeholder="e.g. 10"
           />
         </Field>
 
@@ -166,9 +217,36 @@ function InventoryForm({ initialData, onSave, onClose }) {
               }))
             }
             options={[
-              { value: "In Stock", label: "In Stock" },
-              { value: "Low Stock", label: "Low Stock" },
-              { value: "Out of Stock", label: "Out of Stock" },
+              { value: "ACTIVE", label: "Active" },
+              { value: "INACTIVE", label: "Inactive" },
+            ]}
+          />
+        </Field>
+
+        <Field label="Quantity">
+          <input
+            type="number"
+            className={inputCls}
+            value={formData.quantity}
+            onChange={set("quantity")}
+            placeholder="e.g. 150"
+          />
+        </Field>
+
+        <Field label="Location / Warehouse">
+          <Select
+            variant="settings"
+            className={inputCls}
+            value={formData.warehouseId}
+            onChange={(val) =>
+              setFormData((prev) => ({
+                ...prev,
+                warehouseId: val,
+              }))
+            }
+            options={[
+              { value: "1001", label: "Port Warehouse Alpha" },
+              { value: "1002", label: "Port Warehouse Beta" },
             ]}
           />
         </Field>
@@ -247,44 +325,24 @@ const TrashIcon = () => (
 
 export default function InventoryPage() {
   const [search, setSearch] = useState("");
-  const [inventory, setInventory] = useState([
-    {
-      id: "INV-1001",
-      name: "Industrial Motor",
-      category: "Machinery",
-      quantity: 45,
-      price: "$1,200.00",
-      location: "Warehouse A",
-      status: "In Stock",
-    },
-    {
-      id: "INV-1002",
-      name: "Steel Bearings",
-      category: "Parts",
-      quantity: 12,
-      price: "$45.00",
-      location: "Warehouse B",
-      status: "Low Stock",
-    },
-    {
-      id: "INV-1003",
-      name: "Circuit Boards",
-      category: "Electronics",
-      quantity: 0,
-      price: "$150.00",
-      location: "Warehouse A",
-      status: "Out of Stock",
-    },
-    {
-      id: "INV-1004",
-      name: "Hydraulic Fluid",
-      category: "Consumables",
-      quantity: 200,
-      price: "$85.00",
-      location: "Warehouse C",
-      status: "In Stock",
-    },
-  ]);
+  const [inventory, setInventory] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadInventory();
+  }, []);
+
+  const loadInventory = async () => {
+    try {
+      setLoading(true);
+      const res = await fetchInventory();
+      setInventory(res.data || res);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const [viewItem, setViewItem] = useState(null);
   const [editItem, setEditItem] = useState(null);
@@ -297,7 +355,13 @@ export default function InventoryPage() {
       confirmButtonText: "Yes, delete it!",
     });
     if (isConfirmed) {
-      setInventory(inventory.filter((item) => item.id !== id));
+      try {
+        await deleteInventoryItem(id);
+        setInventory(inventory.filter((item) => item.id !== id));
+      } catch (error) {
+        console.error(error);
+        alert('Failed to delete item.');
+      }
     }
   };
 
@@ -306,30 +370,53 @@ export default function InventoryPage() {
     if (!query) return inventory;
     return inventory.filter(
       (item) =>
-        item.id.toLowerCase().includes(query) ||
-        item.name.toLowerCase().includes(query) ||
-        item.category.toLowerCase().includes(query) ||
-        item.location.toLowerCase().includes(query) ||
-        item.price.toLowerCase().includes(query) ||
-        item.status.toLowerCase().includes(query),
+        (item.sku && item.sku.toLowerCase().includes(query)) ||
+        (item.itemName && item.itemName.toLowerCase().includes(query)) ||
+        (item.category && item.category.toLowerCase().includes(query)) ||
+        (item.status && item.status.toLowerCase().includes(query)),
     );
   }, [inventory, search]);
 
-  const handleSave = (formData) => {
-    if (editItem) {
-      setInventory(
-        inventory.map((item) =>
-          item.id === editItem.id ? { ...item, ...formData } : item,
-        ),
-      );
-    } else {
-      setInventory([
-        ...inventory,
-        { id: `INV-${1000 + inventory.length + 1}`, ...formData },
-      ]);
+  const handleSave = async (formData) => {
+    try {
+      if (editItem) {
+        await updateInventoryItem(editItem.id, formData);
+
+        // Update quantity to the new absolute value
+        const currentQty = editItem.stocks?.reduce((acc, st) => acc + st.quantity, 0) || 0;
+        const newQty = parseInt(formData.quantity, 10);
+        if (!isNaN(newQty) && newQty !== currentQty) {
+          const difference = newQty - currentQty;
+          await moveStock({
+            inventoryItemId: editItem.id,
+            warehouseId: parseInt(formData.warehouseId, 10) || 1001,
+            type: difference > 0 ? 'IN' : 'OUT',
+            quantity: Math.abs(difference),
+            remarks: 'Absolute Stock Update from Edit Form'
+          });
+        }
+      } else {
+        const newItemRes = await createInventoryItem(formData);
+        const newItem = newItemRes.data || newItemRes;
+        
+        // If quantity is provided, add an initial stock movement
+        if (formData.quantity && parseInt(formData.quantity) > 0) {
+          await moveStock({
+            inventoryItemId: newItem.id,
+            warehouseId: parseInt(formData.warehouseId),
+            type: 'IN',
+            quantity: parseInt(formData.quantity),
+            remarks: 'Initial Stock'
+          });
+        }
+      }
+      await loadInventory();
+      setIsFormOpen(false);
+      setEditItem(null);
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || 'Error saving inventory item');
     }
-    setIsFormOpen(false);
-    setEditItem(null);
   };
 
   return (
@@ -364,7 +451,7 @@ export default function InventoryPage() {
         <PageToolbar
           search={search}
           onSearchChange={setSearch}
-          searchPlaceholder="Search inventory..."
+          searchPlaceholder="Search inventory by SKU, Name, Category..."
           onAdd={() => setIsFormOpen(true)}
           addLabel="Add Item"
         />
@@ -373,68 +460,77 @@ export default function InventoryPage() {
           <DataTable
             columns={InventoryPageSchema1}
             data={filteredInventory}
-            emptyMessage="No inventory items found."
-            renderRow={(item, idx) => (
-              <tr
-                key={item.id}
-                className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}
-              >
-                <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + idx + 1}</td>
-                        <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400">
-                  {item.id}
-                </td>
-                <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">
-                  {item.name}
-                </td>
-                <td className="px-5 py-3">
-                  <span className="px-2 py-1 bg-gray-100 dark:bg-[#2a2d36] rounded text-[11px] font-bold text-gray-600 dark:text-gray-400">
-                    {item.category}
-                  </span>
-                </td>
-                <td className="px-5 py-3">{item.location}</td>
-                <td className="px-5 py-3">{item.quantity}</td>
-                <td className="px-5 py-3">{item.price}</td>
-                <td className="px-5 py-3">
-                  <span
-                    className={`px-2 py-1 rounded text-[11px] font-bold ${
-                      item.status === "In Stock"
-                        ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-                        : item.status === "Low Stock"
-                          ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
-                          : "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-                    }`}
-                  >
-                    {item.status}
-                  </span>
-                </td>
-                <td className="px-5 py-3 text-right space-x-3">
-                  <button
-                    onClick={() => setViewItem(item)}
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-                    title="View"
-                  >
-                    <EyeIcon />
-                  </button>
-                  <button
-                    onClick={() => {
-                      setEditItem(item);
-                      setIsFormOpen(true);
-                    }}
-                    className="text-blue-500 hover:text-blue-600 transition-colors"
-                    title="Edit"
-                  >
-                    <EditIcon />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    className="text-red-500 hover:text-red-600 transition-colors"
-                    title="Delete"
-                  >
-                    <TrashIcon />
-                  </button>
-                </td>
-              </tr>
-            )}
+            emptyMessage={loading ? "Loading..." : "No inventory items found."}
+            renderRow={(item, idx) => {
+              const totalQty = item.stocks?.reduce((acc, st) => acc + st.quantity, 0) || 0;
+              const isLowStock = totalQty < item.minimumStockLevel;
+              let statusLabel = 'In Stock';
+              let statusColor = 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400';
+              
+              if (totalQty === 0) {
+                statusLabel = 'Out of Stock';
+                statusColor = 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400';
+              } else if (isLowStock) {
+                statusLabel = 'Low Stock';
+                statusColor = 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400';
+              }
+
+              return (
+                <tr
+                  key={item.id}
+                  className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}
+                >
+                  <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + idx + 1}</td>
+                  <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400">
+                    {item.sku}
+                  </td>
+                  <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">
+                    {item.itemName}
+                  </td>
+                  <td className="px-5 py-3">
+                    <span className="px-2 py-1 bg-gray-100 dark:bg-[#2a2d36] rounded text-[11px] font-bold text-gray-600 dark:text-gray-400">
+                      {item.category || '-'}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3">
+                    {item.stocks?.[0]?.warehouse?.name || 'Main Warehouse'}
+                  </td>
+                  <td className="px-5 py-3">{totalQty}</td>
+                  <td className="px-5 py-3">${parseFloat(item.sellingPrice).toFixed(2)}</td>
+                  <td className="px-5 py-3">
+                    <span className={`px-2 py-1 rounded text-[11px] font-bold ${statusColor}`}>
+                      {statusLabel}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3 text-right space-x-3">
+                    <button
+                      onClick={() => setViewItem(item)}
+                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                      title="View"
+                    >
+                      <EyeIcon />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditItem(item);
+                        setIsFormOpen(true);
+                      }}
+                      className="text-blue-500 hover:text-blue-600 transition-colors"
+                      title="Edit"
+                    >
+                      <EditIcon />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      className="text-red-500 hover:text-red-600 transition-colors"
+                      title="Delete"
+                    >
+                      <TrashIcon />
+                    </button>
+                  </td>
+                </tr>
+              );
+            }}
           />
         </div>
       </div>

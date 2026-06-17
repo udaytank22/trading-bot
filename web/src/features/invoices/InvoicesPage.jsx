@@ -24,7 +24,7 @@ export default function InvoicesPage() {
         refresh
     } = usePaginatedFetch(api.inquiries.getInquiries, 1, 10, {
         search,
-        statuses: 'CHALLAN_RECEIVED,CLOSED'
+        statuses: 'DELIVERED_TO_VESSEL,CHALLAN_RECEIVED,CLOSED'
     });
 
     const mappedInvoices = useMemo(() => {

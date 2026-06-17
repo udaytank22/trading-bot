@@ -110,7 +110,9 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
           </svg>
-          Verify & Send {stagedRFQs.length} RFQ Emails
+          {stagedRFQs.filter(r => !String(r.supplierId).startsWith('INTERNAL_INV_')).length > 0 
+            ? `Verify & Send ${stagedRFQs.filter(r => !String(r.supplierId).startsWith('INTERNAL_INV_')).length} RFQ Emails` 
+            : `Confirm Assignments`}
         </button>
       </div>
     </div>

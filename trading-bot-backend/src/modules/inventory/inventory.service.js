@@ -22,7 +22,7 @@ const getAllInventoryItems = async () => {
  */
 const getInventoryItemById = async (id) => {
   return await prisma.inventoryItem.findFirst({
-    where: { id, deletedAt: null },
+    where: { id: parseInt(id, 10), deletedAt: null },
     include: {
       stocks: {
         include: {
@@ -76,10 +76,11 @@ const createInventoryItem = async (data, creatorId) => {
  * Update inventory item catalog details
  */
 const updateInventoryItem = async (id, data, updaterId) => {
+  const itemId = parseInt(id, 10);
   // Check for duplicate inventory item (by sku or itemName) excluding the current item
   const existingItem = await prisma.inventoryItem.findFirst({
     where: {
-      id: { not: id },
+      id: { not: itemId },
       OR: [
         { sku: data.sku },
         { itemName: data.itemName }
@@ -95,7 +96,7 @@ const updateInventoryItem = async (id, data, updaterId) => {
   }
 
   return await prisma.inventoryItem.update({
-    where: { id },
+    where: { id: itemId },
     data: {
       itemName: data.itemName,
       sku: data.sku,
@@ -115,7 +116,7 @@ const updateInventoryItem = async (id, data, updaterId) => {
  */
 const deleteInventoryItem = async (id, updaterId) => {
   return await prisma.inventoryItem.update({
-    where: { id },
+    where: { id: parseInt(id, 10) },
     data: {
       deletedAt: new Date(),
       status: 'INACTIVE',

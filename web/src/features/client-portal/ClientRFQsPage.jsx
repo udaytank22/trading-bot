@@ -134,7 +134,7 @@ export default function ClientRFQsPage() {
   const activeOrders = useMemo(() => {
     if (!selectedSupplierId) return [];
     const validStatuses = [
-      "ORDER_PLACED", "ORDERED", "VEHICLE_ALLOTTED", "LOADING", "DISPATCHED", "IN_TRANSIT",
+      "PENDING", "ORDER_PLACED", "ORDERED", "VEHICLE_ALLOTTED", "LOADING", "DISPATCHED", "IN_TRANSIT",
       "OUT_FOR_DELIVERY", "DELIVERED", "DELIVERED_TO_VESSEL", "DELIVERED TO VESSEL", "CHALLAN_RECEIVED"
     ];
     return shipments.filter(
@@ -665,8 +665,8 @@ export default function ClientRFQsPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <StatusBadge status={getSupplierDisplayStatus(selectedOrder.currentStatus)} />
-            {selectedOrder.currentStatus === "ORDER_PLACED" && (
+            <StatusBadge status={selectedOrder.currentStatus === 'PENDING' ? 'CONFIRMED' : getSupplierDisplayStatus(selectedOrder.currentStatus)} />
+            {(selectedOrder.currentStatus === "ORDER_PLACED" || selectedOrder.currentStatus === "PENDING") && (
               <button
                 onClick={handleDispatchOrder}
                 className="px-4 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-purple-600 hover:bg-purple-550 text-white shadow-purple-600/10"
@@ -1052,7 +1052,7 @@ export default function ClientRFQsPage() {
                         }) : "—"}
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        <StatusBadge status={getSupplierDisplayStatus(ship.currentStatus)} />
+                        <StatusBadge status={ship.currentStatus === 'PENDING' ? 'CONFIRMED' : getSupplierDisplayStatus(ship.currentStatus)} />
                       </td>
                       <td className="px-6 py-4 text-right flex justify-end gap-2">
                         {(ship.currentStatus === "DISPATCHED" || ship.currentStatus === "DELIVERED" || ship.currentStatus === "DELIVERED_TO_VESSEL" || ship.currentStatus === "DELIVERED TO VESSEL" || ship.currentStatus === "CHALLAN_RECEIVED") && (

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect, useLayoutEffect } from "react";
 import { useData } from '@context';
 import { DataTable, rowStripeClass, ROW_HOVER_CLS, MultiSelectDropdown } from '@components/ui';
+import { fetchInventory } from '../../../api/inventory';
 
 const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
   const { suppliersData, productsData } = useData();
@@ -12,6 +13,12 @@ const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
     return prod ? prod.category : 'General';
   };
 
+  const [inventoryData, setInventoryData] = useState([]);
+
+  useEffect(() => {
+    fetchInventory().then(res => setInventoryData(res.data || res)).catch(console.error);
+  }, []);
+
   const productsAvailability = useMemo(() => {
     if (!deal || !deal.products) return [];
 
@@ -20,12 +27,32 @@ const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
       const availableSuppliers = suppliersData.filter(s =>
         (s.categories || []).some(cat => cat.toLowerCase() === (productCategory || "").toLowerCase())
       );
+
+      // Check if product is in internal inventory
+      const inventoryMatch = inventoryData.find(inv => 
+        inv.itemName.toLowerCase() === product.product_name.toLowerCase() ||
+        (inv.sku && product.product_name.toLowerCase().includes(inv.sku.toLowerCase()))
+      );
+
+      let inventoryStock = 0;
+      if (inventoryMatch) {
+        inventoryStock = inventoryMatch.stocks?.reduce((acc, st) => acc + st.quantity, 0) || 0;
+        if (inventoryStock > 0) {
+          availableSuppliers.unshift({
+            id: 'INTERNAL_INV_' + inventoryMatch.id,
+            name: `🌟 Internal Inventory (${inventoryStock} in stock)`,
+            location: 'Local Warehouse'
+          });
+        }
+      }
+
       return {
         ...product,
+        inventoryStock,
         availableSuppliers
       };
     });
-  }, [deal, suppliersData, productsData]);
+  }, [deal, suppliersData, productsData, inventoryData]);
 
   if (!isOpen) return null;
 
@@ -43,8 +70,21 @@ const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
   }, [selections]);
 
   const handleConfirm = () => {
-    const selectedSupplierObjects = suppliersData.filter(s => uniqueSelectedSupplierIds.includes(s.id));
-    onConfirm(selectedSupplierObjects);
+    const realSuppliers = suppliersData.filter(s => uniqueSelectedSupplierIds.includes(s.id));
+    const internalInvIds = uniqueSelectedSupplierIds.filter(id => typeof id === 'string' && String(id).startsWith('INTERNAL_INV_'));
+    
+    // Reconstruct a pseudo-supplier object for the internal inventory so the next step can read its categories
+    const internalInvSuppliers = internalInvIds.map(id => {
+      const assignedProductIndices = Object.keys(selections).filter(idx => selections[idx].includes(id));
+      const categories = assignedProductIndices.map(idx => getProductCategory(deal.products[idx].product_name));
+      return {
+        id,
+        name: 'Internal Inventory',
+        categories: [...new Set(categories)]
+      };
+    });
+
+    onConfirm([...realSuppliers, ...internalInvSuppliers]);
   };
 
   const handleAutoSelectAll = () => {
@@ -78,6 +118,11 @@ const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
         </td>
         <td className="px-4 py-3">
           <p className="text-sm font-bold text-gray-900 dark:text-white">{product.product_name}</p>
+          {product.inventoryStock > 0 && (
+            <span className="inline-flex mt-1 items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wide bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
+              ✅ Available in Inventory: {product.inventoryStock}
+            </span>
+          )}
         </td>
         <td className="px-4 py-3 text-sm font-mono font-medium text-gray-800 dark:text-gray-200">
           {product.quantity}

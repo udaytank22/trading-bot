@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { formatINR } from '@services/marginEngine';
 
-const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
+const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode, inventoryData = [] }) => {
   const [margin, setMargin] = useState("");
   const [discount, setDiscount] = useState("");
   const [productSearch, setProductSearch] = useState("");
@@ -16,7 +16,8 @@ const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => 
   if (!isOpen || !deal) return null;
 
   const quote = deal.my_quote;
-  const products = quote?.products && quote.products.length > 0
+  // Base products from supplier quotes
+  const supplierProducts = quote?.products && quote.products.length > 0
     ? quote.products
     : (deal.seller_quote?.products || []).map((sqp, idx) => {
       const dp = deal.products?.[idx] || {};
@@ -30,6 +31,35 @@ const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => 
         total_price: (sqp.seller_unit_price || 0) * (dp.quantity || sqp.moq || 1)
       };
     });
+
+  // Merge in inventory-sourced products
+  const supplierProductNames = new Set(supplierProducts.map(p => p.product_name.toLowerCase()));
+  const inventoryProducts = (deal.products || []).reduce((acc, p) => {
+    if (supplierProductNames.has(p.product_name.toLowerCase())) return acc;
+    const invMatch = inventoryData.find(inv =>
+      inv.itemName.toLowerCase() === p.product_name.toLowerCase() ||
+      (inv.sku && p.product_name.toLowerCase().includes(inv.sku.toLowerCase()))
+    );
+    const invStock = invMatch ? (invMatch.stocks?.reduce((s, st) => s + st.quantity, 0) || 0) : 0;
+    if (invMatch && invStock > 0) {
+      const costPrice = parseFloat(invMatch.purchasePrice) || 0;
+      const sellPrice = parseFloat(invMatch.sellingPrice) || 0;
+      const qty = p.quantity || 1;
+      acc.push({
+        product_name: p.product_name,
+        supplier_name: 'Internal Inventory',
+        quantity: qty,
+        unit: p.unit || invMatch.unit || 'pcs',
+        seller_unit_price: costPrice,
+        my_unit_price: sellPrice,
+        total_price: sellPrice * qty,
+        _fromInventory: true,
+      });
+    }
+    return acc;
+  }, []);
+
+  const products = [...supplierProducts, ...inventoryProducts];
 
   const marginVal = parseFloat(margin) || 0;
   const discountVal = parseFloat(discount) || 0;
@@ -80,8 +110,8 @@ const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => 
     'bg-orange-500/10 text-orange-600 dark:text-orange-400',
     'bg-rose-500/10 text-rose-600 dark:text-rose-400',
   ];
-  const supplierColorMap = {};
-  suppliers.forEach((s, i) => {
+  const supplierColorMap = { 'Internal Inventory': 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' };
+  suppliers.filter(s => s.name !== 'Internal Inventory').forEach((s, i) => {
     supplierColorMap[s.name] = supplierColors[i % supplierColors.length];
   });
 

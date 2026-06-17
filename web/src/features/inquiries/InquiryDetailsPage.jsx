@@ -8,6 +8,7 @@ import { calculateMargin, formatINR } from '@services/marginEngine';
 import { CONFIG } from '@/config.js';
 import { StatusBadge, DataTable, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
 import Swal from 'sweetalert2';
+import { fetchInventory } from '../../api/inventory';
 
 // Import action step views
 import StockCheckModal from './modals/StockCheckModal';
@@ -35,10 +36,15 @@ export default function InquiryDetailsPage() {
   const [pendingRFQs, setPendingRFQs] = useState([]);
   const [isMultiEmailModalOpen, setIsMultiEmailModalOpen] = useState(false);
   const [expandedQuotes, setExpandedQuotes] = useState({});
-  // pendingSelections: { [inquiryItemId]: { quoteItemId, supplierName, quoteId } }
   const [pendingSelections, setPendingSelections] = useState({});
   const [isConfirmingSource, setIsConfirmingSource] = useState(false);
   const [isEmailPreviewModalOpen, setIsEmailPreviewModalOpen] = useState(false);
+
+  const [inventoryData, setInventoryData] = useState([]);
+
+  useEffect(() => {
+    fetchInventory().then(res => setInventoryData(res.data || res)).catch(console.error);
+  }, []);
 
   const toggleQuoteExpand = (quoteId) => {
     setExpandedQuotes(prev => ({ ...prev, [quoteId]: !prev[quoteId] }));
@@ -115,7 +121,10 @@ export default function InquiryDetailsPage() {
     );
     if (!confirmed) return;
     try {
-      const supplierIds = selectedSuppliers.map(s => s.id);
+      // Filter out internal inventory pseudo-IDs (e.g. 'INTERNAL_INV_1003') — they are not real DB supplier records
+      const supplierIds = selectedSuppliers
+        .map(s => s.id)
+        .filter(id => typeof id === 'number' || (typeof id === 'string' && !String(id).startsWith('INTERNAL_INV_')));
       const res = await api.inquiries.stockCheck(deal.id, supplierIds);
       if (res.success) {
         refreshAll();
@@ -585,6 +594,64 @@ export default function InquiryDetailsPage() {
     });
   }
 
+  // Enrich my_quote with inventory prices for products sourced from internal inventory
+  const dealEnrichedForEmail = (() => {
+    if (!deal || !deal.products) return { ...deal, my_quote: displayQuote };
+
+    // Step 1: For each inquiry product, check if it's in inventory
+    const enrichedProducts = deal.products.map(p => {
+      const invMatch = inventoryData.find(inv =>
+        inv.itemName.toLowerCase() === p.product_name.toLowerCase() ||
+        (inv.sku && p.product_name.toLowerCase().includes(inv.sku.toLowerCase()))
+      );
+      const invStock = invMatch ? (invMatch.stocks?.reduce((acc, st) => acc + st.quantity, 0) || 0) : 0;
+      if (invMatch && invStock > 0) {
+        const sellingPrice = parseFloat(invMatch.sellingPrice) || 0;
+        const qty = p.quantity || 0;
+        return { ...p, _inv_unit_price: sellingPrice, _inv_total_price: sellingPrice * qty };
+      }
+      return p;
+    });
+
+    // Step 2: Start from existing my_quote products and patch in inventory prices where missing
+    const baseProducts = displayQuote?.products || [];
+    const mergedQuoteProducts = baseProducts.map(mqp => {
+      const enriched = enrichedProducts.find(ep => ep.product_name === mqp.product_name);
+      if (enriched && enriched._inv_unit_price && !(mqp.my_unit_price > 0)) {
+        return {
+          ...mqp,
+          my_unit_price: enriched._inv_unit_price,
+          total_price: enriched._inv_total_price,
+          total_my_price: enriched._inv_total_price,
+        };
+      }
+      return mqp;
+    });
+
+    // Step 3: APPEND inventory products that are NOT already in the quote products list
+    const quotedNames = new Set(mergedQuoteProducts.map(p => p.product_name.toLowerCase()));
+    const missingInvProducts = enrichedProducts
+      .filter(ep => ep._inv_unit_price && !quotedNames.has(ep.product_name.toLowerCase()))
+      .map(ep => ({
+        product_name: ep.product_name,
+        quantity: ep.quantity,
+        unit: ep.unit,
+        supplier_name: 'Internal Inventory',
+        my_unit_price: ep._inv_unit_price,
+        total_price: ep._inv_total_price,
+        total_my_price: ep._inv_total_price,
+      }));
+
+    const allQuoteProducts = [...mergedQuoteProducts, ...missingInvProducts];
+
+    return {
+      ...deal,
+      my_quote: displayQuote
+        ? { ...displayQuote, products: allQuoteProducts }
+        : { products: allQuoteProducts }
+    };
+  })();
+
   const currentDealWithLocalQuote = { ...deal, my_quote: displayQuote };
 
   return (
@@ -677,11 +744,29 @@ export default function InquiryDetailsPage() {
                     emptyMessage="No products requested."
                     renderRow={(p, i) => {
                       const hasSuppliersCol = deal?.suppliers && deal.suppliers.length > 0;
-                      const productSuppliers = hasSuppliersCol ? getProductSuppliers(p) : [];
+                      // p.supplier_name is set per-product only after a supplier quote is selected.
+                      // At RFQ_READY stage, no quotes exist yet — fall back to inquiry-level suppliers.
+                      const perProductSupplierName = p.supplier_name || null;
+                      
+                      const inventoryMatch = inventoryData.find(inv => 
+                        inv.itemName.toLowerCase() === p.product_name.toLowerCase() ||
+                        (inv.sku && p.product_name.toLowerCase().includes(inv.sku.toLowerCase()))
+                      );
+                      const inventoryStock = inventoryMatch ? (inventoryMatch.stocks?.reduce((acc, st) => acc + st.quantity, 0) || 0) : 0;
+                      
                       return (
                         <tr key={i} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
                           <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + i + 1}</td>
-                          <td className="px-4 py-3 text-gray-900 dark:text-white font-bold">{p.product_name}</td>
+                          <td className="px-4 py-3 text-gray-900 dark:text-white font-bold">
+                            {p.product_name}
+                            {inventoryStock > 0 && (
+                              <div className="mt-1">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wide bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
+                                  ✅ Available in Inventory: {inventoryStock}
+                                </span>
+                              </div>
+                            )}
+                          </td>
                           <td className="px-4 py-3">
                             <span className="px-2 py-0.5 bg-gray-200/50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-[10px] font-bold rounded">
                               {p.category || 'General'}
@@ -692,13 +777,28 @@ export default function InquiryDetailsPage() {
                           {hasSuppliersCol && (
                             <td className="px-4 py-3">
                               <div className="flex flex-wrap gap-1 max-w-[220px]">
-                                {productSuppliers.map(s => (
-                                  <span key={s.id} className="px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-bold rounded truncate" title={s.name}>
-                                    {s.name}
+                                {inventoryStock > 0 ? (
+                                  // Product is in inventory — show only Internal Inventory badge
+                                  <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-bold rounded truncate">
+                                    🌟 Internal Inventory
                                   </span>
-                                ))}
-                                {productSuppliers.length === 0 && (
-                                  <span className="text-gray-400 text-xs italic">None</span>
+                                ) : perProductSupplierName ? (
+                                  // A specific supplier quote has been selected for this product (later stages)
+                                  <span className="px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-bold rounded truncate" title={perProductSupplierName}>
+                                    {perProductSupplierName}
+                                  </span>
+                                ) : (
+                                  // No quote selected yet — show inquiry-level assigned suppliers (RFQ_READY stage)
+                                  (() => {
+                                    const inquirySuppliers = (deal.suppliers || []).map(s => s.supplier || s).filter(s => s && s.name);
+                                    return inquirySuppliers.length > 0 ? inquirySuppliers.map(s => (
+                                      <span key={s.id} className="px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-bold rounded truncate" title={s.name}>
+                                        {s.name}
+                                      </span>
+                                    )) : (
+                                      <span className="text-gray-400 text-xs italic">None</span>
+                                    );
+                                  })()
                                 )}
                               </div>
                             </td>
@@ -1163,6 +1263,7 @@ export default function InquiryDetailsPage() {
                 onClose={() => setActiveTab("overview")}
                 onConfirm={handleVerifyConfirm}
                 deal={deal}
+                inventoryData={inventoryData}
               />
             )}
             {deal.status === "ADMIN_APPROVAL" && (
@@ -1172,6 +1273,7 @@ export default function InquiryDetailsPage() {
                 onClose={() => setActiveTab("overview")}
                 onConfirm={handleAdminConfirm}
                 deal={deal}
+                inventoryData={inventoryData}
               />
             )}
             {deal.status === "CLIENT_FINAL_APPROVAL" && (
@@ -1228,7 +1330,7 @@ export default function InquiryDetailsPage() {
       <EmailPreviewModal
         isOpen={isEmailPreviewModalOpen}
         onClose={() => setIsEmailPreviewModalOpen(false)}
-        deal={currentDealWithLocalQuote}
+        deal={dealEnrichedForEmail}
         initialEmailType="QUOTE"
         onStatusUpdate={() => {
           refreshAll();

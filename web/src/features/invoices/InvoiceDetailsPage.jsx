@@ -33,7 +33,7 @@ export default function InvoiceDetailsPage() {
 
       if (inqRes.success && inqRes.data) {
         setInquiryData(inqRes.data);
-        if (inqRes.data.status === 'CHALLAN_RECEIVED' || inqRes.data.currentStatus === 'CHALLAN_RECEIVED') {
+        if (inqRes.data.status === 'CHALLAN_RECEIVED' || inqRes.data.currentStatus === 'CHALLAN_RECEIVED' || inqRes.data.status === 'DELIVERED_TO_VESSEL' || inqRes.data.currentStatus === 'DELIVERED_TO_VESSEL') {
           setChallanConfirmed(true);
         }
       }

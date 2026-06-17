@@ -2,16 +2,17 @@
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').trim();
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 export { USE_MOCK };
 
 // Centralized Axios instance pointing to the API root
 const apiClient = axios.create({
-  baseURL: `${BASE_URL}/api`,
+  baseURL: `${BASE_URL.trim()}/api`,
   headers: {
     'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
   },
 });
 
@@ -23,7 +24,7 @@ apiClient.interceptors.request.use(
       return config;
     }
 
-    const token = sessionStorage.getItem('token');
+    const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     } else {
@@ -80,7 +81,7 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const refreshToken = sessionStorage.getItem('refreshToken');
+      const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) {
         isRefreshing = false;
         // No refresh token, trigger logout or auth error
@@ -97,9 +98,9 @@ apiClient.interceptors.response.use(
           const newToken = response.data.data.accessToken || response.data.data.token;
           const newRefreshToken = response.data.data.refreshToken;
 
-          sessionStorage.setItem('token', newToken);
+          localStorage.setItem('token', newToken);
           if (newRefreshToken) {
-            sessionStorage.setItem('refreshToken', newRefreshToken);
+            localStorage.setItem('refreshToken', newRefreshToken);
           }
 
           apiClient.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
@@ -113,8 +114,8 @@ apiClient.interceptors.response.use(
         processQueue(refreshError, null);
         isRefreshing = false;
         // Refresh token invalid or expired: clear tokens and logout
-        sessionStorage.removeItem('token');
-        sessionStorage.removeItem('refreshToken');
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
         window.dispatchEvent(new CustomEvent('auth-logout'));
         return Promise.reject(refreshError);
       }
