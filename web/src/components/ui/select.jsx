@@ -37,6 +37,7 @@ export default function Select({
   className = "",
   variant = "toolbar",
   placeholder = "Select...",
+  isMulti = false,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -88,9 +89,17 @@ export default function Select({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const selectedOption = options.find((opt) => opt.value === value);
-  const hasValue = value !== "" && value !== null && value !== undefined;
+  const selectedOption = !isMulti ? options.find((opt) => opt.value === value) : null;
+  const hasValue = isMulti ? (Array.isArray(value) && value.length > 0) : (value !== "" && value !== null && value !== undefined);
   const isPlaceholder = !hasValue;
+
+  const displayValue = isMulti
+    ? (isPlaceholder ? placeholder : (
+        value.length === 1
+          ? options.find(opt => opt.value === value[0])?.label ?? value[0]
+          : `${value.length} selected`
+      ))
+    : (isPlaceholder ? placeholder : (selectedOption?.label ?? value));
 
   const variantCls = VARIANT_STYLES[variant] ?? VARIANT_STYLES.toolbar;
   const itemTextSize = variant === "form" || variant === "settings" ? "text-sm" : "text-xs";
@@ -119,7 +128,7 @@ export default function Select({
               : "text-gray-900 dark:text-white",
           ].join(" ")}
         >
-          {isPlaceholder ? placeholder : (selectedOption?.label ?? value)}
+          {displayValue}
         </span>
         <ChevronDown
           className={`w-3.5 h-3.5 shrink-0 text-gray-500 dark:text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
@@ -154,27 +163,52 @@ export default function Select({
 
             {/* Options list */}
             <div className="flex-1 overflow-y-auto max-h-[165px]">
-              {filteredOptions.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  role="option"
-                  aria-selected={value === opt.value}
-                  onClick={() => {
-                    onChange(opt.value);
-                    setIsOpen(false);
-                  }}
-                  className={[
-                    "w-full text-left px-3 py-2 font-medium transition-colors block truncate",
-                    itemTextSize,
-                    value === opt.value
-                      ? "bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400"
-                      : "text-gray-900 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#242830]",
-                  ].join(" ")}
-                >
-                  {opt.label}
-                </button>
-              ))}
+              {filteredOptions.map((opt) => {
+                const isSelected = isMulti ? (Array.isArray(value) && value.includes(opt.value)) : value === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    onClick={() => {
+                      if (isMulti) {
+                        const currentVal = Array.isArray(value) ? value : [];
+                        if (currentVal.includes(opt.value)) {
+                          onChange(currentVal.filter(v => v !== opt.value));
+                        } else {
+                          onChange([...currentVal, opt.value]);
+                        }
+                      } else {
+                        onChange(opt.value);
+                        setIsOpen(false);
+                      }
+                    }}
+                    className={[
+                      "w-full text-left px-3 py-2 font-medium transition-colors flex items-center justify-between",
+                      itemTextSize,
+                      isSelected
+                        ? "bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400"
+                        : "text-gray-900 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#242830]",
+                    ].join(" ")}
+                  >
+                    <span className="truncate">{opt.label}</span>
+                    {isMulti && (
+                      <div className={`w-3.5 h-3.5 rounded flex-shrink-0 flex items-center justify-center border transition-colors ${
+                        isSelected 
+                          ? 'bg-purple-600 border-purple-600' 
+                          : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1a1d23]'
+                      }`}>
+                        {isSelected && (
+                          <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
               {filteredOptions.length === 0 && (
                 <div className="px-3 py-3 text-xs text-gray-400 text-center italic">
                   No matches found

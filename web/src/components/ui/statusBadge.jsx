@@ -123,6 +123,7 @@ const STATUS_LABELS = {
   ADMIN_APPROVAL: "Admin Approval",
   EMPLOYEE_VERIFY: "Employee Verify",
   CLIENT_FINAL_APPROVAL: "Client Final Approval",
+  CONFIRMED:    "Confirmed",
   IN_TRANSIT:   "In Transit",
   ORDERED:      "Ordered",
   ORDER_PLACED: "Order Placed",

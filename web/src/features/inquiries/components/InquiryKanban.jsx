@@ -287,64 +287,44 @@ function KanbanCard({
           </span>
         </div>
 
-        {/* Cargo Weight Row */}
-        <div className="flex items-center gap-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-            className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 shrink-0"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m8.25-3v13.5m0-13.5L3.75 7.5m8.25-3l8.25 3M3.75 7.5h16.5M12 17.25h.008v.008H12v-.008z" />
-          </svg>
-          <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
-            {weight}
-          </span>
+        {/* Cargo Weight & Time Row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500 shrink-0"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m8.25-3v13.5m0-13.5L3.75 7.5m8.25-3l8.25 3M3.75 7.5h16.5M12 17.25h.008v.008H12v-.008z" />
+            </svg>
+            <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
+              {weight}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-gray-400 dark:text-gray-500">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="w-3.5 h-3.5 text-gray-400/80 dark:text-gray-500/80"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-[10px] font-medium">
+              {relativeTime}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Divider */}
       <div className="border-t border-gray-100 dark:border-gray-800/60 my-0.5"></div>
-
-      {/* Footer Row */}
-      <div className="flex items-center justify-between mt-0.5">
-        {/* Relative Time */}
-        <div className="flex items-center gap-1.5 text-gray-400 dark:text-gray-500">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-            className="w-3.5 h-3.5 text-gray-400/80 dark:text-gray-500/80"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span className="text-[10px] font-medium">
-            {relativeTime}
-          </span>
-        </div>
-
-        {/* Right side: Awaiting Feedback or Avatars */}
-        {inq.status === "CLIENT_FINAL_APPROVAL" ? (
-          <span className="bg-cyan-50 text-cyan-600 dark:bg-cyan-950/30 dark:text-cyan-400 px-2 py-0.5 rounded-md text-[9px] font-extrabold border border-cyan-100/30 dark:border-cyan-900/30">
-            Awaiting Feedback
-          </span>
-        ) : (
-          <div className="flex -space-x-1.5 overflow-hidden">
-            {cardAvatars.map((url, idx) => (
-              <img
-                key={idx}
-                className="inline-block h-5 w-5 rounded-full ring-2 ring-white dark:ring-[#1e222b] object-cover"
-                src={url}
-                alt="Assignee Avatar"
-              />
-            ))}
-          </div>
-        )}
-      </div>
 
       {/* Themed Quick Action Button */}
       {canAct && (

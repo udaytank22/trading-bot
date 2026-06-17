@@ -20,7 +20,7 @@ const getAllInquiries = async (query = {}) => {
     console.error("Failed to run autoCloseExpiredRFQs in getAllInquiries:", err.message);
   }
 
-  const { page, pageSize, paginate, status, statuses, clientId, search } = query;
+  const { page, pageSize, paginate, status, statuses, clientId, clientIds, search } = query;
   const where = { deletedAt: null };
 
   if (search) {
@@ -37,17 +37,14 @@ const getAllInquiries = async (query = {}) => {
 
   if (statuses) {
     const statusArray = statuses.split(',').map(s => s.trim());
-    if (!where.AND) where.AND = [];
-    where.AND.push({
-      OR: [
-        { currentStatus: { in: statusArray } },
-        { invoices: { some: {} } }
-      ]
-    });
+    where.currentStatus = { in: statusArray };
   }
 
-  if (clientId) {
-    where.clientId = clientId;
+  if (clientIds) {
+    const idsArray = clientIds.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
+    where.clientId = { in: idsArray };
+  } else if (clientId) {
+    where.clientId = parseInt(clientId, 10);
   }
 
   if (paginate === 'false') {

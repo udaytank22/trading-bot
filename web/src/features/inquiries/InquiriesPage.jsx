@@ -31,7 +31,7 @@ import { useToast } from '@hooks/useToast';
 import InquiryTable from './components/InquiryTable';
 import InquiryKanban from './components/InquiryKanban';
 import AddInquiryModal from './modals/AddInquiryModal';
-import { Toast, PageToolbar, Pagination, Button, EmptyState } from '@components/ui';
+import { Toast, PageToolbar, Pagination, Button, EmptyState, Select } from '@components/ui';
 
 function PlusIcon() {
   return (
@@ -51,8 +51,29 @@ export default function InquiriesPage() {
 
   // Filters & pagination
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState(location.state?.filter ?? "All");
+  const initialFilter = location.state?.filter;
+  const initialFilterState = initialFilter && initialFilter !== "All" ? [initialFilter] : [];
+  const [filter, setFilter] = useState(initialFilterState);
+  const [clientFilter, setClientFilter] = useState([]);
+  const [clients, setClients] = useState([]);
   const [viewMode, setViewMode] = useState("kanban"); // 'table' | 'kanban'
+
+  useEffect(() => {
+    api.clients.getClients({ paginate: 'false' })
+      .then(res => setClients(res.data || []))
+      .catch(console.error);
+  }, []);
+
+  const queryParams = React.useMemo(() => {
+    const params = { search };
+    if (filter && filter.length > 0) {
+      params.statuses = filter.join(",");
+    }
+    if (clientFilter && clientFilter.length > 0) {
+      params.clientIds = clientFilter.join(",");
+    }
+    return params;
+  }, [search, filter, clientFilter]);
 
   const {
     data: inquiriesData,
@@ -61,9 +82,7 @@ export default function InquiriesPage() {
     handlePageChange,
     handlePageSizeChange,
     refresh: loadData
-  } = usePaginatedFetch(api.inquiries.getInquiries, 1, 30, {
-    search
-  });
+  } = usePaginatedFetch(api.inquiries.getInquiries, 1, 30, queryParams);
 
   const [now, setNow] = useState(new Date());
 
@@ -90,7 +109,6 @@ export default function InquiriesPage() {
 
   // Filtering
   const filteredInquiries = inquiriesData || [];
-  console.log('https://omship.in/', filteredInquiries)
 
 
   // Drawer / modal state
@@ -155,17 +173,7 @@ export default function InquiriesPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex flex-col w-full h-full pb-8 animate-pulse gap-4">
-        <div className="flex items-center justify-between h-10">
-          <div className="w-1/3 bg-[#242830] rounded-lg h-full opacity-40" />
-          <div className="w-32 bg-[#242830] rounded-lg h-full opacity-40" />
-        </div>
-        <div className="flex-1 w-full bg-[#1a1d23] border border-[#2a2d33] rounded-xl opacity-40" />
-      </div>
-    );
-  }
+
 
   return (
     <div className="flex flex-col w-full h-full pb-4 relative overflow-hidden min-w-0">
@@ -174,27 +182,35 @@ export default function InquiriesPage() {
       {/* Centralized toolbar: search + status filter + Add Inquiry button */}
       <PageToolbar
         search={search}
-        onSearchChange={(val) => {
-          setSearch(val);
-          handlePageChange(1);
-        }}
+        onSearchChange={(val) => setSearch(val)}
         searchPlaceholder="Search by buyer, vessel, ref..."
-        filterValue={
-          ["QUOTE_SENT_ONLY", "PENDING_REPLIES"].includes(filter)
-            ? "All"
-            : filter
-        }
-        onFilterChange={(val) => {
-          setFilter(val);
-          handlePageChange(1);
-        }}
+        filterValue={filter}
+        onFilterChange={(val) => setFilter(val)}
+        isMultiFilter={true}
+        filterPlaceholder="All Status"
         filterOptions={[
-          { value: "All", label: "All Status" },
-          { value: "PENDING", label: "Pending" },
-          { value: "RFQ_SENT", label: "RFQ Sent" },
-          { value: "QUOTE_SENT", label: "Quote Sent" },
+          { value: "PENDING", label: "Datasheet" },
+          { value: "RFQ_SENT", label: "RFQ sent" },
+          { value: "QUOTE_SENT", label: "Quoted" },
+          { value: "RFQ_RECEIVED", label: "RFQ Received" },
+          { value: "CLIENT_QUOTING", label: "Client Quoting" },
+          { value: "TL_REVIEW", label: "TL Review" },
+          { value: "ADMIN_APPROVAL", label: "Admin Approval" },
+          { value: "EMPLOYEE_VERIFY", label: "Employee Verify" },
+          { value: "CLIENT_FINAL_APPROVAL", label: "Client Final Approval" },
+          { value: "CONFIRMED", label: "Confirmed" },
           { value: "CLOSED", label: "Closed" },
         ]}
+        extraFilters={
+          <Select
+            value={clientFilter}
+            onChange={(val) => setClientFilter(val)}
+            options={clients.map(c => ({ value: c.id, label: c.name }))}
+            isMulti={true}
+            placeholder="All Customers"
+            className="min-w-[160px]"
+          />
+        }
         rightSlot={
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
@@ -248,7 +264,9 @@ export default function InquiriesPage() {
         }
       />
 
-      {viewMode === "kanban" ? (
+      {loading && filteredInquiries.length === 0 ? (
+        <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl opacity-40 animate-pulse" />
+      ) : viewMode === "kanban" ? (
         /* ── Kanban board (no pagination — shows all filtered) ── */
         filteredInquiries.length > 0 ? (
           <div className="flex-1 min-h-0 min-w-0 overflow-hidden">

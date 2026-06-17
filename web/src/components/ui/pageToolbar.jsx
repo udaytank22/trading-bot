@@ -72,13 +72,15 @@ function ChevronIcon() {
  * Shared filter <select> used across list pages.
  * @param {Array<{value:string, label:string}>} options
  */
-function FilterDropdown({ value, onChange, options = [] }) {
+function FilterDropdown({ value, onChange, options = [], isMulti = false, placeholder = "Select..." }) {
   return (
-    <Select 
-      value={value} 
-      onChange={onChange} 
-      options={options} 
-      className="min-w-[140px]" 
+    <Select
+      value={value}
+      onChange={onChange}
+      options={options}
+      isMulti={isMulti}
+      placeholder={placeholder}
+      className="min-w-[140px]"
     />
   );
 }
@@ -110,6 +112,9 @@ export default function PageToolbar({
   filterValue,
   onFilterChange,
   filterOptions,
+  isMultiFilter = false,
+  filterPlaceholder = "All Status",
+  extraFilters,
 
   // Add button
   onAdd,
@@ -142,8 +147,13 @@ export default function PageToolbar({
             value={filterValue}
             onChange={onFilterChange}
             options={filterOptions}
+            isMulti={isMultiFilter}
+            placeholder={filterPlaceholder}
           />
         )}
+
+        {/* Extra custom filters (like Customer Name) */}
+        {extraFilters}
       </div>
 
       {/* ── Right: Add button or custom slot ──────────────────────────────── */}

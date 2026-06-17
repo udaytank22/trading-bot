@@ -32,11 +32,9 @@ import {
 const COLUMNS = [
   { key: "sr_no", label: "#", className: "w-10 text-center" },
   { key: "inquiry_id",   label: "Order Reference" },
-  { key: "status_placeholder", label: "Status", hidden: "hidden xl:table-cell" },
   { key: "buyer",        label: "Customer" },
-  { key: "vessel",       label: "Vessel", hidden: "hidden md:table-cell" },
+  { key: "vessel",       label: "Vessel Name", hidden: "hidden md:table-cell" },
   { key: "received",     label: "Inquiry Date", hidden: "hidden lg:table-cell" },
-  { key: "vessel_ref",   label: "Vessel Ref", hidden: "hidden xl:table-cell" },
   { key: "status",       label: "Enquiry Status" },
   { key: "actions",      label: "Actions",  className: "text-right" },
 ];
@@ -185,10 +183,7 @@ const InquiryTable = ({ items, onView, onAction, currentUser }) => {
         </Tooltip>
       </td>
 
-      {/* ── Status placeholder (empty column matching Odoo screenshot) ───── */}
-      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4 hidden xl:table-cell">
-        <span className="text-gray-400 dark:text-gray-600">—</span>
-      </td>
+
 
       {/* ── Customer ─────────────────────────────────── */}
       <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4">
@@ -204,10 +199,10 @@ const InquiryTable = ({ items, onView, onAction, currentUser }) => {
         </div>
       </td>
 
-      {/* ── Vessel ────────────────────────────────────── */}
+      {/* ── Vessel Name ────────────────────────────────────── */}
       <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4 hidden md:table-cell">
-        <span className="text-gray-900 dark:text-white font-semibold text-sm cursor-default">
-          {inq.vessel_name || "—"}
+        <span className="text-gray-900 dark:text-white font-semibold text-[13px] cursor-default">
+          {inq.vesselName || "—"}
         </span>
       </td>
 
@@ -228,12 +223,6 @@ const InquiryTable = ({ items, onView, onAction, currentUser }) => {
         </Tooltip>
       </td>
 
-      {/* ── Vessel Ref ────────────────────────────────── */}
-      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4 hidden xl:table-cell">
-        <span className="text-gray-700 dark:text-gray-400 text-sm cursor-default font-mono">
-          {inq.vessel_ref || "—"}
-        </span>
-      </td>
 
       {/* ── Enquiry Status ────────────────────────────── */}
       <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4">
