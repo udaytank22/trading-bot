@@ -11,10 +11,15 @@ const asyncWrapper = require('../../utils/asyncWrapper');
 router.use(authMiddleware);
 
 router.get('/', checkPermission('inventory', 'read'), asyncWrapper(controller.getItems));
+router.get('/transactions', checkPermission('inventory', 'read'), asyncWrapper(controller.getTransactionHistory));
 router.get('/:id', checkPermission('inventory', 'read'), asyncWrapper(controller.getItem));
 router.post('/', checkPermission('inventory', 'create'), validate(validateCreateItem), asyncWrapper(controller.createItem));
 router.put('/:id', checkPermission('inventory', 'update'), asyncWrapper(controller.updateItem));
 router.delete('/:id', checkPermission('inventory', 'delete'), asyncWrapper(controller.deleteItem));
 router.post('/movements', checkPermission('inventory', 'update'), validate(validateMovement), asyncWrapper(controller.moveStock));
+
+// Inventory auto-fulfillment endpoints
+router.post('/check-availability', checkPermission('inventory', 'read'), asyncWrapper(controller.checkAvailability));
+router.post('/dispatch-inquiry/:inquiryId', checkPermission('inventory', 'update'), asyncWrapper(controller.dispatchInquiryInventory));
 
 module.exports = router;

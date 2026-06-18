@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import AccountPage from '@features/accounts/AccountPage';
+import { useAuth } from '@context';
 
 import ProductsTab from './components/ProductsTab';
 import ClientsTab from './components/ClientsTab';
@@ -10,19 +11,22 @@ import ReportingTab from './components/ReportingTab';
 import RolePermissionsTab from './components/RolePermissionsTab';
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState('products');
+  const { hasPermission } = useAuth();
 
-  const tabs = [
-    // { id: 'general', label: 'General' },
-    { id: 'products', label: 'Products' },
-    { id: 'clients', label: 'Clients' },
-    { id: 'vendors', label: 'Vendors' },
-    { id: 'vehicles', label: 'Vehicles' },
-    { id: 'documents', label: 'Documents' },
-    { id: 'reporting', label: 'Reporting' },
-    { id: 'accounts', label: 'Accounts' },
-    { id: 'permissions', label: 'Role Permissions' },
+  const allTabs = [
+    { id: 'products', label: 'Products', module: 'products' },
+    { id: 'clients', label: 'Clients', module: 'clients' },
+    { id: 'vendors', label: 'Vendors', module: 'suppliers' },
+    { id: 'vehicles', label: 'Vehicles', module: 'vehicles' },
+    { id: 'documents', label: 'Documents', module: 'documents' },
+    { id: 'accounts', label: 'Accounts', module: 'bankAccounts' },
+    { id: 'permissions', label: 'Role Permissions', module: 'settings' },
   ];
+
+  const tabs = allTabs.filter(t => hasPermission(t.module, 'read'));
+  const [activeTab, setActiveTab] = useState(() => {
+    return tabs[0]?.id || 'products';
+  });
 
   return (
     <div className="flex flex-col w-full min-h-full pb-4">

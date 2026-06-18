@@ -38,6 +38,10 @@ const FILTER_OPTIONS = [
 export default function AccountPage() {
   // Global accounts data from AppContext
   const { accountsData, refreshAll } = useData();
+  const { hasPermission } = useAuth();
+  const canCreate = hasPermission('bankAccounts', 'create');
+  const canUpdate = hasPermission('bankAccounts', 'update');
+  const canDelete = hasPermission('bankAccounts', 'delete');
 
   // ── Local UI state ────────────────────────────────────────────────────────
   const [search, setSearch]             = useState("");
@@ -151,7 +155,7 @@ export default function AccountPage() {
         filterValue={filter}
         onFilterChange={(val) => { setFilter(val); setCurrentPage(1); }}
         filterOptions={FILTER_OPTIONS}
-        onAdd={() => { setAccountToEdit(null); setIsModalOpen(true); }}
+        onAdd={canCreate ? () => { setAccountToEdit(null); setIsModalOpen(true); } : undefined}
         addLabel="Add Account"
       />
 
@@ -159,8 +163,8 @@ export default function AccountPage() {
       <div className="flex-1 bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl shadow-sm flex flex-col overflow-hidden">
         <AccountTable
           items={currentData}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+          onEdit={canUpdate ? handleEdit : undefined}
+          onDelete={canDelete ? handleDelete : undefined}
         />
 
         {/* Empty state */}

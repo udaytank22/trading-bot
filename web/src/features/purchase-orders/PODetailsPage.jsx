@@ -1,7 +1,7 @@
 import { PODetailsPageSchema1 } from '@config/tableSchemas';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useData } from '@context';
+import { useData, useAuth } from '@context';
 import { api } from '@services/api';
 import { formatINR } from '@services/marginEngine';
 import { StatusBadge, DataTable, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
@@ -14,6 +14,7 @@ export default function PODetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { purchaseOrdersData, refreshAll } = useData();
+  const { hasPermission } = useAuth();
 
   const [po, setPo] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -193,7 +194,7 @@ export default function PODetailsPage() {
             >
               Download PDF
             </button>
-            {po.status !== 'ORDERED' && !po.isGrouped && (
+            {po.status !== 'ORDERED' && !po.isGrouped && hasPermission('purchaseOrders', 'update') && (
               <button
                 onClick={() => setIsEmailModalOpen(true)}
                 className="px-4 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-purple-600 hover:bg-purple-500 text-white transition-all shadow-sm"
@@ -201,7 +202,7 @@ export default function PODetailsPage() {
                 Send PO Email
               </button>
             )}
-            {po.isGrouped && po.subPOs && po.subPOs.some(subPo => subPo.status !== 'ORDERED') && (
+            {po.isGrouped && po.subPOs && po.subPOs.some(subPo => subPo.status !== 'ORDERED') && hasPermission('purchaseOrders', 'update') && (
               <button
                 onClick={() => setIsMultiEmailModalOpen(true)}
                 className="px-4 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-purple-600 hover:bg-purple-500 text-white transition-all shadow-sm"

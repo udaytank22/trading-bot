@@ -115,7 +115,7 @@ const POTable = ({ items, onView, onOrder }) => {
           >
             View
           </Button>
-          {po.status !== "ORDERED" && (
+          {po.status !== "ORDERED" && onOrder && (
             <Button
               variant="secondary"
               size="sm"

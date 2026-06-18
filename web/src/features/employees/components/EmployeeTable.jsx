@@ -67,31 +67,37 @@ function EmployeeCard({ emp, onEdit, onDelete, onView }) {
     <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl p-6 relative flex flex-col items-center shadow-sm hover:shadow-md transition-shadow">
       
       {/* 3 Dots Menu */}
-      <div className="absolute top-4 right-4" ref={menuRef}>
-        <button 
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-[#2a2d33] transition-colors"
-        >
-          <DotsIcon />
-        </button>
-        
-        {menuOpen && (
-          <div className="absolute top-full right-0 mt-1 w-36 bg-white dark:bg-[#242830] border border-gray-100 dark:border-[#333842] shadow-xl rounded-xl z-20 py-1 overflow-hidden">
-            <button 
-              onClick={() => { setMenuOpen(false); onEdit(emp); }}
-              className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#2a2d33] hover:text-blue-600 transition-colors"
-            >
-              <EditIcon /> Edit
-            </button>
-            <button 
-              onClick={() => { setMenuOpen(false); onDelete(emp.id); }}
-              className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-            >
-              <DeleteIcon /> Delete
-            </button>
-          </div>
-        )}
-      </div>
+      {(onEdit || onDelete) && (
+        <div className="absolute top-4 right-4" ref={menuRef}>
+          <button 
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-[#2a2d33] transition-colors"
+          >
+            <DotsIcon />
+          </button>
+          
+          {menuOpen && (
+            <div className="absolute top-full right-0 mt-1 w-36 bg-white dark:bg-[#242830] border border-gray-100 dark:border-[#333842] shadow-xl rounded-xl z-20 py-1 overflow-hidden">
+              {onEdit && (
+                <button 
+                  onClick={() => { setMenuOpen(false); onEdit(emp); }}
+                  className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#2a2d33] hover:text-blue-600 transition-colors"
+                >
+                  <EditIcon /> Edit
+                </button>
+              )}
+              {onDelete && (
+                <button 
+                  onClick={() => { setMenuOpen(false); onDelete(emp.id); }}
+                  className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                >
+                  <DeleteIcon /> Delete
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Avatar Circle */}
       <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/20 flex items-center justify-center text-purple-600 dark:text-purple-400 font-bold text-2xl shadow-inner mb-4 relative overflow-hidden border border-white dark:border-[#2a2d33] ring-4 ring-gray-50 dark:ring-[#16191f]">

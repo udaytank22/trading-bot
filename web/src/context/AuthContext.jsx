@@ -51,6 +51,44 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  const refreshUserProfile = useCallback(async () => {
+    try {
+      const response = await apiClient.get('/auth/me');
+      if (response.data && response.data.success) {
+        const user = response.data.data;
+        const profile = {
+          id: user.id,
+          name: user.employeeProfile ? user.employeeProfile.fullName : (user.email.split('@')[0]),
+          role: user.role ? user.role.name : "User",
+          email: user.email,
+          roleData: user.role
+        };
+        setCurrentUser(profile);
+        localStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(profile));
+      }
+    } catch (err) {
+      console.error('Failed to fetch user profile:', err);
+    }
+  }, []);
+
+  const hasPermission = useCallback((moduleName, actionName) => {
+    if (!currentUser) return false;
+    
+    const roleName = typeof currentUser.role === 'string'
+      ? currentUser.role
+      : currentUser.roleData?.name;
+      
+    if (roleName === 'Super Admin') return true;
+
+    const permissions = currentUser.roleData?.permissions || [];
+    return permissions.some(rp => {
+      const perm = rp.permission;
+      if (!perm) return false;
+      return perm.module.toLowerCase() === moduleName.toLowerCase() &&
+             perm.action.toLowerCase() === actionName.toLowerCase();
+    });
+  }, [currentUser]);
+
   useEffect(() => {
     const handleAuthLogout = () => {
       logout();
@@ -60,6 +98,12 @@ export function AuthProvider({ children }) {
       window.removeEventListener('auth-logout', handleAuthLogout);
     };
   }, [logout]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      refreshUserProfile();
+    }
+  }, [isAuthenticated, refreshUserProfile]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -95,7 +139,7 @@ export function AuthProvider({ children }) {
   }, [isAuthenticated, logout]);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, currentUser, setCurrentUser, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, currentUser, setCurrentUser, login, logout, hasPermission, refreshUserProfile }}>
       {children}
     </AuthContext.Provider>
   );

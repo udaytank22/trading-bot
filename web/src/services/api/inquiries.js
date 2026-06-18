@@ -80,8 +80,8 @@ const normalizeInquiry = (inq) => {
       const sellerPrice = sel
         ? parseFloat(sel.item.unitPrice)
         : (latestQuote?.items?.find(qi => qi.inquiryItemId === item.inquiryItemId)
-            ? parseFloat(latestQuote.items.find(qi => qi.inquiryItemId === item.inquiryItemId).unitPrice)
-            : 0);
+          ? parseFloat(latestQuote.items.find(qi => qi.inquiryItemId === item.inquiryItemId).unitPrice)
+          : 0);
       return {
         product_name: inquiryItem ? inquiryItem.description : 'Unknown Product',
         quantity: item.quantity,
@@ -103,6 +103,10 @@ const normalizeInquiry = (inq) => {
     buyer_email: inq.client ? inq.client.email : (inq.buyer_email || 'N/A'),
     status: inq.currentStatus || inq.status,
     date_received: inq.createdAt || inq.date_received,
+    // Inventory auto-fulfillment fields
+    inventoryFulfilled: inq.inventoryFulfilled || false,
+    supplyStatus: inq.supplyStatus || null,
+    dispatchStatus: inq.dispatchStatus || null,
     seller_quote,
     my_quote,
     margin_percent: my_quote ? my_quote.margin_percent : (inq.margin_percent || 0),

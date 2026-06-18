@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StatusBadge, DataTable, rowStripeClass, ROW_HOVER_CLS, Button } from '@components/ui';
 import Swal from 'sweetalert2';
+import { useAuth } from '@context';
 
 export default function GroupedSupplyDetails({
   deal,
@@ -15,6 +16,8 @@ export default function GroupedSupplyDetails({
   handleViewPDF
 }) {
   const navigate = useNavigate();
+  const { hasPermission } = useAuth();
+  const canUpdate = hasPermission('suppliers', 'update');
 
   const formatDate = (d) => {
     if (!d) return '—';
@@ -108,7 +111,7 @@ export default function GroupedSupplyDetails({
 
           <div className="flex items-center gap-3">
             <StatusBadge status={deal.status} />
-            {deal.status === "DELIVERED" && (
+            {deal.status === "DELIVERED" && canUpdate && (
               <Button
                 variant="primary"
                 size="md"
@@ -121,7 +124,7 @@ export default function GroupedSupplyDetails({
                 Allot Final Vehicle
               </Button>
             )}
-            {(deal.status === "VEHICLE_ALLOTTED" || deal.status === "LOADING") && (
+            {(deal.status === "VEHICLE_ALLOTTED" || deal.status === "LOADING") && canUpdate && (
               <button
                 onClick={async () => {
                   const result = await Swal.fire({
@@ -151,7 +154,7 @@ export default function GroupedSupplyDetails({
                 Mark Dispatched
               </button>
             )}
-            {deal.status === "OUT_FOR_DELIVERY" && (
+            {deal.status === "OUT_FOR_DELIVERY" && canUpdate && (
               <button
                 onClick={handleGroupChallanReceived}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-teal-600 hover:bg-teal-500 text-white transition-all shadow-sm"
@@ -211,7 +214,7 @@ export default function GroupedSupplyDetails({
                       <StatusBadge status={shipmentStatus} />
                     </td>
                     <td className="px-6 py-4 text-right">
-                      {(shipmentStatus === "IN_TRANSIT" || shipmentStatus === "DISPATCHED") && (
+                      {(shipmentStatus === "IN_TRANSIT" || shipmentStatus === "DISPATCHED") && canUpdate && (
                         <button
                           onClick={async () => {
                             const result = await Swal.fire({

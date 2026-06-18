@@ -8,10 +8,14 @@ import Swal from 'sweetalert2';
 import { generatePOPDF } from '../purchase-orders/utils/poPdfGenerator';
 import InquiryInvoiceEmailModal from './modals/InquiryInvoiceEmailModal';
 import PaymentModal from './modals/PaymentModal';
+import { useAuth } from '@context';
 
 export default function InvoiceDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { hasPermission } = useAuth();
+  const canCreate = hasPermission('invoices', 'create');
+  const canUpdate = hasPermission('invoices', 'update');
 
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -187,52 +191,56 @@ export default function InvoiceDetailsPage() {
                 <StatusBadge status="PENDING_INVOICE" />
               </div>
               {!challanConfirmed ? (
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => {
-                    Swal.fire({
-                      title: 'Confirm Challan Receipt',
-                      text: "Are you sure you have received the signed delivery challan?",
-                      icon: 'question',
-                      showCancelButton: true,
-                      confirmButtonColor: '#8b5cf6',
-                      cancelButtonColor: '#ef4444',
-                      confirmButtonText: 'Yes, Received',
-                      background: '#1a1d23',
-                      color: '#fff'
-                    }).then((result) => {
-                      if (result.isConfirmed) {
-                        api.inquiries.updateInquiry(id, { currentStatus: 'CHALLAN_RECEIVED' })
-                          .then(() => {
-                            setChallanConfirmed(true);
-                            fetchData();
-                          })
-                          .catch(err => {
-                            console.error('Failed to update status', err);
-                            Swal.fire({
-                              icon: 'error',
-                              title: 'Error',
-                              text: 'Failed to update challan status.',
-                              background: '#1a1d23',
-                              color: '#fff',
+                canUpdate && (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      Swal.fire({
+                        title: 'Confirm Challan Receipt',
+                        text: "Are you sure you have received the signed delivery challan?",
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#8b5cf6',
+                        cancelButtonColor: '#ef4444',
+                        confirmButtonText: 'Yes, Received',
+                        background: '#1a1d23',
+                        color: '#fff'
+                      }).then((result) => {
+                        if (result.isConfirmed) {
+                          api.inquiries.updateInquiry(id, { currentStatus: 'CHALLAN_RECEIVED' })
+                            .then(() => {
+                              setChallanConfirmed(true);
+                              fetchData();
+                            })
+                            .catch(err => {
+                              console.error('Failed to update status', err);
+                              Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Failed to update challan status.',
+                                background: '#1a1d23',
+                                color: '#fff',
+                              });
                             });
-                          });
-                      }
-                    });
-                  }}
-                >
-                  Signed challan received
-                </Button>
+                        }
+                      });
+                    }}
+                  >
+                    Signed challan received
+                  </Button>
+                )
               ) : (
-                <Button
-                  variant="primary"
-                  size="sm"
-                  className="bg-purple-600 hover:bg-purple-700"
-                  onClick={() => setIsInvoiceModalOpen(true)}
-                >
-                  Create Invoice
-                </Button>
+                canCreate && (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="bg-purple-600 hover:bg-purple-700"
+                    onClick={() => setIsInvoiceModalOpen(true)}
+                  >
+                    Create Invoice
+                  </Button>
+                )
               )}
             </div>
           ) : clientInvoice && (
@@ -253,7 +261,7 @@ export default function InvoiceDetailsPage() {
                 </svg>
                 Download Invoice
               </Button>
-              {clientInvoice.status !== 'PAID' && (
+              {clientInvoice.status !== 'PAID' && canUpdate && (
                 <Button
                   variant="primary"
                   size="sm"
@@ -430,7 +438,7 @@ export default function InvoiceDetailsPage() {
                       >
                         Download PDF
                       </Button>
-                      {inv.status !== "SENT" && inv.status !== "PAID" && (
+                      {inv.status !== "SENT" && inv.status !== "PAID" && canUpdate && (
                         <Button
                           variant="primary"
                           size="sm"
@@ -439,7 +447,7 @@ export default function InvoiceDetailsPage() {
                           Send
                         </Button>
                       )}
-                      {inv.status !== "PAID" && (
+                      {inv.status !== "PAID" && canUpdate && (
                         <Button
                           variant="success"
                           size="sm"

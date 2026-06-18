@@ -18,10 +18,11 @@ export default function SupplyDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { supplyData, refreshAll } = useData();
-  const { currentUser } = useAuth();
+  const { currentUser, hasPermission } = useAuth();
 
   const roleLower = currentUser?.role?.toLowerCase();
   const isAdminOrClient = roleLower === 'admin' || roleLower === 'super admin' || roleLower === 'administrator' || roleLower === 'client';
+  const canUpdate = hasPermission('suppliers', 'update');
 
   const [deal, setDeal] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -159,7 +160,7 @@ export default function SupplyDetailsPage() {
 
         docList.push({ name: "Delivery Challan", type: "PDF", size: "Auto-generated", url: challanUrl });
         docList.push({ name: "Gate Pass", type: "PDF", size: "Auto-generated", url: gatePassUrl });
-        
+
         // Push any actual documents stored in DB if needed (mocked here if we had them)
       } catch (e) {
         console.error("Error generating PDFs", e);
@@ -230,13 +231,13 @@ export default function SupplyDetailsPage() {
 
   const handleGroupChallanReceived = async () => {
     try {
-      const promises = deal.subShipments.map(sub => 
+      const promises = deal.subShipments.map(sub =>
         api.shipments.updateShipment(sub.id, { currentStatus: "DELIVERED_TO_VESSEL" })
       );
       await Promise.all(promises);
 
       // Do NOT close inquiry yet. It will be closed from the invoices tab when hard copy is received.
-      
+
       refreshAll();
       const updatedDeal = { ...deal };
       updatedDeal.subShipments = updatedDeal.subShipments.map(s => ({
@@ -380,7 +381,7 @@ export default function SupplyDetailsPage() {
           </div>
         )}
 
-        <GroupedSupplyDetails 
+        <GroupedSupplyDetails
           deal={deal}
           formatINR={formatINR}
           setAllotModalDeal={setAllotModalDeal}
@@ -405,7 +406,7 @@ export default function SupplyDetailsPage() {
           onAllot={async (allotId, vehicle) => {
             try {
               if (allotModalMode === 'group_final_delivery') {
-                const promises = deal.subShipments.map(sub => 
+                const promises = deal.subShipments.map(sub =>
                   api.shipments.updateShipment(sub.id, {
                     currentStatus: 'VEHICLE_ALLOTTED',
                     vehicleDetails: vehicle.vehicle_no,
@@ -413,7 +414,7 @@ export default function SupplyDetailsPage() {
                   })
                 );
                 await Promise.all(promises);
-                
+
                 refreshAll();
                 const updatedDeal = { ...deal };
                 updatedDeal.subShipments = updatedDeal.subShipments.map(s => ({
@@ -538,7 +539,7 @@ export default function SupplyDetailsPage() {
             <StatusBadge status={status} />
 
 
-            {status === "ORDER_PLACED" && isAdminOrClient && (
+            {status === "ORDER_PLACED" && isAdminOrClient && canUpdate && (
               <button
                 onClick={async () => {
                   const result = await Swal.fire({
@@ -561,7 +562,7 @@ export default function SupplyDetailsPage() {
               </button>
             )}
 
-            {status === "LOADING" && (
+            {status === "LOADING" && canUpdate && (
               <button
                 onClick={async () => {
                   const result = await Swal.fire({
@@ -584,7 +585,7 @@ export default function SupplyDetailsPage() {
               </button>
             )}
 
-            {status === "LOADING" && (
+            {status === "LOADING" && canUpdate && (
               <button
                 onClick={() => { setAllotModalDeal(deal); setIsAllotModalOpen(true); }}
                 className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-white hover:bg-gray-50 dark:bg-[#1e2028] dark:hover:bg-[#242830] text-purple-600 dark:text-purple-400 border border-purple-500/30 transition-all shadow-sm"
@@ -593,7 +594,7 @@ export default function SupplyDetailsPage() {
               </button>
             )}
 
-            {(status === "IN_TRANSIT" || status === "DISPATCHED") && (
+            {(status === "IN_TRANSIT" || status === "DISPATCHED") && canUpdate && (
               <button
                 onClick={async () => {
                   const result = await Swal.fire({
@@ -617,7 +618,7 @@ export default function SupplyDetailsPage() {
             )}
 
             {/* DELIVERED: Allot vehicle for final delivery */}
-            {status === "DELIVERED" && (
+            {status === "DELIVERED" && canUpdate && (
               <button
                 onClick={() => { setAllotModalDeal(deal); setAllotModalMode('final_delivery'); setIsAllotModalOpen(true); }}
                 className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-orange-600 hover:bg-orange-500 text-white transition-all shadow-sm flex items-center gap-2"
@@ -630,7 +631,7 @@ export default function SupplyDetailsPage() {
             )}
 
             {/* OUT_FOR_DELIVERY: Final Delivery + Signed Challan buttons */}
-            {status === "OUT_FOR_DELIVERY" && (
+            {status === "OUT_FOR_DELIVERY" && canUpdate && (
               <>
                 <button
                   onClick={async () => {
@@ -672,7 +673,7 @@ export default function SupplyDetailsPage() {
               </div>
             )}
 
-            {status === "SHIPPED" && (
+            {status === "SHIPPED" && canUpdate && (
               <button
                 onClick={() => handleStatusUpdate(deal.id, "SUPPLY")}
                 className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-green-600 hover:bg-green-500 text-white transition-all shadow-sm"

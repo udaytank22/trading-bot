@@ -6,8 +6,10 @@ import { api } from '@services/api';
 import { RightDrawer, ViewDetails, Field, inputCls, EyeIcon, EditIcon, TrashIcon } from './shared';
 import * as XLSX from 'xlsx';
 import { useToast } from '@hooks/useToast';
+import { useAuth } from '@context';
 
 export default function VehiclesTab() {
+  const { hasPermission } = useAuth();
   const [vehicles, setVehicles] = useState([]);
   const [search, setSearch] = useState('');
   const [viewItem, setViewItem] = useState(null);
@@ -18,6 +20,10 @@ export default function VehiclesTab() {
   const [isLoading, setIsLoading] = useState(true);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const { showToast } = useToast();
+
+  const canCreate = hasPermission('vehicles', 'create');
+  const canUpdate = hasPermission('vehicles', 'update');
+  const canDelete = hasPermission('vehicles', 'delete');
 
   const fetchVehicles = async () => {
     try {
@@ -210,25 +216,29 @@ export default function VehiclesTab() {
             Sample
           </button>
 
-          <button
-            onClick={() => setIsImportModalOpen(true)}
-            className="h-9 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-            </svg>
-            Import
-          </button>
+          {canCreate && (
+            <>
+              <button
+                onClick={() => setIsImportModalOpen(true)}
+                className="h-9 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Import
+              </button>
 
-          <button
-            onClick={() => setIsFormOpen(true)}
-            className="h-9 px-4 bg-purple-600 hover:bg-purple-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Add Vehicle
-          </button>
+              <button
+                onClick={() => setIsFormOpen(true)}
+                className="h-9 px-4 bg-purple-600 hover:bg-purple-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Vehicle
+              </button>
+            </>
+          )}
         </div>
 
       </div>
@@ -282,8 +292,8 @@ export default function VehiclesTab() {
               </td>
               <td className="px-5 py-3 text-right space-x-3">
                 <button onClick={() => setViewItem(vehicle)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" title="View"><EyeIcon /></button>
-                <button onClick={() => { setEditItem(vehicle); setIsFormOpen(true); }} className="text-blue-500 hover:text-blue-600 transition-colors" title="Edit"><EditIcon /></button>
-                <button onClick={() => handleDelete(vehicle.id)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete"><TrashIcon /></button>
+                {canUpdate && <button onClick={() => { setEditItem(vehicle); setIsFormOpen(true); }} className="text-blue-500 hover:text-blue-600 transition-colors" title="Edit"><EditIcon /></button>}
+                {canDelete && <button onClick={() => handleDelete(vehicle.id)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete"><TrashIcon /></button>}
               </td>
             </tr>
           )}

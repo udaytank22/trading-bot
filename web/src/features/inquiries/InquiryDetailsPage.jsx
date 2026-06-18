@@ -31,6 +31,7 @@ export default function InquiryDetailsPage() {
   const [loading, setLoading] = useState(false);
   const [isTableFullscreen, setIsTableFullscreen] = useState(false);
   const [localMyQuote, setLocalMyQuote] = useState(null);
+  const [narrative, setNarrative] = useState('');
 
   // RFQ state
   const [pendingRFQs, setPendingRFQs] = useState([]);
@@ -73,6 +74,7 @@ export default function InquiryDetailsPage() {
     if (found) {
       setDeal(found);
       setLocalMyQuote(found.my_quote || null);
+      setNarrative('');
       // Initialise pending selections from existing isSelected flags
       initPendingFromDeal(found);
     } else {
@@ -81,6 +83,7 @@ export default function InquiryDetailsPage() {
         if (res.success && res.data) {
           setDeal(res.data);
           setLocalMyQuote(res.data.my_quote || null);
+          setNarrative('');
           initPendingFromDeal(res.data);
         }
       }).catch(err => {
@@ -747,13 +750,13 @@ export default function InquiryDetailsPage() {
                       // p.supplier_name is set per-product only after a supplier quote is selected.
                       // At RFQ_READY stage, no quotes exist yet — fall back to inquiry-level suppliers.
                       const perProductSupplierName = p.supplier_name || null;
-                      
-                      const inventoryMatch = inventoryData.find(inv => 
+
+                      const inventoryMatch = inventoryData.find(inv =>
                         inv.itemName.toLowerCase() === p.product_name.toLowerCase() ||
                         (inv.sku && p.product_name.toLowerCase().includes(inv.sku.toLowerCase()))
                       );
                       const inventoryStock = inventoryMatch ? (inventoryMatch.stocks?.reduce((acc, st) => acc + st.quantity, 0) || 0) : 0;
-                      
+
                       return (
                         <tr key={i} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
                           <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + i + 1}</td>

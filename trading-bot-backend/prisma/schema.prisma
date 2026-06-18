@@ -151,6 +151,10 @@ model Inquiry {
   assignedTeamLeadId Int?
   expectedDeliveryDate DateTime?
   remarks              String?
+  // Inventory auto-fulfillment fields
+  inventoryFulfilled   Boolean                @default(false)
+  supplyStatus         String?
+  dispatchStatus       String?
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
   deletedAt            DateTime?
@@ -327,7 +331,7 @@ model Shipment {
   shipmentNumber  String         @unique
   inquiryId Int?
   purchaseOrderId Int?
-  supplierId Int
+  supplierId Int?    // Optional: null for inventory-fulfilled orders (no external supplier)
   clientId Int
   cargoDetails    String?
   vehicleDetails  String?
@@ -342,11 +346,12 @@ model Shipment {
   createdById Int?
   updatedById Int?
   isActive        Boolean        @default(true)
+  inventoryFulfilled Boolean     @default(false)  // marks inventory-sourced shipments
   invoices        Invoice[]
   client          Client         @relation(fields: [clientId], references: [id])
   inquiry         Inquiry?       @relation(fields: [inquiryId], references: [id])
   purchaseOrder   PurchaseOrder? @relation(fields: [purchaseOrderId], references: [id])
-  supplier        Supplier       @relation(fields: [supplierId], references: [id])
+  supplier        Supplier?      @relation(fields: [supplierId], references: [id])
 }
 
 model Invoice {
@@ -456,19 +461,23 @@ model StockMovement {
   id Int @id @default(autoincrement())
   inventoryItemId Int
   warehouseId Int
-  type            String
-  quantity        Int
-  referenceType   String?
-  referenceId Int?
-  remarks         String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  deletedAt       DateTime?
-  createdById Int?
-  updatedById Int?
-  isActive        Boolean       @default(true)
-  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
-  warehouse       Warehouse     @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  type              String
+  quantity          Int
+  previousQuantity  Int?      // Stock level before this movement (for audit)
+  remainingQuantity Int?      // Stock level after this movement (for audit)
+  referenceType     String?
+  referenceId       Int?
+  referenceNumber   String?   // e.g. inquiry number for easy display
+  actionBy          String?   // System or user email for audit log
+  remarks           String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  deletedAt         DateTime?
+  createdById       Int?
+  updatedById       Int?
+  isActive          Boolean       @default(true)
+  inventoryItem     InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  warehouse         Warehouse     @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
 }
 
 model Employee {

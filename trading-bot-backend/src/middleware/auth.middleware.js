@@ -25,7 +25,15 @@ const authMiddleware = async (req, res, next) => {
         deletedAt: null
       },
       include: {
-        role: true
+        role: {
+          include: {
+            permissions: {
+              include: {
+                permission: true
+              }
+            }
+          }
+        }
       }
     });
 

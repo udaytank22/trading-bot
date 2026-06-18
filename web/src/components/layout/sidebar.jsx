@@ -19,7 +19,7 @@ const NAV_LINKS = [
 ];
 
 export default function Sidebar({ isOpen }) {
-  const { logout, currentUser } = useAuth();
+  const { logout, currentUser, hasPermission } = useAuth();
   const [isHovered, setIsHovered] = useState(false);
   const effectiveOpen = isOpen || isHovered;
   const navigate = useNavigate();
@@ -31,14 +31,28 @@ export default function Sidebar({ isOpen }) {
 
   const filteredLinks = NAV_LINKS.filter(link => {
     const roleLower = currentUser?.role?.toLowerCase();
+    
+    // Client portal logic
     if (roleLower === 'client') {
       return link.name === "Client RFQs";
     }
-    if (roleLower === 'employee' || roleLower === 'user') {
-      const employeeTabs = ["Dashboard", "Inquiries", "Purchase Orders", "Supply", "Documents", "Invoices", "Notifications", "Inbox", "To-Do", "Reports"];
-      return employeeTabs.includes(link.name) && link.name !== "Client RFQs";
+    if (link.name === "Client RFQs") {
+      return false; // Non-clients don't see Client RFQs tab
     }
-    return true; // Admin sees everything
+
+    // Permission checks
+    if (link.name === "Dashboard") return hasPermission("dashboard", "read");
+    if (link.name === "Inquiries") return hasPermission("inquiries", "read");
+    if (link.name === "Purchase Orders") return hasPermission("purchaseOrders", "read");
+    if (link.name === "Supply") return hasPermission("suppliers", "read");
+    if (link.name === "Invoices") return hasPermission("invoices", "read");
+    if (link.name === "Inventory") return hasPermission("inventory", "read");
+    if (link.name === "Employees") return hasPermission("employees", "read");
+    if (link.name === "Inbox") return hasPermission("chat", "read");
+    if (link.name === "To-Do") return hasPermission("dashboard", "read");
+    if (link.name === "Reports") return hasPermission("reports", "read");
+
+    return true;
   });
 
   return (

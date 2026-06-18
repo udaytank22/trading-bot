@@ -1,17 +1,21 @@
 import React, { useState, useMemo } from 'react';
 import { DataTable, rowStripeClass, ROW_HOVER_CLS, Pagination } from '@components/ui';
 import { confirmAction } from '@utils/swal';
-import { useData } from '@context';
+import { useData, useAuth } from '@context';
 import { api } from '@services/api';
 import { RightDrawer, ViewDetails, EyeIcon, TrashIcon } from './shared';
 import { DocumentsTabSchema1 } from '@config/tableSchemas';
 
 export default function DocumentsTab() {
   const { documentsData, refreshAll } = useData();
+  const { hasPermission } = useAuth();
   const [search, setSearch] = useState('');
   const [viewItem, setViewItem] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const canCreate = hasPermission('documents', 'create');
+  const canDelete = hasPermission('documents', 'delete');
 
   const filteredDocuments = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -77,15 +81,17 @@ export default function DocumentsTab() {
         {/* Right Side - Buttons */}
         <div className="flex flex-wrap items-center gap-3 justify-start sm:justify-end">
 
-          <button
-            onClick={() => setIsFormOpen(true)}
-            className="h-9 px-4 bg-purple-600 hover:bg-purple-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Add Document
-          </button>
+          {canCreate && (
+            <button
+              onClick={() => setIsFormOpen(true)}
+              className="h-9 px-4 bg-purple-600 hover:bg-purple-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Add Document
+            </button>
+          )}
         </div>
 
       </div>
@@ -132,13 +138,15 @@ export default function DocumentsTab() {
                 >
                   <EyeIcon />
                 </button>
-                <button
-                  onClick={() => handleDelete(doc.id)}
-                  className="text-red-500 hover:text-red-600 transition-colors"
-                  title="Delete"
-                >
-                  <TrashIcon />
-                </button>
+                {canDelete && (
+                  <button
+                    onClick={() => handleDelete(doc.id)}
+                    className="text-red-500 hover:text-red-600 transition-colors"
+                    title="Delete"
+                  >
+                    <TrashIcon />
+                  </button>
+                )}
               </td>
             </tr>
           )}

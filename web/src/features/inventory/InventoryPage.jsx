@@ -1,11 +1,36 @@
 import { InventoryPageSchema1 } from '@config/tableSchemas';
 import React, { useMemo, useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import { confirmAction } from '@utils/swal';
-import { PageToolbar, Select, DataTable, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
-import { fetchInventory, createInventoryItem, updateInventoryItem, deleteInventoryItem, moveStock } from '../../api/inventory';
+import { PageToolbar, Select, DataTable, Pagination, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
+import {
+  fetchInventory,
+  getInventoryItem,
+  createInventoryItem,
+  updateInventoryItem,
+  deleteInventoryItem,
+  moveStock,
+  getInventoryTransactionHistory
+} from '../../api/inventory';
+import { useAuth } from '@context';
 
 const inputCls =
   "w-full bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-[36px] px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-all shadow-sm focus:ring-1 focus:ring-purple-500/50";
+
+const getTypeStyle = (type) => {
+  switch (type) {
+    case 'IN':
+    case 'INVENTORY_RELEASED':
+      return 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20';
+    case 'OUT':
+    case 'INVENTORY_DISPATCHED':
+      return 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/20';
+    case 'INVENTORY_RESERVED':
+      return 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20';
+    default:
+      return 'bg-gray-50 dark:bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-500/20';
+  }
+};
 
 function Field({ label, children }) {
   return (
@@ -68,8 +93,8 @@ function ViewDetails({ item, onClose }) {
     "Item Name": item.itemName,
     "Category": item.category || 'N/A',
     "Unit": item.unit || 'N/A',
-    "Selling Price": `$${parseFloat(item.sellingPrice).toFixed(2)}`,
-    "Purchase Price": `$${parseFloat(item.purchasePrice).toFixed(2)}`,
+    "Selling Price": `₹ ${parseFloat(item.sellingPrice).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+    "Purchase Price": `₹ ${parseFloat(item.purchasePrice).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
     "Min Stock Level": item.minimumStockLevel,
     "Status": item.status,
     "Total Quantity": item.stocks?.reduce((acc, st) => acc + st.quantity, 0) || 0,
@@ -77,21 +102,88 @@ function ViewDetails({ item, onClose }) {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 flex flex-col gap-4">
+    <div className="flex flex-col gap-6 h-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {Object.entries(details).map(([key, value]) => (
           <div
             key={key}
-            className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 border-b border-gray-50 dark:border-[#2a2d33]/50 pb-3 last:border-0 last:pb-0"
+            className="flex flex-col border-b border-gray-100 dark:border-[#2a2d36]/30 pb-3"
           >
-            <span className="text-[12px] font-semibold text-gray-500 uppercase tracking-wider w-1/3">
+            <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
               {key}
             </span>
-            <span className="text-[14px] text-gray-900 dark:text-white font-medium flex-1">
+            <span className="text-[13px] text-gray-800 dark:text-gray-200 font-semibold mt-1">
               {value}
             </span>
           </div>
         ))}
+      </div>
+
+      <div className="mt-4">
+        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Stock Ledger (Movements)</h4>
+        {!item.movements || item.movements.length === 0 ? (
+          <div className="text-center py-6 text-xs text-gray-400 italic bg-gray-50/50 dark:bg-[#242830]/20 rounded-xl border border-dashed border-gray-250 dark:border-[#2a2d36]">
+            No movements recorded for this item.
+          </div>
+        ) : (
+          <div className="rounded-xl border border-gray-250 dark:border-[#2a2d36] overflow-hidden max-h-[300px] overflow-y-auto custom-scrollbar">
+            <table className="w-full text-[11px] text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-55 dark:bg-[#15171c] text-gray-500 dark:text-gray-400 font-bold uppercase border-b border-gray-250 dark:border-[#2a2d36] sticky top-0">
+                  <th className="px-4 py-2.5">Date</th>
+                  <th className="px-4 py-2.5">Type</th>
+                  <th className="px-4 py-2.5 text-center">Qty</th>
+                  <th className="px-4 py-2.5 text-center">Prev</th>
+                  <th className="px-4 py-2.5 text-center">Rem</th>
+                  <th className="px-4 py-2.5">Reference</th>
+                  <th className="px-4 py-2.5">Action By</th>
+                </tr>
+              </thead>
+              <tbody>
+                {item.movements.map((m) => {
+                  const isLinkable = m.referenceNumber && m.referenceNumber.startsWith('INQ-');
+                  return (
+                    <tr key={m.id} className="border-b border-gray-150 dark:border-[#2a2d36]/30 last:border-0 hover:bg-gray-50 dark:hover:bg-[#242830]/30 transition-colors">
+                      <td className="px-4 py-2.5 text-gray-500 font-medium">
+                        {new Date(m.createdAt).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase border tracking-wider ${getTypeStyle(m.type)}`}>
+                          {m.type?.replace('INVENTORY_', '')}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5 text-center font-mono font-bold text-gray-900 dark:text-white">
+                        {m.type === 'OUT' || m.type === 'INVENTORY_RESERVED' || m.type === 'INVENTORY_DISPATCHED' ? '-' : '+'}{m.quantity}
+                      </td>
+                      <td className="px-4 py-2.5 text-center font-mono text-gray-500">
+                        {m.previousQuantity !== null ? m.previousQuantity : '—'}
+                      </td>
+                      <td className="px-4 py-2.5 text-center font-mono font-bold text-gray-700 dark:text-gray-300">
+                        {m.remainingQuantity !== null ? m.remainingQuantity : '—'}
+                      </td>
+                      <td className="px-4 py-2.5 font-medium">
+                        {isLinkable ? (
+                          <a
+                            href={`/#/inquiries/${m.referenceId}`}
+                            onClick={onClose}
+                            className="text-purple-600 hover:text-purple-550 dark:text-purple-400 dark:hover:text-purple-300 font-bold hover:underline"
+                          >
+                            {m.referenceNumber}
+                          </a>
+                        ) : (
+                          m.referenceNumber || '—'
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5 text-gray-500 font-mono truncate max-w-[120px]" title={m.actionBy}>
+                        {m.actionBy || 'system'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -104,8 +196,8 @@ function InventoryForm({ initialData, onSave, onClose }) {
       sku: "",
       category: "",
       unit: "pcs",
-      quantity: "", // Only used for creation initial stock
-      warehouseId: "1001", // Default Port Warehouse Alpha
+      quantity: "", 
+      warehouseId: "1001", 
       sellingPrice: "",
       purchasePrice: "",
       minimumStockLevel: "5",
@@ -324,13 +416,44 @@ const TrashIcon = () => (
 );
 
 export default function InventoryPage() {
+  const navigate = useNavigate();
+  const { hasPermission } = useAuth();
+  const canCreate = hasPermission('inventory', 'create');
+  const canUpdate = hasPermission('inventory', 'update');
+  const canDelete = hasPermission('inventory', 'delete');
+
   const [search, setSearch] = useState("");
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('items'); // 'items' | 'transactions'
+
+  // Transactions State
+  const [transactions, setTransactions] = useState([]);
+  const [txTotalItems, setTxTotalItems] = useState(0);
+  const [txTotalPages, setTxTotalPages] = useState(1);
+  const [txCurrentPage, setTxCurrentPage] = useState(1);
+  const [txItemsPerPage, setTxItemsPerPage] = useState(10);
+  const [txLoading, setTxLoading] = useState(false);
+
+  // Filters for transactions
+  const [txTypeFilter, setTxTypeFilter] = useState('');
+  const [txItemSearch, setTxItemSearch] = useState('');
+  const [txStartDate, setTxStartDate] = useState('');
+  const [txEndDate, setTxEndDate] = useState('');
+  const [txRefNumber, setTxRefNumber] = useState('');
 
   useEffect(() => {
     loadInventory();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'transactions') {
+      const timer = setTimeout(() => {
+        loadTransactions();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab, txCurrentPage, txItemsPerPage, txTypeFilter, txItemSearch, txStartDate, txEndDate, txRefNumber]);
 
   const loadInventory = async () => {
     try {
@@ -344,9 +467,49 @@ export default function InventoryPage() {
     }
   };
 
+  const loadTransactions = async () => {
+    try {
+      setTxLoading(true);
+      const params = {
+        page: txCurrentPage,
+        pageSize: txItemsPerPage,
+        type: txTypeFilter || undefined,
+        itemName: txItemSearch || undefined,
+        startDate: txStartDate || undefined,
+        endDate: txEndDate || undefined,
+        referenceNumber: txRefNumber || undefined
+      };
+      const res = await getInventoryTransactionHistory(params);
+      if (res.success) {
+        setTransactions(res.data.items || []);
+        setTxTotalItems(res.data.total || 0);
+        setTxTotalPages(res.data.totalPages || 1);
+      }
+    } catch (error) {
+      console.error("Failed to load transaction history:", error);
+    } finally {
+      setTxLoading(false);
+    }
+  };
+
+  const handleFilterChange = (setter, value) => {
+    setter(value);
+    setTxCurrentPage(1);
+  };
+
   const [viewItem, setViewItem] = useState(null);
   const [editItem, setEditItem] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+
+  const handleViewDetails = async (item) => {
+    try {
+      const res = await getInventoryItem(item.id);
+      setViewItem(res.data || res);
+    } catch (error) {
+      console.error("Failed to fetch inventory item details:", error);
+      setViewItem(item);
+    }
+  };
 
   const handleDelete = async (id) => {
     const isConfirmed = await confirmAction({
@@ -398,7 +561,7 @@ export default function InventoryPage() {
       } else {
         const newItemRes = await createInventoryItem(formData);
         const newItem = newItemRes.data || newItemRes;
-        
+
         // If quantity is provided, add an initial stock movement
         if (formData.quantity && parseInt(formData.quantity) > 0) {
           await moveStock({
@@ -419,17 +582,61 @@ export default function InventoryPage() {
     }
   };
 
+  const handleExportCSV = () => {
+    const headers = ["Date & Time", "Item Name", "Type", "Quantity", "Previous Stock", "Remaining Stock", "Inquiry #", "Action By", "Remarks"];
+    const rows = transactions.map(t => [
+      new Date(t.createdAt).toLocaleString(),
+      t.inventoryItem?.itemName || 'Unknown',
+      t.type,
+      t.quantity,
+      t.previousQuantity ?? '',
+      t.remainingQuantity ?? '',
+      t.referenceNumber || '',
+      t.actionBy || '',
+      t.remarks || ''
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `inventory_transactions_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const txColumns = [
+    { key: "date", label: "Date & Time" },
+    { key: "itemName", label: "Item Name" },
+    { key: "type", label: "Type" },
+    { key: "qty", label: "Qty" },
+    { key: "prev", label: "Prev Stock" },
+    { key: "rem", label: "Rem Stock" },
+    { key: "inquiry", label: "Inquiry #" },
+    { key: "actionBy", label: "Action By" }
+  ];
+
   return (
     <div className="flex flex-col w-full h-full pb-4">
       <div className="w-full flex-1 flex flex-col mt-4">
+        
+        {/* VIEW DETAILS DRAWER */}
         <RightDrawer
           isOpen={!!viewItem}
           title="Inventory Item Details"
           onClose={() => setViewItem(null)}
         >
-          <ViewDetails item={viewItem} onClose={() => setViewItem(null)} />
+          {viewItem && (
+            <ViewDetails item={viewItem} onClose={() => setViewItem(null)} />
+          )}
         </RightDrawer>
 
+        {/* ADD/EDIT FORM DRAWER */}
         <RightDrawer
           isOpen={isFormOpen}
           title={editItem ? "Edit Inventory Item" : "Add New Item"}
@@ -448,91 +655,286 @@ export default function InventoryPage() {
           />
         </RightDrawer>
 
-        <PageToolbar
-          search={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="Search inventory by SKU, Name, Category..."
-          onAdd={() => setIsFormOpen(true)}
-          addLabel="Add Item"
-        />
-
-        <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg transition-colors duration-300">
-          <DataTable
-            columns={InventoryPageSchema1}
-            data={filteredInventory}
-            emptyMessage={loading ? "Loading..." : "No inventory items found."}
-            renderRow={(item, idx) => {
-              const totalQty = item.stocks?.reduce((acc, st) => acc + st.quantity, 0) || 0;
-              const isLowStock = totalQty < item.minimumStockLevel;
-              let statusLabel = 'In Stock';
-              let statusColor = 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400';
-              
-              if (totalQty === 0) {
-                statusLabel = 'Out of Stock';
-                statusColor = 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400';
-              } else if (isLowStock) {
-                statusLabel = 'Low Stock';
-                statusColor = 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400';
-              }
-
-              return (
-                <tr
-                  key={item.id}
-                  className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}
-                >
-                  <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + idx + 1}</td>
-                  <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400">
-                    {item.sku}
-                  </td>
-                  <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">
-                    {item.itemName}
-                  </td>
-                  <td className="px-5 py-3">
-                    <span className="px-2 py-1 bg-gray-100 dark:bg-[#2a2d36] rounded text-[11px] font-bold text-gray-600 dark:text-gray-400">
-                      {item.category || '-'}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3">
-                    {item.stocks?.[0]?.warehouse?.name || 'Main Warehouse'}
-                  </td>
-                  <td className="px-5 py-3">{totalQty}</td>
-                  <td className="px-5 py-3">${parseFloat(item.sellingPrice).toFixed(2)}</td>
-                  <td className="px-5 py-3">
-                    <span className={`px-2 py-1 rounded text-[11px] font-bold ${statusColor}`}>
-                      {statusLabel}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3 text-right space-x-3">
-                    <button
-                      onClick={() => setViewItem(item)}
-                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-                      title="View"
-                    >
-                      <EyeIcon />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditItem(item);
-                        setIsFormOpen(true);
-                      }}
-                      className="text-blue-500 hover:text-blue-600 transition-colors"
-                      title="Edit"
-                    >
-                      <EditIcon />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="text-red-500 hover:text-red-600 transition-colors"
-                      title="Delete"
-                    >
-                      <TrashIcon />
-                    </button>
-                  </td>
-                </tr>
-              );
-            }}
-          />
+        {/* TABS SELECTOR */}
+        <div className="flex border-b border-gray-200 dark:border-[#2a2d36] mb-4">
+          <button
+            onClick={() => setActiveTab('items')}
+            className={`px-6 py-2.5 font-bold text-sm border-b-2 transition-all duration-200 ${activeTab === 'items'
+              ? 'border-purple-500 text-purple-650 dark:text-purple-400 font-extrabold'
+              : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+          >
+            Inventory Items
+          </button>
+          <button
+            onClick={() => setActiveTab('transactions')}
+            className={`px-6 py-2.5 font-bold text-sm border-b-2 transition-all duration-200 ${activeTab === 'transactions'
+              ? 'border-purple-500 text-purple-650 dark:text-purple-400 font-extrabold'
+              : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+          >
+            Transaction History
+          </button>
         </div>
+
+        {activeTab === 'items' ? (
+          <div className="flex-1 flex flex-col gap-4">
+            <PageToolbar
+              search={search}
+              onSearchChange={setSearch}
+              searchPlaceholder="Search inventory by SKU, Name, Category..."
+              onAdd={canCreate ? () => setIsFormOpen(true) : undefined}
+              addLabel="Add Item"
+            />
+
+            <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg transition-colors duration-300">
+              <DataTable
+                columns={InventoryPageSchema1}
+                data={filteredInventory}
+                emptyMessage={loading ? "Loading..." : "No inventory items found."}
+                renderRow={(item, idx) => {
+                  const totalQty = item.stocks?.reduce((acc, st) => acc + st.quantity, 0) || 0;
+                  const isLowStock = totalQty < item.minimumStockLevel;
+                  let statusLabel = 'In Stock';
+                  let statusColor = 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400';
+
+                  if (totalQty === 0) {
+                    statusLabel = 'Out of Stock';
+                    statusColor = 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400';
+                  } else if (isLowStock) {
+                    statusLabel = 'Low Stock';
+                    statusColor = 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400';
+                  }
+
+                  return (
+                    <tr
+                      key={item.id}
+                      className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}
+                    >
+                      <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + idx + 1}</td>
+                      <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400">
+                        {item.sku}
+                      </td>
+                      <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">
+                        {item.itemName}
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className="px-2 py-1 bg-gray-100 dark:bg-[#2a2d36] rounded text-[11px] font-bold text-gray-600 dark:text-gray-400">
+                          {item.category || '-'}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3">
+                        {item.stocks?.[0]?.warehouse?.name || 'Main Warehouse'}
+                      </td>
+                      <td className="px-5 py-3 font-mono font-semibold">{totalQty}</td>
+                      <td className="px-5 py-3 font-mono">₹ {parseFloat(item.sellingPrice).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                      <td className="px-5 py-3">
+                        <span className={`px-2 py-1 rounded text-[11px] font-bold ${statusColor}`}>
+                          {statusLabel}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-right space-x-3">
+                        <button
+                          onClick={() => handleViewDetails(item)}
+                          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                          title="View Details"
+                        >
+                          <EyeIcon />
+                        </button>
+                        {canUpdate && (
+                          <button
+                            onClick={() => {
+                              setEditItem(item);
+                              setIsFormOpen(true);
+                            }}
+                            className="text-blue-500 hover:text-blue-600 transition-colors"
+                            title="Edit"
+                          >
+                            <EditIcon />
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            className="text-red-500 hover:text-red-600 transition-colors"
+                            title="Delete"
+                          >
+                            <TrashIcon />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                }}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col gap-4 animate-in fade-in duration-200">
+            {/* Filter controls */}
+            <div className="bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d36] rounded-xl p-4 flex flex-col gap-4 shadow-sm transition-colors duration-300">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+                {/* Search Item Name */}
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5">Item Name</label>
+                  <input
+                    type="text"
+                    value={txItemSearch}
+                    onChange={(e) => handleFilterChange(setTxItemSearch, e.target.value)}
+                    placeholder="Search item name..."
+                    className="w-full bg-white dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-xl h-9 px-3 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 shadow-sm"
+                  />
+                </div>
+
+                {/* Search Inquiry Number */}
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5">Inquiry #</label>
+                  <input
+                    type="text"
+                    value={txRefNumber}
+                    onChange={(e) => handleFilterChange(setTxRefNumber, e.target.value)}
+                    placeholder="e.g. INQ-1004"
+                    className="w-full bg-white dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-xl h-9 px-3 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 shadow-sm"
+                  />
+                </div>
+
+                {/* Type Filter */}
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5">Transaction Type</label>
+                  <select
+                    value={txTypeFilter}
+                    onChange={(e) => handleFilterChange(setTxTypeFilter, e.target.value)}
+                    className="w-full bg-white dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d36] rounded-xl h-9 px-3 text-xs text-gray-700 dark:text-gray-300 focus:outline-none focus:border-purple-500 shadow-sm cursor-pointer"
+                  >
+                    <option value="">All Types</option>
+                    <option value="IN">IN (Stock Added)</option>
+                    <option value="OUT">OUT (Stock Removed)</option>
+                    <option value="INVENTORY_RESERVED">Reserved</option>
+                    <option value="INVENTORY_DISPATCHED">Dispatched</option>
+                    <option value="INVENTORY_RELEASED">Released</option>
+                  </select>
+                </div>
+
+                {/* Start Date */}
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5">Start Date</label>
+                  <input
+                    type="date"
+                    value={txStartDate}
+                    onChange={(e) => handleFilterChange(setTxStartDate, e.target.value)}
+                    className="w-full bg-white dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d36] rounded-xl h-9 px-3 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 shadow-sm"
+                  />
+                </div>
+
+                {/* End Date */}
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5">End Date</label>
+                  <input
+                    type="date"
+                    value={txEndDate}
+                    onChange={(e) => handleFilterChange(setTxEndDate, e.target.value)}
+                    className="w-full bg-white dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d36] rounded-xl h-9 px-3 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 shadow-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center border-t border-gray-150 dark:border-[#2a2d36] pt-3 flex-wrap gap-3">
+                <button
+                  onClick={() => {
+                    setTxItemSearch('');
+                    setTxRefNumber('');
+                    setTxTypeFilter('');
+                    setTxStartDate('');
+                    setTxEndDate('');
+                    setTxCurrentPage(1);
+                  }}
+                  className="text-xs text-gray-550 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white font-bold transition-all"
+                >
+                  Clear All Filters
+                </button>
+                <button
+                  onClick={handleExportCSV}
+                  disabled={transactions.length === 0}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-550 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm shadow-purple-600/10 cursor-pointer"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Export CSV
+                </button>
+              </div>
+            </div>
+
+            {/* Table Container */}
+            <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg transition-colors duration-300">
+              <DataTable
+                columns={txColumns}
+                data={transactions}
+                emptyMessage={txLoading ? "Loading transaction ledger..." : "No transactions found matching criteria."}
+                renderRow={(tx, idx) => {
+                  const isLinkable = tx.referenceNumber && tx.referenceNumber.startsWith('INQ-');
+                  return (
+                    <tr key={tx.id} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}>
+                      <td className="px-5 py-3 text-gray-500 font-medium font-mono text-xs">
+                        {new Date(tx.createdAt).toLocaleString()}
+                      </td>
+                      <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">
+                        {tx.inventoryItem?.itemName || 'Unknown'}
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase border tracking-wider ${getTypeStyle(tx.type)}`}>
+                          {tx.type?.replace('INVENTORY_', '')}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 font-mono font-bold text-gray-900 dark:text-white">
+                        {tx.type === 'OUT' || tx.type === 'INVENTORY_RESERVED' || tx.type === 'INVENTORY_DISPATCHED' ? '-' : '+'}{tx.quantity}
+                      </td>
+                      <td className="px-5 py-3 font-mono text-gray-500">
+                        {tx.previousQuantity !== null ? tx.previousQuantity : '—'}
+                      </td>
+                      <td className="px-5 py-3 font-mono font-bold text-gray-750 dark:text-gray-300">
+                        {tx.remainingQuantity !== null ? tx.remainingQuantity : '—'}
+                      </td>
+                      <td className="px-5 py-3 font-medium">
+                        {isLinkable ? (
+                          <a
+                            href={`/#/inquiries/${tx.referenceId}`}
+                            className="text-purple-650 hover:text-purple-550 dark:text-purple-400 dark:hover:text-purple-300 font-bold hover:underline"
+                          >
+                            {tx.referenceNumber}
+                          </a>
+                        ) : (
+                          tx.referenceNumber || '—'
+                        )}
+                      </td>
+                      <td className="px-5 py-3 text-gray-500 font-mono text-xs max-w-[120px] truncate" title={tx.actionBy}>
+                        {tx.actionBy || 'system'}
+                      </td>
+                    </tr>
+                  );
+                }}
+              />
+              {txTotalItems > 0 && (
+                <div className="p-4 border-t border-gray-150 dark:border-[#2a2d36] bg-gray-50/50 dark:bg-[#1a1d23]">
+                  <Pagination
+                    currentPage={txCurrentPage}
+                    totalPages={txTotalPages}
+                    totalItems={txTotalItems}
+                    itemsPerPage={txItemsPerPage}
+                    onPrev={() => setTxCurrentPage(prev => Math.max(prev - 1, 1))}
+                    onNext={() => setTxCurrentPage(prev => Math.min(prev + 1, txTotalPages))}
+                    onPageChange={(page) => setTxCurrentPage(page)}
+                    onItemsPerPageChange={(size) => {
+                      setTxItemsPerPage(size);
+                      setTxCurrentPage(1);
+                    }}
+                    itemLabel="transactions"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

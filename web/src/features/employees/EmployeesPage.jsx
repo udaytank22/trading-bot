@@ -148,6 +148,8 @@ export default function EmployeesPage() {
     setIsModalOpen(true);
   };
 
+  const { hasPermission } = useAuth();
+
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col w-full h-full pb-4 relative">
@@ -166,7 +168,7 @@ export default function EmployeesPage() {
         filterValue={filter}
         onFilterChange={(val) => { setFilter(val); handlePageChange(1); }}
         filterOptions={FILTER_OPTIONS}
-        onAdd={handleAdd}
+        onAdd={hasPermission('employees', 'create') ? handleAdd : undefined}
         addLabel="Add Employee"
       />
 
@@ -177,11 +179,11 @@ export default function EmployeesPage() {
         <EmployeeTable
           employees={mappedEmployees}
           onView={(emp) => setEmployeeToView(emp)}
-          onEdit={(emp) => {
+          onEdit={hasPermission('employees', 'update') ? (emp) => {
             setEmployeeToEdit(emp);
             setIsModalOpen(true);
-          }}
-          onDelete={handleDelete}
+          } : undefined}
+          onDelete={hasPermission('employees', 'delete') ? handleDelete : undefined}
         />
 
         {/* Empty state when no employees match the filter */}

@@ -35,7 +35,8 @@ const LoginPage = () => {
           id: user.id,
           name: user.employeeProfile ? user.employeeProfile.fullName : (user.email.split('@')[0]),
           role: normalizedRole,
-          email: user.email
+          email: user.email,
+          roleData: user.role
         }, usedToken, refreshToken);
 
         navigate("/");

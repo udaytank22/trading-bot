@@ -48,6 +48,7 @@ const FILTER_OPTIONS = [
 export default function SupplyPage() {
   const { setSupplyData } = useData();
   const navigate = useNavigate();
+  const { hasPermission } = useAuth();
 
   // ── Local UI state ────────────────────────────────────────────────────────
   const [search, setSearch] = useState("");
@@ -212,7 +213,7 @@ export default function SupplyPage() {
         filterValue={filter}
         onFilterChange={(val) => { setFilter(val); handlePageChange(1); }}
         filterOptions={FILTER_OPTIONS}
-        onAdd={() => setIsAddModalOpen(true)}
+        onAdd={hasPermission('suppliers', 'create') ? () => setIsAddModalOpen(true) : undefined}
         addLabel="Add Supply"
       />
 
@@ -232,11 +233,11 @@ export default function SupplyPage() {
             setContactModalDeal(item);
             setIsContactModalOpen(true);
           }}
-          onAllot={(item) => {
+          onAllot={hasPermission('suppliers', 'update') ? (item) => {
             setAllotModalDeal(item);
             setIsAllotModalOpen(true);
-          }}
-          onStatusUpdate={handleStatusUpdate}
+          } : undefined}
+          onStatusUpdate={hasPermission('suppliers', 'update') ? handleStatusUpdate : undefined}
         />
 
         {/* Centralized pagination footer */}

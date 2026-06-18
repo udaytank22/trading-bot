@@ -13,7 +13,15 @@ const login = async (email, password) => {
       deletedAt: null
     },
     include: {
-      role: true
+      role: {
+        include: {
+          permissions: {
+            include: {
+              permission: true
+            }
+          }
+        }
+      }
     }
   });
 
@@ -63,7 +71,15 @@ const refreshSession = async (token) => {
       deletedAt: null
     },
     include: {
-      role: true
+      role: {
+        include: {
+          permissions: {
+            include: {
+              permission: true
+            }
+          }
+        }
+      }
     }
   });
 

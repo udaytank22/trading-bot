@@ -122,22 +122,26 @@ const AccountTable = ({ items, onEdit, onDelete }) => {
       {/* ── Icon action buttons (edit + delete) ────────────────────────── */}
       <td className="px-3 md:px-6 py-4 text-right">
         <div className="flex items-center justify-end gap-2">
-          <Button
-            variant="icon"
-            color="blue"
-            onClick={() => onEdit(acc)}
-            title="Edit Account"
-          >
-            <EditIcon />
-          </Button>
-          <Button
-            variant="icon"
-            color="red"
-            onClick={() => onDelete(acc.id)}
-            title="Delete Account"
-          >
-            <DeleteIcon />
-          </Button>
+          {onEdit && (
+            <Button
+              variant="icon"
+              color="blue"
+              onClick={() => onEdit(acc)}
+              title="Edit Account"
+            >
+              <EditIcon />
+            </Button>
+          )}
+          {onDelete && (
+            <Button
+              variant="icon"
+              color="red"
+              onClick={() => onDelete(acc.id)}
+              title="Delete Account"
+            >
+              <DeleteIcon />
+            </Button>
+          )}
         </div>
       </td>
     </tr>

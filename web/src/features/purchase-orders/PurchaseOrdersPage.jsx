@@ -18,6 +18,7 @@ import { api } from '@services/api';
 import React, { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { useAuth } from '@context';
 import { useToast } from '@hooks/useToast';
 import { usePaginatedFetch } from '@hooks/usePaginatedFetch';
 import AddPurchaseOrderModal from './modals/AddPurchaseOrderModal';
@@ -30,6 +31,7 @@ import { Toast, PageToolbar, Pagination, EmptyState } from '@components/ui';
 export default function PurchaseOrdersPage() {
   const { toast, showToast } = useToast();
   const navigate = useNavigate();
+  const { hasPermission } = useAuth();
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
@@ -173,7 +175,7 @@ export default function PurchaseOrdersPage() {
           { value: "SHIPPED", label: "Shipped" },
           { value: "CLOSED", label: "Closed" },
         ]}
-        onAdd={() => setIsAddModalOpen(true)}
+        onAdd={hasPermission('purchaseOrders', 'create') ? () => setIsAddModalOpen(true) : undefined}
         addLabel="Add Purchase Order"
       />
 
@@ -184,14 +186,14 @@ export default function PurchaseOrdersPage() {
             onView={(po) => {
               navigate(`/purchase-orders/${po.id}`);
             }}
-            onOrder={(po) => {
+            onOrder={hasPermission('purchaseOrders', 'update') ? (po) => {
               if (po.isGrouped) {
                 navigate(`/purchase-orders/${po.id}`);
               } else {
                 setSelectedPO(po);
                 setIsEmailModalOpen(true);
               }
-            }}
+            } : undefined}
           />
         ) : (
           <EmptyState title="No purchase orders found" description="Create your first purchase order to get started" />

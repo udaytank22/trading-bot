@@ -46,7 +46,7 @@ function PlusIcon() {
 /* ── Main page ───────────────────────────────────────────────────── */
 export default function InquiriesPage() {
   const location = useLocation();
-  const { currentUser } = useAuth();
+  const { currentUser, hasPermission } = useAuth();
   const { toast, showToast } = useToast();
 
   // Filters & pagination
@@ -256,10 +256,12 @@ export default function InquiriesPage() {
                 </svg>
               </button>
             </div>
-            <Button variant="primary" size="sm" onClick={() => setIsAddModalOpen(true)}>
-              <PlusIcon />
-              Add Inquiry
-            </Button>
+            {hasPermission("inquiries", "create") && (
+              <Button variant="primary" size="sm" onClick={() => setIsAddModalOpen(true)}>
+                <PlusIcon />
+                Add Inquiry
+              </Button>
+            )}
           </div>
         }
       />

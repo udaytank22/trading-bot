@@ -61,6 +61,8 @@ const STATUS_STYLES = {
     "bg-teal-50 dark:bg-teal-500/20 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-500/25",
   CLOSED:
     "bg-gray-100 dark:bg-gray-500/20 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-500/25",
+  READY_TO_DISPATCH:
+    "bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-500/25",
 
   // ── Purchase Order statuses ────────────────────────────────────────────────
   // PENDING already defined above
@@ -114,25 +116,26 @@ const STATUS_STYLES = {
  * If a status isn't listed here, the raw value is displayed with "_" replaced by " ".
  */
 const STATUS_LABELS = {
-  PENDING:      "Datasheet",
-  RFQ_SENT:     "RFQ sent",
-  QUOTE_SENT:   "Quoted",
+  PENDING: "Datasheet",
+  RFQ_SENT: "RFQ sent",
+  QUOTE_SENT: "Quoted",
   RFQ_RECEIVED: "RFQ Received",
   CLIENT_QUOTING: "Client Quoting",
-  TL_REVIEW:    "TL Review",
+  TL_REVIEW: "TL Review",
   ADMIN_APPROVAL: "Admin Approval",
   EMPLOYEE_VERIFY: "Employee Verify",
   CLIENT_FINAL_APPROVAL: "Client Final Approval",
-  CONFIRMED:    "Confirmed",
-  IN_TRANSIT:   "In Transit",
-  ORDERED:      "Ordered",
+  CONFIRMED: "Confirmed",
+  IN_TRANSIT: "In Transit",
+  ORDERED: "Ordered",
   ORDER_PLACED: "Order Placed",
   VEHICLE_ALLOTTED: "Vehicle Allotted",
-  DISPATCHED:   "Dispatched",
+  DISPATCHED: "Dispatched",
   OUT_FOR_DELIVERY: "Out for Delivery",
   DELIVERED_TO_VESSEL: "Delivered To Vessel",
   CHALLAN_RECEIVED: "Challan Received",
-  PENDING_INVOICE: "Pending Invoice"
+  PENDING_INVOICE: "Pending Invoice",
+  READY_TO_DISPATCH: "Ready to Dispatch"
 };
 
 // ─── Fallback style for unknown statuses ───────────────────────────────────────
@@ -147,13 +150,13 @@ const FALLBACK_STYLE =
  */
 export default function StatusBadge({ status }) {
   const { user } = useAuth();
-  
+
   // Look up styles — fall back to gray if status is unknown
   const styleCls = STATUS_STYLES[status] ?? FALLBACK_STYLE;
 
   // Look up label — fall back to status string with underscores as spaces
   let label = STATUS_LABELS[status] ?? status?.replace(/_/g, " ") ?? "—";
-  
+
   if (status === 'SENT') {
     label = user?.role === 'Client' ? 'Received' : 'Sent';
   }

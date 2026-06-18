@@ -21,14 +21,14 @@ import {
 
 // ─── Column definitions ─────────────────────────────────────────────────────────
 const COLUMNS = [
-  { key: "sr_no",       label: "#",           className: "w-10 text-center" },
-  { key: "order_id",    label: "Order ID" },
-  { key: "customer",    label: "Customer" },
-  { key: "vessel",      label: "Vessel",      hidden: "hidden lg:table-cell" },
-  { key: "products",    label: "Products" },
-  { key: "date",        label: "Date",        hidden: "hidden xl:table-cell" },
-  { key: "status",      label: "Status" },
-  { key: "actions",     label: "Actions",     className: "text-right" },
+  { key: "sr_no", label: "#", className: "w-10 text-center" },
+  { key: "order_id", label: "Order ID" },
+  { key: "customer", label: "Customer" },
+  { key: "vessel", label: "Vessel", hidden: "hidden lg:table-cell" },
+  { key: "products", label: "Products" },
+  { key: "date", label: "Date", hidden: "hidden xl:table-cell" },
+  { key: "status", label: "Status" },
+  { key: "actions", label: "Actions", className: "text-right" },
 ];
 
 /**
@@ -107,7 +107,7 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
         <div className="flex flex-col md:flex-row justify-end gap-2">
 
 
-          {!item.isGrouped && item.status === "LOADING" && (
+          {!item.isGrouped && item.status === "LOADING" && onStatusUpdate && (
             <Button
               variant="secondary"
               size="sm"
@@ -122,7 +122,7 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
             </Button>
           )}
 
-          {!item.isGrouped && item.status === "LOADING" && (
+          {!item.isGrouped && item.status === "LOADING" && onAllot && (
             <Button
               variant="secondary"
               size="sm"
@@ -133,7 +133,7 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
             </Button>
           )}
 
-          {!item.isGrouped && (item.status === "IN_TRANSIT" || item.status === "DISPATCHED") && (
+          {!item.isGrouped && (item.status === "IN_TRANSIT" || item.status === "DISPATCHED") && onStatusUpdate && (
             <Button
               variant="secondary"
               size="sm"
@@ -155,7 +155,7 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
             View
           </Button>
 
-          {!item.isGrouped && item.status === "SHIPPED" && (
+          {!item.isGrouped && item.status === "SHIPPED" && onStatusUpdate && (
             <Button
               variant="secondary"
               size="sm"

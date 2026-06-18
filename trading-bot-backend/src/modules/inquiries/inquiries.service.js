@@ -1,6 +1,7 @@
 const prisma = require('../../prisma/client');
 const { createNotification, notifyAdmins } = require('../notifications/notifications.service');
 const { createAuditLog } = require('../auditLogs/auditLogs.service');
+const inventoryService = require('../inventory/inventory.service');
 
 /**
  * Helper to generate unique sequential inquiry number
@@ -187,6 +188,8 @@ const getInquiryById = async (id) => {
 
 /**
  * Create a new inquiry (PENDING)
+ * If ALL items are available in inventory → status becomes INVENTORY_FULFILLED
+ * and inventory is automatically reserved.
  */
 const createInquiry = async (data, creatorId) => {
   const inquiryNumber = await generateInquiryNumber();
@@ -234,7 +237,7 @@ const createInquiry = async (data, creatorId) => {
       });
     }
 
-    // Status history
+    // Initial status history
     await tx.inquiryStatusHistory.create({
       data: {
         inquiryId: inquiry.id,
@@ -248,6 +251,8 @@ const createInquiry = async (data, creatorId) => {
     return inquiry;
   });
 };
+
+
 
 /**
  * Update basic details (not status)
@@ -975,9 +980,6 @@ const submitClientQuote = async (id, data, userId) => {
   });
 };
 
-/**
- * 5. Team Lead Review Action (TL_REVIEW -> ADMIN_APPROVAL / REJECTED)
- */
 const teamLeadApprove = async (id, data, userId) => {
   return await prisma.$transaction(async (tx) => {
     const inquiry = await tx.inquiry.findUnique({ where: { id } });
