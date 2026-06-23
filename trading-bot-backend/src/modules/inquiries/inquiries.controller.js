@@ -57,6 +57,34 @@ const createInquiry = async (req, res) => {
 };
 
 /**
+ * Create a new inquiry publicly from portal (PENDING)
+ */
+const createPublicInquiry = async (req, res) => {
+  const { inquiry, client, creatorId } = await service.createPublicInquiry(req.body);
+
+  await createAuditLog({
+    userId: creatorId,
+    module: 'inquiries',
+    action: 'create (public)',
+    recordId: inquiry.id,
+    newValue: inquiry,
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent']
+  });
+
+  await notifyAdmins({
+    title: 'New Public Inquiry Received',
+    message: `Client ${client.name} (${client.company || 'No Company'}) submitted inquiry ${inquiry.inquiryNumber}.`,
+    type: 'inquiry',
+    relatedModule: 'inquiries',
+    relatedRecordId: inquiry.id
+  });
+
+  const fullInquiry = await service.getInquiryById(inquiry.id);
+  return sendSuccess(res, 'Inquiry created successfully from public portal', fullInquiry, 201);
+};
+
+/**
  * Update basic details
  */
 const updateInquiry = async (req, res) => {
@@ -502,6 +530,7 @@ module.exports = {
   getInquiries,
   getInquiry,
   createInquiry,
+  createPublicInquiry,
   updateInquiry,
   deleteInquiry,
 

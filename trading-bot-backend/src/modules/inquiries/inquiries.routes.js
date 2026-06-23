@@ -6,6 +6,7 @@ const { checkPermission } = require('../../middleware/permission.middleware');
 const validate = require('../../middleware/validation.middleware');
 const {
   validateCreateInquiry,
+  validateCreatePublicInquiry,
   validateUpdateInquiry,
   validateStockCheck,
   validateSupplierQuote,
@@ -14,6 +15,9 @@ const {
   validateClientDecision
 } = require('./inquiries.validation');
 const asyncWrapper = require('../../utils/asyncWrapper');
+
+// Public route for clients to submit product requests / inquiries
+router.post('/public', validate(validateCreatePublicInquiry), asyncWrapper(controller.createPublicInquiry));
 
 // All inquiry routes are protected
 router.use(authMiddleware);

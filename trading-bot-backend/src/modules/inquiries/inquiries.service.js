@@ -252,6 +252,95 @@ const createInquiry = async (data, creatorId) => {
   });
 };
 
+/**
+ * Create a public inquiry (anonymous / from client portal)
+ */
+const createPublicInquiry = async (data) => {
+  // Find or create Client by email
+  let client = await prisma.client.findFirst({
+    where: { email: data.clientEmail, deletedAt: null }
+  });
+
+  if (!client) {
+    client = await prisma.client.create({
+      data: {
+        name: data.clientName,
+        email: data.clientEmail,
+        phone: data.clientPhone || null,
+        company: data.company || null,
+        address: data.address || null
+      }
+    });
+  }
+
+  // Find a system/admin user for creation attribution
+  const systemUser = await prisma.user.findFirst({
+    where: { email: 'superadmin@trademind.com' }
+  }) || await prisma.user.findFirst();
+
+  const creatorId = systemUser ? systemUser.id : 1;
+
+  // Generate Sequential Inquiry Number
+  const inquiryNumber = await generateInquiryNumber();
+
+  // Create inquiry and items in transaction
+  const inquiry = await prisma.$transaction(async (tx) => {
+    const inq = await tx.inquiry.create({
+      data: {
+        inquiryNumber,
+        clientId: client.id,
+        vesselName: data.vesselName || null,
+        imoNumber: data.imoNumber || null,
+        referenceNumber: data.referenceNumber || null,
+        currentStatus: 'PENDING',
+        expectedDeliveryDate: data.expectedDeliveryDate ? new Date(data.expectedDeliveryDate) : null,
+        remarks: data.remarks || null,
+        createdById: creatorId
+      }
+    });
+
+    if (data.items && data.items.length > 0) {
+      const itemsToCreate = [];
+      for (const item of data.items) {
+        let pId = item.productId || null;
+        if (!pId && item.description) {
+          const matchedProd = await tx.product.findFirst({
+            where: { name: item.description, deletedAt: null }
+          });
+          if (matchedProd) {
+            pId = matchedProd.id;
+          }
+        }
+        itemsToCreate.push({
+          inquiryId: inq.id,
+          productId: pId,
+          description: item.description,
+          quantity: parseInt(item.quantity, 10),
+          unit: item.unit || null
+        });
+      }
+      await tx.inquiryItem.createMany({
+        data: itemsToCreate
+      });
+    }
+
+    // Initial status history
+    await tx.inquiryStatusHistory.create({
+      data: {
+        inquiryId: inq.id,
+        fromStatus: 'NONE',
+        toStatus: 'PENDING',
+        changedById: creatorId,
+        remarks: 'Inquiry submitted publicly by client'
+      }
+    });
+
+    return inq;
+  });
+
+  return { inquiry, client, creatorId };
+};
+
 
 
 /**
@@ -1444,6 +1533,7 @@ module.exports = {
   getAllInquiries,
   getInquiryById,
   createInquiry,
+  createPublicInquiry,
   updateInquiry,
   deleteInquiry,
 

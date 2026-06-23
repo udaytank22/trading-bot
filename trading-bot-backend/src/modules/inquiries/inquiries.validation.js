@@ -23,6 +23,31 @@ const validateCreateInquiry = {
   }
 };
 
+const validateCreatePublicInquiry = {
+  body: (body) => {
+    const errors = [];
+    if (!body.clientName || body.clientName.trim() === '') {
+      errors.push('clientName is required');
+    }
+    if (!body.clientEmail || body.clientEmail.trim() === '') {
+      errors.push('clientEmail is required');
+    }
+    if (!body.items || !Array.isArray(body.items) || body.items.length === 0) {
+      errors.push('At least one item is required in the items array');
+    } else {
+      body.items.forEach((item, index) => {
+        if (!item.description || item.description.trim() === '') {
+          errors.push(`Item at index ${index} must have a description`);
+        }
+        if (item.quantity === undefined || isNaN(parseInt(item.quantity, 10)) || parseInt(item.quantity, 10) <= 0) {
+          errors.push(`Item at index ${index} must have a valid quantity greater than 0`);
+        }
+      });
+    }
+    return errors;
+  }
+};
+
 const validateUpdateInquiry = {
   params: (params) => {
     const errors = [];
@@ -144,6 +169,7 @@ const validateClientDecision = {
 
 module.exports = {
   validateCreateInquiry,
+  validateCreatePublicInquiry,
   validateUpdateInquiry,
   validateStockCheck,
   validateSupplierQuote,

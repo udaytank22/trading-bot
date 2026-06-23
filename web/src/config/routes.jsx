@@ -24,10 +24,12 @@ const InquiryDetailsPage = React.lazy(() => import('@features/inquiries/InquiryD
 const PODetailsPage = React.lazy(() => import('@features/purchase-orders/PODetailsPage'));
 const SupplyDetailsPage = React.lazy(() => import('@features/supply/SupplyDetailsPage'));
 const ReportsPage = React.lazy(() => import('@features/reports/ReportsPage'));
+const RequestProductPage = React.lazy(() => import('@features/public-portal/RequestProductPage'));
 
 /** Public routes (no auth required) */
 export const PUBLIC_ROUTES = [
   { path: '/login', element: <LoginPage /> },
+  { path: '/request-product', element: <RequestProductPage /> },
 ];
 
 /** Protected routes (auth required, rendered inside AppShell) */

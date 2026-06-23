@@ -142,6 +142,15 @@ const LoginPage = () => {
             </div>
           </form>
 
+          <div className="text-center pt-2">
+            <button
+              onClick={() => navigate('/request-product')}
+              className="text-xs font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors uppercase tracking-widest hover:underline"
+            >
+              Client Quote Request Portal &rarr;
+            </button>
+          </div>
+
         </div>
       </div>
 

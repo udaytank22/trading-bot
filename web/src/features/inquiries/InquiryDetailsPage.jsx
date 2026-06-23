@@ -360,52 +360,6 @@ export default function InquiryDetailsPage() {
     }
   };
 
-  const handleSelectSupplierQuote = async (quoteId) => {
-    const ok = await Swal.fire({
-      icon: 'question',
-      title: 'Select Supplier Quote',
-      text: "Are you sure you want to select this supplier's quote? This will update the client quotation draft based on their pricing.",
-      showCancelButton: true,
-      confirmButtonText: 'Yes, select',
-      background: '#1a1d23',
-      color: '#fff',
-      confirmButtonColor: '#7c3aed'
-    });
-    if (!ok.isConfirmed) return;
-    try {
-      const res = await api.inquiries.selectSupplierQuote(deal.id, quoteId);
-      if (res.success) {
-        setDeal(res.data);
-        Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.QUOTE_SELECTED, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
-      }
-    } catch {
-      Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to select supplier quote.', background: '#1a1d23', color: '#fff' });
-    }
-  };
-
-  const handleSelectSupplierQuoteItem = async (quoteItemId, productName) => {
-    const ok = await Swal.fire({
-      icon: 'question',
-      title: 'Select Supplier for this Product',
-      html: `Buy <b>${productName}</b> from this supplier?<br/><small style="color:#aaa">This will update the client quotation draft.</small>`,
-      showCancelButton: true,
-      confirmButtonText: 'Yes, source from here',
-      background: '#1a1d23',
-      color: '#fff',
-      confirmButtonColor: '#7c3aed'
-    });
-    if (!ok.isConfirmed) return;
-    try {
-      const res = await api.inquiries.selectSupplierQuoteItem(deal.id, quoteItemId);
-      if (res.success) {
-        setDeal(res.data);
-        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Selection Saved', text: `${productName} will be sourced from this supplier.`, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1600 });
-      }
-    } catch {
-      Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to save product selection.', background: '#1a1d23', color: '#fff' });
-    }
-  };
-
   // Checkbox toggle for per-product supplier selection (local draft state)
   const handleCheckboxToggle = async (item, quote) => {
     const inquiryItemId = item.inquiryItemId;
@@ -658,8 +612,8 @@ export default function InquiryDetailsPage() {
   const currentDealWithLocalQuote = { ...deal, my_quote: displayQuote };
 
   return (
-    <div className="w-full animate-in fade-in duration-300 pb-6">
-      <div className="max-w-7xl mx-auto py-2 px-2 md:px-4 flex flex-col gap-4">
+    <div className="w-full animate-in fade-in duration-300">
+      <div className=" mx-auto flex flex-col gap-4">
 
         {/* HEADER BAR */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 dark:border-[#2a2d36] pb-4 gap-4">
@@ -727,7 +681,7 @@ export default function InquiryDetailsPage() {
               {/* Products Requested */}
               <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Products Requested <a className="font-bold text-black">({deal.products.length} items) </a></h3>
+                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Products Requested <a className="font-bold text-gray-500">({deal.products.length} items) </a></h3>
                   {deal.products.length > 4 && (
                     <button
                       onClick={() => setIsTableFullscreen(true)}

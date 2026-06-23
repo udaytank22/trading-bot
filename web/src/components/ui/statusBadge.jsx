@@ -1,33 +1,33 @@
 /**
- * @file StatusBadge.jsx
- * @description Centralized status badge — single source of truth for ALL status
- *              values across every module in TradeMind.
- *
- * MODULES COVERED:
- *   - Inquiries  → PENDING, RFQ_SENT, RFQ_RECEIVED, QUOTE_SENT, CONFIRMED, CLOSED
- *   - Purchase Orders → PENDING, CONFIRMED, SHIPPED, CLOSED
- *   - Supply     → PENDING, LOADING, IN_TRANSIT, DELIVERED
- *   - Employees  → Active, Inactive
- *   - Accounts   → Active, Inactive
- *
- * WHY ONE FILE:
- *   Previously each module had its own badge (Employee had an inline StatusBadge,
- *   Supply passed getStatusStyle() as a prop, PO/Inquiry used this file but
- *   didn't cover all statuses). Now one map handles everything.
- *
- * ADDING A NEW STATUS:
- *   1. Add an entry to STATUS_STYLES with a Tailwind color set.
- *   2. Add a human-readable label to STATUS_LABELS (optional — falls back to
- *      the raw status string with underscores replaced by spaces).
- *   That's it — all badges across the app update automatically.
- *
- * USAGE:
- *   <StatusBadge status="PENDING" />
- *   <StatusBadge status="Active" />
- *   <StatusBadge status="DELIVERED" />
- *
- * @author TradeMind Dev Team
- */
+* @file StatusBadge.jsx
+* @description Centralized status badge — single source of truth for ALL status
+*              values across every module in TradeMind.
+*
+* MODULES COVERED:
+*   - Inquiries  → PENDING, RFQ_SENT, RFQ_RECEIVED, QUOTE_SENT, CONFIRMED, CLOSED
+*   - Purchase Orders → PENDING, CONFIRMED, SHIPPED, CLOSED
+*   - Supply     → PENDING, LOADING, IN_TRANSIT, DELIVERED
+*   - Employees  → Active, Inactive
+*   - Accounts   → Active, Inactive
+*
+* WHY ONE FILE:
+*   Previously each module had its own badge (Employee had an inline StatusBadge,
+*   Supply passed getStatusStyle() as a prop, PO/Inquiry used this file but
+*   didn't cover all statuses). Now one map handles everything.
+*
+* ADDING A NEW STATUS:
+*   1. Add an entry to STATUS_STYLES with a Tailwind color set.
+*   2. Add a human-readable label to STATUS_LABELS (optional — falls back to
+*      the raw status string with underscores replaced by spaces).
+*   That's it — all badges across the app update automatically.
+*
+* USAGE:
+*   <StatusBadge status="PENDING" />
+*   <StatusBadge status="Active" />
+*   <StatusBadge status="DELIVERED" />
+*
+* @author TradeMind Dev Team
+*/
 
 import React from "react";
 import { useAuth } from "@context";
