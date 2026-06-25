@@ -12,10 +12,24 @@ const chatService = require('./modules/chat/chat.service');
 const app = express();
 const httpServer = http.createServer(app);
 
+// CORS configuration
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || config.ALLOWED_ORIGINS.includes(origin)) {
+      callback(null, true);
+    } else {
+      const error = new Error('Not allowed by CORS');
+      error.statusCode = 403;
+      callback(error);
+    }
+  },
+  credentials: true
+};
+
 // Setup Socket.io
 const io = new Server(httpServer, {
   cors: {
-    origin: '*',
+    ...corsOptions,
     methods: ['GET', 'POST', 'PUT', 'DELETE']
   }
 });
@@ -85,7 +99,7 @@ io.on('connection', (socket) => {
 
 // Security and middleware setup
 app.use(helmet());
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 

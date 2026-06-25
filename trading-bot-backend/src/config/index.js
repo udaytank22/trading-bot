@@ -10,5 +10,8 @@ module.exports = {
   DATABASE_URL: process.env.DATABASE_URL,
   OUTLOOK_CLIENT_ID: process.env.OUTLOOK_CLIENT_ID,
   OUTLOOK_CLIENT_SECRET: process.env.OUTLOOK_CLIENT_SECRET,
-  OUTLOOK_REDIRECT_URI: process.env.OUTLOOK_REDIRECT_URI || 'http://localhost:5000/api/outlook/callback'
+  OUTLOOK_REDIRECT_URI: process.env.OUTLOOK_REDIRECT_URI || 'http://localhost:5000/api/outlook/callback',
+  ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+    : ['http://localhost:5000', 'http://localhost:5173']
 };
