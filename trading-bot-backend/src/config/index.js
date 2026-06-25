@@ -13,5 +13,9 @@ module.exports = {
   OUTLOOK_REDIRECT_URI: process.env.OUTLOOK_REDIRECT_URI || 'http://localhost:5000/api/outlook/callback',
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
-    : ['http://localhost:5000', 'http://localhost:5173']
+    : ['http://localhost:5000', 'http://localhost:5173'],
+  RATE_LIMIT_WINDOW_MS: process.env.RATE_LIMIT_WINDOW_MS ? Number(process.env.RATE_LIMIT_WINDOW_MS) : 60000,
+  RATE_LIMIT_MAX: process.env.RATE_LIMIT_MAX ? Number(process.env.RATE_LIMIT_MAX) : 200,
+  STRICT_RATE_LIMIT_WINDOW_MS: process.env.STRICT_RATE_LIMIT_WINDOW_MS ? Number(process.env.STRICT_RATE_LIMIT_WINDOW_MS) : 60000,
+  STRICT_RATE_LIMIT_MAX: process.env.STRICT_RATE_LIMIT_MAX ? Number(process.env.STRICT_RATE_LIMIT_MAX) : 10
 };

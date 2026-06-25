@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const config = require('./config');
 const errorHandler = require('./middleware/error.middleware');
+const { globalLimiter } = require('./middleware/rateLimiter');
 const { sendError } = require('./utils/response');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -102,6 +103,7 @@ app.use(helmet());
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use('/api', globalLimiter);
 
 // Server check endpoint
 app.get('/', (req, res) => {
