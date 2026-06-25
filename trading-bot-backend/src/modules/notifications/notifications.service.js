@@ -1,62 +1,87 @@
 const prisma = require('../../prisma/client');
 
 /**
- * Create a notification for a specific user
+ * Send a notification to a specific user and emit to their socket room
  */
-const createNotification = async ({ userId, title, message, type, relatedModule, relatedRecordId }) => {
+const notifyUser = async (userId, { title, message, type, relatedModule, relatedRecordId }) => {
   try {
-    return await prisma.notification.create({
+    const notification = await prisma.notification.create({
       data: {
         userId,
         title,
         message,
-        type, // inquiry, purchase-order, document, supply, system
+        type: type || 'SYSTEM',
         relatedModule,
         relatedRecordId: relatedRecordId ? String(relatedRecordId) : null
       }
     });
+
+    if (global.io) {
+      global.io.to(`user_${userId}`).emit('new_notification', notification);
+    }
+    return notification;
   } catch (error) {
-    console.error('Error creating notification:', error);
+    console.error(`Error in notifyUser for user ${userId}:`, error);
   }
 };
 
 /**
- * Create notification for all Admin and Super Admin users
+ * Send a notification to all active users with a specific role
  */
-const notifyAdmins = async ({ title, message, type, relatedModule, relatedRecordId }) => {
+const notifyRole = async (roleName, { title, message, type, relatedModule, relatedRecordId }) => {
   try {
-    const admins = await prisma.user.findMany({
+    const users = await prisma.user.findMany({
       where: {
         role: {
-          name: {
-            in: ['Super Admin', 'Admin']
-          }
+          name: roleName
         },
         isActive: true,
         deletedAt: null
       }
     });
 
-    const notifications = admins.map((admin) => ({
-      userId: admin.id,
-      title,
-      message,
-      type,
-      relatedModule,
-      relatedRecordId: relatedRecordId ? String(relatedRecordId) : null
-    }));
-
-    if (notifications.length > 0) {
-      await prisma.notification.createMany({
-        data: notifications
+    const notifications = [];
+    for (const user of users) {
+      const notification = await prisma.notification.create({
+        data: {
+          userId: user.id,
+          title,
+          message,
+          type: type || 'SYSTEM',
+          relatedModule,
+          relatedRecordId: relatedRecordId ? String(relatedRecordId) : null
+        }
       });
+      notifications.push(notification);
+
+      if (global.io) {
+        global.io.to(`user_${user.id}`).emit('new_notification', notification);
+      }
     }
+    return notifications;
   } catch (error) {
-    console.error('Error sending notifications to admins:', error);
+    console.error(`Error in notifyRole for role ${roleName}:`, error);
   }
 };
 
+/**
+ * Create a notification for a specific user (compatibility wrapper)
+ */
+const createNotification = async (payload) => {
+  return notifyUser(payload.userId, payload);
+};
+
+/**
+ * Create notification for all Admin and Super Admin users (compatibility wrapper)
+ */
+const notifyAdmins = async (payload) => {
+  await notifyRole('Admin', payload);
+  await notifyRole('Super Admin', payload);
+};
+
 module.exports = {
+  notifyUser,
+  notifyRole,
   createNotification,
   notifyAdmins
 };
