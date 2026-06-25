@@ -508,6 +508,7 @@ export default function InvoiceDetailsPage() {
         isOpen={!!paymentTargetId}
         onClose={() => setPaymentTargetId(null)}
         invoiceId={paymentTargetId}
+        inquiryId={id}
         onSuccess={() => {
           setPaymentTargetId(null);
           fetchData();

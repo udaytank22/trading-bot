@@ -64,10 +64,11 @@ export function DataProvider({ children }) {
       if (supRes.success) {
         const mappedSupply = (supRes.data ?? []).map(ship => ({
           ...ship,
-          inquiry_id: ship.id,
-          supplier: ship.supplier?.name || 'Unknown Supplier',
-          buyer_email: ship.client?.email || '',
-          cargo: ship.cargoDetails || 'General Cargo',
+          supply_id: ship.shipmentNumber,
+          inquiry_id: ship.inquiry?.inquiryNumber || 'N/A',
+          customer: ship.client?.name || 'N/A',
+          supplier: ship.inventoryFulfilled ? 'Internal Inventory' : (ship.supplier?.name || 'N/A'),
+          product_name: ship.cargoDetails || 'N/A',
           quantity: '1 Lot',
           destination: ship.client?.address || 'N/A',
           status: ship.currentStatus,

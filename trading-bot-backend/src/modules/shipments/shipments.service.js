@@ -11,7 +11,13 @@ const getAllShipments = async (query = {}) => {
     const shipments = await prisma.shipment.findMany({
       where,
       include: {
-        inquiry: true,
+        inquiry: {
+          include: {
+            clientQuotations: {
+              include: { items: { include: { inquiryItem: true } } }
+            }
+          }
+        },
         purchaseOrder: {
           include: {
             items: {
@@ -34,7 +40,13 @@ const getAllShipments = async (query = {}) => {
     prisma.shipment.findMany({
       where,
       include: {
-        inquiry: true,
+        inquiry: {
+          include: {
+            clientQuotations: {
+              include: { items: { include: { inquiryItem: true } } }
+            }
+          }
+        },
         purchaseOrder: {
           include: {
             items: {
@@ -64,7 +76,13 @@ const getShipmentById = async (id) => {
   return await prisma.shipment.findFirst({
     where: { id: parseInt(id, 10), deletedAt: null },
     include: {
-      inquiry: true,
+      inquiry: {
+        include: {
+          clientQuotations: {
+            include: { items: { include: { inquiryItem: true } } }
+          }
+        }
+      },
       purchaseOrder: {
         include: {
           items: {

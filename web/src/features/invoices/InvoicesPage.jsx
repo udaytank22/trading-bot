@@ -1,15 +1,13 @@
 import { InvoicesPageSchema1 } from '@config/tableSchemas';
-import { useAuth, useUI, useData } from '@context';
+import { useData } from '@context';
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from '@services/api';
 import { usePaginatedFetch } from '@hooks/usePaginatedFetch';
-
 import { PageToolbar, Pagination, Button, StatusBadge, DataTable, rowStripeClass, ROW_HOVER_CLS, DatePicker, Select } from '@components/ui';
 
 export default function InvoicesPage() {
     const { accountsData } = useData();
-
     const navigate = useNavigate();
     const [search, setSearch] = useState("");
     const [paymentModalInvoice, setPaymentModalInvoice] = useState(null);
@@ -24,7 +22,7 @@ export default function InvoicesPage() {
         refresh
     } = usePaginatedFetch(api.inquiries.getInquiries, 1, 10, {
         search,
-        statuses: 'DELIVERED_TO_VESSEL,CHALLAN_RECEIVED,CLOSED'
+        statuses: 'DELIVERED_TO_VESSEL,CHALLAN_RECEIVED,CLOSED',
     });
 
     const mappedInvoices = useMemo(() => {

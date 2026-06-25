@@ -30,13 +30,22 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
   const isTLReview = deal?.status === "TL_REVIEW";
 
   const calculations = useMemo(() => {
-    if (!isTLReview || !deal?.seller_quote?.products || deal.seller_quote.products.length === 0) return null;
+    if (!isTLReview) return null;
 
     let totalSellerCost = 0;
-    deal.seller_quote.products.forEach((sqp) => {
-      const qty = sqp.moq || 1;
-      totalSellerCost += (sqp.seller_unit_price || 0) * qty;
-    });
+    if (deal?.seller_quote?.products && deal.seller_quote.products.length > 0) {
+      deal.seller_quote.products.forEach((sqp) => {
+        const qty = sqp.moq || 1;
+        totalSellerCost += (sqp.seller_unit_price || 0) * qty;
+      });
+    } else if (deal?.my_quote?.products && deal.my_quote.products.length > 0) {
+      deal.my_quote.products.forEach((mqp) => {
+        const qty = mqp.quantity || 1;
+        totalSellerCost += (mqp.my_unit_price || 0) * qty;
+      });
+    } else {
+      return null;
+    }
 
     const marginVal = parseFloat(margin) || 0;
     const discountVal = parseFloat(discount) || 0;
@@ -127,19 +136,25 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
         }}
         className="p-6 space-y-6"
       >
-        {isTLReview && deal?.seller_quote?.products && deal.seller_quote.products.length > 0 && (
+        {isTLReview && (deal?.seller_quote?.products?.length > 0 || deal?.my_quote?.products?.length > 0) && (
           <div className="space-y-3">
             <div className="flex justify-between items-center flex-wrap gap-2">
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Base Quoted Prices (Supplier)</h3>
-              {deal.seller_quote.is_multi_supplier ? (
-                <span className="px-2 py-0.5 bg-purple-500/10 text-purple-650 dark:text-purple-400 text-[10px] font-bold rounded">
-                  Multi-Supplier Sourcing
+              {deal?.seller_quote ? (
+                deal.seller_quote.is_multi_supplier ? (
+                  <span className="px-2 py-0.5 bg-purple-500/10 text-purple-650 dark:text-purple-400 text-[10px] font-bold rounded">
+                    Multi-Supplier Sourcing
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 bg-purple-500/10 text-purple-650 dark:text-purple-400 text-[10px] font-bold rounded">
+                    Using: {deal.seller_quote.seller_name}
+                  </span>
+                )
+              ) : (deal?.my_quote?.products?.length > 0 ? (
+                <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-650 dark:text-emerald-400 text-[10px] font-bold rounded">
+                  Internal Inventory Sourced
                 </span>
-              ) : (
-                <span className="px-2 py-0.5 bg-purple-500/10 text-purple-650 dark:text-purple-400 text-[10px] font-bold rounded">
-                  Using: {deal.seller_quote.seller_name}
-                </span>
-              )}
+              ) : null)}
             </div>
 
             {/* Products table */}
@@ -155,7 +170,7 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {deal.seller_quote.products.map((p, idx) => {
+                  {deal?.seller_quote?.products && deal.seller_quote.products.length > 0 ? deal.seller_quote.products.map((p, idx) => {
                     const qty = p.moq || 1;
                     const rowTotal = (p.seller_unit_price || 0) * qty;
                     return (
@@ -169,6 +184,26 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
                         <td className="px-4 py-2.5 font-mono text-center text-gray-600 dark:text-gray-400">{qty}</td>
                         <td className="px-4 py-2.5 font-mono text-right text-gray-700 dark:text-gray-300">
                           ₹ {new Intl.NumberFormat('en-IN').format(p.seller_unit_price || 0)}
+                        </td>
+                        <td className="px-4 py-2.5 font-mono text-right font-bold text-gray-900 dark:text-white">
+                          ₹ {new Intl.NumberFormat('en-IN').format(rowTotal)}
+                        </td>
+                      </tr>
+                    );
+                  }) : (deal?.my_quote?.products || []).map((p, idx) => {
+                    const qty = p.quantity || 1;
+                    const rowTotal = (p.my_unit_price || 0) * qty;
+                    return (
+                      <tr key={idx} className="border-b border-gray-100 dark:border-[#2a2d33]/50 last:border-0 hover:bg-gray-50 dark:hover:bg-[#0c0e12]/50 transition-colors">
+                        <td className="px-4 py-2.5 font-semibold text-gray-800 dark:text-gray-200">{p.product_name}</td>
+                        <td className="px-4 py-2.5">
+                          <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9px] font-bold rounded uppercase tracking-wider">
+                            {p.supplier_name || 'Internal Inventory'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 font-mono text-center text-gray-600 dark:text-gray-400">{qty}</td>
+                        <td className="px-4 py-2.5 font-mono text-right text-gray-700 dark:text-gray-300">
+                          ₹ {new Intl.NumberFormat('en-IN').format(p.my_unit_price || 0)}
                         </td>
                         <td className="px-4 py-2.5 font-mono text-right font-bold text-gray-900 dark:text-white">
                           ₹ {new Intl.NumberFormat('en-IN').format(rowTotal)}

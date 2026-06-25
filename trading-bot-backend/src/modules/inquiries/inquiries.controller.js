@@ -85,6 +85,18 @@ const createPublicInquiry = async (req, res) => {
 };
 
 /**
+ * Track an inquiry publicly by inquiryNumber
+ */
+const trackPublicInquiry = async (req, res) => {
+  const data = await service.trackPublicInquiry(req.params.inquiryNumber);
+  if (!data) {
+    return sendError(res, 'Inquiry not found', [], 404);
+  }
+  return sendSuccess(res, 'Inquiry tracking details retrieved', data);
+};
+
+
+/**
  * Update basic details
  */
 const updateInquiry = async (req, res) => {
@@ -154,9 +166,11 @@ const stockCheck = async (req, res) => {
     userAgent: req.headers['user-agent']
   });
 
+  const isTLReview = updated.currentStatus === 'TL_REVIEW';
+
   await notifyAdmins({
-    title: 'RFQ Ready',
-    message: `Inquiry ${updated.inquiryNumber} stock checks completed. Status advanced to RFQ_READY.`,
+    title: isTLReview ? 'Ready for TL Review' : 'RFQ Ready',
+    message: `Inquiry ${updated.inquiryNumber} stock checks completed. Status advanced to ${updated.currentStatus}.`,
     type: 'inquiry',
     relatedModule: 'inquiries',
     relatedRecordId: updated.id
@@ -531,6 +545,7 @@ module.exports = {
   getInquiry,
   createInquiry,
   createPublicInquiry,
+  trackPublicInquiry,
   updateInquiry,
   deleteInquiry,
 

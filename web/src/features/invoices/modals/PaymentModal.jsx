@@ -3,7 +3,7 @@ import { Modal } from '@components/ui';
 import { api } from '@services/api';
 import Swal from 'sweetalert2';
 
-export default function PaymentModal({ isOpen, onClose, invoiceId, onSuccess }) {
+export default function PaymentModal({ isOpen, onClose, invoiceId, inquiryId, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     method: 'Bank Transfer',
@@ -25,14 +25,22 @@ export default function PaymentModal({ isOpen, onClose, invoiceId, onSuccess }) 
         paymentDetails: formData
       });
       if (res.success) {
+        // Also close the inquiry when the client invoice is marked paid
+        if (inquiryId) {
+          try {
+            await api.inquiries.updateInquiry(inquiryId, { currentStatus: 'CLOSED' });
+          } catch (err) {
+            console.error('Failed to update inquiry status to CLOSED:', err);
+          }
+        }
         Swal.fire({
           toast: true, position: 'top-end', icon: 'success',
-          title: 'Paid',
-          text: 'Invoice marked as paid.',
+          title: 'Paid & Closed',
+          text: 'Invoice marked as paid and inquiry closed.',
           background: '#1a1d23',
           color: '#fff',
           showConfirmButton: false,
-          timer: 1500
+          timer: 2000
         });
         onSuccess(formData);
         onClose();

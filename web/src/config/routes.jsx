@@ -25,11 +25,13 @@ const PODetailsPage = React.lazy(() => import('@features/purchase-orders/PODetai
 const SupplyDetailsPage = React.lazy(() => import('@features/supply/SupplyDetailsPage'));
 const ReportsPage = React.lazy(() => import('@features/reports/ReportsPage'));
 const RequestProductPage = React.lazy(() => import('@features/public-portal/RequestProductPage'));
+const TrackInquiryPage = React.lazy(() => import('@features/public-portal/TrackInquiryPage'));
 
 /** Public routes (no auth required) */
 export const PUBLIC_ROUTES = [
   { path: '/login', element: <LoginPage /> },
   { path: '/request-product', element: <RequestProductPage /> },
+  { path: '/track-inquiry', element: <TrackInquiryPage /> },
 ];
 
 /** Protected routes (auth required, rendered inside AppShell) */

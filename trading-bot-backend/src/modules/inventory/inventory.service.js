@@ -131,6 +131,12 @@ const deleteInventoryItem = async (id, updaterId) => {
 /**
  * Log a stock movement ledger entry and adjust warehouse stock
  */
+// Friendly names for known warehouse IDs (matches frontend dropdown)
+const WAREHOUSE_NAMES = {
+  1: 'Port Warehouse Alpha',
+  2: 'Port Warehouse Beta',
+};
+
 const createStockMovement = async (data, creatorId) => {
   return await prisma.$transaction(async (tx) => {
     const qty = parseInt(data.quantity, 10);
@@ -138,11 +144,23 @@ const createStockMovement = async (data, creatorId) => {
     const itemId = data.inventoryItemId;
     const warehouseId = data.warehouseId;
 
+    // 0. Ensure the warehouse row exists (auto-create if wiped by a DB cleanup).
+    //    We look up by name so we don't fight the auto-increment sequence.
+    const warehouseName = WAREHOUSE_NAMES[warehouseId] || `Warehouse ${warehouseId}`;
+    let warehouse = await tx.warehouse.findFirst({ where: { name: warehouseName } });
+    if (!warehouse) {
+      warehouse = await tx.warehouse.create({
+        data: { name: warehouseName, isActive: true },
+      });
+    }
+    // Use the real DB id (may differ from the incoming warehouseId after a wipe)
+    const resolvedWarehouseId = warehouse.id;
+
     // 1. Insert Movement Record
     const movement = await tx.stockMovement.create({
       data: {
         inventoryItemId: itemId,
-        warehouseId,
+        warehouseId: resolvedWarehouseId,
         type,
         quantity: qty,
         referenceType: data.referenceType || null,
@@ -158,7 +176,7 @@ const createStockMovement = async (data, creatorId) => {
     let stock = await tx.warehouseStock.findUnique({
       where: {
         warehouseId_inventoryItemId: {
-          warehouseId,
+          warehouseId: resolvedWarehouseId,
           inventoryItemId: itemId
         }
       }
@@ -167,7 +185,7 @@ const createStockMovement = async (data, creatorId) => {
     if (!stock) {
       stock = await tx.warehouseStock.create({
         data: {
-          warehouseId,
+          warehouseId: resolvedWarehouseId,
           inventoryItemId: itemId,
           quantity: 0
         }

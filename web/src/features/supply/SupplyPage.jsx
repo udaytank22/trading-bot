@@ -140,16 +140,20 @@ export default function SupplyPage() {
 
     const STATUS_RANK = {
       'ORDER PLACED': 1,
+      'ORDER_PLACED': 1,
       'ORDERED': 1,
       'PENDING': 1,
+      'CONFIRMED': 1,
       'VEHICLE_ALLOTTED': 2,
       'LOADING': 2,
+      'IN_TRANSIT': 3,
       'DISPATCHED': 3,
       'DELIVERED': 4,
       'OUT_FOR_DELIVERY': 5,
       'DELIVERED_TO_VESSEL': 6,
       'DELIVERED TO VESSEL': 6,
-      'CHALLAN_RECEIVED': 7
+      'CHALLAN_RECEIVED': 7,
+      'CLOSED': 8
     };
     const RANK_TO_STATUS = {
       1: 'ORDER PLACED',
@@ -158,7 +162,8 @@ export default function SupplyPage() {
       4: 'DELIVERED',
       5: 'OUT_FOR_DELIVERY',
       6: 'DELIVERED_TO_VESSEL',
-      7: 'CHALLAN_RECEIVED'
+      7: 'CHALLAN_RECEIVED',
+      8: 'CLOSED'
     };
 
     const groupValues = Object.values(groups);

@@ -19,6 +19,9 @@ const asyncWrapper = require('../../utils/asyncWrapper');
 // Public route for clients to submit product requests / inquiries
 router.post('/public', validate(validateCreatePublicInquiry), asyncWrapper(controller.createPublicInquiry));
 
+// Public route for clients to track their inquiry status
+router.get('/public/track/:inquiryNumber', asyncWrapper(controller.trackPublicInquiry));
+
 // All inquiry routes are protected
 router.use(authMiddleware);
 

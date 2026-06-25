@@ -236,8 +236,13 @@ export default function InquiryDetailsPage() {
 
         let totalAmount = 0;
         const items = deal.products.map((p, idx) => {
-          const sqp = deal.seller_quote?.products?.[idx];
-          const cost = sqp?.seller_unit_price || 0;
+          let cost = 0;
+          if (deal.seller_quote?.products?.[idx]) {
+            cost = deal.seller_quote.products[idx].seller_unit_price || 0;
+          } else if (deal.my_quote?.products?.[idx]) {
+            cost = deal.my_quote.products[idx].my_unit_price || 0;
+          }
+          
           const qty = p.quantity || 1;
           const my_unit_price = cost * (1 + marginVal / 100) * (1 - discountVal / 100);
           const totalPrice = my_unit_price * qty;
@@ -536,30 +541,18 @@ export default function InquiryDetailsPage() {
   ];
   const currentStepIdx = steps.findIndex(s => s.id === deal.status);
 
-  // Financial summary calculations
-  let totalDealValue = 0;
-  let totalCostValue = 0;
-  const displayQuote = localMyQuote;
-
-  if (deal && displayQuote && deal.seller_quote) {
-    displayQuote.products.forEach((mqp) => {
-      totalDealValue += mqp.total_price || mqp.total_my_price || 0;
-    });
-    // Sum cost from seller_quote (per-product moq × price supports multi-supplier)
-    deal.seller_quote.products.forEach((sqp) => {
-      totalCostValue += (sqp.seller_unit_price || 0) * (sqp.moq || 1);
-    });
-  }
+  const baseQuote = localMyQuote;
 
   // Enrich my_quote with inventory prices for products sourced from internal inventory
   const dealEnrichedForEmail = (() => {
-    if (!deal || !deal.products) return { ...deal, my_quote: displayQuote };
+    if (!deal || !deal.products) return { ...deal, my_quote: baseQuote };
 
     // Step 1: For each inquiry product, check if it's in inventory
     const enrichedProducts = deal.products.map(p => {
+      const pName = p.product_name || p.description || "";
       const invMatch = inventoryData.find(inv =>
-        inv.itemName.toLowerCase() === p.product_name.toLowerCase() ||
-        (inv.sku && p.product_name.toLowerCase().includes(inv.sku.toLowerCase()))
+        inv.itemName.toLowerCase() === pName.toLowerCase() ||
+        (inv.sku && pName.toLowerCase().includes(inv.sku.toLowerCase()))
       );
       const invStock = invMatch ? (invMatch.stocks?.reduce((acc, st) => acc + st.quantity, 0) || 0) : 0;
       if (invMatch && invStock > 0) {
@@ -571,7 +564,7 @@ export default function InquiryDetailsPage() {
     });
 
     // Step 2: Start from existing my_quote products and patch in inventory prices where missing
-    const baseProducts = displayQuote?.products || [];
+    const baseProducts = baseQuote?.products || [];
     const mergedQuoteProducts = baseProducts.map(mqp => {
       const enriched = enrichedProducts.find(ep => ep.product_name === mqp.product_name);
       if (enriched && enriched._inv_unit_price && !(mqp.my_unit_price > 0)) {
@@ -603,11 +596,29 @@ export default function InquiryDetailsPage() {
 
     return {
       ...deal,
-      my_quote: displayQuote
-        ? { ...displayQuote, products: allQuoteProducts }
-        : { products: allQuoteProducts }
+      my_quote: baseQuote
+        ? { ...baseQuote, products: allQuoteProducts }
+        : (allQuoteProducts.length > 0 ? { products: allQuoteProducts } : null)
     };
   })();
+
+  const displayQuote = dealEnrichedForEmail.my_quote;
+
+  // Financial summary calculations
+  let totalDealValue = 0;
+  let totalCostValue = 0;
+
+  if (deal && displayQuote) {
+    (displayQuote.products || []).forEach((mqp) => {
+      totalDealValue += mqp.total_price || mqp.total_my_price || 0;
+    });
+    // Sum cost from seller_quote (per-product moq × price supports multi-supplier)
+    if (deal.seller_quote) {
+      deal.seller_quote.products.forEach((sqp) => {
+        totalCostValue += (sqp.seller_unit_price || 0) * (sqp.moq || 1);
+      });
+    }
+  }
 
   const currentDealWithLocalQuote = { ...deal, my_quote: displayQuote };
 
@@ -1210,7 +1221,7 @@ export default function InquiryDetailsPage() {
                 isPageMode={true}
                 onClose={() => setActiveTab("overview")}
                 onSubmit={handleQuoteSubmit}
-                deal={deal}
+                deal={currentDealWithLocalQuote}
               />
             )}
             {deal.status === "EMPLOYEE_VERIFY" && (
@@ -1219,7 +1230,7 @@ export default function InquiryDetailsPage() {
                 isPageMode={true}
                 onClose={() => setActiveTab("overview")}
                 onConfirm={handleVerifyConfirm}
-                deal={deal}
+                deal={currentDealWithLocalQuote}
                 inventoryData={inventoryData}
               />
             )}
@@ -1229,7 +1240,7 @@ export default function InquiryDetailsPage() {
                 isPageMode={true}
                 onClose={() => setActiveTab("overview")}
                 onConfirm={handleAdminConfirm}
-                deal={deal}
+                deal={currentDealWithLocalQuote}
                 inventoryData={inventoryData}
               />
             )}

@@ -35,34 +35,47 @@ export default function GroupedSupplyDetails({
   // Aggregate all products across all sub-shipments
   const items = useMemo(() => {
     const list = [];
-    deal.subShipments?.forEach(ship => {
-      if (ship.purchaseOrder?.items) {
-        ship.purchaseOrder.items.forEach(item => {
+      deal.subShipments?.forEach(ship => {
+        if (ship.purchaseOrder?.items) {
+          ship.purchaseOrder.items.forEach(item => {
+            list.push({
+              id: item.id,
+              description: item.description || item.product?.name || item.product_name || '',
+              product: item.product,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice || item.unit_price || 0,
+              totalPrice: item.totalPrice || item.total_price || 0,
+              supplier: ship.supplier?.name || ship.supplier || 'Unknown Supplier',
+              shipmentId: ship.id
+            });
+          });
+        } else if (ship.inventoryFulfilled && deal.inquiry?.clientQuotations?.[0]?.items?.length > 0) {
+          deal.inquiry.clientQuotations[0].items.forEach(cqi => {
+            list.push({
+              id: cqi.id,
+              description: cqi.inquiryItem?.description || 'Internal Product',
+              product: null,
+              quantity: cqi.quantity,
+              unitPrice: parseFloat(cqi.sellingPrice || 0),
+              totalPrice: parseFloat(cqi.totalPrice || 0),
+              supplier: 'Internal Inventory',
+              shipmentId: ship.id
+            });
+          });
+        } else if (ship.cargoDetails) {
           list.push({
-            id: item.id,
-            description: item.description || item.product?.name || item.product_name || '',
-            product: item.product,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice || item.unit_price || 0,
-            totalPrice: item.totalPrice || item.total_price || 0,
-            supplier: ship.supplier?.name || ship.supplier || 'Unknown Supplier',
+            id: Math.random(),
+            description: ship.cargoDetails,
+            quantity: ship.quantity || '—',
+            unitPrice: 0,
+            totalPrice: 0,
+            supplier: ship.supplier?.name || ship.supplier || 'Internal Inventory',
             shipmentId: ship.id
           });
-        });
-      } else if (ship.cargoDetails) {
-        list.push({
-          id: Math.random(),
-          description: ship.cargoDetails,
-          quantity: ship.quantity || '—',
-          unitPrice: 0,
-          totalPrice: 0,
-          supplier: ship.supplier?.name || ship.supplier || 'Unknown Supplier',
-          shipmentId: ship.id
-        });
-      }
-    });
+        }
+      });
     return list;
-  }, [deal.subShipments]);
+  }, [deal.subShipments, deal.inquiry]);
 
   const subtotal = items.reduce((sum, item) => {
     const price = parseFloat(item.totalPrice ?? item.total_price ?? 0);
@@ -124,8 +137,20 @@ export default function GroupedSupplyDetails({
                 Allot Final Vehicle
               </Button>
             )}
-            {(deal.status === "VEHICLE_ALLOTTED" || deal.status === "LOADING") && canUpdate && (
-              <button
+            {(deal.status === "ORDER_PLACED" || deal.status === "ORDER PLACED" || deal.status === "PENDING" || deal.status === "CONFIRMED") && deal.status !== "CLOSED" && deal.subShipments?.every(s => s.inventoryFulfilled) && deal.subShipments?.every(s => s.currentStatus !== "CLOSED" && s.status !== "CLOSED") && canUpdate && (
+                <button
+                  onClick={() => {
+                    setAllotModalDeal(deal);
+                    setAllotModalMode("group_initial_delivery");
+                    setIsAllotModalOpen(true);
+                  }}
+                  className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-white hover:bg-gray-50 dark:bg-[#1e2028] dark:hover:bg-[#242830] text-purple-600 dark:text-purple-400 border border-purple-500/30 transition-all shadow-sm"
+                >
+                  Allot Vehicle
+                </button>
+            )}
+            {((deal.status === "VEHICLE_ALLOTTED" || deal.status === "LOADING") || deal.subShipments?.some(s => s.inventoryFulfilled && (s.currentStatus === 'LOADING' || s.currentStatus === 'VEHICLE_ALLOTTED' || s.status === 'LOADING' || s.status === 'VEHICLE_ALLOTTED'))) && deal.status !== "OUT_FOR_DELIVERY" && deal.status !== "OUT FOR DELIVERY" && deal.status !== "DISPATCHED" && deal.status !== "DELIVERED" && deal.status !== "COMPLETED" && canUpdate && (
+                <button
                 onClick={async () => {
                   const result = await Swal.fire({
                     title: 'Mark as Dispatched?',
@@ -296,7 +321,7 @@ export default function GroupedSupplyDetails({
                 </div>
                 <div className="flex flex-col bg-gray-50 dark:bg-[#242830]/30 p-3.5 rounded-xl border border-gray-200 dark:border-[#2a2d36]">
                   <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Status</span>
-                  <span className="text-gray-900 dark:text-white font-bold text-xs mt-1">{deal.status}</span>
+                  <span className="text-gray-900 dark:text-white font-bold text-xs mt-1 uppercase">{deal.status?.replace(/_/g, ' ')}</span>
                 </div>
               </div>
             </div>

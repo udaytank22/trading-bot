@@ -197,7 +197,7 @@ function InventoryForm({ initialData, onSave, onClose }) {
       category: "",
       unit: "pcs",
       quantity: "", 
-      warehouseId: "1001", 
+      warehouseId: "1", 
       sellingPrice: "",
       purchasePrice: "",
       minimumStockLevel: "5",
@@ -211,7 +211,7 @@ function InventoryForm({ initialData, onSave, onClose }) {
       setFormData(prev => ({
         ...prev,
         quantity: totalQty,
-        warehouseId: initialData.stocks?.[0]?.warehouseId || "1001"
+        warehouseId: initialData.stocks?.[0]?.warehouseId?.toString() || "1"
       }));
     }
   }, [initialData]);
@@ -337,8 +337,8 @@ function InventoryForm({ initialData, onSave, onClose }) {
               }))
             }
             options={[
-              { value: "1001", label: "Port Warehouse Alpha" },
-              { value: "1002", label: "Port Warehouse Beta" },
+              { value: "1", label: "Port Warehouse Alpha" },
+              { value: "2", label: "Port Warehouse Beta" },
             ]}
           />
         </Field>
@@ -552,7 +552,7 @@ export default function InventoryPage() {
           const difference = newQty - currentQty;
           await moveStock({
             inventoryItemId: editItem.id,
-            warehouseId: parseInt(formData.warehouseId, 10) || 1001,
+            warehouseId: parseInt(formData.warehouseId, 10) || 1,
             type: difference > 0 ? 'IN' : 'OUT',
             quantity: Math.abs(difference),
             remarks: 'Absolute Stock Update from Edit Form'

@@ -7,8 +7,30 @@ const inventoryService = require('../inventory/inventory.service');
  * Helper to generate unique sequential inquiry number
  */
 const generateInquiryNumber = async () => {
-  const count = await prisma.inquiry.count();
-  return `INQ-${1000 + count + 1}`;
+  // Use the highest existing inquiry number to avoid duplicates from deletions or concurrent inserts
+  const last = await prisma.inquiry.findFirst({
+    orderBy: { id: 'desc' },
+    select: { inquiryNumber: true }
+  });
+
+  let nextNum = 1001;
+  if (last?.inquiryNumber) {
+    const match = last.inquiryNumber.match(/INQ-(\d+)/);
+    if (match) {
+      nextNum = parseInt(match[1], 10) + 1;
+    }
+  }
+
+  // Ensure uniqueness — keep incrementing if this number already exists
+  let candidate = `INQ-${nextNum}`;
+  while (true) {
+    const exists = await prisma.inquiry.findFirst({ where: { inquiryNumber: candidate } });
+    if (!exists) break;
+    nextNum += 1;
+    candidate = `INQ-${nextNum}`;
+  }
+
+  return candidate;
 };
 
 /**
@@ -21,8 +43,12 @@ const getAllInquiries = async (query = {}) => {
     console.error("Failed to run autoCloseExpiredRFQs in getAllInquiries:", err.message);
   }
 
-  const { page, pageSize, paginate, status, statuses, clientId, clientIds, search } = query;
+  const { page, pageSize, paginate, status, statuses, clientId, clientIds, search, excludeInventoryFulfilled } = query;
   const where = { deletedAt: null };
+
+  if (excludeInventoryFulfilled === 'true') {
+    where.inventoryFulfilled = false;
+  }
 
   if (search) {
     where.OR = [
@@ -31,7 +57,6 @@ const getAllInquiries = async (query = {}) => {
       { client: { name: { contains: search, mode: 'insensitive' } } }
     ];
   }
-
   if (status) {
     where.currentStatus = status;
   }
@@ -406,10 +431,17 @@ const stockCheck = async (id, data, userId) => {
       });
     }
 
+    const isFullyInventory = !data.supplierIds || data.supplierIds.length === 0;
+    const nextStatus = isFullyInventory ? 'TL_REVIEW' : 'RFQ_READY';
+
     // Update status
     const updated = await tx.inquiry.update({
       where: { id },
-      data: { currentStatus: 'RFQ_READY', updatedById: userId }
+      data: {
+        currentStatus: nextStatus,
+        updatedById: userId,
+        ...(isFullyInventory ? { inventoryFulfilled: true } : {})
+      }
     });
 
     // History
@@ -417,9 +449,9 @@ const stockCheck = async (id, data, userId) => {
       data: {
         inquiryId: id,
         fromStatus: 'PENDING',
-        toStatus: 'RFQ_READY',
+        toStatus: nextStatus,
         changedById: userId,
-        remarks: data.remarks || 'Stock check completed'
+        remarks: data.remarks || (isFullyInventory ? 'Fulfilled via internal inventory' : 'Stock check completed')
       }
     });
 
@@ -1126,6 +1158,33 @@ const teamLeadApprove = async (id, data, userId) => {
             });
           }
         }
+      } else {
+        const qNumber = `QT-${Date.now().toString().slice(-6)}`;
+        const newQuotation = await tx.clientQuotation.create({
+          data: {
+            inquiryId: id,
+            quotationNumber: qNumber,
+            marginPercentage: data.overrideQuote.marginPercentage,
+            discountPercentage: data.overrideQuote.discountPercentage,
+            taxPercentage: 18,
+            totalAmount: data.overrideQuote.totalAmount,
+            finalAmount: data.overrideQuote.finalAmount,
+            status: 'DRAFT',
+            createdById: userId
+          }
+        });
+
+        if (data.overrideQuote.items && data.overrideQuote.items.length > 0) {
+          await tx.clientQuotationItem.createMany({
+            data: data.overrideQuote.items.map(i => ({
+              clientQuotationId: newQuotation.id,
+              inquiryItemId: i.inquiryItemId,
+              sellingPrice: parseFloat(i.sellingPrice),
+              quantity: parseInt(i.quantity, 10) || 1,
+              totalPrice: parseFloat(i.totalPrice)
+            }))
+          });
+        }
       }
     }
 
@@ -1379,7 +1438,7 @@ const confirmDeal = async (id, data, userId) => {
       }
     }
 
-    if (selectedItemMapping.size === 0) {
+    if (selectedItemMapping.size === 0 && !inquiry.inventoryFulfilled) {
       throw new Error('No supplier quotes found for this inquiry. Deal cannot be confirmed.');
     }
 
@@ -1477,6 +1536,25 @@ const confirmDeal = async (id, data, userId) => {
       });
     }
 
+    if (inquiry.inventoryFulfilled) {
+      const shipmentNumber = `SH-${1000 + baseShCount + shIndex + 1}`;
+      shIndex++;
+
+      await tx.shipment.create({
+        data: {
+          shipmentNumber,
+          inquiryId: id,
+          purchaseOrderId: null,
+          supplierId: null,
+          clientId: inquiry.clientId,
+          cargoDetails: inquiry.items.map(m => `${m.description} (x${m.quantity})`).join(', '),
+          currentStatus: 'PENDING',
+          inventoryFulfilled: true,
+          createdById: userId
+        }
+      });
+    }
+
     // 3. Update status of the inquiry
     const updated = await tx.inquiry.update({
       where: { id },
@@ -1490,7 +1568,7 @@ const confirmDeal = async (id, data, userId) => {
         fromStatus: 'QUOTE_SENT',
         toStatus: 'CONFIRMED',
         changedById: userId,
-        remarks: `Deal confirmed. Generated ${poIndex} Purchase Order(s) and Shipment(s) for the selected vendors.`
+        remarks: `Deal confirmed.` + (poIndex > 0 ? ` Generated ${poIndex} Purchase Order(s) and Shipment(s) for the selected vendors.` : ` Fulfilled via internal inventory.`)
       }
     });
 
@@ -1529,11 +1607,84 @@ const closeInquiry = async (id, data, userId) => {
   });
 };
 
+/**
+ * Track an inquiry publicly by inquiryNumber
+ */
+const trackPublicInquiry = async (inquiryNumber) => {
+  const inquiry = await prisma.inquiry.findFirst({
+    where: { inquiryNumber },
+    select: {
+      inquiryNumber: true,
+      currentStatus: true,
+      createdAt: true,
+      vesselName: true,
+      inventoryFulfilled: true,
+      client: {
+        select: {
+          name: true,
+          company: true,
+        }
+      },
+      items: {
+        select: {
+          description: true,
+          quantity: true,
+          unit: true
+        }
+      },
+      shipments: {
+        select: {
+          currentStatus: true
+        }
+      }
+    }
+  });
+
+  if (!inquiry) return null;
+
+  // Derive aggregate status from shipments if present
+  if (inquiry.shipments && inquiry.shipments.length > 0) {
+    const STATUS_RANK = {
+      'PENDING': 1,
+      'ORDER PLACED': 1,
+      'ORDERED': 1,
+      'VEHICLE_ALLOTTED': 2,
+      'LOADING': 2,
+      'DISPATCHED': 3,
+      'IN_TRANSIT': 3,
+      'DELIVERED': 4,
+      'OUT_FOR_DELIVERY': 5,
+      'DELIVERED_TO_VESSEL': 6,
+      'DELIVERED TO VESSEL': 6,
+      'CHALLAN_RECEIVED': 7
+    };
+    
+    let maxRank = 0;
+    let advancedStatus = inquiry.currentStatus;
+
+    inquiry.shipments.forEach(s => {
+      const rank = STATUS_RANK[s.currentStatus] || 0;
+      if (rank > maxRank) {
+        maxRank = rank;
+        advancedStatus = s.currentStatus;
+      }
+    });
+
+    // If shipment is past CONFIRMED, use its status
+    if (maxRank > 0 && inquiry.currentStatus === 'CONFIRMED') {
+      inquiry.currentStatus = advancedStatus;
+    }
+  }
+
+  return inquiry;
+};
+
 module.exports = {
   getAllInquiries,
   getInquiryById,
   createInquiry,
   createPublicInquiry,
+  trackPublicInquiry,
   updateInquiry,
   deleteInquiry,
 

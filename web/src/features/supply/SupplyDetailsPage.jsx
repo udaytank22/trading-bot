@@ -61,7 +61,8 @@ export default function SupplyDetailsPage() {
           'OUT_FOR_DELIVERY': 5,
           'DELIVERED_TO_VESSEL': 6,
           'DELIVERED TO VESSEL': 6,
-          'CHALLAN_RECEIVED': 7
+          'CHALLAN_RECEIVED': 7,
+          'CLOSED': 8
         };
         const RANK_TO_STATUS = {
           1: 'ORDER PLACED',
@@ -70,7 +71,8 @@ export default function SupplyDetailsPage() {
           4: 'DELIVERED',
           5: 'OUT_FOR_DELIVERY',
           6: 'DELIVERED_TO_VESSEL',
-          7: 'CHALLAN_RECEIVED'
+          7: 'CHALLAN_RECEIVED',
+          8: 'CLOSED'
         };
 
         let minRank = Infinity;
@@ -84,6 +86,7 @@ export default function SupplyDetailsPage() {
         setDeal({
           isGrouped: true,
           id: id,
+          inquiryId: inqId,
           shipmentNumber: groupShipments[0].inquiry?.inquiryNumber ? `ORD-${groupShipments[0].inquiry.inquiryNumber}` : `ORD-${inqId}`,
           client: groupShipments[0].client,
           inquiry: groupShipments[0].inquiry,
@@ -249,7 +252,7 @@ export default function SupplyDetailsPage() {
       setDeal(updatedDeal);
 
       Swal.fire({
-        title: '✅ Challan Signed!',
+        title: 'Challan Signed!',
         text: 'The vessel has signed the challan. Ready for invoicing.',
         toast: true, showConfirmButton: false, position: 'top-end', icon: 'success',
         confirmButtonColor: '#0d9488',
@@ -391,9 +394,7 @@ export default function SupplyDetailsPage() {
           handleGroupChallanReceived={handleGroupChallanReceived}
           documents={documents}
           handleViewPDF={(doc) => {
-            setPdfUrl(doc.url);
-            setPdfLabel(doc.name);
-            setShowPdf(true);
+            window.open(doc.url, "_blank");
           }}
         />
         {/* Modals are rendered below in SupplyDetailsPage */}
@@ -405,10 +406,11 @@ export default function SupplyDetailsPage() {
           modalTitle={(allotModalMode === 'final_delivery' || allotModalMode === 'group_final_delivery') ? 'Allot Vehicle for Final Delivery' : 'Allot Vehicle'}
           onAllot={async (allotId, vehicle) => {
             try {
-              if (allotModalMode === 'group_final_delivery') {
+              if (allotModalMode === 'group_final_delivery' || allotModalMode === 'group_initial_delivery') {
+                const newStatus = allotModalMode === 'group_final_delivery' ? 'VEHICLE_ALLOTTED' : 'LOADING';
                 const promises = deal.subShipments.map(sub =>
                   api.shipments.updateShipment(sub.id, {
-                    currentStatus: 'VEHICLE_ALLOTTED',
+                    currentStatus: newStatus,
                     vehicleDetails: vehicle.vehicle_no,
                     driverDetails: `${vehicle.driver_name || vehicle.owner_name} (${vehicle.phone || vehicle.owner_phone})`
                   })
@@ -419,12 +421,12 @@ export default function SupplyDetailsPage() {
                 const updatedDeal = { ...deal };
                 updatedDeal.subShipments = updatedDeal.subShipments.map(s => ({
                   ...s,
-                  status: 'VEHICLE_ALLOTTED',
-                  currentStatus: 'VEHICLE_ALLOTTED',
+                  status: newStatus,
+                  currentStatus: newStatus,
                   vehicleDetails: vehicle.vehicle_no,
                   driverDetails: `${vehicle.driver_name || vehicle.owner_name} (${vehicle.phone || vehicle.owner_phone})`
                 }));
-                updatedDeal.status = 'VEHICLE_ALLOTTED';
+                updatedDeal.status = newStatus;
                 setDeal(updatedDeal);
               } else {
                 // For grouped view, update specific subShipment locally
@@ -539,7 +541,7 @@ export default function SupplyDetailsPage() {
             <StatusBadge status={status} />
 
 
-            {status === "ORDER_PLACED" && isAdminOrClient && canUpdate && (
+            {(status === "ORDER_PLACED" || (status === "PENDING" && deal.inventoryFulfilled)) && isAdminOrClient && canUpdate && (
               <button
                 onClick={async () => {
                   const result = await Swal.fire({
@@ -585,14 +587,14 @@ export default function SupplyDetailsPage() {
               </button>
             )}
 
-            {status === "LOADING" && canUpdate && (
+            {/* {((status === "LOADING" && !deal.inventoryFulfilled) || ((status === "ORDER_PLACED" || status === "PENDING" || status === "CONFIRMED") && deal.inventoryFulfilled)) && canUpdate && (
               <button
                 onClick={() => { setAllotModalDeal(deal); setIsAllotModalOpen(true); }}
                 className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-white hover:bg-gray-50 dark:bg-[#1e2028] dark:hover:bg-[#242830] text-purple-600 dark:text-purple-400 border border-purple-500/30 transition-all shadow-sm"
               >
                 Allot Vehicle
               </button>
-            )}
+            )} */}
 
             {(status === "IN_TRANSIT" || status === "DISPATCHED") && canUpdate && (
               <button
@@ -652,7 +654,11 @@ export default function SupplyDetailsPage() {
                       background: '#1a1d23',
                       color: '#fff',
                     });
-                    if (result.isConfirmed) handleStatusUpdate(deal.id, 'CHALLAN_RECEIVED');
+                    if (result.isConfirmed) {
+                      const isAllInventory = deal.inventoryFulfilled;
+                      const finalStatus = isAllInventory ? 'CLOSED' : 'CHALLAN_RECEIVED';
+                      handleStatusUpdate(deal.id, finalStatus);
+                    }
                   }}
                   className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-teal-600 hover:bg-teal-500 text-white transition-all shadow-sm flex items-center gap-2"
                 >
@@ -883,7 +889,7 @@ export default function SupplyDetailsPage() {
                           {doc.type}
                         </div>
                         <div
-                          onClick={() => { setPdfLabel(doc.name); setPdfUrl(doc.url); setShowPdf(true); }}
+                          onClick={() => window.open(doc.url, "_blank")}
                           className="cursor-pointer min-w-0"
                           title="Click to view document"
                         >
@@ -893,7 +899,7 @@ export default function SupplyDetailsPage() {
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0">
                         <button
-                          onClick={() => { setPdfLabel(doc.name); setPdfUrl(doc.url); setShowPdf(true); }}
+                          onClick={() => window.open(doc.url, "_blank")}
                           title="View document"
                           className="p-1 rounded-lg text-purple-500 bg-purple-500/10 hover:bg-purple-500/20 transition-colors"
                         >

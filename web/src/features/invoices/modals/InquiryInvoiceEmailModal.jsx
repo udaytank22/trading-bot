@@ -30,12 +30,9 @@ export default function InquiryInvoiceEmailModal({ inquiry, isOpen, onClose, onS
             setInvoiceId(previewData.invoice.id);
             setSubject(`Invoice for Inquiry: ${inquiry.inquiryNumber}`);
 
-            // Set body from API or fallback
+            // Set body from API (used only when sending — display is handled by static JSX)
             if (previewData.defaultEmailBody) {
               setBody(previewData.defaultEmailBody);
-              if (bodyRef.current && !isEditing) {
-                bodyRef.current.innerHTML = previewData.defaultEmailBody.replace(/\n/g, '<br/>');
-              }
             }
 
             try {
