@@ -1,11 +1,6 @@
-import apiClient from '../apiClient';
+import { createResourceApi } from './factory';
 
-export const getQuotations = async () => {
-  const response = await apiClient.get('/quotations');
-  return response.data;
-};
+const api = createResourceApi('/quotations');
 
-export const getQuotation = async (id) => {
-  const response = await apiClient.get(`/quotations/${id}`);
-  return response.data;
-};
+export const getQuotations = api.getAll;
+export const getQuotation = api.getById;

@@ -1,6 +1,5 @@
-import apiClient from '../apiClient';
+import { createResourceApi } from './factory';
 
-export const getAuditLogs = async (params = {}) => {
-  const response = await apiClient.get('/audit-logs', { params });
-  return response.data;
-};
+const api = createResourceApi('/audit-logs');
+
+export const getAuditLogs = api.getAll;

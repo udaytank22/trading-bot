@@ -1,26 +1,9 @@
-import apiClient from '../apiClient';
+import { createResourceApi } from './factory';
 
-export const getShipments = async (params = {}) => {
-  const response = await apiClient.get('/shipments', { params });
-  return response.data;
-};
+const api = createResourceApi('/shipments');
 
-export const getShipment = async (id) => {
-  const response = await apiClient.get(`/shipments/${id}`);
-  return response.data;
-};
-
-export const createShipment = async (data) => {
-  const response = await apiClient.post('/shipments', data);
-  return response.data;
-};
-
-export const updateShipment = async (id, data) => {
-  const response = await apiClient.put(`/shipments/${id}`, data);
-  return response.data;
-};
-
-export const deleteShipment = async (id) => {
-  const response = await apiClient.delete(`/shipments/${id}`);
-  return response.data;
-};
+export const getShipments = api.getAll;
+export const getShipment = api.getById;
+export const createShipment = api.create;
+export const updateShipment = api.update;
+export const deleteShipment = api.remove;

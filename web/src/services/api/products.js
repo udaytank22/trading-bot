@@ -1,31 +1,15 @@
+import { createResourceApi } from './factory';
 import apiClient from '../apiClient';
 
-export const getProducts = async (params = {}) => {
-  const response = await apiClient.get('/products', { params });
-  return response.data;
-};
+const api = createResourceApi('/products');
 
-export const getProduct = async (id) => {
-  const response = await apiClient.get(`/products/${id}`);
-  return response.data;
-};
-
-export const createProduct = async (data) => {
-  const response = await apiClient.post('/products', data);
-  return response.data;
-};
+export const getProducts = api.getAll;
+export const getProduct = api.getById;
+export const createProduct = api.create;
+export const updateProduct = api.update;
+export const deleteProduct = api.remove;
 
 export const bulkUpsert = async (productsData) => {
   const response = await apiClient.post('/products/bulk', { products: productsData });
-  return response.data;
-};
-
-export const updateProduct = async (id, data) => {
-  const response = await apiClient.put(`/products/${id}`, data);
-  return response.data;
-};
-
-export const deleteProduct = async (id) => {
-  const response = await apiClient.delete(`/products/${id}`);
   return response.data;
 };

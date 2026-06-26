@@ -1,29 +1,13 @@
+import { createResourceApi } from './factory';
 import apiClient from '../apiClient';
 
-export const getEmployees = async (params = {}) => {
-  const response = await apiClient.get('/employees', { params });
-  return response.data;
-};
+const api = createResourceApi('/employees');
 
-export const getEmployee = async (id) => {
-  const response = await apiClient.get(`/employees/${id}`);
-  return response.data;
-};
-
-export const createEmployee = async (data) => {
-  const response = await apiClient.post('/employees', data);
-  return response.data;
-};
-
-export const updateEmployee = async (id, data) => {
-  const response = await apiClient.put(`/employees/${id}`, data);
-  return response.data;
-};
-
-export const deleteEmployee = async (id) => {
-  const response = await apiClient.delete(`/employees/${id}`);
-  return response.data;
-};
+export const getEmployees = api.getAll;
+export const getEmployee = api.getById;
+export const createEmployee = api.create;
+export const updateEmployee = api.update;
+export const deleteEmployee = api.remove;
 
 export const logAttendance = async (id, attendanceData) => {
   const response = await apiClient.post(`/employees/${id}/attendance`, attendanceData);

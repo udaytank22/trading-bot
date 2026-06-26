@@ -1,21 +1,8 @@
-import apiClient from '../apiClient';
+import { createResourceApi } from './factory';
 
-export const getPayments = async () => {
-  const response = await apiClient.get('/payments');
-  return response.data;
-};
+const api = createResourceApi('/payments');
 
-export const getPayment = async (id) => {
-  const response = await apiClient.get(`/payments/${id}`);
-  return response.data;
-};
-
-export const createPayment = async (data) => {
-  const response = await apiClient.post('/payments', data);
-  return response.data;
-};
-
-export const deletePayment = async (id) => {
-  const response = await apiClient.delete(`/payments/${id}`);
-  return response.data;
-};
+export const getPayments = api.getAll;
+export const getPayment = api.getById;
+export const createPayment = api.create;
+export const deletePayment = api.remove;

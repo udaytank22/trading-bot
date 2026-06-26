@@ -1,6 +1,5 @@
-import apiClient from '../apiClient';
+import { createResourceApi } from './factory';
 
-export const getPermissions = async () => {
-  const response = await apiClient.get('/permissions');
-  return response.data;
-};
+const api = createResourceApi('/permissions');
+
+export const getPermissions = api.getAll;

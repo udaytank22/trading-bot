@@ -1,24 +1,13 @@
+import { createResourceApi } from './factory';
 import apiClient from '../apiClient';
 
-export const getInvoices = async (params = {}) => {
-  const response = await apiClient.get('/invoices', { params });
-  return response.data;
-};
+const api = createResourceApi('/invoices');
 
-export const getInvoice = async (id) => {
-  const response = await apiClient.get(`/invoices/${id}`);
-  return response.data;
-};
-
-export const createInvoice = async (data) => {
-  const response = await apiClient.post('/invoices', data);
-  return response.data;
-};
-
-export const updateInvoice = async (id, data) => {
-  const response = await apiClient.put(`/invoices/${id}`, data);
-  return response.data;
-};
+export const getInvoices = api.getAll;
+export const getInvoice = api.getById;
+export const createInvoice = api.create;
+export const updateInvoice = api.update;
+export const deleteInvoice = api.remove;
 
 export const downloadPdf = async (id) => {
   const response = await apiClient.get(`/invoices/${id}/pdf`, { responseType: 'blob' });
@@ -27,11 +16,6 @@ export const downloadPdf = async (id) => {
 
 export const previewInvoice = async (id) => {
   const response = await apiClient.get(`/invoices/${id}/preview`);
-  return response.data;
-};
-
-export const deleteInvoice = async (id) => {
-  const response = await apiClient.delete(`/invoices/${id}`);
   return response.data;
 };
 

@@ -1,9 +1,10 @@
+import { createResourceApi } from './factory';
 import apiClient from '../apiClient';
 
-export const getNotifications = async () => {
-  const response = await apiClient.get('/notifications');
-  return response.data;
-};
+const api = createResourceApi('/notifications');
+
+export const getNotifications = api.getAll;
+export const deleteNotification = api.remove;
 
 export const markAllRead = async () => {
   const response = await apiClient.put('/notifications/mark-all-read');
@@ -12,10 +13,5 @@ export const markAllRead = async () => {
 
 export const markRead = async (id) => {
   const response = await apiClient.put(`/notifications/${id}/mark-read`);
-  return response.data;
-};
-
-export const deleteNotification = async (id) => {
-  const response = await apiClient.delete(`/notifications/${id}`);
   return response.data;
 };

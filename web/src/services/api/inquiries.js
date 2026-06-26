@@ -1,4 +1,7 @@
+import { createResourceApi } from './factory';
 import apiClient from '../apiClient';
+
+const api = createResourceApi('/inquiries');
 
 const normalizeInquiry = (inq) => {
   if (!inq) return null;
@@ -132,41 +135,38 @@ const normalizeInquiry = (inq) => {
 };
 
 export const getInquiries = async (params = {}) => {
-  const response = await apiClient.get('/inquiries', { params });
-  if (response.data && response.data.success && Array.isArray(response.data.data)) {
-    response.data.data = response.data.data.map(normalizeInquiry);
+  const resData = await api.getAll(params);
+  if (resData && resData.success && Array.isArray(resData.data)) {
+    resData.data = resData.data.map(normalizeInquiry);
   }
-  return response.data;
+  return resData;
 };
 
 export const getInquiry = async (id) => {
-  const response = await apiClient.get(`/inquiries/${id}`);
-  if (response.data && response.data.success && response.data.data) {
-    response.data.data = normalizeInquiry(response.data.data);
+  const resData = await api.getById(id);
+  if (resData && resData.success && resData.data) {
+    resData.data = normalizeInquiry(resData.data);
   }
-  return response.data;
+  return resData;
 };
 
 export const createInquiry = async (data) => {
-  const response = await apiClient.post('/inquiries', data);
-  if (response.data && response.data.success && response.data.data) {
-    response.data.data = normalizeInquiry(response.data.data);
+  const resData = await api.create(data);
+  if (resData && resData.success && resData.data) {
+    resData.data = normalizeInquiry(resData.data);
   }
-  return response.data;
+  return resData;
 };
 
 export const updateInquiry = async (id, data) => {
-  const response = await apiClient.put(`/inquiries/${id}`, data);
-  if (response.data && response.data.success && response.data.data) {
-    response.data.data = normalizeInquiry(response.data.data);
+  const resData = await api.update(id, data);
+  if (resData && resData.success && resData.data) {
+    resData.data = normalizeInquiry(resData.data);
   }
-  return response.data;
+  return resData;
 };
 
-export const deleteInquiry = async (id) => {
-  const response = await apiClient.delete(`/inquiries/${id}`);
-  return response.data;
-};
+export const deleteInquiry = api.remove;
 
 export const stockCheck = async (id, supplierIds) => {
   const response = await apiClient.post(`/inquiries/${id}/stock-check`, { supplierIds });
