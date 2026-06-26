@@ -2,6 +2,7 @@ const prisma = require('../../prisma/client');
 const ejs = require('ejs');
 const path = require('path');
 const puppeteer = require('puppeteer');
+const browserPool = require('../../utils/browserPool');
 const { sendInvoiceEmail } = require('../../utils/email.service');
 
 /**
@@ -337,11 +338,16 @@ const generateInvoiceFromShipment = async (shipmentId, creatorId) => {
 
   const html = await ejs.renderFile(templatePath, renderData);
 
-  const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-  const page = await browser.newPage();
-  await page.setContent(html, { waitUntil: 'networkidle0' });
-  const pdfUint8Array = await page.pdf({ format: 'A4', printBackground: true });
-  await browser.close();
+  const browser = await browserPool.acquire();
+  let pdfUint8Array;
+  try {
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    pdfUint8Array = await page.pdf({ format: 'A4', printBackground: true });
+    await page.close();
+  } finally {
+    browserPool.release(browser);
+  }
 
   const pdfBase64 = Buffer.from(pdfUint8Array).toString('base64');
 
@@ -441,11 +447,16 @@ const generateInvoiceFromInquiry = async (inquiryId, creatorId) => {
 
   const html = await ejs.renderFile(templatePath, renderData);
 
-  const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-  const page = await browser.newPage();
-  await page.setContent(html, { waitUntil: 'networkidle0' });
-  const pdfUint8Array = await page.pdf({ format: 'A4', printBackground: true });
-  await browser.close();
+  const browser = await browserPool.acquire();
+  let pdfUint8Array;
+  try {
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    pdfUint8Array = await page.pdf({ format: 'A4', printBackground: true });
+    await page.close();
+  } finally {
+    browserPool.release(browser);
+  }
 
   const pdfBase64 = Buffer.from(pdfUint8Array).toString('base64');
 
@@ -493,11 +504,16 @@ const generateInvoicePdfBuffer = async (invoiceId) => {
   };
 
   const html = await ejs.renderFile(templatePath, renderData);
-  const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-  const page = await browser.newPage();
-  await page.setContent(html, { waitUntil: 'networkidle0' });
-  const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
-  await browser.close();
+  const browser = await browserPool.acquire();
+  let pdfBuffer;
+  try {
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
+    await page.close();
+  } finally {
+    browserPool.release(browser);
+  }
 
   return { pdfBuffer, invoice };
 };
