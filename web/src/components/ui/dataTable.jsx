@@ -37,8 +37,9 @@
  * @author TradeMind Dev Team
  */
 
-import React from "react";
+import React, { useRef } from "react";
 import EmptyState from "./emptyState";
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 // ─── Shared row stripe helper (exported so individual tables can use it) ───────
 
@@ -78,12 +79,31 @@ export default function DataTable({
   className = "",
   renderFooter,
 }) {
+  const parentRef = useRef(null);
+
+  const virtualizer = useVirtualizer({
+    count: data.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 50,
+    overscan: 5,
+  });
+
+  const virtualItems = virtualizer.getVirtualItems();
+
+  const paddingTop = virtualItems.length > 0 ? virtualItems[0].start : 0;
+  const paddingBottom = virtualItems.length > 0
+    ? virtualizer.getTotalSize() - virtualItems[virtualItems.length - 1].end
+    : 0;
+
   return (
     /* Outer wrapper — hides overflow for rounded corners */
     <div className={`w-full overflow-hidden flex flex-col ${className}`}>
 
       {/* Scrollable container — both axes, styled scrollbar */}
-      <div className={`w-full max-w-full overflow-auto ${maxHeight} custom-scrollbar`}>
+      <div 
+        ref={parentRef}
+        className={`w-full max-w-full overflow-auto ${maxHeight} custom-scrollbar`}
+      >
 
         {/* Main table — auto layout so columns size to content */}
         <table className="w-full text-left text-sm table-auto border-collapse">
@@ -112,12 +132,34 @@ export default function DataTable({
           {/* ── BODY ───────────────────────────────────────────────────────── */}
           <tbody className="divide-y divide-gray-100 dark:divide-[#2a2d33]/50">
             {data.length > 0 ? (
-              // If renderRow is provided, use it for backwards compatibility.
-              // Otherwise, iterate columns and use col.renderCell or row[col.key]
-              renderRow 
-                ? data.map((row, idx) => renderRow(row, idx))
-                : data.map((row, idx) => (
-                    <tr key={row.id || idx} className={`${ROW_HOVER_CLS} ${rowStripeClass(idx)}`}>
+              <>
+                {paddingTop > 0 && (
+                  <tr>
+                    <td colSpan={columns.length} style={{ height: paddingTop, padding: 0, border: 0 }} />
+                  </tr>
+                )}
+                {virtualItems.map((virtualRow) => {
+                  const idx = virtualRow.index;
+                  const row = data[idx];
+                  
+                  // If renderRow is provided, use it for backwards compatibility.
+                  // Otherwise, iterate columns and use col.renderCell or row[col.key]
+                  if (renderRow) {
+                    const rendered = renderRow(row, idx);
+                    return React.cloneElement(rendered, {
+                      key: row.id || idx,
+                      ref: virtualizer.measureElement,
+                      'data-index': idx
+                    });
+                  }
+
+                  return (
+                    <tr 
+                      key={row.id || idx} 
+                      ref={virtualizer.measureElement}
+                      data-index={idx}
+                      className={`${ROW_HOVER_CLS} ${rowStripeClass(idx)}`}
+                    >
                       {columns.map((col, cIdx) => {
                         const cellValue = col.renderCell ? col.renderCell(row, idx) : row[col.key];
                         return (
@@ -130,7 +172,14 @@ export default function DataTable({
                         );
                       })}
                     </tr>
-                  ))
+                  );
+                })}
+                {paddingBottom > 0 && (
+                  <tr>
+                    <td colSpan={columns.length} style={{ height: paddingBottom, padding: 0, border: 0 }} />
+                  </tr>
+                )}
+              </>
             ) : (
               // Empty state row spans all columns
               <tr>
