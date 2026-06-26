@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Select, Field, Modal, DatePicker } from '@components/ui';
+import { Select, Field, Modal, DatePicker, DataTable } from '@components/ui';
 import { parseExcelFile } from '@utils/excelUtils';
 import Swal from "sweetalert2";
 import { useData } from '@context';
@@ -477,106 +477,67 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
 
           <div className="border border-gray-250 dark:border-[#2f3441] rounded-xl overflow-hidden bg-white dark:bg-[#181b22]">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[600px] table-fixed">
-                <thead className="bg-gray-55 dark:bg-[#1f222b] border-b border-gray-250 dark:border-[#2f3441]">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 w-[60px]">
-                      S.No.
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-200">
-                      Product Name
-                    </th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 w-[120px]">
-                      Quantity
-                    </th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 w-[120px]">
-                      Unit
-                    </th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 dark:text-gray-200 w-[80px]">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-[#2f3441]">
-                  {formData.products.map((p, idx) => (
-                    <tr
-                      key={idx}
-                      className="hover:bg-gray-55/30 dark:hover:bg-white/[0.01] transition-colors"
+              <DataTable
+                columns={[
+                  { key: 'srno', label: 'S.No.', cellClassName: 'text-sm text-gray-500 font-mono w-[60px]', renderCell: (_, idx) => idx + 1 },
+                  { key: 'product_name', label: 'Product Name', cellClassName: 'px-4 py-2', renderCell: (p, idx) => (
+                    <div className="relative z-[11111] overflow-visible">
+                      <Select
+                        variant="form"
+                        value={p.product_name}
+                        onChange={(val) => {
+                          const productObj = productsData.find(prod => prod.name === val);
+                          setFormData(prev => {
+                            const updated = [...prev.products];
+                            updated[idx] = {
+                              ...updated[idx],
+                              product_name: val,
+                              unit: productObj?.unit || updated[idx].unit || "pcs"
+                            };
+                            return { ...prev, products: updated };
+                          });
+                        }}
+                        options={productsData.map(prod => ({ value: prod.name, label: prod.name }))}
+                        placeholder="Select product"
+                      />
+                    </div>
+                  )},
+                  { key: 'quantity', label: 'Quantity', cellClassName: 'px-4 py-2 w-[120px]', renderCell: (p, idx) => (
+                    <input
+                      type="number"
+                      min="1"
+                      value={p.quantity}
+                      onChange={(e) => updateProductInList(idx, "quantity", Math.max(1, parseInt(e.target.value, 10) || 1))}
+                      className="w-full h-[36px] rounded-lg px-3 text-sm bg-white dark:bg-[#0f1117] border border-gray-300 dark:border-[#2f3441] text-gray-900 dark:text-white text-center focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20"
+                    />
+                  )},
+                  { key: 'unit', label: 'Unit', cellClassName: 'px-4 py-2 w-[120px]', renderCell: (p, idx) => (
+                    <div className="relative z-[1111] overflow-visible">
+                      <Select
+                        variant="form"
+                        value={p.unit}
+                        onChange={(val) => updateProductInList(idx, "unit", val)}
+                        options={uniqueUnits.map(u => ({ value: u, label: u }))}
+                        placeholder="Select unit"
+                      />
+                    </div>
+                  )},
+                  { key: 'action', label: 'Action', cellClassName: 'px-4 py-2 text-center w-[80px]', renderCell: (_, idx) => (
+                    <button
+                      type="button"
+                      onClick={() => removeProductFromInquiry(idx)}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-colors mx-auto"
+                      title="Remove product"
                     >
-                      <td className="px-4 py-2 text-sm text-gray-500 font-mono">
-                        {idx + 1}
-                      </td>
-                      <td className="px-4 py-2">
-                        <div className="relative z-[11111] overflow-visible">
-                          <Select
-                            variant="form"
-                            value={p.product_name}
-                            onChange={(val) => {
-                              const productObj = productsData.find(prod => prod.name === val);
-                              setFormData(prev => {
-                                const updated = [...prev.products];
-                                updated[idx] = {
-                                  ...updated[idx],
-                                  product_name: val,
-                                  unit: productObj?.unit || updated[idx].unit || "pcs"
-                                };
-                                return { ...prev, products: updated };
-                              });
-                            }}
-                            options={productsData.map(prod => ({
-                              value: prod.name,
-                              label: prod.name
-                            }))}
-                            placeholder="Select product"
-                          />
-                        </div>
-                      </td>
-                      <td className="px-4 py-2">
-                        <input
-                          type="number"
-                          min="1"
-                          value={p.quantity}
-                          onChange={(e) => updateProductInList(idx, "quantity", Math.max(1, parseInt(e.target.value, 10) || 1))}
-                          className="w-full h-[36px] rounded-lg px-3 text-sm bg-white dark:bg-[#0f1117] border border-gray-300 dark:border-[#2f3441] text-gray-900 dark:text-white text-center focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20"
-                        />
-                      </td>
-                      <td className="px-4 py-2">
-                        <div className="relative z-[1111] overflow-visible">
-                          <Select
-                            variant="form"
-                            value={p.unit}
-                            onChange={(val) => updateProductInList(idx, "unit", val)}
-                            options={uniqueUnits.map(u => ({
-                              value: u,
-                              label: u
-                            }))}
-                            placeholder="Select unit"
-                          />
-                        </div>
-                      </td>
-                      <td className="px-4 py-2 text-center">
-                        <button
-                          type="button"
-                          onClick={() => removeProductFromInquiry(idx)}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-colors mx-auto"
-                          title="Remove product"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {formData.products.length === 0 && (
-                    <tr>
-                      <td colSpan="5" className="text-center py-8 text-sm text-gray-500 italic bg-gray-55/30 dark:bg-[#1a1d24]/50">
-                        No products added yet. Add at least one product above.
-                      </td>
-                    </tr>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   )}
-                </tbody>
-              </table>
+                ]}
+                data={formData.products}
+                emptyMessage="No products added yet. Add at least one product above."
+              />
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { parseExcelFile } from '@utils/excelUtils';
 import Swal from "sweetalert2";
+import { DataTable } from '@components/ui';
 
 const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
   const [discount, setDiscount] = useState("");
@@ -159,60 +160,44 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
 
             {/* Products table */}
             <div className="rounded-xl border border-gray-200 dark:border-[#2a2d33] overflow-hidden">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="bg-gray-50 dark:bg-[#0c0e12] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider border-b border-gray-200 dark:border-[#2a2d33]">
-                    <th className="px-4 py-2.5 text-left">Product</th>
-                    <th className="px-4 py-2.5 text-left">Supplier</th>
-                    <th className="px-4 py-2.5 text-center">Qty</th>
-                    <th className="px-4 py-2.5 text-right">Unit Price</th>
-                    <th className="px-4 py-2.5 text-right">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {deal?.seller_quote?.products && deal.seller_quote.products.length > 0 ? deal.seller_quote.products.map((p, idx) => {
-                    const qty = p.moq || 1;
-                    const rowTotal = (p.seller_unit_price || 0) * qty;
+              <div className="overflow-x-auto">
+                <DataTable
+                  columns={[
+                    { key: 'product', label: 'Product', cellClassName: 'px-4 py-2.5 font-semibold text-gray-800 dark:text-gray-200' },
+                    { key: 'supplier', label: 'Supplier', cellClassName: 'px-4 py-2.5' },
+                    { key: 'qty', label: 'Qty', cellClassName: 'px-4 py-2.5 font-mono text-center text-gray-600 dark:text-gray-400' },
+                    { key: 'price', label: 'Unit Price', cellClassName: 'px-4 py-2.5 font-mono text-right text-gray-700 dark:text-gray-300' },
+                    { key: 'total', label: 'Total', cellClassName: 'px-4 py-2.5 font-mono text-right font-bold text-gray-900 dark:text-white' }
+                  ]}
+                  data={deal?.seller_quote?.products && deal.seller_quote.products.length > 0 ? deal.seller_quote.products : (deal?.my_quote?.products || [])}
+                  emptyMessage="No products."
+                  renderRow={(p, idx) => {
+                    const isSeller = deal?.seller_quote?.products && deal.seller_quote.products.length > 0;
+                    const qty = isSeller ? (p.moq || 1) : (p.quantity || 1);
+                    const unitPrice = isSeller ? (p.seller_unit_price || 0) : (p.my_unit_price || 0);
+                    const rowTotal = unitPrice * qty;
+                    const supplierName = isSeller ? (p.supplier_name || deal.seller_quote.seller_name) : (p.supplier_name || 'Internal Inventory');
+                    const badgeClass = isSeller ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
                     return (
                       <tr key={idx} className="border-b border-gray-100 dark:border-[#2a2d33]/50 last:border-0 hover:bg-gray-50 dark:hover:bg-[#0c0e12]/50 transition-colors">
                         <td className="px-4 py-2.5 font-semibold text-gray-800 dark:text-gray-200">{p.product_name}</td>
                         <td className="px-4 py-2.5">
-                          <span className="px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9px] font-bold rounded uppercase tracking-wider">
-                            {p.supplier_name || deal.seller_quote.seller_name}
+                          <span className={`px-2 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider ${badgeClass}`}>
+                            {supplierName}
                           </span>
                         </td>
                         <td className="px-4 py-2.5 font-mono text-center text-gray-600 dark:text-gray-400">{qty}</td>
                         <td className="px-4 py-2.5 font-mono text-right text-gray-700 dark:text-gray-300">
-                          ₹ {new Intl.NumberFormat('en-IN').format(p.seller_unit_price || 0)}
+                          ₹ {new Intl.NumberFormat('en-IN').format(unitPrice)}
                         </td>
                         <td className="px-4 py-2.5 font-mono text-right font-bold text-gray-900 dark:text-white">
                           ₹ {new Intl.NumberFormat('en-IN').format(rowTotal)}
                         </td>
                       </tr>
                     );
-                  }) : (deal?.my_quote?.products || []).map((p, idx) => {
-                    const qty = p.quantity || 1;
-                    const rowTotal = (p.my_unit_price || 0) * qty;
-                    return (
-                      <tr key={idx} className="border-b border-gray-100 dark:border-[#2a2d33]/50 last:border-0 hover:bg-gray-50 dark:hover:bg-[#0c0e12]/50 transition-colors">
-                        <td className="px-4 py-2.5 font-semibold text-gray-800 dark:text-gray-200">{p.product_name}</td>
-                        <td className="px-4 py-2.5">
-                          <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9px] font-bold rounded uppercase tracking-wider">
-                            {p.supplier_name || 'Internal Inventory'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2.5 font-mono text-center text-gray-600 dark:text-gray-400">{qty}</td>
-                        <td className="px-4 py-2.5 font-mono text-right text-gray-700 dark:text-gray-300">
-                          ₹ {new Intl.NumberFormat('en-IN').format(p.my_unit_price || 0)}
-                        </td>
-                        <td className="px-4 py-2.5 font-mono text-right font-bold text-gray-900 dark:text-white">
-                          ₹ {new Intl.NumberFormat('en-IN').format(rowTotal)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                  }}
+                />
+              </div>
             </div>
           </div>
         )}

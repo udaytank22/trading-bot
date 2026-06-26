@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Select, Field, Modal } from "@components/ui";
+import { Select, Field, Modal, DataTable } from "@components/ui";
 import { useData } from "@context";
 import { parseExcelFile } from '@utils/excelUtils';
 import Swal from "sweetalert2";
@@ -321,117 +321,55 @@ export default function AddPurchaseOrderModal({ isOpen, onClose, onSubmit }) {
           `}
         >
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px]">
-              <thead className={`${panelBg} border-b ${borderColor}`}>
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200 w-[280px]">
-                    Product
-                  </th>
-
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">
-                    Description
-                  </th>
-
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200 w-[130px]">
-                    Qty
-                  </th>
-
-                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-200 w-[100px]">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {formData.products.map((item, index) => (
-                  <tr
-                    key={item.id}
-                    className={`
-                      border-b last:border-b-0 ${borderColor}
-                      hover:bg-gray-50 dark:hover:bg-white/[0.03]
-                      transition
-                    `}
-                  >
-                    <td className="p-3 align-top">
-                      <div className="relative z-[1111111] overflow-visible">
-                        <Select
-                          variant="form"
-                          options={PRODUCTS.map((p) => ({
-                            value: p,
-                            label: p,
-                          }))}
-                          value={item.product}
-                          onChange={(v) =>
-                            updateProduct(index, "product", v)
-                          }
-                          placeholder="Select product"
-                        />
-                      </div>
-                    </td>
-
-                    <td className="p-3 align-top">
-                      <input
-                        value={item.description}
-                        onChange={(e) =>
-                          updateProduct(
-                            index,
-                            "description",
-                            e.target.value
-                          )
-                        }
-                        className={inputClass}
-                        placeholder="Enter product description"
-                      />
-                    </td>
-
-                    <td className="p-3 align-top">
-                      <input
-                        type="number"
-                        min="1"
-                        value={item.qty}
-                        onChange={(e) =>
-                          updateProduct(index, "qty", e.target.value)
-                        }
-                        className={inputClass}
-                        placeholder="Qty"
-                      />
-                    </td>
-
-                    <td className="p-3 align-top">
-                      <div className="flex justify-center">
-                        <button
-                          type="button"
-                          onClick={() => deleteProduct(index)}
-                          className="
-                            w-10 h-10 rounded-lg
-                            flex items-center justify-center
-                            bg-red-50 dark:bg-red-500/10
-                            text-red-600 dark:text-red-400
-                            hover:bg-red-100 dark:hover:bg-red-500/20
-                            transition
-                          "
-                          title="Delete product"
-                        >
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M6 7h12M9 7V4h6v3m-7 4v6m4-6v6m4-6v6M5 7h14l-1 13H6L5 7z"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <DataTable
+              columns={[
+                { key: 'product', label: 'Product', cellClassName: 'p-3 align-top w-[280px]', renderCell: (item, index) => (
+                  <div className="relative z-[1111111] overflow-visible">
+                    <Select
+                      variant="form"
+                      options={PRODUCTS.map((p) => ({ value: p, label: p }))}
+                      value={item.product}
+                      onChange={(v) => updateProduct(index, "product", v)}
+                      placeholder="Select product"
+                    />
+                  </div>
+                )},
+                { key: 'description', label: 'Description', cellClassName: 'p-3 align-top', renderCell: (item, index) => (
+                  <input
+                    value={item.description}
+                    onChange={(e) => updateProduct(index, "description", e.target.value)}
+                    className={inputClass}
+                    placeholder="Enter product description"
+                  />
+                )},
+                { key: 'qty', label: 'Qty', cellClassName: 'p-3 align-top w-[130px]', renderCell: (item, index) => (
+                  <input
+                    type="number"
+                    min="1"
+                    value={item.qty}
+                    onChange={(e) => updateProduct(index, "qty", e.target.value)}
+                    className={inputClass}
+                    placeholder="Qty"
+                  />
+                )},
+                { key: 'action', label: 'Action', cellClassName: 'p-3 align-top w-[100px] text-center', renderCell: (item, index) => (
+                  <div className="flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => deleteProduct(index)}
+                      className="w-10 h-10 rounded-lg flex items-center justify-center bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition"
+                      title="Delete product"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 7h12M9 7V4h6v3m-7 4v6m4-6v6m4-6v6M5 7h14l-1 13H6L5 7z" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              ]}
+              data={formData.products}
+              emptyMessage="No products added."
+            />
           </div>
         </div>
       </div>

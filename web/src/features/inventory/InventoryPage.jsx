@@ -127,61 +127,23 @@ function ViewDetails({ item, onClose }) {
           </div>
         ) : (
           <div className="rounded-xl border border-gray-250 dark:border-[#2a2d36] overflow-hidden max-h-[300px] overflow-y-auto custom-scrollbar">
-            <table className="w-full text-[11px] text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-55 dark:bg-[#15171c] text-gray-500 dark:text-gray-400 font-bold uppercase border-b border-gray-250 dark:border-[#2a2d36] sticky top-0">
-                  <th className="px-4 py-2.5">Date</th>
-                  <th className="px-4 py-2.5">Type</th>
-                  <th className="px-4 py-2.5 text-center">Qty</th>
-                  <th className="px-4 py-2.5 text-center">Prev</th>
-                  <th className="px-4 py-2.5 text-center">Rem</th>
-                  <th className="px-4 py-2.5">Reference</th>
-                  <th className="px-4 py-2.5">Action By</th>
-                </tr>
-              </thead>
-              <tbody>
-                {item.movements.map((m) => {
-                  const isLinkable = m.referenceNumber && m.referenceNumber.startsWith('INQ-');
-                  return (
-                    <tr key={m.id} className="border-b border-gray-150 dark:border-[#2a2d36]/30 last:border-0 hover:bg-gray-50 dark:hover:bg-[#242830]/30 transition-colors">
-                      <td className="px-4 py-2.5 text-gray-500 font-medium">
-                        {new Date(m.createdAt).toLocaleString()}
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase border tracking-wider ${getTypeStyle(m.type)}`}>
-                          {m.type?.replace('INVENTORY_', '')}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2.5 text-center font-mono font-bold text-gray-900 dark:text-white">
-                        {m.type === 'OUT' || m.type === 'INVENTORY_RESERVED' || m.type === 'INVENTORY_DISPATCHED' ? '-' : '+'}{m.quantity}
-                      </td>
-                      <td className="px-4 py-2.5 text-center font-mono text-gray-500">
-                        {m.previousQuantity !== null ? m.previousQuantity : '—'}
-                      </td>
-                      <td className="px-4 py-2.5 text-center font-mono font-bold text-gray-700 dark:text-gray-300">
-                        {m.remainingQuantity !== null ? m.remainingQuantity : '—'}
-                      </td>
-                      <td className="px-4 py-2.5 font-medium">
-                        {isLinkable ? (
-                          <a
-                            href={`/#/inquiries/${m.referenceId}`}
-                            onClick={onClose}
-                            className="text-purple-600 hover:text-purple-550 dark:text-purple-400 dark:hover:text-purple-300 font-bold hover:underline"
-                          >
-                            {m.referenceNumber}
-                          </a>
-                        ) : (
-                          m.referenceNumber || '—'
-                        )}
-                      </td>
-                      <td className="px-4 py-2.5 text-gray-500 font-mono truncate max-w-[120px]" title={m.actionBy}>
-                        {m.actionBy || 'system'}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <DataTable
+              columns={[
+                { key: 'date', label: 'Date', renderCell: (m) => new Date(m.createdAt).toLocaleString(), cellClassName: 'text-gray-500 font-medium' },
+                { key: 'type', label: 'Type', renderCell: (m) => (
+                  <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase border tracking-wider ${getTypeStyle(m.type)}`}>
+                    {m.type?.replace('INVENTORY_', '')}
+                  </span>
+                )},
+                { key: 'qty', label: 'Qty', cellClassName: 'text-center font-mono font-bold text-gray-900 dark:text-white', renderCell: (m) => (m.type === 'OUT' || m.type === 'INVENTORY_RESERVED' || m.type === 'INVENTORY_DISPATCHED' ? '-' : '+') + m.quantity },
+                { key: 'prev', label: 'Prev', cellClassName: 'text-center font-mono text-gray-500', renderCell: (m) => m.previousQuantity !== null ? m.previousQuantity : '—' },
+                { key: 'rem', label: 'Rem', cellClassName: 'text-center font-mono font-bold text-gray-700 dark:text-gray-300', renderCell: (m) => m.remainingQuantity !== null ? m.remainingQuantity : '—' },
+                { key: 'ref', label: 'Reference', cellClassName: 'font-medium', renderCell: (m) => m.referenceNumber?.startsWith('INQ-') ? <a href={`/#/inquiries/${m.referenceId}`} onClick={onClose} className="text-purple-600 hover:text-purple-550 dark:text-purple-400 dark:hover:text-purple-300 font-bold hover:underline">{m.referenceNumber}</a> : (m.referenceNumber || '—') },
+                { key: 'actionBy', label: 'Action By', cellClassName: 'text-gray-500 font-mono truncate max-w-[120px]', renderCell: (m) => m.actionBy || 'system' }
+              ]}
+              data={item.movements}
+              emptyMessage="No movements recorded for this item."
+            />
           </div>
         )}
       </div>

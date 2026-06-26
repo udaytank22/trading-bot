@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useToast } from '@hooks/useToast';
 import { confirmAction } from '@utils/swal';
 import Toast from '@components/ui/toast';
+import { DataTable } from '@components/ui';
 import { Shield, Lock, RotateCcw, Check, CheckSquare, Search } from 'lucide-react';
 import { inputCls } from './shared';
 import { api } from '@services/api';
@@ -426,56 +427,40 @@ export default function RolePermissionsTab() {
                     <>
                       {/* Desktop Table View */}
                       <div className="hidden md:block overflow-x-auto">
-                        <table className="w-full text-left text-[13px]">
-                          <thead>
-                            <tr className="border-b border-gray-100 dark:border-[#2a2d33] text-gray-400 font-semibold uppercase tracking-wider text-[11px]">
-                              <th className="py-3 pl-2">Module Name</th>
-                              {ACTIONS_ORDER.map(action => (
-                                <th key={action} className="py-3 text-center">
-                                  {ACTION_DISPLAY_NAMES[action]}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {filteredModules.map(module => {
-                              return (
-                                <tr
-                                  key={module}
-                                  className={`border-b border-gray-50 dark:border-[#2a2d33]/50 hover:bg-gray-50/50 dark:hover:bg-white/[0.01] transition-colors`}
-                                >
-                                  <td className="py-3.5 pl-2 font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 bg-purple-500 rounded-full" />
-                                    {MODULE_DISPLAY_NAMES[module] || module}
-                                  </td>
-                                  {ACTIONS_ORDER.map(action => {
-                                    const permId = groupedPermissions[module]?.[action];
-                                    if (!permId) {
-                                      return (
-                                        <td key={action} className="py-3.5 text-center text-gray-300 dark:text-gray-700">
-                                          —
-                                        </td>
-                                      );
-                                    }
-                                    const checked = !!(rolePermissionsMap[role.id]?.has(permId));
-                                    const disabled = role.name === 'Super Admin';
-                                    return (
-                                      <td key={action} className="py-3.5 text-center">
-                                        <div className="flex justify-center">
-                                          <PermissionSwitch
-                                            checked={checked}
-                                            disabled={disabled}
-                                            onChange={() => handleTogglePermission(role.id, permId)}
-                                          />
-                                        </div>
-                                      </td>
-                                    );
-                                  })}
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
+                        <DataTable
+                          columns={[
+                            { key: 'module', label: 'Module Name', cellClassName: "font-semibold text-gray-800 dark:text-gray-200" },
+                            ...ACTIONS_ORDER.map(action => ({ key: action, label: ACTION_DISPLAY_NAMES[action], cellClassName: "text-center" }))
+                          ]}
+                          data={filteredModules.map(module => {
+                            const row = { id: module, module: (
+                              <div className="flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 bg-purple-500 rounded-full" />
+                                {MODULE_DISPLAY_NAMES[module] || module}
+                              </div>
+                            ) };
+                            ACTIONS_ORDER.forEach(action => {
+                              const permId = groupedPermissions[module]?.[action];
+                              if (!permId) {
+                                row[action] = <span className="text-gray-300 dark:text-gray-700">—</span>;
+                              } else {
+                                const checked = !!(rolePermissionsMap[role.id]?.has(permId));
+                                const disabled = role.name === 'Super Admin';
+                                row[action] = (
+                                  <div className="flex justify-center">
+                                    <PermissionSwitch
+                                      checked={checked}
+                                      disabled={disabled}
+                                      onChange={() => handleTogglePermission(role.id, permId)}
+                                    />
+                                  </div>
+                                );
+                              }
+                            });
+                            return row;
+                          })}
+                          emptyMessage="No modules match the search filter inside this role."
+                        />
                       </div>
 
                       {/* Mobile Cards View */}
