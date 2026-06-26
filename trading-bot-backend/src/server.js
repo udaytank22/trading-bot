@@ -1,4 +1,6 @@
+require('./utils/sentry');
 const express = require('express');
+const Sentry = require('@sentry/node');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
@@ -147,6 +149,18 @@ app.use((req, res, next) => {
 });
 app.use('/api', globalLimiter);
 
+const prisma = require('./config/db');
+
+// Health check endpoint
+app.get('/health', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: 'ok', db: 'connected' });
+  } catch (err) {
+    res.status(503).json({ status: 'error', db: 'disconnected' });
+  }
+});
+
 // Server check endpoint
 app.get('/', (req, res) => {
   res.json({
@@ -185,6 +199,8 @@ app.use('/api/chat', require('./modules/chat/chat.routes'));
 app.use((req, res, next) => {
   return sendError(res, `API route not found: [${req.method}] ${req.originalUrl}`, [], 404);
 });
+
+Sentry.setupExpressErrorHandler(app);
 
 // Global central error handler
 app.use(errorHandler);
