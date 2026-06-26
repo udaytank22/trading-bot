@@ -519,19 +519,38 @@ const generateInvoicePdfBuffer = async (invoiceId) => {
 };
 
 /**
- * Send the drafted invoice to the client via email
+ * Send the drafted invoice to the client via email (queues a job)
  */
 const sendInvoiceEmailAPI = async (invoiceId, emailSubject, emailBody, updaterId, toEmail) => {
+  const { emailQueue } = require('../../utils/queue');
+  
+  // Push the heavy job to the background queue
+  const job = await emailQueue.add('sendInvoiceEmail', {
+    invoiceId, emailSubject, emailBody, updaterId, toEmail
+  });
+
+  // Optimistically update status to SENT so UI reflects it immediately
+  const updatedInvoice = await prisma.invoice.update({
+    where: { id: invoiceId },
+    data: {
+      status: 'SENT',
+      updatedById: updaterId
+    }
+  });
+
+  return { invoice: updatedInvoice, jobId: job.id };
+};
+
+/**
+ * The actual heavy job executed by BullMQ Worker
+ */
+const executeInvoiceEmailJob = async (invoiceId, emailSubject, emailBody, updaterId, toEmail) => {
   const { pdfBuffer, invoice } = await generateInvoicePdfBuffer(invoiceId);
 
   // Send Email with custom body if provided
-  let emailPreviewUrl = null;
   if (invoice.client.email) {
-    // Modify email service to accept custom body if needed, but for now we'll send it directly here
     const nodemailer = require('nodemailer');
-    const { createTransporter } = require('../../utils/email.service');
 
-    // Fallback if the helper doesn't export createTransporter
     let testAccount = await nodemailer.createTestAccount();
     const transporter = nodemailer.createTransport({
       host: "smtp.ethereal.email",
@@ -557,19 +576,10 @@ const sendInvoiceEmailAPI = async (invoiceId, emailSubject, emailBody, updaterId
         }
       ]
     });
-    emailPreviewUrl = nodemailer.getTestMessageUrl(info);
+    
+    return { success: true, previewUrl: nodemailer.getTestMessageUrl(info) };
   }
-
-  // Update status to SENT
-  const updatedInvoice = await prisma.invoice.update({
-    where: { id: invoiceId },
-    data: {
-      status: 'SENT',
-      updatedById: updaterId
-    }
-  });
-
-  return { invoice: updatedInvoice, emailPreviewUrl };
+  return { success: false, reason: 'No client email' };
 };
 
 module.exports = {
@@ -580,6 +590,8 @@ module.exports = {
   deleteInvoice,
   generateInvoiceFromShipment,
   generateInvoiceFromInquiry,
+  getInvoiceDashboardStats,
   sendInvoiceEmailAPI,
+  executeInvoiceEmailJob,
   generateInvoicePdfBuffer
 };

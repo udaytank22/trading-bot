@@ -90,9 +90,18 @@ const deleteVehicle = async (id) => {
 };
 
 /**
- * Bulk import vehicles
+ * Bulk import vehicles (queues a job)
  */
 const bulkImportVehicles = async (vehiclesArray) => {
+  const { documentQueue } = require('../../utils/queue');
+  const job = await documentQueue.add('bulkImportVehicles', { vehiclesArray });
+  return { successCount: vehiclesArray.length, status: 'queued', jobId: job.id };
+};
+
+/**
+ * Execute bulk import job (called by Worker)
+ */
+const executeBulkImportVehiclesJob = async (vehiclesArray) => {
   let successCount = 0;
   const errors = [];
 
@@ -156,5 +165,6 @@ module.exports = {
   createVehicle,
   updateVehicle,
   deleteVehicle,
-  bulkImportVehicles
+  bulkImportVehicles,
+  executeBulkImportVehiclesJob
 };

@@ -209,9 +209,18 @@ const deleteSupplier = async (id, updaterId) => {
 };
 
 /**
- * Bulk import suppliers
+ * Bulk import suppliers (queues a job)
  */
 const bulkImportSuppliers = async (suppliersArray, updaterId) => {
+  const { documentQueue } = require('../../utils/queue');
+  const job = await documentQueue.add('bulkImportSuppliers', { suppliersArray, updaterId });
+  return { successCount: suppliersArray.length, status: 'queued', jobId: job.id };
+};
+
+/**
+ * Execute bulk import job (called by Worker)
+ */
+const executeBulkImportSuppliersJob = async (suppliersArray, updaterId) => {
   let successCount = 0;
   const errors = [];
 
@@ -279,5 +288,6 @@ module.exports = {
   createSupplier,
   updateSupplier,
   deleteSupplier,
-  bulkImportSuppliers
+  bulkImportSuppliers,
+  executeBulkImportSuppliersJob
 };

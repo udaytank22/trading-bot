@@ -141,9 +141,18 @@ const deleteClient = async (id, updaterId) => {
 };
 
 /**
- * Bulk import clients
+ * Bulk import clients (queues a job)
  */
 const bulkImportClients = async (clientsArray, updaterId) => {
+  const { documentQueue } = require('../../utils/queue');
+  const job = await documentQueue.add('bulkImportClients', { clientsArray, updaterId });
+  return { successCount: clientsArray.length, status: 'queued', jobId: job.id };
+};
+
+/**
+ * Execute bulk import job (called by Worker)
+ */
+const executeBulkImportClientsJob = async (clientsArray, updaterId) => {
   let successCount = 0;
   const errors = [];
 
@@ -226,5 +235,6 @@ module.exports = {
   createClient,
   updateClient,
   deleteClient,
-  bulkImportClients
+  bulkImportClients,
+  executeBulkImportClientsJob
 };

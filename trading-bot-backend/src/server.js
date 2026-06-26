@@ -16,6 +16,7 @@ const chatService = require('./modules/chat/chat.service');
 const crypto = require('crypto');
 const pinoHttp = require('pino-http');
 const logger = require('./utils/logger');
+const { setupWorkers } = require('./utils/queue');
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -199,6 +200,9 @@ app.use('/api/chat', require('./modules/chat/chat.routes'));
 app.use((req, res, next) => {
   return sendError(res, `API route not found: [${req.method}] ${req.originalUrl}`, [], 404);
 });
+
+// Initialize BullMQ workers
+setupWorkers();
 
 Sentry.setupExpressErrorHandler(app);
 

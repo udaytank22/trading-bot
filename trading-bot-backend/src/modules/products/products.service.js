@@ -115,9 +115,18 @@ const deleteProduct = async (id, updaterId) => {
 };
 
 /**
- * Bulk upsert products
+ * Bulk upsert products (queues a job)
  */
 const bulkUpsertProducts = async (products, creatorId) => {
+  const { documentQueue } = require('../../utils/queue');
+  const job = await documentQueue.add('bulkUpsertProducts', { products, creatorId });
+  return { results: products, status: 'queued', jobId: job.id };
+};
+
+/**
+ * Execute bulk upsert job (called by Worker)
+ */
+const executeBulkUpsertProductsJob = async (products, creatorId) => {
   const results = [];
   const errors = [];
 
@@ -176,5 +185,6 @@ module.exports = {
   createProduct,
   updateProduct,
   deleteProduct,
-  bulkUpsertProducts
+  bulkUpsertProducts,
+  executeBulkUpsertProductsJob
 };
