@@ -89,14 +89,15 @@ export default function Select({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const selectedOption = !isMulti ? options.find((opt) => opt.value === value) : null;
+  const safeOptions = Array.isArray(options) ? options : [];
+  const selectedOption = !isMulti ? safeOptions.find((opt) => opt.value === value) : null;
   const hasValue = isMulti ? (Array.isArray(value) && value.length > 0) : (value !== "" && value !== null && value !== undefined);
   const isPlaceholder = !hasValue;
 
   const displayValue = isMulti
     ? (isPlaceholder ? placeholder : (
         value.length === 1
-          ? options.find(opt => opt.value === value[0])?.label ?? value[0]
+          ? safeOptions.find(opt => opt.value === value[0])?.label ?? value[0]
           : `${value.length} selected`
       ))
     : (isPlaceholder ? placeholder : (selectedOption?.label ?? value));
@@ -107,7 +108,7 @@ export default function Select({
   const baseBtnCls =
     "flex items-center justify-between w-full border focus:outline-none focus:border-purple-500 cursor-pointer transition-colors text-left";
 
-  const filteredOptions = options.filter((opt) =>
+  const filteredOptions = safeOptions.filter((opt) =>
     (opt.label || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -209,11 +210,11 @@ export default function Select({
                   </button>
                 );
               })}
-              {filteredOptions.length === 0 && (
+              {safeOptions.length === 0 ? (
                 <div className="px-3 py-3 text-xs text-gray-400 text-center italic">
                   No matches found
                 </div>
-              )}
+              ) : null}
             </div>
           </div>,
           document.body
