@@ -15,8 +15,8 @@ const inputClass =
   "w-full h-[52px] rounded-xl px-4 text-sm transition-all duration-200 bg-white dark:bg-[#0f1117] border border-gray-300 dark:border-[#2f3441] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 hover:border-gray-400 dark:hover:border-[#464c5c]";
 
 const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
-  const { data: clientsData } = useClients();
-  const { data: employeesData } = useEmployees();
+  const { data: clientsData = [] } = useClients();
+  const { data: employeesData = [] } = useEmployees();
   const { data: productsData = [] } = useProducts();
   const uniqueUnits = useMemo(() => {
     const unitsSet = new Set();
