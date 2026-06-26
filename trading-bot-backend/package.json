@@ -9,7 +9,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
-    "prisma:seed-mock": "node prisma/seed-mock.js"
+    "prisma:seed-mock": "node prisma/seed-mock.js",
+    "docs:generate": "node swagger.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -39,6 +40,8 @@
     "pino-http": "^11.0.0",
     "puppeteer": "^25.1.0",
     "socket.io": "^4.8.3",
+    "swagger-autogen": "^2.23.7",
+    "swagger-ui-express": "^5.0.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {

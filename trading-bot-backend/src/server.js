@@ -162,6 +162,15 @@ app.get('/health', async (req, res) => {
   }
 });
 
+// Swagger Documentation
+try {
+  const swaggerUi = require('swagger-ui-express');
+  const swaggerDocument = require('../swagger-output.json');
+  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+} catch (error) {
+  console.log('Swagger documentation not found. Run `node swagger.js` to generate it.');
+}
+
 // Server check endpoint
 app.get('/', (req, res) => {
   res.json({
