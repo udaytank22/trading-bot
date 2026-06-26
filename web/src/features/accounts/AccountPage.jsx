@@ -1,5 +1,6 @@
 import { TOAST_MESSAGES } from '../../constants/toastMessages';
-import { useAuth, useUI, useData } from '@context';
+import { useAuth, useUI } from '@context';
+import { useAccounts } from '@hooks/queries';
 import { api } from '@services/api';
 /**
  * @file AccountPage.jsx
@@ -37,7 +38,7 @@ const FILTER_OPTIONS = [
 // ─── Main Page Component ───────────────────────────────────────────────────────
 export default function AccountPage() {
   // Global accounts data from AppContext
-  const { accountsData, refreshAll } = useData();
+  const { data: accountsData, refetch: refreshAll } = useAccounts();
   const { hasPermission } = useAuth();
   const canCreate = hasPermission('bankAccounts', 'create');
   const canUpdate = hasPermission('bankAccounts', 'update');

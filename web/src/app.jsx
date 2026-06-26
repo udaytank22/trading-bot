@@ -1,9 +1,12 @@
 import React, { Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AuthProvider, UIProvider, DataProvider, SocketProvider, useAuth } from '@context';
+import { AuthProvider, UIProvider, SocketProvider, useAuth } from '@context';
 import AppShell from '@components/layout/AppShell';
 import PageLoader from '@components/common/PageLoader';
 import { PUBLIC_ROUTES, PROTECTED_ROUTES } from '@config/routes';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
 
 function ProtectedApp() {
   const { isAuthenticated, currentUser } = useAuth();
@@ -37,7 +40,7 @@ export default function App() {
     <AuthProvider>
       <SocketProvider>
         <UIProvider>
-          <DataProvider>
+          <QueryClientProvider client={queryClient}>
             <HashRouter>
               <Suspense fallback={<PageLoader />}>
                 <Routes>
@@ -48,7 +51,7 @@ export default function App() {
                 </Routes>
               </Suspense>
             </HashRouter>
-          </DataProvider>
+          </QueryClientProvider>
         </UIProvider>
       </SocketProvider>
     </AuthProvider>

@@ -3,7 +3,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Select, DataTable, rowStripeClass, ROW_HOVER_CLS, Pagination, ExcelImportModal } from '@components/ui';
 import { confirmAction } from '@utils/swal';
 import Swal from 'sweetalert2';
-import { useData, useAuth } from '@context';
+import { useAuth } from '@context';
+import { useProducts } from '@hooks/queries';
 import { api } from '@services/api';
 import { RightDrawer, ViewDetails, Field, inputCls, EyeIcon, EditIcon, TrashIcon, CenterModal } from './shared';
 import * as XLSX from 'xlsx';
@@ -581,7 +582,7 @@ export default function VendorsTab() {
 }
 
 function VendorForm({ initialData, onSave, onClose }) {
-  const { productsData } = useData();
+  const { data: productsData } = useProducts();
   const [catSearch, setCatSearch] = useState('');
   const [formData, setFormData] = useState(
     initialData ? {

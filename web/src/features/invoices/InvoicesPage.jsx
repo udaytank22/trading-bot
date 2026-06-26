@@ -1,5 +1,5 @@
 import { InvoicesPageSchema1 } from '@config/tableSchemas';
-import { useData } from '@context';
+import { useAccounts } from '@hooks/queries';
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from '@services/api';
@@ -7,7 +7,7 @@ import { usePaginatedFetch } from '@hooks/usePaginatedFetch';
 import { PageToolbar, Pagination, Button, StatusBadge, DataTable, rowStripeClass, ROW_HOVER_CLS, DatePicker, Select } from '@components/ui';
 
 export default function InvoicesPage() {
-    const { accountsData } = useData();
+    const { data: accountsData } = useAccounts();
     const navigate = useNavigate();
     const [search, setSearch] = useState("");
     const [paymentModalInvoice, setPaymentModalInvoice] = useState(null);

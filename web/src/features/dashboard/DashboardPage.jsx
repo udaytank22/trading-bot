@@ -1,16 +1,8 @@
 import { DashboardPageSchema1 } from '@config/tableSchemas';
-import { useAuth, useUI, useData } from '@context';
+import { useAuth, useUI } from '@context';
 import React, { useState, useEffect, useMemo, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
 import { api } from '@services/api';
 import { formatINR, formatDateString } from '@services/marginEngine';
 import StatusBadge from '@components/ui/statusBadge';

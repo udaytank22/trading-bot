@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { DataTable, rowStripeClass, ROW_HOVER_CLS, Pagination } from '@components/ui';
 import { confirmAction } from '@utils/swal';
-import { useData, useAuth } from '@context';
+import { useAuth } from '@context';
 import { api } from '@services/api';
 import { RightDrawer, ViewDetails, EyeIcon, TrashIcon } from './shared';
 import { DocumentsTabSchema1 } from '@config/tableSchemas';

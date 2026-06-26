@@ -1,43 +1,43 @@
+const { z } = require('zod');
+
 /**
  * Validation rules for Products module
  */
 const validateCreateProduct = {
-  body: (body) => {
-    const errors = [];
-    if (!body.name || typeof body.name !== 'string' || body.name.trim() === '') {
-      errors.push('Product name is required and must be a string');
-    }
-    if (!body.sku || typeof body.sku !== 'string' || body.sku.trim() === '') {
-      errors.push('Product SKU is required');
-    }
-    if (body.sellingPrice === undefined || isNaN(parseFloat(body.sellingPrice))) {
-      errors.push('sellingPrice is required and must be a number');
-    }
-    if (body.purchasePrice === undefined || isNaN(parseFloat(body.purchasePrice))) {
-      errors.push('purchasePrice is required and must be a number');
-    }
-    return errors;
-  }
+  body: z.object({
+    name: z.string().min(1, 'Product name is required and must be a string'),
+    sku: z.string().min(1, 'Product SKU is required'),
+    sellingPrice: z.coerce.number({
+      required_error: 'sellingPrice is required and must be a number',
+      invalid_type_error: 'sellingPrice must be a number'
+    }),
+    purchasePrice: z.coerce.number({
+      required_error: 'purchasePrice is required and must be a number',
+      invalid_type_error: 'purchasePrice must be a number'
+    }),
+    category: z.string().optional(),
+    description: z.string().optional(),
+    stockCount: z.coerce.number().optional()
+  }).passthrough()
 };
 
 const validateUpdateProduct = {
-  params: (params) => {
-    const errors = [];
-    if (!params.id || params.id.trim() === '') {
-      errors.push('Product ID parameter is required');
-    }
-    return errors;
-  },
-  body: (body) => {
-    const errors = [];
-    if (body.sellingPrice !== undefined && isNaN(parseFloat(body.sellingPrice))) {
-      errors.push('sellingPrice must be a number');
-    }
-    if (body.purchasePrice !== undefined && isNaN(parseFloat(body.purchasePrice))) {
-      errors.push('purchasePrice must be a number');
-    }
-    return errors;
-  }
+  params: z.object({
+    id: z.string().min(1, 'Product ID parameter is required')
+  }),
+  body: z.object({
+    name: z.string().min(1, 'Product name is required and must be a string').optional(),
+    sku: z.string().min(1, 'Product SKU is required').optional(),
+    sellingPrice: z.coerce.number({
+      invalid_type_error: 'sellingPrice must be a number'
+    }).optional(),
+    purchasePrice: z.coerce.number({
+      invalid_type_error: 'purchasePrice must be a number'
+    }).optional(),
+    category: z.string().optional(),
+    description: z.string().optional(),
+    stockCount: z.coerce.number().optional()
+  }).passthrough()
 };
 
 module.exports = {

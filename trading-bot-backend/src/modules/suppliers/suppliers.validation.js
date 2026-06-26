@@ -1,38 +1,31 @@
+const { z } = require('zod');
+
 /**
  * Validation rules for Suppliers module
  */
 const validateCreateSupplier = {
-  body: (body) => {
-    const errors = [];
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!body.name || typeof body.name !== 'string' || body.name.trim() === '') {
-      errors.push('Supplier name is required and must be a string');
-    }
-    if (!body.email || !emailRegex.test(body.email)) {
-      errors.push('A valid supplier email is required');
-    }
-    return errors;
-  }
+  body: z.object({
+    name: z.string().min(1, 'Supplier name is required and must be a string'),
+    email: z.string().email('A valid supplier email is required'),
+    phone: z.string().optional(),
+    address: z.string().optional(),
+    status: z.string().optional(),
+    taxId: z.string().optional()
+  }).passthrough()
 };
 
 const validateUpdateSupplier = {
-  params: (params) => {
-    const errors = [];
-    if (!params.id || params.id.trim() === '') {
-      errors.push('Supplier ID parameter is required');
-    }
-    return errors;
-  },
-  body: (body) => {
-    const errors = [];
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (body.email && !emailRegex.test(body.email)) {
-      errors.push('Email address is invalid');
-    }
-    return errors;
-  }
+  params: z.object({
+    id: z.string().min(1, 'Supplier ID parameter is required')
+  }),
+  body: z.object({
+    name: z.string().min(1, 'Supplier name is required and must be a string').optional(),
+    email: z.string().email('Email address is invalid').optional(),
+    phone: z.string().optional(),
+    address: z.string().optional(),
+    status: z.string().optional(),
+    taxId: z.string().optional()
+  }).passthrough()
 };
 
 module.exports = {

@@ -1,5 +1,5 @@
 import { TOAST_MESSAGES } from '../../constants/toastMessages';
-import { useAuth, useUI, useData } from '@context';
+import { useAuth, useUI } from '@context';
 import { api } from '@services/api';
 /**
  * @file EmployeesPage.jsx

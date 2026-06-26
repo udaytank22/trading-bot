@@ -1,7 +1,7 @@
 import { SupplyDetailsPageSchema1 } from '@config/tableSchemas';
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useNavigate } from 'react-router-dom';
-import { useData, useAuth } from '@context';
+import { useAuth } from '@context';
 import { api } from '@services/api';
 import { formatINR } from '@services/marginEngine';
 import { DataTable, rowStripeClass, ROW_HOVER_CLS, StatusBadge } from '@components/ui';
@@ -17,7 +17,6 @@ const DUMMY_PDF_URL = "/memories/file-sample_150kB.pdf";
 export default function SupplyDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { supplyData, refreshAll } = useData();
   const { currentUser, hasPermission } = useAuth();
 
   const roleLower = currentUser?.role?.toLowerCase();
@@ -181,7 +180,6 @@ export default function SupplyDetailsPage() {
   const handleStatusUpdate = async (shipmentId, newStatus) => {
     if (newStatus === "SUPPLY") {
       const res = await api.shipments.updateShipment(shipmentId, { currentStatus: "SUPPLY" });
-      if (res.success) refreshAll();
       return;
     }
 
@@ -198,7 +196,6 @@ export default function SupplyDetailsPage() {
               console.warn("Could not close inquiry:", e);
             }
           }
-          refreshAll();
           setDeal(prev => ({ ...prev, status: "CHALLAN_RECEIVED" }));
           Swal.fire({
             title: '✅ Challan Received!',
@@ -220,7 +217,6 @@ export default function SupplyDetailsPage() {
     try {
       const res = await api.shipments.updateShipment(shipmentId, { currentStatus: newStatus });
       if (res.success) {
-        refreshAll();
         setDeal(prev => ({ ...prev, status: newStatus }));
       }
     } catch (e) {
@@ -237,7 +233,6 @@ export default function SupplyDetailsPage() {
 
       // Do NOT close inquiry yet. It will be closed from the invoices tab when hard copy is received.
 
-      refreshAll();
       const updatedDeal = { ...deal };
       updatedDeal.subShipments = updatedDeal.subShipments.map(s => ({
         ...s,
@@ -413,7 +408,6 @@ export default function SupplyDetailsPage() {
                 );
                 await Promise.all(promises);
 
-                refreshAll();
                 const updatedDeal = { ...deal };
                 updatedDeal.subShipments = updatedDeal.subShipments.map(s => ({
                   ...s,
@@ -444,7 +438,6 @@ export default function SupplyDetailsPage() {
                       driverDetails: `${vehicle.driver_name || vehicle.owner_name} (${vehicle.phone || vehicle.owner_phone})`
                     };
                   }
-                  refreshAll();
                   setDeal(updatedDeal);
 
                   // Generate Challan PDF for single sub-shipment

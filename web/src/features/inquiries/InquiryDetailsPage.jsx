@@ -2,7 +2,7 @@ import { TOAST_MESSAGES } from '../../constants/toastMessages';
 import { InquiryDetailsPageSchema1, InquiryDetailsPageSchema2, InquiryDetailsPageSchema3 } from '@config/tableSchemas';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useData, useAuth } from '@context';
+import { useAuth } from '@context';
 import { api } from '@services/api';
 import { calculateMargin, formatINR } from '@services/marginEngine';
 import { CONFIG } from '@/config.js';
@@ -24,7 +24,7 @@ export default function InquiryDetailsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser } = useAuth();
-  const { inquiriesData, refreshAll } = useData();
+  // useData removed
 
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'action'
   const [deal, setDeal] = useState(null);

@@ -2,14 +2,15 @@ import { TOAST_MESSAGES } from '../../../constants/toastMessages';
 import React, { useState, useMemo } from 'react';
 import { DataTable, rowStripeClass, ROW_HOVER_CLS, Pagination, ExcelImportModal } from '@components/ui';
 import { confirmAction } from '@utils/swal';
-import { useData, useAuth } from '@context';
+import { useAuth } from '@context';
+import { useProducts } from '@hooks/queries';
 import { api } from '@services/api';
 import { RightDrawer, ViewDetails, Field, inputCls, EyeIcon, EditIcon, TrashIcon } from './shared';
 import * as XLSX from 'xlsx';
 import { useToast } from '@hooks/useToast';
 
 export default function ProductsTab() {
-  const { productsData, refreshAll } = useData();
+  const { data: productsData, refetch: refreshAll } = useProducts();
   const { hasPermission } = useAuth();
   const [search, setSearch] = useState('');
   const [viewItem, setViewItem] = useState(null);

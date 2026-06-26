@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from "react";
 import { DataTable, rowStripeClass } from '@components/ui';
-import { useData } from '@context';
+import { useProducts } from '@hooks/queries';
 
 const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
-  const { productsData } = useData();
+  const { data: productsData } = useProducts();
   const [expandedIndices, setExpandedIndices] = useState([]);
 
   const getProductCategory = (productName) => {

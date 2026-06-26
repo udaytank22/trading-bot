@@ -2,7 +2,7 @@ import { TOAST_MESSAGES } from '../../../constants/toastMessages';
 import React, { useState, useMemo } from 'react';
 import { Select, DataTable, rowStripeClass, ROW_HOVER_CLS, Pagination, ExcelImportModal } from '@components/ui';
 import { confirmAction } from '@utils/swal';
-import { useData, useAuth } from '@context';
+import { useAuth } from '@context';
 import { api } from '@services/api';
 import { RightDrawer, ViewDetails, Field, inputCls, EyeIcon, EditIcon, TrashIcon } from './shared';
 import * as XLSX from 'xlsx';
@@ -11,7 +11,6 @@ import { ClientsTabSchema1 } from '@config/tableSchemas';
 import { usePaginatedFetch } from '@hooks/usePaginatedFetch';
 
 export default function ClientsTab() {
-  const { refreshAll } = useData();
   const { hasPermission } = useAuth();
   const [search, setSearch] = useState('');
   const [viewItem, setViewItem] = useState(null);

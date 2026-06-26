@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth, useUI, useData } from '@context';
+import { useAuth, useUI } from '@context';
 import { api } from '@services/api';
 import { usePaginatedFetch } from '@hooks/usePaginatedFetch';
 import ContactModal from '@features/accounts/modals/ContactModal';

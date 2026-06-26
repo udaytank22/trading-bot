@@ -1,10 +1,11 @@
 import React, { useState, useMemo, useRef, useEffect, useLayoutEffect } from "react";
-import { useData } from '@context';
+import { useProducts, useSuppliers } from '@hooks/queries';
 import { DataTable, rowStripeClass, ROW_HOVER_CLS, MultiSelectDropdown } from '@components/ui';
 import { fetchInventory } from '../../../api/inventory';
 
 const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
-  const { suppliersData, productsData } = useData();
+  const { data: suppliersData } = useSuppliers();
+  const { data: productsData } = useProducts();
   const [selections, setSelections] = useState({}); // mapping of product index -> array of supplier IDs
   const [isFullscreen, setIsFullscreen] = useState(false);
 

@@ -1,7 +1,7 @@
 import { PODetailsPageSchema1 } from '@config/tableSchemas';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useData, useAuth } from '@context';
+import { useAuth } from '@context';
 import { api } from '@services/api';
 import { formatINR } from '@services/marginEngine';
 import { StatusBadge, DataTable, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
@@ -13,7 +13,6 @@ import { generatePOPDF, getSourcedSupplierForItem, getSourcedQuoteItemAndSupplie
 export default function PODetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { purchaseOrdersData, refreshAll } = useData();
   const { hasPermission } = useAuth();
 
   const [po, setPo] = useState(null);
@@ -61,7 +60,6 @@ export default function PODetailsPage() {
       if (attachment) payload.attachment = attachment;
       const res = await api.purchaseOrders.updatePurchaseOrder(poId, payload);
       if (res.success) {
-        refreshAll();
         setPo(prev => prev?.id === poId ? { ...prev, status, ...(attachment ? { attachment } : {}) } : prev);
       }
     } catch (e) {

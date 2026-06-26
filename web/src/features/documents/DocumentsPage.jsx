@@ -1,5 +1,5 @@
 import { TOAST_MESSAGES } from '../../constants/toastMessages';
-import { useAuth, useUI, useData } from '@context';
+import { useAuth, useUI } from '@context';
 import { api } from '@services/api';
 import React, { useState, useMemo } from "react";
 
@@ -104,7 +104,7 @@ const KanbanColumn = ({ title, status, documents, onEdit, onDelete, colorClass }
 );
 
 export default function DocumentsPage() {
-  const { refreshAll } = useData();
+  // useData removed
   const [activeTab, setActiveTab] = useState("Employee");
   const [search, setSearch] = useState("");
   const { toast, showToast } = useToast();
@@ -120,7 +120,7 @@ export default function DocumentsPage() {
     try {
       const res = await api.documents.getDocuments({ pageSize: 500 });
       if (res.success) {
-        setDocumentsData(res.data);
+        refresh();
       }
     } catch (e) {
       console.error(e);

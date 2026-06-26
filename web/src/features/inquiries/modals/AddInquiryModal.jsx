@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Select, Field, Modal, DatePicker, DataTable } from '@components/ui';
 import { parseExcelFile } from '@utils/excelUtils';
 import Swal from "sweetalert2";
-import { useData } from '@context';
+import { useClients, useEmployees, useProducts } from '@hooks/queries';
 
 const modalBg = "bg-white dark:bg-[#1b1d24]";
 const panelBg = "bg-gray-50 dark:bg-[#1f222b]";
@@ -15,7 +15,9 @@ const inputClass =
   "w-full h-[52px] rounded-xl px-4 text-sm transition-all duration-200 bg-white dark:bg-[#0f1117] border border-gray-300 dark:border-[#2f3441] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 hover:border-gray-400 dark:hover:border-[#464c5c]";
 
 const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
-  const { clientsData, employeesData, productsData = [] } = useData();
+  const { data: clientsData } = useClients();
+  const { data: employeesData } = useEmployees();
+  const { data: productsData = [] } = useProducts();
   const uniqueUnits = useMemo(() => {
     const unitsSet = new Set();
     productsData.forEach(p => {

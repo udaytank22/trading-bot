@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Select, Field, Modal, DataTable } from "@components/ui";
-import { useData } from "@context";
+import { useClients, useSuppliers } from "@hooks/queries";
 import { parseExcelFile } from '@utils/excelUtils';
 import Swal from "sweetalert2";
 
@@ -28,7 +28,8 @@ const emptyProduct = () => ({
 });
 
 export default function AddPurchaseOrderModal({ isOpen, onClose, onSubmit }) {
-  const { clientsData, suppliersData } = useData();
+  const { data: clientsData } = useClients();
+  const { data: suppliersData } = useSuppliers();
   const [formData, setFormData] = useState({
     clientId: "",
     supplierId: "",
