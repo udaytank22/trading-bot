@@ -2,328 +2,22 @@ import { InventoryPageSchema1 } from '@config/tableSchemas';
 import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { confirmAction } from '@utils/swal';
-import { PageToolbar, Select, DataTable, Pagination, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
+import { PageToolbar, DataTable, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
 import {
-  fetchInventory,
   getInventoryItem,
   createInventoryItem,
   updateInventoryItem,
   deleteInventoryItem,
-  moveStock,
-  getInventoryTransactionHistory
+  moveStock
 } from '../../api/inventory';
 import { useAuth } from '@context';
+import { useInventory } from '@hooks/queries/useInventory';
 
-const inputCls =
-  "w-full bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-[36px] px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-all shadow-sm focus:ring-1 focus:ring-purple-500/50";
-
-const getTypeStyle = (type) => {
-  switch (type) {
-    case 'IN':
-    case 'INVENTORY_RELEASED':
-      return 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20';
-    case 'OUT':
-    case 'INVENTORY_DISPATCHED':
-      return 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/20';
-    case 'INVENTORY_RESERVED':
-      return 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20';
-    default:
-      return 'bg-gray-50 dark:bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-500/20';
-  }
-};
-
-function Field({ label, children }) {
-  return (
-    <div>
-      <label className="block text-sm text-gray-600 dark:text-gray-300 font-medium mb-1.5">
-        {label}
-      </label>
-      {children}
-    </div>
-  );
-}
-
-function RightDrawer({ isOpen, title, onClose, children }) {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div
-        className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm animate-fade-in"
-        onClick={onClose}
-      />
-
-      <div className="relative w-full max-w-3xl max-h-[85vh] bg-white dark:bg-[#1a1d23] shadow-2xl flex flex-col rounded-2xl overflow-hidden border border-gray-200 dark:border-[#2a2d33] animate-fade-in">
-        <div className="px-6 py-4 border-b border-gray-100 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
-          <h3 className="font-bold text-gray-900 dark:text-white text-lg">
-            {title}
-          </h3>
-
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ViewDetails({ item, onClose }) {
-  const details = {
-    "SKU": item.sku,
-    "Item Name": item.itemName,
-    "Category": item.category || 'N/A',
-    "Unit": item.unit || 'N/A',
-    "Selling Price": `₹ ${parseFloat(item.sellingPrice).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
-    "Purchase Price": `₹ ${parseFloat(item.purchasePrice).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
-    "Min Stock Level": item.minimumStockLevel,
-    "Status": item.status,
-    "Total Quantity": item.stocks?.reduce((acc, st) => acc + st.quantity, 0) || 0,
-    "Warehouse Locations": item.stocks?.map(s => `${s.warehouse?.name} (${s.quantity})`).join(', ') || 'None'
-  };
-
-  return (
-    <div className="flex flex-col gap-6 h-full">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {Object.entries(details).map(([key, value]) => (
-          <div
-            key={key}
-            className="flex flex-col border-b border-gray-100 dark:border-[#2a2d36]/30 pb-3"
-          >
-            <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
-              {key}
-            </span>
-            <span className="text-[13px] text-gray-800 dark:text-gray-200 font-semibold mt-1">
-              {value}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-4">
-        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Stock Ledger (Movements)</h4>
-        {!item.movements || item.movements.length === 0 ? (
-          <div className="text-center py-6 text-xs text-gray-400 italic bg-gray-50/50 dark:bg-[#242830]/20 rounded-xl border border-dashed border-gray-250 dark:border-[#2a2d36]">
-            No movements recorded for this item.
-          </div>
-        ) : (
-          <div className="rounded-xl border border-gray-250 dark:border-[#2a2d36] overflow-hidden max-h-[300px] overflow-y-auto custom-scrollbar">
-            <DataTable
-              columns={[
-                { key: 'date', label: 'Date', renderCell: (m) => new Date(m.createdAt).toLocaleString(), cellClassName: 'text-gray-500 font-medium' },
-                { key: 'type', label: 'Type', renderCell: (m) => (
-                  <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase border tracking-wider ${getTypeStyle(m.type)}`}>
-                    {m.type?.replace('INVENTORY_', '')}
-                  </span>
-                )},
-                { key: 'qty', label: 'Qty', cellClassName: 'text-center font-mono font-bold text-gray-900 dark:text-white', renderCell: (m) => (m.type === 'OUT' || m.type === 'INVENTORY_RESERVED' || m.type === 'INVENTORY_DISPATCHED' ? '-' : '+') + m.quantity },
-                { key: 'prev', label: 'Prev', cellClassName: 'text-center font-mono text-gray-500', renderCell: (m) => m.previousQuantity !== null ? m.previousQuantity : '—' },
-                { key: 'rem', label: 'Rem', cellClassName: 'text-center font-mono font-bold text-gray-700 dark:text-gray-300', renderCell: (m) => m.remainingQuantity !== null ? m.remainingQuantity : '—' },
-                { key: 'ref', label: 'Reference', cellClassName: 'font-medium', renderCell: (m) => m.referenceNumber?.startsWith('INQ-') ? <a href={`/#/inquiries/${m.referenceId}`} onClick={onClose} className="text-purple-600 hover:text-purple-550 dark:text-purple-400 dark:hover:text-purple-300 font-bold hover:underline">{m.referenceNumber}</a> : (m.referenceNumber || '—') },
-                { key: 'actionBy', label: 'Action By', cellClassName: 'text-gray-500 font-mono truncate max-w-[120px]', renderCell: (m) => m.actionBy || 'system' }
-              ]}
-              data={item.movements}
-              emptyMessage="No movements recorded for this item."
-            />
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function InventoryForm({ initialData, onSave, onClose }) {
-  const [formData, setFormData] = useState(
-    initialData || {
-      itemName: "",
-      sku: "",
-      category: "",
-      unit: "pcs",
-      quantity: "", 
-      warehouseId: "1", 
-      sellingPrice: "",
-      purchasePrice: "",
-      minimumStockLevel: "5",
-      status: "ACTIVE",
-    },
-  );
-
-  useEffect(() => {
-    if (initialData) {
-      const totalQty = initialData.stocks?.reduce((acc, st) => acc + st.quantity, 0) || 0;
-      setFormData(prev => ({
-        ...prev,
-        quantity: totalQty,
-        warehouseId: initialData.stocks?.[0]?.warehouseId?.toString() || "1"
-      }));
-    }
-  }, [initialData]);
-
-  const set = (key) => (e) =>
-    setFormData((prev) => ({
-      ...prev,
-      [key]: e.target.value,
-    }));
-
-  return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-5">
-        <Field label="Item Name">
-          <input
-            type="text"
-            className={inputCls}
-            value={formData.itemName}
-            onChange={set("itemName")}
-            placeholder="e.g. Copper Wire"
-          />
-        </Field>
-
-        <Field label="SKU">
-          <input
-            type="text"
-            className={inputCls}
-            value={formData.sku}
-            onChange={set("sku")}
-            placeholder="e.g. CW-001"
-          />
-        </Field>
-
-        <Field label="Category">
-          <input
-            type="text"
-            className={inputCls}
-            value={formData.category}
-            onChange={set("category")}
-            placeholder="e.g. Raw Materials"
-          />
-        </Field>
-
-        <Field label="Unit">
-          <input
-            type="text"
-            className={inputCls}
-            value={formData.unit}
-            onChange={set("unit")}
-            placeholder="e.g. kg, pcs, liters"
-          />
-        </Field>
-
-        <Field label="Selling Price">
-          <input
-            type="number"
-            step="0.01"
-            className={inputCls}
-            value={formData.sellingPrice}
-            onChange={set("sellingPrice")}
-            placeholder="e.g. 45.00"
-          />
-        </Field>
-
-        <Field label="Purchase Price">
-          <input
-            type="number"
-            step="0.01"
-            className={inputCls}
-            value={formData.purchasePrice}
-            onChange={set("purchasePrice")}
-            placeholder="e.g. 30.00"
-          />
-        </Field>
-
-        <Field label="Min Stock Level">
-          <input
-            type="number"
-            className={inputCls}
-            value={formData.minimumStockLevel}
-            onChange={set("minimumStockLevel")}
-            placeholder="e.g. 10"
-          />
-        </Field>
-
-        <Field label="Status">
-          <Select
-            variant="settings"
-            className={inputCls}
-            value={formData.status}
-            onChange={(val) =>
-              setFormData((prev) => ({
-                ...prev,
-                status: val,
-              }))
-            }
-            options={[
-              { value: "ACTIVE", label: "Active" },
-              { value: "INACTIVE", label: "Inactive" },
-            ]}
-          />
-        </Field>
-
-        <Field label="Quantity">
-          <input
-            type="number"
-            className={inputCls}
-            value={formData.quantity}
-            onChange={set("quantity")}
-            placeholder="e.g. 150"
-          />
-        </Field>
-
-        <Field label="Location / Warehouse">
-          <Select
-            variant="settings"
-            className={inputCls}
-            value={formData.warehouseId}
-            onChange={(val) =>
-              setFormData((prev) => ({
-                ...prev,
-                warehouseId: val,
-              }))
-            }
-            options={[
-              { value: "1", label: "Port Warehouse Alpha" },
-              { value: "2", label: "Port Warehouse Beta" },
-            ]}
-          />
-        </Field>
-      </div>
-
-      <div className="mt-8 flex justify-end gap-3">
-        <button
-          onClick={onClose}
-          className="px-4 py-2 text-[13px] font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
-        >
-          Cancel
-        </button>
-
-        <button
-          onClick={() => onSave(formData)}
-          className="px-5 py-2 text-[13px] font-bold text-white bg-purple-600 hover:bg-purple-500 rounded-lg shadow-sm transition-colors"
-        >
-          Save Details
-        </button>
-      </div>
-    </div>
-  );
-}
+// Components
+import { RightDrawer } from './components/RightDrawer';
+import { ViewDetails } from './components/ViewDetails';
+import { InventoryForm } from './components/InventoryForm';
+import { TransactionFilters } from './components/TransactionFilters';
 
 const EyeIcon = () => (
   <svg
@@ -384,20 +78,25 @@ export default function InventoryPage() {
   const canUpdate = hasPermission('inventory', 'update');
   const canDelete = hasPermission('inventory', 'delete');
 
+  const {
+    inventory,
+    setInventory,
+    loading,
+    loadInventory,
+    transactions,
+    txTotalItems,
+    txTotalPages,
+    txLoading,
+    loadTransactions
+  } = useInventory();
+
   const [search, setSearch] = useState("");
-  const [inventory, setInventory] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('items'); // 'items' | 'transactions'
 
-  // Transactions State
-  const [transactions, setTransactions] = useState([]);
-  const [txTotalItems, setTxTotalItems] = useState(0);
-  const [txTotalPages, setTxTotalPages] = useState(1);
+  // Transactions local state
   const [txCurrentPage, setTxCurrentPage] = useState(1);
   const [txItemsPerPage, setTxItemsPerPage] = useState(10);
-  const [txLoading, setTxLoading] = useState(false);
 
-  // Filters for transactions
   const [txTypeFilter, setTxTypeFilter] = useState('');
   const [txItemSearch, setTxItemSearch] = useState('');
   const [txStartDate, setTxStartDate] = useState('');
@@ -405,59 +104,21 @@ export default function InventoryPage() {
   const [txRefNumber, setTxRefNumber] = useState('');
 
   useEffect(() => {
-    loadInventory();
-  }, []);
-
-  useEffect(() => {
     if (activeTab === 'transactions') {
       const timer = setTimeout(() => {
-        loadTransactions();
+        loadTransactions({
+          page: txCurrentPage,
+          pageSize: txItemsPerPage,
+          type: txTypeFilter || undefined,
+          itemName: txItemSearch || undefined,
+          startDate: txStartDate || undefined,
+          endDate: txEndDate || undefined,
+          referenceNumber: txRefNumber || undefined
+        });
       }, 300);
       return () => clearTimeout(timer);
     }
   }, [activeTab, txCurrentPage, txItemsPerPage, txTypeFilter, txItemSearch, txStartDate, txEndDate, txRefNumber]);
-
-  const loadInventory = async () => {
-    try {
-      setLoading(true);
-      const res = await fetchInventory();
-      setInventory(res.data || res);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadTransactions = async () => {
-    try {
-      setTxLoading(true);
-      const params = {
-        page: txCurrentPage,
-        pageSize: txItemsPerPage,
-        type: txTypeFilter || undefined,
-        itemName: txItemSearch || undefined,
-        startDate: txStartDate || undefined,
-        endDate: txEndDate || undefined,
-        referenceNumber: txRefNumber || undefined
-      };
-      const res = await getInventoryTransactionHistory(params);
-      if (res.success) {
-        setTransactions(res.data.items || []);
-        setTxTotalItems(res.data.total || 0);
-        setTxTotalPages(res.data.totalPages || 1);
-      }
-    } catch (error) {
-      console.error("Failed to load transaction history:", error);
-    } finally {
-      setTxLoading(false);
-    }
-  };
-
-  const handleFilterChange = (setter, value) => {
-    setter(value);
-    setTxCurrentPage(1);
-  };
 
   const [viewItem, setViewItem] = useState(null);
   const [editItem, setEditItem] = useState(null);
@@ -573,14 +234,14 @@ export default function InventoryPage() {
   };
 
   const txColumns = [
-    { key: "date", label: "Date & Time" },
-    { key: "itemName", label: "Item Name" },
-    { key: "type", label: "Type" },
-    { key: "qty", label: "Qty" },
-    { key: "prev", label: "Prev Stock" },
-    { key: "rem", label: "Rem Stock" },
-    { key: "inquiry", label: "Inquiry #" },
-    { key: "actionBy", label: "Action By" }
+    { key: "date", label: "Date & Time", renderCell: (row) => new Date(row.createdAt).toLocaleString() },
+    { key: "itemName", label: "Item Name", renderCell: (row) => row.inventoryItem?.itemName },
+    { key: "type", label: "Type", renderCell: (row) => row.type },
+    { key: "qty", label: "Qty", renderCell: (row) => row.quantity },
+    { key: "prev", label: "Prev Stock", renderCell: (row) => row.previousQuantity },
+    { key: "rem", label: "Rem Stock", renderCell: (row) => row.remainingQuantity },
+    { key: "inquiry", label: "Inquiry #", renderCell: (row) => row.referenceNumber },
+    { key: "actionBy", label: "Action By", renderCell: (row) => row.actionBy }
   ];
 
   return (
@@ -734,164 +395,57 @@ export default function InventoryPage() {
         ) : (
           <div className="flex-1 flex flex-col gap-4 animate-in fade-in duration-200">
             {/* Filter controls */}
-            <div className="bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d36] rounded-xl p-4 flex flex-col gap-4 shadow-sm transition-colors duration-300">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-                {/* Search Item Name */}
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5">Item Name</label>
-                  <input
-                    type="text"
-                    value={txItemSearch}
-                    onChange={(e) => handleFilterChange(setTxItemSearch, e.target.value)}
-                    placeholder="Search item name..."
-                    className="w-full bg-white dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-xl h-9 px-3 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 shadow-sm"
-                  />
-                </div>
+            <TransactionFilters
+              txItemSearch={txItemSearch} setTxItemSearch={(val) => { setTxItemSearch(val); setTxCurrentPage(1); }}
+              txRefNumber={txRefNumber} setTxRefNumber={(val) => { setTxRefNumber(val); setTxCurrentPage(1); }}
+              txTypeFilter={txTypeFilter} setTxTypeFilter={(val) => { setTxTypeFilter(val); setTxCurrentPage(1); }}
+              txStartDate={txStartDate} setTxStartDate={(val) => { setTxStartDate(val); setTxCurrentPage(1); }}
+              txEndDate={txEndDate} setTxEndDate={(val) => { setTxEndDate(val); setTxCurrentPage(1); }}
+            />
 
-                {/* Search Inquiry Number */}
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5">Inquiry #</label>
-                  <input
-                    type="text"
-                    value={txRefNumber}
-                    onChange={(e) => handleFilterChange(setTxRefNumber, e.target.value)}
-                    placeholder="e.g. INQ-1004"
-                    className="w-full bg-white dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-xl h-9 px-3 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 shadow-sm"
-                  />
-                </div>
-
-                {/* Type Filter */}
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5">Transaction Type</label>
-                  <select
-                    value={txTypeFilter}
-                    onChange={(e) => handleFilterChange(setTxTypeFilter, e.target.value)}
-                    className="w-full bg-white dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d36] rounded-xl h-9 px-3 text-xs text-gray-700 dark:text-gray-300 focus:outline-none focus:border-purple-500 shadow-sm cursor-pointer"
-                  >
-                    <option value="">All Types</option>
-                    <option value="IN">IN (Stock Added)</option>
-                    <option value="OUT">OUT (Stock Removed)</option>
-                    <option value="INVENTORY_RESERVED">Reserved</option>
-                    <option value="INVENTORY_DISPATCHED">Dispatched</option>
-                    <option value="INVENTORY_RELEASED">Released</option>
-                  </select>
-                </div>
-
-                {/* Start Date */}
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5">Start Date</label>
-                  <input
-                    type="date"
-                    value={txStartDate}
-                    onChange={(e) => handleFilterChange(setTxStartDate, e.target.value)}
-                    className="w-full bg-white dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d36] rounded-xl h-9 px-3 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 shadow-sm"
-                  />
-                </div>
-
-                {/* End Date */}
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5">End Date</label>
-                  <input
-                    type="date"
-                    value={txEndDate}
-                    onChange={(e) => handleFilterChange(setTxEndDate, e.target.value)}
-                    className="w-full bg-white dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d36] rounded-xl h-9 px-3 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 shadow-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center border-t border-gray-150 dark:border-[#2a2d36] pt-3 flex-wrap gap-3">
-                <button
-                  onClick={() => {
-                    setTxItemSearch('');
-                    setTxRefNumber('');
-                    setTxTypeFilter('');
-                    setTxStartDate('');
-                    setTxEndDate('');
-                    setTxCurrentPage(1);
-                  }}
-                  className="text-xs text-gray-550 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white font-bold transition-all"
-                >
-                  Clear All Filters
-                </button>
-                <button
-                  onClick={handleExportCSV}
-                  disabled={transactions.length === 0}
-                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-550 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm shadow-purple-600/10 cursor-pointer"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  Export CSV
-                </button>
-              </div>
+            <div className="flex justify-between items-center px-2">
+              <h2 className="text-sm font-bold text-gray-900 dark:text-white">Transaction Log</h2>
+              <button
+                onClick={handleExportCSV}
+                className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#2a2d36] rounded-lg border border-gray-200 dark:border-[#2a2d36] transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Export CSV
+              </button>
             </div>
 
-            {/* Table Container */}
             <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg transition-colors duration-300">
               <DataTable
                 columns={txColumns}
                 data={transactions}
-                emptyMessage={txLoading ? "Loading transaction ledger..." : "No transactions found matching criteria."}
-                renderRow={(tx, idx) => {
-                  const isLinkable = tx.referenceNumber && tx.referenceNumber.startsWith('INQ-');
-                  return (
-                    <tr key={tx.id} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}>
-                      <td className="px-5 py-3 text-gray-500 font-medium font-mono text-xs">
-                        {new Date(tx.createdAt).toLocaleString()}
-                      </td>
-                      <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">
-                        {tx.inventoryItem?.itemName || 'Unknown'}
-                      </td>
-                      <td className="px-5 py-3">
-                        <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase border tracking-wider ${getTypeStyle(tx.type)}`}>
-                          {tx.type?.replace('INVENTORY_', '')}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3 font-mono font-bold text-gray-900 dark:text-white">
-                        {tx.type === 'OUT' || tx.type === 'INVENTORY_RESERVED' || tx.type === 'INVENTORY_DISPATCHED' ? '-' : '+'}{tx.quantity}
-                      </td>
-                      <td className="px-5 py-3 font-mono text-gray-500">
-                        {tx.previousQuantity !== null ? tx.previousQuantity : '—'}
-                      </td>
-                      <td className="px-5 py-3 font-mono font-bold text-gray-750 dark:text-gray-300">
-                        {tx.remainingQuantity !== null ? tx.remainingQuantity : '—'}
-                      </td>
-                      <td className="px-5 py-3 font-medium">
-                        {isLinkable ? (
-                          <a
-                            href={`/#/inquiries/${tx.referenceId}`}
-                            className="text-purple-650 hover:text-purple-550 dark:text-purple-400 dark:hover:text-purple-300 font-bold hover:underline"
-                          >
-                            {tx.referenceNumber}
-                          </a>
-                        ) : (
-                          tx.referenceNumber || '—'
-                        )}
-                      </td>
-                      <td className="px-5 py-3 text-gray-500 font-mono text-xs max-w-[120px] truncate" title={tx.actionBy}>
-                        {tx.actionBy || 'system'}
-                      </td>
-                    </tr>
-                  );
-                }}
+                emptyMessage={txLoading ? "Loading transactions..." : "No transactions found matching criteria."}
               />
-              {txTotalItems > 0 && (
-                <div className="p-4 border-t border-gray-150 dark:border-[#2a2d36] bg-gray-50/50 dark:bg-[#1a1d23]">
-                  <Pagination
-                    currentPage={txCurrentPage}
-                    totalPages={txTotalPages}
-                    totalItems={txTotalItems}
-                    itemsPerPage={txItemsPerPage}
-                    onPrev={() => setTxCurrentPage(prev => Math.max(prev - 1, 1))}
-                    onNext={() => setTxCurrentPage(prev => Math.min(prev + 1, txTotalPages))}
-                    onPageChange={(page) => setTxCurrentPage(page)}
-                    onItemsPerPageChange={(size) => {
-                      setTxItemsPerPage(size);
-                      setTxCurrentPage(1);
-                    }}
-                    itemLabel="transactions"
-                  />
+              
+              {txTotalPages > 1 && (
+                <div className="p-4 border-t border-gray-100 dark:border-[#2a2d33] bg-gray-50/50 dark:bg-[#1f2229]">
+                  {/* Since Pagination component was removed/replaced or uses standard DataTable footer, 
+                      we just render simple prev/next for now, or you can restore <Pagination> if it exists in @components/ui */}
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-gray-500 font-medium">Showing page {txCurrentPage} of {txTotalPages} ({txTotalItems} total items)</span>
+                    <div className="flex gap-2">
+                      <button 
+                        disabled={txCurrentPage === 1} 
+                        onClick={() => setTxCurrentPage(p => Math.max(1, p - 1))}
+                        className="px-3 py-1.5 bg-white border border-gray-200 rounded disabled:opacity-50"
+                      >
+                        Prev
+                      </button>
+                      <button 
+                        disabled={txCurrentPage === txTotalPages} 
+                        onClick={() => setTxCurrentPage(p => Math.min(txTotalPages, p + 1))}
+                        className="px-3 py-1.5 bg-white border border-gray-200 rounded disabled:opacity-50"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
