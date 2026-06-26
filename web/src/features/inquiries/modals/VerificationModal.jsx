@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { formatINR } from '@services/marginEngine';
+import { DataTable } from '@components/ui';
 
 const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode, inventoryData = [] }) => {
   const [margin, setMargin] = useState("");
@@ -165,20 +166,32 @@ const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode, inven
               </span>
             )}
           </div>
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="bg-gray-50 dark:bg-[#0c0e12] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider border-b border-gray-200 dark:border-[#2a2d33]">
-                <th className="px-4 py-2.5 text-left w-8">#</th>
-                <th className="px-4 py-2.5 text-left">Product</th>
-                <th className="px-4 py-2.5 text-left">Sourced From</th>
-                <th className="px-4 py-2.5 text-center">Qty</th>
-                <th className="px-4 py-2.5 text-right">Cost / Unit</th>
-                <th className="px-4 py-2.5 text-right">Sell / Unit</th>
-                <th className="px-4 py-2.5 text-right">Total Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredProducts.map((p, i) => {
+          <div className="overflow-x-auto">
+            <DataTable
+              columns={[
+                { key: 'index', label: '#', cellClassName: 'px-4 py-3 font-mono text-purple-500 font-bold text-xs w-8', renderCell: (_, i) => i + 1 },
+                { key: 'product_name', label: 'Product', cellClassName: 'px-4 py-3', renderCell: (p) => (
+                  <>
+                    <p className="font-semibold text-gray-900 dark:text-white text-xs">{p.product_name}</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">{p.quantity} {p.unit}</p>
+                  </>
+                )},
+                { key: 'supplier_name', label: 'Sourced From', cellClassName: 'px-4 py-3', renderCell: (p) => {
+                  const supplierColor = supplierColorMap[p.supplier_name] || supplierColors[0];
+                  return (
+                    <span className={`px-2 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider ${supplierColor}`}>
+                      {p.supplier_name || 'N/A'}
+                    </span>
+                  );
+                }},
+                { key: 'quantity', label: 'Qty', cellClassName: 'px-4 py-3 font-mono text-center text-gray-500' },
+                { key: 'seller_unit_price', label: 'Cost / Unit', cellClassName: 'px-4 py-3 font-mono text-right text-gray-400', renderCell: (p) => formatINR(p.seller_unit_price) },
+                { key: 'my_unit_price', label: 'Sell / Unit', cellClassName: 'px-4 py-3 font-mono text-right font-bold text-purple-400', renderCell: (p) => formatINR(p.my_unit_price) },
+                { key: 'total_price', label: 'Total Value', cellClassName: 'px-4 py-3 font-mono text-right font-bold text-gray-900 dark:text-white', renderCell: (p) => formatINR(p.total_price) }
+              ]}
+              data={filteredProducts}
+              emptyMessage="No products."
+              renderRow={(p, i) => {
                 const supplierColor = supplierColorMap[p.supplier_name] || supplierColors[0];
                 return (
                   <tr key={i} className={`border-b border-gray-100 dark:border-[#2a2d33]/50 last:border-0 transition-colors ${i % 2 === 0 ? '' : 'bg-gray-50/40 dark:bg-[#0c0e12]/30'} hover:bg-purple-500/5`}>
@@ -198,17 +211,19 @@ const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode, inven
                     <td className="px-4 py-3 font-mono text-right font-bold text-gray-900 dark:text-white">{formatINR(p.total_price)}</td>
                   </tr>
                 );
-              })}
-            </tbody>
-            <tfoot>
-              <tr className="bg-gray-50 dark:bg-[#0c0e12] border-t-2 border-gray-200 dark:border-[#2a2d33]">
-                <td colSpan={4} className="px-4 py-3 font-bold text-xs text-gray-500 uppercase tracking-wider">Totals</td>
-                <td className="px-4 py-3 font-mono text-right font-bold text-gray-500">{formatINR(totalSellerCost)}</td>
-                <td className="px-4 py-3"></td>
-                <td className="px-4 py-3 font-mono text-right font-extrabold text-gray-900 dark:text-white text-sm">{formatINR(totalFinalPrice)}</td>
-              </tr>
-            </tfoot>
-          </table>
+              }}
+              renderFooter={() => (
+                <tfoot>
+                  <tr className="bg-gray-50 dark:bg-[#0c0e12] border-t-2 border-gray-200 dark:border-[#2a2d33]">
+                    <td colSpan={4} className="px-4 py-3 font-bold text-xs text-gray-500 uppercase tracking-wider">Totals</td>
+                    <td className="px-4 py-3 font-mono text-right font-bold text-gray-500">{formatINR(totalSellerCost)}</td>
+                    <td className="px-4 py-3"></td>
+                    <td className="px-4 py-3 font-mono text-right font-extrabold text-gray-900 dark:text-white text-sm">{formatINR(totalFinalPrice)}</td>
+                  </tr>
+                </tfoot>
+              )}
+            />
+          </div>
         </div>
 
         {/* ── MARGIN & DISCOUNT FROM TL_REVIEW ── */}

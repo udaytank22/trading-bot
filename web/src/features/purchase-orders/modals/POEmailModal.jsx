@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { formatINR } from '@services/marginEngine';
 import { generatePOPDF, getSourcedSupplierForItem, getSourcedQuoteItemAndSupplier } from "../utils/poPdfGenerator";
+import { DataTable } from '@components/ui';
 
 export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -247,32 +248,17 @@ export default function POEmailModal({ po, isOpen, onClose, onStatusUpdate }) {
                   <div className="py-3">
                     <p className="mb-3 font-semibold text-gray-700">Summary of items included in this order:</p>
                     <div className="overflow-hidden border border-gray-200 rounded-xl bg-gray-50/20 shadow-inner">
-                      <table className="w-full text-left border-collapse text-[12px]">
-                        <thead>
-                          <tr className="bg-gray-50 border-b border-gray-200 text-gray-500 font-bold uppercase tracking-wider text-[9px]">
-                            <th className="px-4 py-2">Product Description</th>
-                            <th className="px-4 py-2 text-center w-24">Quantity</th>
-                            <th className="px-4 py-2 text-right w-28">Unit Price</th>
-                            <th className="px-4 py-2 text-right w-28">Total Price</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-150 bg-white">
-                          {itemsList.map((p, i) => (
-                            <tr key={i} className="hover:bg-gray-50/40 transition-colors">
-                              <td className="px-4 py-2 font-medium text-gray-900">
-                                {p.description || p.product?.name || p.product_name || '—'}
-                              </td>
-                              <td className="px-4 py-2 text-center text-gray-600 font-mono">{p.quantity} PCS</td>
-                              <td className="px-4 py-2 text-right text-gray-600 font-mono">
-                                {formatINR(p.unitPrice || p.unit_price || p.my_unit_price || 0)}
-                              </td>
-                              <td className="px-4 py-2 text-right font-semibold text-purple-600 font-mono">
-                                {formatINR(p.totalPrice || p.total_price || p.total_my_price || 0)}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                      <DataTable
+                        columns={[
+                          { key: 'description', label: 'Product Description', cellClassName: 'px-4 py-2 font-medium text-gray-900', renderCell: (p) => p.description || p.product?.name || p.product_name || '—' },
+                          { key: 'quantity', label: 'Quantity', cellClassName: 'px-4 py-2 text-center text-gray-600 font-mono w-24', renderCell: (p) => `${p.quantity} PCS` },
+                          { key: 'unitPrice', label: 'Unit Price', cellClassName: 'px-4 py-2 text-right text-gray-600 font-mono w-28', renderCell: (p) => formatINR(p.unitPrice || p.unit_price || p.my_unit_price || 0) },
+                          { key: 'totalPrice', label: 'Total Price', cellClassName: 'px-4 py-2 text-right font-semibold text-purple-600 font-mono w-28', renderCell: (p) => formatINR(p.totalPrice || p.total_price || p.total_my_price || 0) }
+                        ]}
+                        data={itemsList}
+                        emptyMessage="No items in order."
+                        rowClassName="hover:bg-gray-50/40 transition-colors"
+                      />
                     </div>
                   </div>
                   <p>

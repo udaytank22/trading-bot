@@ -3,6 +3,7 @@ import { api } from '@services/api';
 import { calculateMargin, formatINR } from '@services/marginEngine';
 import { CONFIG } from '@/config.js';
 import Swal from 'sweetalert2';
+import { DataTable } from '@components/ui';
 
 export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOpen, onClose, onStatusUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -189,24 +190,18 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
                           We hope this email finds you well. We are currently sourcing products for an upcoming requirement.
                           Please review the items requested below and provide your best wholesale quotation including unit prices, minimum order quantities, and estimated lead times.
                         </p>
-                        <table className="w-full border-collapse border border-gray-200 dark:border-[#2a2d33] my-6 text-[12px] text-gray-900 dark:text-white shadow-sm font-sans">
-                          <thead>
-                            <tr className="bg-gray-50 dark:bg-[#0c0e12] text-gray-500 dark:text-gray-400 tracking-wide text-left">
-                              <th className="p-3 border border-gray-200 dark:border-[#2a2d33] font-bold">Product</th>
-                              <th className="p-3 border border-gray-200 dark:border-[#2a2d33] text-center font-bold">Qty</th>
-                              <th className="p-3 border border-gray-200 dark:border-[#2a2d33] font-bold">Specs</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {supp.items.map((p, i) => (
-                              <tr key={i} className="hover:bg-gray-50/50">
-                                <td className="p-3 border border-gray-200 dark:border-[#2a2d33] font-medium">{p.product_name}</td>
-                                <td className="p-3 border border-gray-200 dark:border-[#2a2d33] text-center font-mono font-medium">{p.quantity} {p.unit}</td>
-                                <td className="p-3 border border-gray-200 dark:border-[#2a2d33] text-gray-500 text-[11px] leading-snug">{p.specs}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                        <div className="my-6">
+                          <DataTable
+                            columns={[
+                              { key: 'product', label: 'Product', cellClassName: 'p-3 border border-gray-200 dark:border-[#2a2d33] font-medium', renderCell: (p) => p.product_name },
+                              { key: 'qty', label: 'Qty', cellClassName: 'p-3 border border-gray-200 dark:border-[#2a2d33] text-center font-mono font-medium', renderCell: (p) => `${p.quantity} ${p.unit}` },
+                              { key: 'specs', label: 'Specs', cellClassName: 'p-3 border border-gray-200 dark:border-[#2a2d33] text-gray-500 text-[11px] leading-snug', renderCell: (p) => p.specs }
+                            ]}
+                            data={supp.items}
+                            emptyMessage="No products."
+                            rowClassName="hover:bg-gray-50/50"
+                          />
+                        </div>
                         <p className="mt-7 mb-8 font-medium">Looking forward to receiving your prompt response soon.</p>
                         <div className="text-[12px] font-bold tracking-wide text-gray-800 dark:text-gray-200 border-t border-gray-200 dark:border-[#2a2d33] pt-4 mt-8 inline-block select-none">
                           TradeMind Sourcing Team<br />
@@ -252,29 +247,25 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
                       Thank you for your recent inquiry! We are pleased to offer the following quotation for the requested items. Our team ensures the highest quality standards, resulting in pristine compliance for B2B channels.
                     </p>
 
-                    <table className="w-full border-collapse border border-gray-200 dark:border-[#2a2d33] my-6 text-[12px] text-gray-900 dark:text-white shadow-sm font-sans">
-                      <thead>
-                        <tr className="bg-gray-50 dark:bg-[#0c0e12] text-gray-500 dark:text-gray-400 tracking-wide text-left">
-                          <th className="p-3 border border-gray-200 dark:border-[#2a2d33] font-bold">Product</th>
-                          <th className="p-3 border border-gray-200 dark:border-[#2a2d33] text-right font-bold">Unit Price</th>
-                          <th className="p-3 border border-gray-200 dark:border-[#2a2d33] text-center font-bold">Qty</th>
-                          <th className="p-3 border border-gray-200 dark:border-[#2a2d33] text-right font-bold w-[25%]">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {deal.products.map((p, i) => {
-                          let myQuoteProd = deal.my_quote?.products?.find(mqp => mqp.product_name === p.product_name) || deal.calculated_my_quote?.products?.find(mqp => mqp.product_name === p.product_name);
-                          return (
-                            <tr key={i} className="hover:bg-gray-50/50">
-                              <td className="p-3 border border-gray-200 dark:border-[#2a2d33] font-medium">{p.product_name}</td>
-                              <td className="p-3 border border-gray-200 dark:border-[#2a2d33] text-right font-mono font-medium">{myQuoteProd ? formatCurrency(myQuoteProd.my_unit_price) : 'TBD'}</td>
-                              <td className="p-3 border border-gray-200 dark:border-[#2a2d33] text-center font-mono font-medium">{p.quantity} {p.unit}</td>
-                              <td className="p-3 border border-gray-200 dark:border-[#2a2d33] text-right font-mono font-bold">{myQuoteProd ? formatCurrency(myQuoteProd.total_my_price || myQuoteProd.total_price) : 'TBD'}</td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
+                    <div className="my-6">
+                      <DataTable
+                        columns={[
+                          { key: 'product', label: 'Product', cellClassName: 'p-3 border border-gray-200 dark:border-[#2a2d33] font-medium', renderCell: (p) => p.product_name },
+                          { key: 'unitPrice', label: 'Unit Price', cellClassName: 'p-3 border border-gray-200 dark:border-[#2a2d33] text-right font-mono font-medium', renderCell: (p) => {
+                            let myQuoteProd = deal.my_quote?.products?.find(mqp => mqp.product_name === p.product_name) || deal.calculated_my_quote?.products?.find(mqp => mqp.product_name === p.product_name);
+                            return myQuoteProd ? formatCurrency(myQuoteProd.my_unit_price) : 'TBD';
+                          }},
+                          { key: 'qty', label: 'Qty', cellClassName: 'p-3 border border-gray-200 dark:border-[#2a2d33] text-center font-mono font-medium', renderCell: (p) => `${p.quantity} ${p.unit}` },
+                          { key: 'total', label: 'Total', cellClassName: 'p-3 border border-gray-200 dark:border-[#2a2d33] text-right font-mono font-bold w-[25%]', renderCell: (p) => {
+                            let myQuoteProd = deal.my_quote?.products?.find(mqp => mqp.product_name === p.product_name) || deal.calculated_my_quote?.products?.find(mqp => mqp.product_name === p.product_name);
+                            return myQuoteProd ? formatCurrency(myQuoteProd.total_my_price || myQuoteProd.total_price) : 'TBD';
+                          }}
+                        ]}
+                        data={deal.products}
+                        emptyMessage="No products."
+                        rowClassName="hover:bg-gray-50/50"
+                      />
+                    </div>
 
                     <div className="mb-6 bg-gray-50 dark:bg-[#242830] p-5 border-l-[3px] border-purple-500 rounded-r shadow-sm">
                       <p className="font-bold text-[12px] mb-2.5 uppercase tracking-wider text-gray-800 dark:text-gray-200">Payment Terms</p>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { formatINR } from '@services/marginEngine';
 import { generatePOPDF } from "../utils/poPdfGenerator";
+import { DataTable } from '@components/ui';
 
 const POEmailDraftCard = ({ po }) => {
   const [pdfUrl, setPdfUrl] = useState("");
@@ -52,24 +53,17 @@ const POEmailDraftCard = ({ po }) => {
           <p>Dear {supplierName},</p>
           <p>We are pleased to place the following Purchase Order for the upcoming requirements.</p>
 
-          <table className="w-full border-collapse border border-gray-200 my-4 text-[12px]">
-            <thead>
-              <tr className="bg-gray-50 text-left">
-                <th className="p-2 border border-gray-200">Product</th>
-                <th className="p-2 border border-gray-200 text-center">Qty</th>
-                <th className="p-2 border border-gray-200 text-right">Total Price</th>
-              </tr>
-            </thead>
-            <tbody>
-              {itemsList.map((p, i) => (
-                <tr key={i}>
-                  <td className="p-2 border border-gray-200 font-medium">{p.description || p.product?.name || p.product_name || '—'}</td>
-                  <td className="p-2 border border-gray-200 text-center">{p.quantity} PCS</td>
-                  <td className="p-2 border border-gray-200 text-right font-semibold text-purple-600">{formatINR(p.totalPrice || p.total_price || 0)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="my-4">
+            <DataTable
+              columns={[
+                { key: 'product', label: 'Product', cellClassName: 'p-2 border border-gray-200 font-medium', renderCell: (p) => p.description || p.product?.name || p.product_name || '—' },
+                { key: 'qty', label: 'Qty', cellClassName: 'p-2 border border-gray-200 text-center', renderCell: (p) => `${p.quantity} PCS` },
+                { key: 'total', label: 'Total Price', cellClassName: 'p-2 border border-gray-200 text-right font-semibold text-purple-600', renderCell: (p) => formatINR(p.totalPrice || p.total_price || 0) }
+              ]}
+              data={itemsList}
+              emptyMessage="No products."
+            />
+          </div>
 
           <p>Please find the official PDF attached to the final email.</p>
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { api } from '../../../services/api';
 import { formatINR } from '@services/marginEngine';
+import { DataTable } from '@components/ui';
 
 export default function InvoiceReviewModal({ isOpen, onClose, previewData, onSent }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -284,26 +285,17 @@ export default function InvoiceReviewModal({ isOpen, onClose, previewData, onSen
                       <div className="py-3">
                         <p className="mb-3 font-semibold text-gray-700">Summary of items included in this invoice:</p>
                         <div className="overflow-hidden border border-gray-200 rounded-xl bg-gray-50/20 shadow-inner">
-                          <table className="w-full text-left border-collapse text-[12px]">
-                            <thead>
-                              <tr className="bg-gray-50 border-b border-gray-200 text-gray-500 font-bold uppercase tracking-wider text-[9px]">
-                                <th className="px-4 py-2">Product Description</th>
-                                <th className="px-4 py-2 text-center w-24">Quantity</th>
-                                <th className="px-4 py-2 text-right w-28">Unit Price</th>
-                                <th className="px-4 py-2 text-right w-28">Total Price</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-150 bg-white">
-                              {invoice.items && invoice.items.map((p, i) => (
-                                <tr key={i} className="hover:bg-gray-50/40 transition-colors">
-                                  <td className="px-4 py-2 font-medium text-gray-900">{p.description}</td>
-                                  <td className="px-4 py-2 text-center text-gray-600 font-mono">{p.quantity}</td>
-                                  <td className="px-4 py-2 text-right text-gray-600 font-mono">{formatINR(p.unitPrice || 0)}</td>
-                                  <td className="px-4 py-2 text-right font-semibold text-purple-600 font-mono">{formatINR(p.totalPrice || 0)}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                          <DataTable
+                            columns={[
+                              { key: 'description', label: 'Product Description', cellClassName: 'px-4 py-2 font-medium text-gray-900', renderCell: (p) => p.description },
+                              { key: 'quantity', label: 'Quantity', cellClassName: 'px-4 py-2 text-center text-gray-600 font-mono w-24', renderCell: (p) => p.quantity },
+                              { key: 'unitPrice', label: 'Unit Price', cellClassName: 'px-4 py-2 text-right text-gray-600 font-mono w-28', renderCell: (p) => formatINR(p.unitPrice || 0) },
+                              { key: 'totalPrice', label: 'Total Price', cellClassName: 'px-4 py-2 text-right font-semibold text-purple-600 font-mono w-28', renderCell: (p) => formatINR(p.totalPrice || 0) }
+                            ]}
+                            data={invoice.items || []}
+                            emptyMessage="No items in invoice."
+                            rowClassName="hover:bg-gray-50/40 transition-colors"
+                          />
                         </div>
                       </div>
                     </div>

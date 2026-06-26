@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../../../services/api';
+import { DataTable } from '@components/ui';
 
 export default function InquiryInvoiceEmailModal({ inquiry, isOpen, onClose, onStatusUpdate }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -227,24 +228,18 @@ export default function InquiryInvoiceEmailModal({ inquiry, isOpen, onClose, onS
                     We hope this email finds you well. Following the successful delivery of your shipment, we are pleased to share the final tax invoice for your records.
                   </p>
 
-                  <table className="w-full border-collapse border border-gray-300 my-7 text-[14px] text-black shadow-sm font-sans">
-                    <thead>
-                      <tr className="bg-gray-100 text-gray-700 tracking-wide text-left">
-                        <th className="p-3 border border-gray-300 font-bold">Product</th>
-                        <th className="p-3 border border-gray-300 text-center font-bold">Qty</th>
-                        <th className="p-3 border border-gray-300 text-right font-bold w-[25%]">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(inquiry.my_quote?.products || []).map((p, i) => (
-                        <tr key={i} className="hover:bg-gray-50/50">
-                          <td className="p-3 border border-gray-300 font-medium">{p.product_name}</td>
-                          <td className="p-3 border border-gray-300 text-center font-mono font-medium">{p.quantity}</td>
-                          <td className="p-3 border border-gray-300 text-right font-mono font-bold">₹{p.total_price}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <div className="my-7">
+                    <DataTable
+                      columns={[
+                        { key: 'product', label: 'Product', cellClassName: 'p-3 border border-gray-300 font-medium', renderCell: (p) => p.product_name },
+                        { key: 'qty', label: 'Qty', cellClassName: 'p-3 border border-gray-300 text-center font-mono font-medium', renderCell: (p) => p.quantity },
+                        { key: 'total', label: 'Total', cellClassName: 'p-3 border border-gray-300 text-right font-mono font-bold w-[25%]', renderCell: (p) => `₹${p.total_price}` }
+                      ]}
+                      data={inquiry.my_quote?.products || []}
+                      emptyMessage="No products."
+                      rowClassName="hover:bg-gray-50/50"
+                    />
+                  </div>
 
                   {/* ── PDF Attachment Card ── */}
                   <div

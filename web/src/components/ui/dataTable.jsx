@@ -67,6 +67,7 @@ export const ROW_HOVER_CLS =
  * @param {function(any, number): React.ReactNode} props.renderRow - Render function for each <tr>
  * @param {string} [props.emptyMessage="No data found."] - Message shown when data is empty
  * @param {string} [props.maxHeight="max-h-[600px]"] - Tailwind max-height for the scroll container
+ * @param {function(): React.ReactNode} [props.renderFooter] - Optional render function for tfoot
  */
 export default function DataTable({
   columns = [],
@@ -75,6 +76,7 @@ export default function DataTable({
   emptyMessage = "No data found.",
   maxHeight = "max-h-[600px]",
   className = "",
+  renderFooter,
 }) {
   return (
     /* Outer wrapper — hides overflow for rounded corners */
@@ -110,8 +112,25 @@ export default function DataTable({
           {/* ── BODY ───────────────────────────────────────────────────────── */}
           <tbody className="divide-y divide-gray-100 dark:divide-[#2a2d33]/50">
             {data.length > 0 ? (
-              // Delegate row rendering to the caller — they know the shape of their data
-              data.map((row, idx) => renderRow(row, idx))
+              // If renderRow is provided, use it for backwards compatibility.
+              // Otherwise, iterate columns and use col.renderCell or row[col.key]
+              renderRow 
+                ? data.map((row, idx) => renderRow(row, idx))
+                : data.map((row, idx) => (
+                    <tr key={row.id || idx} className={`${ROW_HOVER_CLS} ${rowStripeClass(idx)}`}>
+                      {columns.map((col, cIdx) => {
+                        const cellValue = col.renderCell ? col.renderCell(row, idx) : row[col.key];
+                        return (
+                          <td 
+                            key={col.key || cIdx} 
+                            className={`px-2 sm:px-3 md:px-4 py-3 md:py-4 ${col.hidden ?? ""} ${col.cellClassName ?? ""}`}
+                          >
+                            {cellValue}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))
             ) : (
               // Empty state row spans all columns
               <tr>
@@ -121,6 +140,7 @@ export default function DataTable({
               </tr>
             )}
           </tbody>
+          {renderFooter && renderFooter()}
         </table>
       </div>
     </div>

@@ -156,20 +156,13 @@ function getActionBtn(inq, onAction, currentUser) {
  * @param {Object}   props.currentUser - Current logged in user
  */
 const InquiryTable = ({ items, onView, onAction, currentUser }) => {
-  /**
-   * Renders a single inquiry as a <tr>.
-   * DataTable calls this for each item in props.items.
-   */
-  const renderRow = (inq, idx) => (
-    <tr
-      key={inq.inquiry_id}
-      className={`${ROW_HOVER_CLS} ${rowStripeClass(idx)}`}
-    >
-      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4 text-center text-gray-500 text-sm font-medium">
-        {idx + 1}
-      </td>
-      {/* ── Order Reference ──────────────────────────────── */}
-      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4 font-mono text-gray-900 dark:text-white text-[12px] md:text-[13px] font-bold break-words">
+  const COLUMNS_SCHEMA = [
+    { key: "sr_no", label: "#", cellClassName: "text-center text-gray-500 text-sm font-medium w-10", renderCell: (_, idx) => idx + 1 },
+    { 
+      key: "inquiry_id",   
+      label: "Order Reference", 
+      cellClassName: "font-mono text-gray-900 dark:text-white text-[12px] md:text-[13px] font-bold break-words",
+      renderCell: (inq) => (
         <Tooltip content={inq.products?.map((p) => `${p.product_name} (${p.quantity} ${p.unit})`).join(", ")}>
           <div className="flex flex-col">
             <span className="cursor-pointer hover:text-purple-400 transition-colors" onClick={() => onView(inq)}>{inq.inquiry_id}</span>
@@ -181,12 +174,12 @@ const InquiryTable = ({ items, onView, onAction, currentUser }) => {
             )}
           </div>
         </Tooltip>
-      </td>
-
-
-
-      {/* ── Customer ─────────────────────────────────── */}
-      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4">
+      )
+    },
+    { 
+      key: "buyer",        
+      label: "Customer",
+      renderCell: (inq) => (
         <div className="flex flex-col">
           <Tooltip content={inq.buyer_email}>
             <span className="text-gray-900 dark:text-white font-bold text-sm cursor-default">
@@ -197,40 +190,44 @@ const InquiryTable = ({ items, onView, onAction, currentUser }) => {
             {inq.buyer_email}
           </span>
         </div>
-      </td>
-
-      {/* ── Vessel Name ────────────────────────────────────── */}
-      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4 hidden md:table-cell">
+      )
+    },
+    { 
+      key: "vessel",       
+      label: "Vessel Name", 
+      hidden: "hidden md:table-cell",
+      renderCell: (inq) => (
         <span className="text-gray-900 dark:text-white font-semibold text-[13px] cursor-default">
           {inq.vesselName || "—"}
         </span>
-      </td>
-
-      {/* ── Inquiry Date ──────────────────────────────── */}
-      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4 hidden lg:table-cell">
+      )
+    },
+    { 
+      key: "received",     
+      label: "Inquiry Date", 
+      hidden: "hidden lg:table-cell",
+      renderCell: (inq) => (
         <Tooltip content={new Date(inq.date_received).toLocaleString("en-GB")}>
           <span className="text-gray-600 dark:text-gray-300 text-sm cursor-default">
             {new Date(inq.date_received).toLocaleString("en-GB", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit",
+              day: "2-digit", month: "2-digit", year: "numeric",
+              hour: "2-digit", minute: "2-digit", second: "2-digit",
               hour12: false
             }).replace(/,/g, "")}
           </span>
         </Tooltip>
-      </td>
-
-
-      {/* ── Enquiry Status ────────────────────────────── */}
-      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4">
-        <StatusBadge status={inq.status} />
-      </td>
-
-      {/* ── Actions ───────────────────────────────────── */}
-      <td className="px-2 sm:px-3 md:px-4 py-3 md:py-4 text-right">
+      )
+    },
+    { 
+      key: "status",       
+      label: "Enquiry Status",
+      renderCell: (inq) => <StatusBadge status={inq.status} />
+    },
+    { 
+      key: "actions",      
+      label: "Actions",  
+      cellClassName: "text-right",
+      renderCell: (inq) => (
         <div className="flex items-center justify-end gap-1 md:gap-2">
           <Button
             variant="secondary"
@@ -242,15 +239,14 @@ const InquiryTable = ({ items, onView, onAction, currentUser }) => {
           </Button>
           {getActionBtn(inq, onAction, currentUser)}
         </div>
-      </td>
-    </tr>
-  );
+      )
+    },
+  ];
 
   return (
     <DataTable
-      columns={COLUMNS}
+      columns={COLUMNS_SCHEMA}
       data={items}
-      renderRow={renderRow}
       emptyMessage="No inquiries found."
     />
   );

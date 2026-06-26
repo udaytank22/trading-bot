@@ -1,7 +1,9 @@
+
 import React, { useState } from 'react';
 import { api } from '@services/api';
 import { formatINR } from '@services/marginEngine';
 import Swal from 'sweetalert2';
+import { DataTable } from '@components/ui';
 
 const EmailDraftCard = ({ rfq, inquiryId, buyerName, allProducts }) => {
   const products = allProducts.filter(p => rfq.products.includes(p.product_name));
@@ -26,24 +28,17 @@ const EmailDraftCard = ({ rfq, inquiryId, buyerName, allProducts }) => {
           <p>Dear {rfq.supplierName},</p>
           <p>We are currently sourcing products for an upcoming requirement. Please review the items requested below and provide your best wholesale quotation.</p>
 
-          <table className="w-full border-collapse border border-gray-200 my-4 text-[12px]">
-            <thead>
-              <tr className="bg-gray-50 text-left">
-                <th className="p-2 border border-gray-200">Product</th>
-                <th className="p-2 border border-gray-200 text-center">Qty</th>
-                <th className="p-2 border border-gray-200">Specs</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((p, i) => (
-                <tr key={i}>
-                  <td className="p-2 border border-gray-200 font-medium">{p.product_name}</td>
-                  <td className="p-2 border border-gray-200 text-center">{p.quantity} {p.unit}</td>
-                  <td className="p-2 border border-gray-200 text-gray-500 italic text-[11px]">{p.specs}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="my-4">
+            <DataTable
+              columns={[
+                { key: 'product', label: 'Product', cellClassName: 'p-2 border border-gray-200 font-medium', renderCell: (p) => p.product_name },
+                { key: 'qty', label: 'Qty', cellClassName: 'p-2 border border-gray-200 text-center', renderCell: (p) => `${p.quantity} ${p.unit}` },
+                { key: 'specs', label: 'Specs', cellClassName: 'p-2 border border-gray-200 text-gray-500 italic text-[11px]', renderCell: (p) => p.specs }
+              ]}
+              data={products}
+              emptyMessage="No products."
+            />
+          </div>
 
           <p>Looking forward to your prompt response.</p>
           <div className="pt-4 text-gray-500 font-bold text-[11px]">

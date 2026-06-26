@@ -901,75 +901,67 @@ export default function InquiryDetailsPage() {
                                 </p>
                               )}
                               <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-[#2a2d36] bg-white dark:bg-[#1a1d23]">
-                                <table className="w-full text-left border-collapse text-xs">
-                                  <thead>
-                                    <tr className="bg-gray-50 dark:bg-[#242830] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider border-b border-gray-200 dark:border-[#2a2d36]">
-                                      {canSelectQuote && <th className="px-4 py-2.5 w-10"></th>}
-                                      <th className="px-4 py-2.5">Product Name</th>
-                                      <th className="px-4 py-2.5">Unit Price</th>
-                                      <th className="px-4 py-2.5 text-center">Qty</th>
-                                      <th className="px-4 py-2.5 text-right">Total</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {quote.items?.map((item, idx) => {
-                                      const inquiryItem = deal.items?.find(ii => ii.id === item.inquiryItemId);
-                                      const qty = inquiryItem?.quantity || item.quantity || 1;
-                                      const price = parseFloat(item.unitPrice) || 0;
-                                      const productName = inquiryItem?.description || 'Unknown Product';
-                                      // Is this item checked in pending selections?
-                                      const isChecked = pendingSelections[item.inquiryItemId]?.quoteItemId === item.id;
-                                      // Is this product already picked from a DIFFERENT supplier?
-                                      const pickedElsewhere = !isChecked && !!pendingSelections[item.inquiryItemId];
-                                      return (
-                                        <tr
-                                          key={item.id || idx}
-                                          onClick={canSelectQuote ? () => handleCheckboxToggle(item, quote) : undefined}
-                                          className={`border-b border-gray-100 dark:border-[#2a2d36]/50 last:border-0 transition-colors ${isChecked
-                                            ? 'bg-emerald-500/5 dark:bg-emerald-500/10'
-                                            : pickedElsewhere
-                                              ? 'opacity-40'
-                                              : canSelectQuote ? 'hover:bg-purple-500/5 cursor-pointer' : ''
-                                            }`}
-                                        >
-                                          {canSelectQuote && (
-                                            <td className="px-4 py-3 w-10" onClick={e => e.stopPropagation()}>
-                                              <input
-                                                type="checkbox"
-                                                checked={isChecked}
-                                                disabled={pickedElsewhere}
-                                                onChange={() => handleCheckboxToggle(item, quote)}
-                                                className="w-4 h-4 rounded accent-purple-600 cursor-pointer disabled:cursor-not-allowed"
-                                              />
-                                            </td>
-                                          )}
-                                          <td className="px-4 py-3 font-semibold text-gray-800 dark:text-gray-200">
-                                            <div className="flex items-center gap-2">
-                                              {isChecked && (
-                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-purple-600 text-white text-[9px] font-extrabold rounded uppercase tracking-wider shrink-0">
-                                                  <svg className="w-2 h-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                                                  Pending
-                                                </span>
-                                              )}
-                                              {item.isSelected && !isChecked && (
-                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-emerald-500 text-white text-[9px] font-extrabold rounded uppercase tracking-wider shrink-0">
-                                                  <svg className="w-2 h-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                                                  Confirmed
-                                                </span>
-                                              )}
-                                              {productName}
-                                            </div>
+                                <DataTable
+                                  columns={[
+                                    ...(canSelectQuote ? [{ key: 'select', label: '', cellClassName: 'px-4 py-2.5 w-10' }] : []),
+                                    { key: 'product', label: 'Product Name', cellClassName: 'px-4 py-2.5' },
+                                    { key: 'unitPrice', label: 'Unit Price', cellClassName: 'px-4 py-2.5' },
+                                    { key: 'qty', label: 'Qty', cellClassName: 'px-4 py-2.5 text-center' },
+                                    { key: 'total', label: 'Total', cellClassName: 'px-4 py-2.5 text-right' }
+                                  ]}
+                                  data={quote.items || []}
+                                  emptyMessage="No items in quote."
+                                  renderRow={(item, idx) => {
+                                    const inquiryItem = deal.items?.find(ii => ii.id === item.inquiryItemId);
+                                    const qty = inquiryItem?.quantity || item.quantity || 1;
+                                    const price = parseFloat(item.unitPrice) || 0;
+                                    const productName = inquiryItem?.description || 'Unknown Product';
+                                    const isChecked = pendingSelections[item.inquiryItemId]?.quoteItemId === item.id;
+                                    const pickedElsewhere = !isChecked && !!pendingSelections[item.inquiryItemId];
+                                    return (
+                                      <tr
+                                        key={item.id || idx}
+                                        onClick={canSelectQuote ? () => handleCheckboxToggle(item, quote) : undefined}
+                                        className={`border-b border-gray-100 dark:border-[#2a2d36]/50 last:border-0 transition-colors ${isChecked
+                                          ? 'bg-emerald-500/5 dark:bg-emerald-500/10'
+                                          : pickedElsewhere
+                                            ? 'opacity-40'
+                                            : canSelectQuote ? 'hover:bg-purple-500/5 cursor-pointer' : ''
+                                          }`}
+                                      >
+                                        {canSelectQuote && (
+                                          <td className="px-4 py-3 w-10" onClick={e => e.stopPropagation()}>
+                                            <input
+                                              type="checkbox"
+                                              checked={isChecked}
+                                              disabled={pickedElsewhere}
+                                              onChange={() => handleCheckboxToggle(item, quote)}
+                                              className="w-4 h-4 rounded accent-purple-600 cursor-pointer disabled:cursor-not-allowed"
+                                            />
                                           </td>
-                                          <td className="px-4 py-3 font-mono font-medium">{formatINR(price)}</td>
-                                          <td className="px-4 py-3 font-mono text-center">{qty}</td>
-                                          <td className="px-4 py-3 font-mono text-right font-bold text-gray-900 dark:text-white">
-                                            {formatINR(price * qty)}
-                                          </td>
-                                        </tr>
-                                      );
-                                    })}
-                                  </tbody>
-                                </table>
+                                        )}
+                                        <td className="px-4 py-3 font-semibold text-gray-800 dark:text-gray-200">
+                                          <div className="flex items-center gap-2">
+                                            {isChecked && (
+                                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-purple-600 text-white text-[9px] font-extrabold rounded uppercase tracking-wider shrink-0">
+                                                <svg className="w-2 h-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                                Selected
+                                              </span>
+                                            )}
+                                            {productName}
+                                          </div>
+                                        </td>
+                                        <td className="px-4 py-3 font-mono text-purple-600 dark:text-purple-400 font-bold">{formatINR(price)}</td>
+                                        <td className="px-4 py-3 text-center">
+                                          <span className="font-mono text-gray-900 dark:text-white font-medium">{qty}</span>
+                                        </td>
+                                        <td className="px-4 py-3 text-right font-mono font-extrabold text-gray-900 dark:text-white">
+                                          {formatINR(price * qty)}
+                                        </td>
+                                      </tr>
+                                    );
+                                  }}
+                                />
                               </div>
                             </div>
                           )}
@@ -1032,28 +1024,17 @@ export default function InquiryDetailsPage() {
                           Purchase Orders
                         </h4>
                         <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-[#2a2d36]">
-                          <table className="w-full text-left border-collapse text-xs">
-                            <thead>
-                              <tr className="bg-gray-50 dark:bg-[#242830] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider border-b border-gray-200 dark:border-[#2a2d36]">
-                                <th className="px-4 py-2.5">PO Number</th>
-                                <th className="px-4 py-2.5">Supplier</th>
-                                <th className="px-4 py-2.5">Status</th>
-                                <th className="px-4 py-2.5 text-right">Amount</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {deal.purchaseOrders.map((po) => (
-                                <tr key={po.id} className="border-b border-gray-100 dark:border-[#2a2d36]/50 last:border-0 hover:bg-gray-50/50 dark:hover:bg-[#242830]/50">
-                                  <td className="px-4 py-3 font-mono font-semibold text-purple-600 dark:text-purple-400">
-                                    <button onClick={() => navigate(`/purchase-orders/${po.id}`)} className="hover:underline">{po.poNumber}</button>
-                                  </td>
-                                  <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">{po.supplier?.name || 'N/A'}</td>
-                                  <td className="px-4 py-3"><StatusBadge status={po.status} /></td>
-                                  <td className="px-4 py-3 font-mono font-bold text-gray-900 dark:text-white text-right">{formatINR(po.amount)}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                          <DataTable
+                            columns={[
+                              { key: 'poNumber', label: 'PO Number', cellClassName: 'px-4 py-3 font-mono font-semibold text-purple-600 dark:text-purple-400', renderCell: (po) => <button onClick={() => navigate(`/purchase-orders/${po.id}`)} className="hover:underline">{po.poNumber}</button> },
+                              { key: 'supplier', label: 'Supplier', cellClassName: 'px-4 py-3 font-medium text-gray-800 dark:text-gray-200', renderCell: (po) => po.supplier?.name || 'N/A' },
+                              { key: 'status', label: 'Status', cellClassName: 'px-4 py-3', renderCell: (po) => <StatusBadge status={po.status} /> },
+                              { key: 'amount', label: 'Amount', cellClassName: 'px-4 py-3 font-mono font-bold text-gray-900 dark:text-white text-right', renderCell: (po) => formatINR(po.amount) }
+                            ]}
+                            data={deal.purchaseOrders}
+                            emptyMessage="No Purchase Orders found."
+                            rowClassName="hover:bg-gray-50/50 dark:hover:bg-[#242830]/50 border-b border-gray-100 dark:border-[#2a2d36]/50 last:border-0"
+                          />
                         </div>
                       </div>
                     )}
@@ -1068,30 +1049,18 @@ export default function InquiryDetailsPage() {
                           Client Invoices & Payments
                         </h4>
                         <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-[#2a2d36]">
-                          <table className="w-full text-left border-collapse text-xs">
-                            <thead>
-                              <tr className="bg-gray-50 dark:bg-[#242830] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider border-b border-gray-200 dark:border-[#2a2d36]">
-                                <th className="px-4 py-2.5">Invoice #</th>
-                                <th className="px-4 py-2.5">Status</th>
-                                <th className="px-4 py-2.5 text-right">Total</th>
-                                <th className="px-4 py-2.5 text-right">Paid</th>
-                                <th className="px-4 py-2.5 text-right">Pending</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {deal.invoices.map((inv) => (
-                                <tr key={inv.id} className="border-b border-gray-100 dark:border-[#2a2d36]/50 last:border-0 hover:bg-gray-50/50 dark:hover:bg-[#242830]/50">
-                                  <td className="px-4 py-3 font-mono font-semibold text-purple-600 dark:text-purple-400">
-                                    <button onClick={() => navigate(`/invoices/${inv.id}`)} className="hover:underline">{inv.invoiceNumber}</button>
-                                  </td>
-                                  <td className="px-4 py-3"><StatusBadge status={inv.status} /></td>
-                                  <td className="px-4 py-3 font-mono font-bold text-gray-900 dark:text-white text-right">{formatINR(inv.total)}</td>
-                                  <td className="px-4 py-3 font-mono font-bold text-emerald-500 text-right">{formatINR(inv.paidAmount)}</td>
-                                  <td className="px-4 py-3 font-mono font-bold text-red-500 text-right">{formatINR(inv.pendingAmount)}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                          <DataTable
+                            columns={[
+                              { key: 'invoiceNumber', label: 'Invoice #', cellClassName: 'px-4 py-3 font-mono font-semibold text-purple-600 dark:text-purple-400', renderCell: (inv) => <button onClick={() => navigate(`/invoices/${inv.id}`)} className="hover:underline">{inv.invoiceNumber}</button> },
+                              { key: 'status', label: 'Status', cellClassName: 'px-4 py-3', renderCell: (inv) => <StatusBadge status={inv.status} /> },
+                              { key: 'total', label: 'Total', cellClassName: 'px-4 py-3 font-mono font-bold text-gray-900 dark:text-white text-right', renderCell: (inv) => formatINR(inv.total) },
+                              { key: 'paid', label: 'Paid', cellClassName: 'px-4 py-3 font-mono font-bold text-emerald-500 text-right', renderCell: (inv) => formatINR(inv.paidAmount) },
+                              { key: 'pending', label: 'Pending', cellClassName: 'px-4 py-3 font-mono font-bold text-red-500 text-right', renderCell: (inv) => formatINR(inv.pendingAmount) }
+                            ]}
+                            data={deal.invoices}
+                            emptyMessage="No Invoices found."
+                            rowClassName="hover:bg-gray-50/50 dark:hover:bg-[#242830]/50 border-b border-gray-100 dark:border-[#2a2d36]/50 last:border-0"
+                          />
                         </div>
                       </div>
                     )}
