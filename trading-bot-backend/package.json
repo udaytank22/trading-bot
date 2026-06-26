@@ -10,7 +10,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
     "prisma:seed-mock": "node prisma/seed-mock.js",
-    "docs:generate": "node swagger.js"
+    "docs:generate": "node swagger.js",
+    "test": "cross-env NODE_ENV=test jest"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -46,7 +47,10 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^10.4.0",
+    "cross-env": "^10.1.0",
+    "jest": "^30.4.2",
     "nodemon": "^3.1.0",
-    "prisma": "^5.13.0"
+    "prisma": "^5.13.0",
+    "supertest": "^7.2.2"
   }
 }
