@@ -7,13 +7,6 @@ const getAllEmployees = async (query = {}) => {
   const { page, pageSize, paginate } = query;
   const where = { deletedAt: null };
 
-  if (paginate === 'false') {
-    const employees = await prisma.employee.findMany({
-      where,
-      orderBy: { fullName: 'asc' }
-    });
-    return { data: employees, total: employees.length };
-  }
 
   const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
   const take = pageSize ? parseInt(pageSize) : undefined;

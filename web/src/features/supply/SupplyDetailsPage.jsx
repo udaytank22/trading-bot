@@ -43,82 +43,78 @@ export default function SupplyDetailsPage() {
   const [challanNo, setChallanNo] = useState('');
   const challanBlobRef = useRef(null); // hold URL for cleanup
 
-  // Load shipment — id from URL is a string, backend IDs are integers
   useEffect(() => {
     if (typeof id === 'string' && id.startsWith('inq-')) {
       const inqId = parseInt(id.replace('inq-', ''), 10);
-      const groupShipments = supplyData.filter(item => item.inquiryId === inqId);
-      if (groupShipments.length > 0) {
-        const STATUS_RANK = {
-          'ORDER PLACED': 1,
-          'ORDERED': 1,
-          'PENDING': 1,
-          'VEHICLE_ALLOTTED': 2,
-          'LOADING': 2,
-          'DISPATCHED': 3,
-          'IN_TRANSIT': 3,
-          'DELIVERED': 4,
-          'OUT_FOR_DELIVERY': 5,
-          'DELIVERED_TO_VESSEL': 6,
-          'DELIVERED TO VESSEL': 6,
-          'CHALLAN_RECEIVED': 7,
-          'CLOSED': 8
-        };
-        const RANK_TO_STATUS = {
-          1: 'ORDER PLACED',
-          2: 'VEHICLE_ALLOTTED',
-          3: 'DISPATCHED',
-          4: 'DELIVERED',
-          5: 'OUT_FOR_DELIVERY',
-          6: 'DELIVERED_TO_VESSEL',
-          7: 'CHALLAN_RECEIVED',
-          8: 'CLOSED'
-        };
+      setLoading(true);
+      api.shipments.getShipments({ inquiryId: inqId, pageSize: 500 })
+        .then(res => {
+          if (res.success && res.data && res.data.length > 0) {
+            const groupShipments = res.data;
+            const STATUS_RANK = {
+              'ORDER PLACED': 1,
+              'ORDERED': 1,
+              'PENDING': 1,
+              'VEHICLE_ALLOTTED': 2,
+              'LOADING': 2,
+              'DISPATCHED': 3,
+              'IN_TRANSIT': 3,
+              'DELIVERED': 4,
+              'OUT_FOR_DELIVERY': 5,
+              'DELIVERED_TO_VESSEL': 6,
+              'DELIVERED TO VESSEL': 6,
+              'CHALLAN_RECEIVED': 7,
+              'CLOSED': 8
+            };
+            const RANK_TO_STATUS = {
+              1: 'ORDER PLACED',
+              2: 'VEHICLE_ALLOTTED',
+              3: 'DISPATCHED',
+              4: 'DELIVERED',
+              5: 'OUT_FOR_DELIVERY',
+              6: 'DELIVERED_TO_VESSEL',
+              7: 'CHALLAN_RECEIVED',
+              8: 'CLOSED'
+            };
 
-        let minRank = Infinity;
-        groupShipments.forEach(s => {
-          const st = s.currentStatus || s.status;
-          const rank = STATUS_RANK[st?.toUpperCase()] || 1;
-          if (rank < minRank) minRank = rank;
-        });
-        const aggregateStatus = minRank !== Infinity ? RANK_TO_STATUS[minRank] : (groupShipments[0].currentStatus || groupShipments[0].status);
+            let minRank = Infinity;
+            groupShipments.forEach(s => {
+              const st = s.currentStatus || s.status;
+              const rank = STATUS_RANK[st?.toUpperCase()] || 1;
+              if (rank < minRank) minRank = rank;
+            });
+            const aggregateStatus = minRank !== Infinity ? RANK_TO_STATUS[minRank] : (groupShipments[0].currentStatus || groupShipments[0].status);
 
-        setDeal({
-          isGrouped: true,
-          id: id,
-          inquiryId: inqId,
-          shipmentNumber: groupShipments[0].inquiry?.inquiryNumber ? `ORD-${groupShipments[0].inquiry.inquiryNumber}` : `ORD-${inqId}`,
-          client: groupShipments[0].client,
-          inquiry: groupShipments[0].inquiry,
-          subShipments: groupShipments,
-          status: aggregateStatus,
-          date: groupShipments[0].createdAt
-        });
-      }
+            setDeal({
+              isGrouped: true,
+              id: id,
+              inquiryId: inqId,
+              shipmentNumber: groupShipments[0].inquiry?.inquiryNumber ? `ORD-${groupShipments[0].inquiry.inquiryNumber}` : `ORD-${inqId}`,
+              client: groupShipments[0].client,
+              inquiry: groupShipments[0].inquiry,
+              subShipments: groupShipments,
+              status: aggregateStatus,
+              date: groupShipments[0].createdAt
+            });
+          }
+        })
+        .catch(err => console.error('Failed to fetch grouped shipments:', err))
+        .finally(() => setLoading(false));
     } else {
-      const numId = parseInt(id, 10);
-      const found = supplyData.find(item => item.id === numId || item.id === id);
-      if (found) {
-        setDeal({
-          ...found,
-          status: found.currentStatus || found.status
-        });
-      } else {
-        setLoading(true);
-        api.shipments.getShipment(id)
-          .then(res => {
-            if (res.success && res.data) {
-              setDeal({
-                ...res.data,
-                status: res.data.currentStatus || res.data.status
-              });
-            }
-          })
-          .catch(err => console.error('Failed to fetch shipment details:', err))
-          .finally(() => setLoading(false));
-      }
+      setLoading(true);
+      api.shipments.getShipment(id)
+        .then(res => {
+          if (res.success && res.data) {
+            setDeal({
+              ...res.data,
+              status: res.data.currentStatus || res.data.status
+            });
+          }
+        })
+        .catch(err => console.error('Failed to fetch shipment details:', err))
+        .finally(() => setLoading(false));
     }
-  }, [id, supplyData]);
+  }, [id]);
 
   // Close PDF viewer on Escape
   useEffect(() => {

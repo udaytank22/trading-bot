@@ -24,7 +24,6 @@ const PAGE_TITLES = {
 export default function Topbar({ onToggleSidebar }) {
   const { currentUser } = useAuth();
   const { theme, toggleTheme } = useUI();
-  const { inquiriesData } = useData();
   const { unreadCount } = useSocket() || { unreadCount: 0 };
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -36,6 +35,27 @@ export default function Topbar({ onToggleSidebar }) {
   const todayDate = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   const roleLower = currentUser?.role?.toLowerCase();
   const isAdmin = roleLower === 'admin' || roleLower === 'super admin';
+
+  const [suggestions, setSuggestions] = useState([]);
+  
+  React.useEffect(() => {
+    const q = searchQuery.trim();
+    if (!q) {
+      setSuggestions([]);
+      return;
+    }
+    const delay = setTimeout(async () => {
+      try {
+        const res = await api.inquiries.getInquiries({ search: q, pageSize: 5 });
+        if (res.success && res.data) {
+          setSuggestions(res.data);
+        }
+      } catch (err) {
+        console.error('Search failed', err);
+      }
+    }, 300);
+    return () => clearTimeout(delay);
+  }, [searchQuery]);
 
   return (
     <header className="h-[50px] border-b border-gray-200/60 dark:border-[#2a2d33] flex items-center justify-between px-8 bg-[#f8f9fc] dark:bg-[#0f1117] flex-shrink-0 transition-colors duration-300 relative">
@@ -65,9 +85,7 @@ export default function Topbar({ onToggleSidebar }) {
                 if (e.key === "Enter") {
                   const q = searchQuery.trim().toLowerCase();
                   if (!q) return;
-                  const exact = (inquiriesData || []).find((i) => i.inquiry_id.toLowerCase() === q);
-                  const first = (inquiriesData || []).find((i) => i.inquiry_id.toLowerCase().includes(q));
-                  const pick = exact || first;
+                  const pick = suggestions.find((i) => i.inquiry_id.toLowerCase() === q) || suggestions[0];
                   if (pick) {
                     setShowSuggestions(false);
                     navigate("/inquiries", { state: { openInquiryId: pick.inquiry_id } });
@@ -79,12 +97,9 @@ export default function Topbar({ onToggleSidebar }) {
             />
           </div>
 
-          {showSuggestions && searchQuery.trim().length > 0 && (inquiriesData || []).filter((i) => i.inquiry_id.toLowerCase().includes(searchQuery.trim().toLowerCase())).slice(0, 5).length > 0 && (
+          {showSuggestions && searchQuery.trim().length > 0 && suggestions.length > 0 && (
             <div className="absolute left-0 mt-1 w-full bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d33] rounded-md shadow-lg z-50">
-              {(inquiriesData || [])
-                .filter((i) => i.inquiry_id.toLowerCase().includes(searchQuery.trim().toLowerCase()))
-                .slice(0, 5)
-                .map((inq) => (
+              {suggestions.map((inq) => (
                   <button
                     key={inq.inquiry_id}
                     onClick={() => {

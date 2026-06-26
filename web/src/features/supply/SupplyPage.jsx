@@ -46,7 +46,6 @@ const FILTER_OPTIONS = [
 
 // ─── Main Page Component ───────────────────────────────────────────────────────
 export default function SupplyPage() {
-  const { setSupplyData } = useData();
   const navigate = useNavigate();
   const { hasPermission } = useAuth();
 

@@ -7,14 +7,6 @@ const getAllClients = async (query = {}) => {
   const { page, pageSize, paginate } = query;
   const where = { deletedAt: null };
 
-  if (paginate === 'false') {
-    const clients = await prisma.client.findMany({
-      where,
-      orderBy: { name: 'asc' },
-      include: { vessels: true }
-    });
-    return { data: clients, total: clients.length };
-  }
 
   const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
   const take = pageSize ? parseInt(pageSize) : undefined;

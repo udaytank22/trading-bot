@@ -51,10 +51,8 @@ function StatCard({ value, label, colorClass, onClick }) {
   );
 }
 
-/* ── Main page ───────────────────────────────────────────────────── */
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { setInquiriesData } = useData();
 
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -69,9 +67,6 @@ export default function DashboardPage() {
       const res = await api.reports.getDashboardStats();
       if (res.success) {
         setStats(res.data);
-        if (res.data.recentInquiries) {
-          setInquiriesData(res.data.recentInquiries);
-        }
       } else {
         setError("Error loading data.");
       }

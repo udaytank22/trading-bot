@@ -11,7 +11,7 @@ import { ClientsTabSchema1 } from '@config/tableSchemas';
 import { usePaginatedFetch } from '@hooks/usePaginatedFetch';
 
 export default function ClientsTab() {
-  const { supplyData, refreshAll } = useData();
+  const { refreshAll } = useData();
   const { hasPermission } = useAuth();
   const [search, setSearch] = useState('');
   const [viewItem, setViewItem] = useState(null);
@@ -166,7 +166,7 @@ export default function ClientsTab() {
     <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-sm animate-fade-in flex-1 flex flex-col">
       <RightDrawer isOpen={!!viewItem} title="Client Profile" onClose={() => setViewItem(null)}>
         {viewItem && (
-          <ClientDetailsView client={viewItem} supplyData={supplyData || []} onClose={() => setViewItem(null)} />
+          <ClientDetailsView client={viewItem} onClose={() => setViewItem(null)} />
         )}
       </RightDrawer>
 
@@ -361,7 +361,19 @@ function ClientForm({ initialData, onSave, onClose }) {
   );
 }
 
-function ClientDetailsView({ client, supplyData, onClose }) {
+function ClientDetailsView({ client, onClose }) {
+  const [clientSupplies, setClientSupplies] = React.useState([]);
+
+  React.useEffect(() => {
+    if (client?.id) {
+      api.shipments.getShipments({ clientId: client.id, pageSize: 500 }).then(res => {
+        if (res.success && res.data) {
+          setClientSupplies(res.data);
+        }
+      });
+    }
+  }, [client?.id]);
+
   const formatDateTime = (dateStr) => {
     if (!dateStr) return "—";
     return new Date(dateStr).toLocaleString("en-GB", {
@@ -373,12 +385,6 @@ function ClientDetailsView({ client, supplyData, onClose }) {
       hour12: true
     });
   };
-
-  // Filter supply data for this client
-  const clientSupplies = useMemo(() => {
-    if (!client) return [];
-    return supplyData.filter(s => s.clientId === client.id);
-  }, [client, supplyData]);
 
   // Stats
   const confirmedCount = clientSupplies.filter(s => s.status === "ORDER_PLACED" || s.currentStatus === "ORDER_PLACED").length;

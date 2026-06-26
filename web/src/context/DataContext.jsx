@@ -1,4 +1,3 @@
-// src/context/DataContext.jsx
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api } from '@services/api';
 import { useAuth } from './AuthContext';
@@ -7,13 +6,10 @@ const DataContext = createContext(null);
 
 export function DataProvider({ children }) {
   const { currentUser } = useAuth();
-  const [inquiriesData, setInquiriesData] = useState([]);
-  const [supplyData, setSupplyData] = useState([]);
-  const [purchaseOrdersData, setPurchaseOrdersData] = useState([]);
+  
+  // Reference data only
   const [employeesData, setEmployeesData] = useState([]);
-  const [documentsData, setDocumentsData] = useState([]);
   const [accountsData, setAccountsData] = useState([]);
-  const [invoicesData, setInvoicesData] = useState([]);
   const [productsData, setProductsData] = useState([]);
   const [clientsData, setClientsData] = useState([]);
   const [suppliersData, setSuppliersData] = useState([]);
@@ -37,62 +33,19 @@ export function DataProvider({ children }) {
 
     try {
       const [
-        inqRes,
-        supRes,
-        poRes,
         empRes,
-        docRes,
         accRes,
-        invRes,
         prodRes,
         cliRes,
         supplierRes,
       ] = await Promise.all([
-        safeFetch(api.inquiries.getInquiries({ paginate: 'false' })),
-        safeFetch(api.shipments.getShipments({ paginate: 'false' })),
-        isClient ? { success: true, data: [] } : safeFetch(api.purchaseOrders.getPurchaseOrders({ paginate: 'false' })),
-        isClient ? { success: true, data: [] } : safeFetch(api.employees.getEmployees({ paginate: 'false' })),
-        isClient ? { success: true, data: [] } : safeFetch(api.documents.getDocuments({ paginate: 'false' })),
-        isClient ? { success: true, data: [] } : safeFetch(api.bankAccounts.getBankAccounts({ paginate: 'false' })),
-        safeFetch(api.invoices.getInvoices({ paginate: 'false' })), // Both clients and admins need invoices
-        isClient ? { success: true, data: [] } : safeFetch(api.products.getProducts({ paginate: 'false' })),
-        isClient ? { success: true, data: [] } : safeFetch(api.clients.getClients({ paginate: 'false' })),
-        safeFetch(api.suppliers.getSuppliers({ paginate: 'false' })),
+        isClient ? { success: true, data: [] } : safeFetch(api.employees.getEmployees({ pageSize: 500 })),
+        isClient ? { success: true, data: [] } : safeFetch(api.bankAccounts.getBankAccounts({ pageSize: 500 })),
+        isClient ? { success: true, data: [] } : safeFetch(api.products.getProducts({ pageSize: 500 })),
+        isClient ? { success: true, data: [] } : safeFetch(api.clients.getClients({ pageSize: 500 })),
+        safeFetch(api.suppliers.getSuppliers({ pageSize: 500 })),
       ]);
 
-      if (inqRes.success) setInquiriesData(inqRes.data ?? []);
-      if (supRes.success) {
-        const mappedSupply = (supRes.data ?? []).map(ship => ({
-          ...ship,
-          supply_id: ship.shipmentNumber,
-          inquiry_id: ship.inquiry?.inquiryNumber || 'N/A',
-          customer: ship.client?.name || 'N/A',
-          supplier: ship.inventoryFulfilled ? 'Internal Inventory' : (ship.supplier?.name || 'N/A'),
-          product_name: ship.cargoDetails || 'N/A',
-          quantity: '1 Lot',
-          destination: ship.client?.address || 'N/A',
-          status: ship.currentStatus,
-          date: ship.createdAt
-        }));
-        setSupplyData(mappedSupply);
-      }
-      if (poRes.success) {
-        const mappedPOs = (poRes.data ?? []).map(po => ({
-          ...po,
-          po_id: po.poNumber,
-          total_amount: parseFloat(po.amount || 0),
-          customer: po.client?.name || 'Unknown',
-          vessel: po.inquiry?.vesselName || 'N/A',
-          date: po.createdAt,
-          products: po.items?.map(item => ({
-            product_name: item.description,
-            quantity: item.quantity,
-            unit_price: parseFloat(item.unitPrice || 0),
-            total_price: parseFloat(item.totalPrice || 0)
-          })) || []
-        }));
-        setPurchaseOrdersData(mappedPOs);
-      }
       if (empRes.success) {
         const mappedEmps = (empRes.data ?? []).map(emp => ({
           ...emp,
@@ -108,14 +61,7 @@ export function DataProvider({ children }) {
         }));
         setEmployeesData(mappedEmps);
       }
-      if (docRes.success) {
-        const mappedDocs = (docRes.data ?? []).map(doc => ({
-          ...doc,
-          entityName: doc.entityId || '',
-          status: doc.status === 'VALID' ? 'Valid' : (doc.status === 'EXPIRING_SOON' ? 'Expiring Soon' : (doc.status === 'EXPIRED' ? 'Expired' : (doc.status || 'Valid')))
-        }));
-        setDocumentsData(mappedDocs);
-      }
+      
       if (accRes.success) {
         const mappedAccs = (accRes.data ?? []).map(acc => ({
           ...acc,
@@ -125,28 +71,12 @@ export function DataProvider({ children }) {
         }));
         setAccountsData(mappedAccs);
       }
-      if (invRes.success) {
-        const mappedInvoices = (invRes.data ?? []).map(inv => ({
-          ...inv,
-          inquiry_id: inv.id,
-          buyer_name: inv.client?.name || 'Unknown Buyer',
-          buyer_email: inv.client?.email || '',
-          cargo: inv.shipment?.cargoDetails || 'General Cargo',
-          invoice_date: inv.invoiceDate,
-          invoice_status: inv.status,
-          products: inv.items?.map(item => ({
-            product_name: item.description,
-            quantity: item.quantity,
-            total_price: item.totalPrice
-          })) || []
-        }));
-        setInvoicesData(mappedInvoices);
-      }
+      
       if (prodRes.success) setProductsData(prodRes.data ?? []);
       if (cliRes.success) setClientsData(cliRes.data ?? []);
       if (supplierRes.success) setSuppliersData(supplierRes.data ?? []);
     } catch (e) {
-      console.error('Failed to load all data from backend:', e);
+      console.error('Failed to load reference data from backend:', e);
     } finally {
       setLoading(false);
     }
@@ -156,15 +86,21 @@ export function DataProvider({ children }) {
     loadAllData();
   }, [loadAllData]);
 
+  // Keep empty setter/getters for transactional data to prevent immediate crash if a component still destructures them
+  // The individual pages should use usePaginatedFetch instead of these.
+  const emptyArr = [];
+  const noop = () => {};
+
   return (
     <DataContext.Provider value={{
-      inquiriesData, setInquiriesData,
-      supplyData, setSupplyData,
-      purchaseOrdersData, setPurchaseOrdersData,
+      inquiriesData: emptyArr, setInquiriesData: noop,
+      supplyData: emptyArr, setSupplyData: noop,
+      purchaseOrdersData: emptyArr, setPurchaseOrdersData: noop,
+      invoicesData: emptyArr, setInvoicesData: noop,
+      documentsData: emptyArr, setDocumentsData: noop,
+      
       employeesData, setEmployeesData,
-      documentsData, setDocumentsData,
       accountsData, setAccountsData,
-      invoicesData, setInvoicesData,
       productsData, setProductsData,
       clientsData, setClientsData,
       suppliersData, setSuppliersData,

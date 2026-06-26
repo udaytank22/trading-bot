@@ -70,29 +70,20 @@ export default function InquiryDetailsPage() {
   };
 
   useEffect(() => {
-    const found = inquiriesData.find(inq => inq.id === id || inq.inquiry_id === id);
-    if (found) {
-      setDeal(found);
-      setLocalMyQuote(found.my_quote || null);
-      setNarrative('');
-      // Initialise pending selections from existing isSelected flags
-      initPendingFromDeal(found);
-    } else {
-      setLoading(true);
-      api.inquiries.getInquiry(id).then(res => {
-        if (res.success && res.data) {
-          setDeal(res.data);
-          setLocalMyQuote(res.data.my_quote || null);
-          setNarrative('');
-          initPendingFromDeal(res.data);
-        }
-      }).catch(err => {
-        console.error('Failed to fetch inquiry:', err);
-      }).finally(() => {
-        setLoading(false);
-      });
-    }
-  }, [id, inquiriesData]);
+    setLoading(true);
+    api.inquiries.getInquiry(id).then(res => {
+      if (res.success && res.data) {
+        setDeal(res.data);
+        setLocalMyQuote(res.data.my_quote || null);
+        setNarrative('');
+        initPendingFromDeal(res.data);
+      }
+    }).catch(err => {
+      console.error('Failed to fetch inquiry:', err);
+    }).finally(() => {
+      setLoading(false);
+    });
+  }, [id]);
 
   // Set default tab if passed in location.state
   useEffect(() => {

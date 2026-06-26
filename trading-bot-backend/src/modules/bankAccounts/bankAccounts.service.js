@@ -7,13 +7,6 @@ const getAllBankAccounts = async (query = {}) => {
   const { page, pageSize, paginate } = query;
   const where = { deletedAt: null };
 
-  if (paginate === 'false') {
-    const bankAccounts = await prisma.bankAccount.findMany({
-      where,
-      orderBy: { bankName: 'asc' }
-    });
-    return { data: bankAccounts, total: bankAccounts.length };
-  }
 
   const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
   const take = pageSize ? parseInt(pageSize) : undefined;

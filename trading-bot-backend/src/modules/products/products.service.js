@@ -7,13 +7,6 @@ const getAllProducts = async (query = {}) => {
   const { page, pageSize, paginate } = query;
   const where = { deletedAt: null };
 
-  if (paginate === 'false') {
-    const products = await prisma.product.findMany({
-      where,
-      orderBy: { name: 'asc' }
-    });
-    return { data: products, total: products.length };
-  }
 
   const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
   const take = pageSize ? parseInt(pageSize) : undefined;

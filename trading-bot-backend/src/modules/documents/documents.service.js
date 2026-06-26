@@ -35,20 +35,6 @@ const getAllDocuments = async (query = {}) => {
     where.entityId = entityId;
   }
 
-  if (paginate === 'false') {
-    const docs = await prisma.document.findMany({
-      where,
-      include: {
-        uploadedBy: { select: { id: true, email: true } }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-    const mappedDocs = docs.map((doc) => ({
-      ...doc,
-      status: resolveDocumentStatus(doc.expiryDate)
-    }));
-    return { data: mappedDocs, total: mappedDocs.length };
-  }
 
   const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
   const take = pageSize ? parseInt(pageSize) : undefined;

@@ -73,24 +73,6 @@ const getAllInquiries = async (query = {}) => {
     where.clientId = parseInt(clientId, 10);
   }
 
-  if (paginate === 'false') {
-    const inquiries = await prisma.inquiry.findMany({
-      where,
-      include: {
-        client: true,
-        items: { include: { product: true } },
-        suppliers: { include: { supplier: true } },
-        supplierQuotes: { include: { supplier: true, items: true } },
-        assignedEmployee: { select: { id: true, email: true } },
-        assignedTeamLead: { select: { id: true, email: true } },
-        statusHistory: { orderBy: { createdAt: 'desc' } },
-        clientQuotations: { include: { items: true } },
-        invoices: { select: { id: true, status: true } }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-    return { data: inquiries, total: inquiries.length };
-  }
 
   const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
   const take = pageSize ? parseInt(pageSize) : undefined;

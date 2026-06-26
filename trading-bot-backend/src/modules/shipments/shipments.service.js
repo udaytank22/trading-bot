@@ -7,31 +7,6 @@ const getAllShipments = async (query = {}) => {
   const { page, pageSize, paginate } = query;
   const where = { deletedAt: null };
 
-  if (paginate === 'false') {
-    const shipments = await prisma.shipment.findMany({
-      where,
-      include: {
-        inquiry: {
-          include: {
-            clientQuotations: {
-              include: { items: { include: { inquiryItem: true } } }
-            }
-          }
-        },
-        purchaseOrder: {
-          include: {
-            items: {
-              include: { product: true }
-            }
-          }
-        },
-        supplier: true,
-        client: true
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-    return { data: shipments, total: shipments.length };
-  }
 
   const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
   const take = pageSize ? parseInt(pageSize) : undefined;

@@ -57,20 +57,6 @@ const getAllInvoices = async (user, query = {}) => {
     }
   }
 
-  if (paginate === 'false') {
-    const invoices = await prisma.invoice.findMany({
-      where: whereClause,
-      include: {
-        client: true,
-        inquiry: true,
-        shipment: { include: { supplier: true, purchaseOrder: true } },
-        items: true,
-        payments: true
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-    return { data: invoices, total: invoices.length };
-  }
 
   const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
   const take = pageSize ? parseInt(pageSize) : undefined;

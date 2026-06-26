@@ -104,7 +104,7 @@ const KanbanColumn = ({ title, status, documents, onEdit, onDelete, colorClass }
 );
 
 export default function DocumentsPage() {
-  const { documentsData, refreshAll } = useData();
+  const { refreshAll } = useData();
   const [activeTab, setActiveTab] = useState("Employee");
   const [search, setSearch] = useState("");
   const { toast, showToast } = useToast();
@@ -113,6 +113,23 @@ export default function DocumentsPage() {
   const [documentToEdit, setDocumentToEdit] = useState(null);
 
   const TABS = ["Employee", "Vehicle", "Company"];
+
+  const [documentsData, setDocumentsData] = useState([]);
+  
+  const fetchDocs = React.useCallback(async () => {
+    try {
+      const res = await api.documents.getDocuments({ pageSize: 500 });
+      if (res.success) {
+        setDocumentsData(res.data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchDocs();
+  }, [fetchDocs]);
 
   const filteredDocs = useMemo(() => {
     return documentsData.filter(doc => {
@@ -140,7 +157,7 @@ export default function DocumentsPage() {
         const res = await api.documents.deleteDocument(id);
         if (res.success) {
           showToast(TOAST_MESSAGES.DOCUMENTS.DELETED, "success");
-          refreshAll();
+          fetchDocs();
         } else {
           showToast(res.message || TOAST_MESSAGES.DOCUMENTS.DELETE_ERROR, "error");
         }
@@ -171,7 +188,7 @@ export default function DocumentsPage() {
         const res = await api.documents.updateDocument(documentToEdit.id, payload);
         if (res.success) {
           showToast(TOAST_MESSAGES.DOCUMENTS.UPDATED, "success");
-          refreshAll();
+          fetchDocs();
         } else {
           showToast(res.message || TOAST_MESSAGES.DOCUMENTS.UPDATE_ERROR, "error");
         }
@@ -179,7 +196,7 @@ export default function DocumentsPage() {
         const res = await api.documents.createDocument(payload);
         if (res.success) {
           showToast(TOAST_MESSAGES.DOCUMENTS.ADDED, "success");
-          refreshAll();
+          fetchDocs();
         } else {
           showToast(res.message || TOAST_MESSAGES.DOCUMENTS.ADD_ERROR, "error");
         }

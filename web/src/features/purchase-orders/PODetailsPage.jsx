@@ -24,38 +24,36 @@ export default function PODetailsPage() {
   useEffect(() => {
     if (typeof id === 'string' && id.startsWith('inq-')) {
       const inqId = parseInt(id.replace('inq-', ''), 10);
-      const groupPOs = purchaseOrdersData.filter(item => item.inquiryId === inqId);
-      if (groupPOs.length > 0) {
-        setPo({
-          isGrouped: true,
-          id: id,
-          poNumber: groupPOs[0].inquiry?.inquiryNumber ? `ORD-${groupPOs[0].inquiry.inquiryNumber}` : `ORD-${inqId}`,
-          client: groupPOs[0].client,
-          inquiry: groupPOs[0].inquiry,
-          createdAt: groupPOs[0].createdAt,
-          status: groupPOs[0].status,
-          subPOs: groupPOs,
-          items: groupPOs.flatMap(p => (p.items || []).map(i => ({ ...i, supplier: p.supplier, originalPoId: p.id, po: p })))
-        });
-      }
+      setLoading(true);
+      api.purchaseOrders.getPurchaseOrders({ inquiryId: inqId, pageSize: 500 })
+        .then(res => {
+          if (res.success && res.data && res.data.length > 0) {
+            const groupPOs = res.data;
+            setPo({
+              isGrouped: true,
+              id: id,
+              poNumber: groupPOs[0].inquiry?.inquiryNumber ? `ORD-${groupPOs[0].inquiry.inquiryNumber}` : `ORD-${inqId}`,
+              client: groupPOs[0].client,
+              inquiry: groupPOs[0].inquiry,
+              createdAt: groupPOs[0].createdAt,
+              status: groupPOs[0].status,
+              subPOs: groupPOs,
+              items: groupPOs.flatMap(p => (p.items || []).map(i => ({ ...i, supplier: p.supplier, originalPoId: p.id, po: p })))
+            });
+          }
+        })
+        .catch(err => console.error('Failed to fetch grouped POs:', err))
+        .finally(() => setLoading(false));
     } else {
-      const numId = parseInt(id, 10);
-      const found = purchaseOrdersData.find(
-        item => item.id === numId || item.id === id || item.poNumber === id
-      );
-      if (found) {
-        setPo(found);
-      } else {
-        setLoading(true);
-        api.purchaseOrders.getPurchaseOrder(id)
-          .then(res => {
-            if (res.success && res.data) setPo(res.data);
-          })
-          .catch(err => console.error('Failed to fetch PO details:', err))
-          .finally(() => setLoading(false));
-      }
+      setLoading(true);
+      api.purchaseOrders.getPurchaseOrder(id)
+        .then(res => {
+          if (res.success && res.data) setPo(res.data);
+        })
+        .catch(err => console.error('Failed to fetch PO details:', err))
+        .finally(() => setLoading(false));
     }
-  }, [id, purchaseOrdersData]);
+  }, [id]);
 
   const updatePOStatus = async (poId, status, attachment) => {
     try {

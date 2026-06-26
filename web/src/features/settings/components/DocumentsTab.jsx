@@ -5,33 +5,26 @@ import { useData, useAuth } from '@context';
 import { api } from '@services/api';
 import { RightDrawer, ViewDetails, EyeIcon, TrashIcon } from './shared';
 import { DocumentsTabSchema1 } from '@config/tableSchemas';
+import { usePaginatedFetch } from '@hooks/usePaginatedFetch';
 
 export default function DocumentsTab() {
-  const { documentsData, refreshAll } = useData();
   const { hasPermission } = useAuth();
   const [search, setSearch] = useState('');
   const [viewItem, setViewItem] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const canCreate = hasPermission('documents', 'create');
   const canDelete = hasPermission('documents', 'delete');
 
-  const filteredDocuments = useMemo(() => {
-    const q = search.toLowerCase().trim();
-    if (!q) return documentsData || [];
-    return (documentsData || []).filter(doc =>
-      (doc.title && doc.title.toLowerCase().includes(q)) ||
-      (doc.category && doc.category.toLowerCase().includes(q)) ||
-      (doc.entityType && doc.entityType.toLowerCase().includes(q)) ||
-      (doc.entityName && doc.entityName.toLowerCase().includes(q))
-    );
-  }, [documentsData, search]);
-
-  const totalPages = Math.max(1, Math.ceil((filteredDocuments?.length || 0) / itemsPerPage));
-  const currentItems = useMemo(() => {
-    return filteredDocuments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  }, [filteredDocuments, currentPage, itemsPerPage]);
+  const {
+    data: currentItems,
+    meta,
+    loading,
+    handlePageChange,
+    handlePageSizeChange,
+    refresh
+  } = usePaginatedFetch(api.documents.getDocuments, 1, 10, {
+    search
+  });
 
   const handleDelete = async (id) => {
     const isConfirmed = await confirmAction({
@@ -44,7 +37,7 @@ export default function DocumentsTab() {
       try {
         const res = await api.documents.deleteDocument(id);
         if (res.success) {
-          refreshAll();
+          refresh();
         }
       } catch (e) {
         console.error('Failed to delete document:', e);
@@ -103,7 +96,7 @@ export default function DocumentsTab() {
           emptyMessage="No documents found."
           renderRow={(doc, i) => (
             <tr key={doc.id} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
-              <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{((currentPage ? currentPage : 1) - 1) * (itemsPerPage ? itemsPerPage : 10) + i + 1}</td>
+              <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{((meta.currentPage ? meta.currentPage : 1) - 1) * (meta.pageSize ? meta.pageSize : 10) + i + 1}</td>
               <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">
                 {String(doc.id).slice(-8)}
               </td>
@@ -155,14 +148,14 @@ export default function DocumentsTab() {
 
       <div className="p-4 border-t border-gray-200 dark:border-[#2a2d33]">
         <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={filteredDocuments?.length || 0}
-          itemsPerPage={itemsPerPage}
-          onPrev={() => setCurrentPage((p) => Math.max(1, p - 1))}
-          onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-          onPageChange={(p) => setCurrentPage(p)}
-          onItemsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
+          currentPage={meta.currentPage}
+          totalPages={meta.totalPages}
+          totalItems={meta.totalItems}
+          itemsPerPage={meta.pageSize}
+          onPrev={() => handlePageChange(meta.currentPage - 1)}
+          onNext={() => handlePageChange(meta.currentPage + 1)}
+          onPageChange={handlePageChange}
+          onItemsPerPageChange={handlePageSizeChange}
           itemLabel="documents"
         />
       </div>
