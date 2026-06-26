@@ -1,6 +1,6 @@
 const service = require('./payments.service');
 const { sendSuccess, sendError } = require('../../utils/response');
-const { createAuditLog } = require('../auditLogs/auditLogs.service');
+
 const { createNotification } = require('../notifications/notifications.service');
 
 /**
@@ -29,15 +29,7 @@ const createPayment = async (req, res) => {
   try {
     const payment = await service.createPayment(req.body, req.user.id);
 
-    await createAuditLog({
-      userId: req.user.id,
-      module: 'payments',
-      action: 'payment',
-      recordId: payment.id,
-      newValue: payment,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    });
+    
 
     await createNotification({
       userId: req.user.id,
@@ -66,15 +58,7 @@ const deletePayment = async (req, res) => {
   try {
     await service.deletePayment(req.params.id, req.user.id);
 
-    await createAuditLog({
-      userId: req.user.id,
-      module: 'payments',
-      action: 'delete',
-      recordId: req.params.id,
-      oldValue: old,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    });
+    
 
     return sendSuccess(res, 'Payment deleted successfully');
   } catch (error) {

@@ -1,6 +1,6 @@
 const service = require('./documents.service');
 const { sendSuccess, sendError } = require('../../utils/response');
-const { createAuditLog } = require('../auditLogs/auditLogs.service');
+
 
 /**
  * Get all documents
@@ -34,15 +34,7 @@ const createDocument = async (req, res) => {
   try {
     const doc = await service.createDocument(req.body, req.user.id);
 
-    await createAuditLog({
-      userId: req.user.id,
-      module: 'documents',
-      action: 'create',
-      recordId: doc.id,
-      newValue: doc,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    });
+    
 
     return sendSuccess(res, 'Document logged successfully', doc, 201);
   } catch (error) {
@@ -62,16 +54,7 @@ const updateDocument = async (req, res) => {
   try {
     const doc = await service.updateDocument(req.params.id, req.body, req.user.id);
 
-    await createAuditLog({
-      userId: req.user.id,
-      module: 'documents',
-      action: 'update',
-      recordId: doc.id,
-      oldValue: old,
-      newValue: doc,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    });
+    
 
     return sendSuccess(res, 'Document details updated successfully', doc);
   } catch (error) {
@@ -90,15 +73,7 @@ const deleteDocument = async (req, res) => {
 
   await service.deleteDocument(req.params.id, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'documents',
-    action: 'delete',
-    recordId: req.params.id,
-    oldValue: old,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Document deleted successfully');
 };

@@ -1,6 +1,6 @@
 const service = require('./bankAccounts.service');
 const { sendSuccess, sendError } = require('../../utils/response');
-const { createAuditLog } = require('../auditLogs/auditLogs.service');
+
 
 /**
  * Get all bank accounts
@@ -34,15 +34,7 @@ const createBankAccount = async (req, res) => {
   try {
     const account = await service.createBankAccount(req.body, req.user.id);
 
-    await createAuditLog({
-      userId: req.user.id,
-      module: 'bankAccounts',
-      action: 'create',
-      recordId: account.id,
-      newValue: account,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    });
+    
 
     return sendSuccess(res, 'Bank account created successfully', account, 201);
   } catch (error) {
@@ -62,16 +54,7 @@ const updateBankAccount = async (req, res) => {
   try {
     const account = await service.updateBankAccount(req.params.id, req.body, req.user.id);
 
-    await createAuditLog({
-      userId: req.user.id,
-      module: 'bankAccounts',
-      action: 'update',
-      recordId: account.id,
-      oldValue: old,
-      newValue: account,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    });
+    
 
     return sendSuccess(res, 'Bank account updated successfully', account);
   } catch (error) {
@@ -90,15 +73,7 @@ const deleteBankAccount = async (req, res) => {
 
   await service.deleteBankAccount(req.params.id, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'bankAccounts',
-    action: 'delete',
-    recordId: req.params.id,
-    oldValue: old,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Bank account deleted successfully');
 };

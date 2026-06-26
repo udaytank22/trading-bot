@@ -1,6 +1,6 @@
 const service = require('./inquiries.service');
 const { sendSuccess, sendError } = require('../../utils/response');
-const { createAuditLog } = require('../auditLogs/auditLogs.service');
+
 const { notifyAdmins, createNotification } = require('../notifications/notifications.service');
 
 /**
@@ -34,15 +34,7 @@ const getInquiry = async (req, res) => {
 const createInquiry = async (req, res) => {
   const inquiry = await service.createInquiry(req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'inquiries',
-    action: 'create',
-    recordId: inquiry.id,
-    newValue: inquiry,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   await notifyAdmins({
     title: 'New Inquiry Created',
@@ -62,15 +54,7 @@ const createInquiry = async (req, res) => {
 const createPublicInquiry = async (req, res) => {
   const { inquiry, client, creatorId } = await service.createPublicInquiry(req.body);
 
-  await createAuditLog({
-    userId: creatorId,
-    module: 'inquiries',
-    action: 'create (public)',
-    recordId: inquiry.id,
-    newValue: inquiry,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   await notifyAdmins({
     title: 'New Public Inquiry Received',
@@ -107,16 +91,7 @@ const updateInquiry = async (req, res) => {
 
   const updated = await service.updateInquiry(req.params.id, req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'inquiries',
-    action: 'update',
-    recordId: updated.id,
-    oldValue: old,
-    newValue: updated,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   const fullInquiry = await service.getInquiryById(updated.id);
   return sendSuccess(res, 'Inquiry updated successfully', fullInquiry);
@@ -133,15 +108,7 @@ const deleteInquiry = async (req, res) => {
 
   await service.deleteInquiry(req.params.id, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'inquiries',
-    action: 'delete',
-    recordId: req.params.id,
-    oldValue: old,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Inquiry soft-deleted successfully');
 };
@@ -156,15 +123,7 @@ const deleteInquiry = async (req, res) => {
 const stockCheck = async (req, res) => {
   const updated = await service.stockCheck(req.params.id, req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'inquiries',
-    action: 'status change',
-    recordId: updated.id,
-    newValue: updated,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   const isTLReview = updated.currentStatus === 'TL_REVIEW';
 
@@ -186,15 +145,7 @@ const stockCheck = async (req, res) => {
 const sendRFQ = async (req, res) => {
   const updated = await service.sendRFQ(req.params.id, req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'inquiries',
-    action: 'status change',
-    recordId: updated.id,
-    newValue: updated,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   await createNotification({
     userId: req.user.id,
@@ -215,15 +166,7 @@ const sendRFQ = async (req, res) => {
 const supplierQuote = async (req, res) => {
   const updated = await service.submitSupplierQuote(req.params.id, req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'inquiries',
-    action: 'status change',
-    recordId: updated.id,
-    newValue: updated,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   await createNotification({
     userId: req.user.id,
@@ -244,15 +187,7 @@ const supplierQuote = async (req, res) => {
 const clientQuote = async (req, res) => {
   const updated = await service.submitClientQuote(req.params.id, req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'inquiries',
-    action: 'status change',
-    recordId: updated.id,
-    newValue: updated,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   // Notify Team Lead for review
   if (updated.assignedTeamLeadId) {
@@ -284,15 +219,7 @@ const clientQuote = async (req, res) => {
 const teamLeadApprove = async (req, res) => {
   const updated = await service.teamLeadApprove(req.params.id, req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'inquiries',
-    action: 'approval',
-    recordId: updated.id,
-    newValue: updated,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   await notifyAdmins({
     title: req.body.approved ? 'TL Approved Deal' : 'TL Rejected Deal',
@@ -312,15 +239,7 @@ const teamLeadApprove = async (req, res) => {
 const adminApprove = async (req, res) => {
   const updated = await service.adminApprove(req.params.id, req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'inquiries',
-    action: 'approval',
-    recordId: updated.id,
-    newValue: updated,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   if (updated.assignedEmployeeId) {
     await createNotification({
@@ -343,15 +262,7 @@ const adminApprove = async (req, res) => {
 const finalVerify = async (req, res) => {
   const updated = await service.finalVerify(req.params.id, req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'inquiries',
-    action: 'status change',
-    recordId: updated.id,
-    newValue: updated,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   const fullInquiry = await service.getInquiryById(updated.id);
   return sendSuccess(res, 'Final verification logged. Dispatched to client.', fullInquiry);
@@ -363,15 +274,7 @@ const finalVerify = async (req, res) => {
 const clientDecision = async (req, res) => {
   const updated = await service.clientDecision(req.params.id, req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'inquiries',
-    action: 'status change',
-    recordId: updated.id,
-    newValue: updated,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   await notifyAdmins({
     title: req.body.accepted ? 'Deal Accepted by Client' : 'Deal Declined by Client',
@@ -391,15 +294,7 @@ const clientDecision = async (req, res) => {
 const confirmDeal = async (req, res) => {
   const updated = await service.confirmDeal(req.params.id, req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'inquiries',
-    action: 'status change',
-    recordId: updated.id,
-    newValue: updated,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   await notifyAdmins({
     title: 'Deal Confirmed!',
@@ -419,15 +314,7 @@ const confirmDeal = async (req, res) => {
 const close = async (req, res) => {
   const updated = await service.closeInquiry(req.params.id, req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'inquiries',
-    action: 'status change',
-    recordId: updated.id,
-    newValue: updated,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   await createNotification({
     userId: req.user.id,
@@ -448,15 +335,7 @@ const close = async (req, res) => {
 const closeRFQ = async (req, res) => {
   const updated = await service.closeRFQ(req.params.id, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'inquiries',
-    action: 'status change',
-    recordId: updated.id,
-    newValue: updated,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   await notifyAdmins({
     title: 'RFQ Closed',
@@ -476,15 +355,7 @@ const closeRFQ = async (req, res) => {
 const selectSupplierQuote = async (req, res) => {
   const updated = await service.selectSupplierQuote(req.params.id, req.body.quoteId, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'inquiries',
-    action: 'update',
-    recordId: updated.id,
-    newValue: updated,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   const fullInquiry = await service.getInquiryById(updated.id);
   return sendSuccess(res, 'Supplier quote selected successfully', fullInquiry);
@@ -501,15 +372,7 @@ const selectSupplierQuoteItem = async (req, res) => {
   }
   const result = await service.selectSupplierQuoteItem(parseInt(id), parseInt(quoteItemId), req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'inquiries',
-    action: 'update',
-    recordId: parseInt(id),
-    newValue: { quoteItemId },
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   const fullInquiry = await service.getInquiryById(parseInt(id));
   return sendSuccess(res, 'Product sourcing selection updated', fullInquiry);
@@ -526,15 +389,7 @@ const selectSupplierQuoteItems = async (req, res) => {
   }
   await service.selectSupplierQuoteItems(parseInt(id), selections, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'inquiries',
-    action: 'update',
-    recordId: parseInt(id),
-    newValue: { selections },
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   const fullInquiry = await service.getInquiryById(parseInt(id));
   return sendSuccess(res, 'Sourcing selections confirmed', fullInquiry);

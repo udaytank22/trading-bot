@@ -52,9 +52,9 @@ const authMiddleware = async (req, res, next) => {
 
     req.user = user;
     
-    // Store user in async context
+    // Store user and req in async context
     const { asyncLocalStorage } = require('../utils/context');
-    asyncLocalStorage.run({ user }, () => {
+    asyncLocalStorage.run({ user, req }, () => {
       next();
     });
   } catch (error) {

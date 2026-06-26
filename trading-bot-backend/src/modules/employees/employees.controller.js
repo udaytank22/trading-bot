@@ -1,6 +1,6 @@
 const service = require('./employees.service');
 const { sendSuccess, sendError } = require('../../utils/response');
-const { createAuditLog } = require('../auditLogs/auditLogs.service');
+
 
 /**
  * Get all employees
@@ -34,15 +34,7 @@ const createEmployee = async (req, res) => {
   try {
     const employee = await service.createEmployee(req.body, req.user.id);
 
-    await createAuditLog({
-      userId: req.user.id,
-      module: 'employees',
-      action: 'create',
-      recordId: employee.id,
-      newValue: employee,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    });
+    
 
     return sendSuccess(res, 'Employee profile created successfully', employee, 201);
   } catch (error) {
@@ -62,16 +54,7 @@ const updateEmployee = async (req, res) => {
   try {
     const employee = await service.updateEmployee(req.params.id, req.body, req.user.id);
 
-    await createAuditLog({
-      userId: req.user.id,
-      module: 'employees',
-      action: 'update',
-      recordId: employee.id,
-      oldValue: old,
-      newValue: employee,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    });
+    
 
     return sendSuccess(res, 'Employee profile updated successfully', employee);
   } catch (error) {
@@ -91,15 +74,7 @@ const deleteEmployee = async (req, res) => {
   try {
     await service.deleteEmployee(req.params.id, req.user.id);
 
-    await createAuditLog({
-      userId: req.user.id,
-      module: 'employees',
-      action: 'delete',
-      recordId: req.params.id,
-      oldValue: old,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    });
+    
 
     return sendSuccess(res, 'Employee profile deleted successfully');
   } catch (error) {
@@ -114,15 +89,7 @@ const logAttendance = async (req, res) => {
   try {
     const attendance = await service.logAttendance(req.params.id, req.body);
 
-    await createAuditLog({
-      userId: req.user.id,
-      module: 'employees',
-      action: 'update',
-      recordId: attendance.id,
-      newValue: attendance,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    });
+    
 
     return sendSuccess(res, 'Employee attendance recorded successfully', attendance);
   } catch (error) {

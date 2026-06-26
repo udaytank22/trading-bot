@@ -1,6 +1,6 @@
 const service = require('./roles.service');
 const { sendSuccess, sendError } = require('../../utils/response');
-const { createAuditLog } = require('../auditLogs/auditLogs.service');
+
 
 /**
  * Get all roles
@@ -28,15 +28,7 @@ const createRole = async (req, res) => {
   const { name, permissionIds } = req.body;
   const role = await service.createRole(name, permissionIds);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'roles',
-    action: 'create',
-    recordId: role.id,
-    newValue: role,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Role created successfully', role, 201);
 };
@@ -53,16 +45,7 @@ const updateRole = async (req, res) => {
   const { permissionIds } = req.body;
   const role = await service.updateRolePermissions(req.params.id, permissionIds);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'roles',
-    action: 'permission change',
-    recordId: role.id,
-    oldValue: oldRole,
-    newValue: role,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Role permissions updated successfully', role);
 };
@@ -78,15 +61,7 @@ const deleteRole = async (req, res) => {
 
   await service.deleteRole(req.params.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'roles',
-    action: 'delete',
-    recordId: req.params.id,
-    oldValue: oldRole,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Role deleted successfully');
 };

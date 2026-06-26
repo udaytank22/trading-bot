@@ -1,6 +1,6 @@
 const service = require('./invoices.service');
 const { sendSuccess, sendError } = require('../../utils/response');
-const { createAuditLog } = require('../auditLogs/auditLogs.service');
+
 const { createNotification } = require('../notifications/notifications.service');
 
 /**
@@ -34,15 +34,7 @@ const getInvoice = async (req, res) => {
 const createInvoice = async (req, res) => {
   const invoice = await service.createInvoice(req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'invoices',
-    action: 'create',
-    recordId: invoice.id,
-    newValue: invoice,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Invoice created successfully', invoice, 201);
 };
@@ -58,16 +50,7 @@ const updateInvoice = async (req, res) => {
 
   const invoice = await service.updateInvoice(req.params.id, req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'invoices',
-    action: 'update',
-    recordId: invoice.id,
-    oldValue: old,
-    newValue: invoice,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   // If status is updated to SENT
   if (req.body.status === 'SENT' && old.status !== 'SENT') {
@@ -95,15 +78,7 @@ const deleteInvoice = async (req, res) => {
 
   await service.deleteInvoice(req.params.id, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'invoices',
-    action: 'delete',
-    recordId: req.params.id,
-    oldValue: old,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Invoice deleted successfully');
 };
@@ -115,15 +90,7 @@ const generateInvoiceFromShipment = async (req, res) => {
   try {
     const result = await service.generateInvoiceFromShipment(req.params.shipmentId, req.user.id);
 
-    await createAuditLog({
-      userId: req.user.id,
-      module: 'invoices',
-      action: 'create',
-      recordId: result.invoice.id,
-      newValue: result.invoice,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    });
+    
 
     return sendSuccess(res, 'Invoice draft generated successfully', result, 201);
   } catch (err) {
@@ -142,15 +109,7 @@ const createInvoiceFromInquiry = async (req, res) => {
 
     const result = await service.generateInvoiceFromInquiry(inquiryId, req.user.id);
 
-    await createAuditLog({
-      userId: req.user.id,
-      module: 'invoices',
-      action: 'create',
-      recordId: result.invoice.id,
-      newValue: result.invoice,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    });
+    
 
     return sendSuccess(res, 'Invoice generated successfully', result, 201);
   } catch (err) {
@@ -167,14 +126,7 @@ const sendInvoiceEmail = async (req, res) => {
     const { subject, body, toEmail } = req.body;
     const result = await service.sendInvoiceEmailAPI(req.params.id, subject, body, req.user.id, toEmail);
 
-    await createAuditLog({
-      userId: req.user.id,
-      module: 'invoices',
-      action: 'send',
-      recordId: result.invoice.id,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    });
+    
 
     return sendSuccess(res, 'Invoice emailed successfully', result);
   } catch (err) {

@@ -1,6 +1,6 @@
 const service = require('./inventory.service');
 const { sendSuccess, sendError } = require('../../utils/response');
-const { createAuditLog } = require('../auditLogs/auditLogs.service');
+
 
 /**
  * Get all inventory items
@@ -28,15 +28,7 @@ const createItem = async (req, res) => {
   try {
     const item = await service.createInventoryItem(req.body, req.user.id);
 
-    await createAuditLog({
-      userId: req.user.id,
-      module: 'inventory',
-      action: 'create',
-      recordId: item.id,
-      newValue: item,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    });
+    
 
     return sendSuccess(res, 'Inventory item created successfully', item, 201);
   } catch (error) {
@@ -56,16 +48,7 @@ const updateItem = async (req, res) => {
   try {
     const item = await service.updateInventoryItem(req.params.id, req.body, req.user.id);
 
-    await createAuditLog({
-      userId: req.user.id,
-      module: 'inventory',
-      action: 'update',
-      recordId: item.id,
-      oldValue: old,
-      newValue: item,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    });
+    
 
     return sendSuccess(res, 'Inventory item updated successfully', item);
   } catch (error) {
@@ -84,15 +67,7 @@ const deleteItem = async (req, res) => {
 
   await service.deleteInventoryItem(req.params.id, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'inventory',
-    action: 'delete',
-    recordId: req.params.id,
-    oldValue: old,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Inventory item deleted successfully');
 };
@@ -104,15 +79,7 @@ const moveStock = async (req, res) => {
   try {
     const movement = await service.createStockMovement(req.body, req.user.id);
 
-    await createAuditLog({
-      userId: req.user.id,
-      module: 'inventory',
-      action: 'update',
-      recordId: movement.id,
-      newValue: movement,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    });
+    
 
     return sendSuccess(res, 'Stock movement recorded successfully', movement, 201);
   } catch (error) {
@@ -174,15 +141,7 @@ const dispatchInquiryInventory = async (req, res) => {
       userEmail
     );
 
-    await createAuditLog({
-      userId: req.user.id,
-      module: 'inventory',
-      action: 'dispatch',
-      recordId: inquiryId,
-      newValue: { movements: movements.length },
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    });
+    
 
     return sendSuccess(res, 'Inventory dispatched successfully', { movementsCreated: movements.length });
   } catch (error) {

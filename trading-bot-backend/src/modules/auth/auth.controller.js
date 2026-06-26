@@ -1,6 +1,6 @@
 const service = require('./auth.service');
 const { sendSuccess, sendError } = require('../../utils/response');
-const { createAuditLog } = require('../auditLogs/auditLogs.service');
+
 
 /**
  * Log in controller
@@ -21,14 +21,7 @@ const login = async (req, res) => {
     const { refreshToken, ...responseData } = data;
 
     // Audit log
-    await createAuditLog({
-      userId: data.user.id,
-      module: 'auth',
-      action: 'login',
-      recordId: data.user.id,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    });
+    
 
     return sendSuccess(res, 'Login successful', responseData);
   } catch (error) {
@@ -74,14 +67,7 @@ const logout = async (req, res) => {
   res.clearCookie('refreshToken');
 
   // Audit log
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'auth',
-    action: 'logout',
-    recordId: req.user.id,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Logged out successfully');
 };
@@ -102,14 +88,7 @@ const changePassword = async (req, res) => {
   try {
     await service.changePassword(req.user.id, oldPassword, newPassword);
 
-    await createAuditLog({
-      userId: req.user.id,
-      module: 'auth',
-      action: 'change password',
-      recordId: req.user.id,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent']
-    });
+    
 
     return sendSuccess(res, 'Password updated successfully');
   } catch (error) {

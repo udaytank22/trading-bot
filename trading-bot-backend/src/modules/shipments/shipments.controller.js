@@ -1,6 +1,6 @@
 const service = require('./shipments.service');
 const { sendSuccess, sendError } = require('../../utils/response');
-const { createAuditLog } = require('../auditLogs/auditLogs.service');
+
 const { createNotification } = require('../notifications/notifications.service');
 
 /**
@@ -34,15 +34,7 @@ const getShipment = async (req, res) => {
 const createShipment = async (req, res) => {
   const shipment = await service.createShipment(req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'shipments',
-    action: 'create',
-    recordId: shipment.id,
-    newValue: shipment,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Shipment created successfully', shipment, 201);
 };
@@ -58,16 +50,7 @@ const updateShipment = async (req, res) => {
 
   const shipment = await service.updateShipment(req.params.id, req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'shipments',
-    action: 'update',
-    recordId: shipment.id,
-    oldValue: old,
-    newValue: shipment,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   // Trigger alert if status transitioned to DELIVERED
   if (req.body.currentStatus === 'DELIVERED' && old.currentStatus !== 'DELIVERED') {
@@ -95,15 +78,7 @@ const deleteShipment = async (req, res) => {
 
   await service.deleteShipment(req.params.id, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'shipments',
-    action: 'delete',
-    recordId: req.params.id,
-    oldValue: old,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Shipment deleted successfully');
 };

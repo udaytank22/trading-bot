@@ -1,6 +1,6 @@
 const service = require('./users.service');
 const { sendSuccess, sendError } = require('../../utils/response');
-const { createAuditLog } = require('../auditLogs/auditLogs.service');
+
 
 /**
  * Get all users
@@ -37,15 +37,7 @@ const createUser = async (req, res) => {
   const user = await service.createUser(req.body, req.user.id);
   const { password, refreshToken, ...data } = user;
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'users',
-    action: 'create',
-    recordId: user.id,
-    newValue: data,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'User created successfully', data, 201);
 };
@@ -63,16 +55,7 @@ const updateUser = async (req, res) => {
   const { password, refreshToken, ...data } = user;
   const { password: p, refreshToken: r, ...oldData } = oldUser;
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'users',
-    action: 'update',
-    recordId: user.id,
-    oldValue: oldData,
-    newValue: data,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'User updated successfully', data);
 };
@@ -89,15 +72,7 @@ const deleteUser = async (req, res) => {
   await service.deleteUser(req.params.id, req.user.id);
   const { password, refreshToken, ...oldData } = oldUser;
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'users',
-    action: 'delete',
-    recordId: req.params.id,
-    oldValue: oldData,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'User deleted successfully');
 };

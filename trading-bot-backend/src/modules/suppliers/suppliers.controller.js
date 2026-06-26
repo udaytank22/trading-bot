@@ -1,6 +1,6 @@
 const service = require('./suppliers.service');
 const { sendSuccess, sendError } = require('../../utils/response');
-const { createAuditLog } = require('../auditLogs/auditLogs.service');
+
 
 /**
  * Get all suppliers
@@ -33,15 +33,7 @@ const getSupplier = async (req, res) => {
 const createSupplier = async (req, res) => {
   const supplier = await service.createSupplier(req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'suppliers',
-    action: 'create',
-    recordId: supplier.id,
-    newValue: supplier,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Supplier created successfully', supplier, 201);
 };
@@ -57,16 +49,7 @@ const updateSupplier = async (req, res) => {
 
   const supplier = await service.updateSupplier(req.params.id, req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'suppliers',
-    action: 'update',
-    recordId: supplier.id,
-    oldValue: oldSupplier,
-    newValue: supplier,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Supplier updated successfully', supplier);
 };
@@ -82,15 +65,7 @@ const deleteSupplier = async (req, res) => {
 
   await service.deleteSupplier(req.params.id, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'suppliers',
-    action: 'delete',
-    recordId: req.params.id,
-    oldValue: oldSupplier,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Supplier deleted successfully');
 };
@@ -101,14 +76,7 @@ const deleteSupplier = async (req, res) => {
 const bulkImportSuppliers = async (req, res) => {
   const result = await service.bulkImportSuppliers(req.body.suppliers, req.user.id);
   
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'suppliers',
-    action: 'import',
-    newValue: { count: result.successCount },
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, `Successfully imported ${result.successCount} suppliers`, result);
 };

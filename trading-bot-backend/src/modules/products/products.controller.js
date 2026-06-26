@@ -1,6 +1,6 @@
 const service = require('./products.service');
 const { sendSuccess, sendError } = require('../../utils/response');
-const { createAuditLog } = require('../auditLogs/auditLogs.service');
+
 
 /**
  * Get all products
@@ -33,15 +33,7 @@ const getProduct = async (req, res) => {
 const createProduct = async (req, res) => {
   const product = await service.createProduct(req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'products',
-    action: 'create',
-    recordId: product.id,
-    newValue: product,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Product created successfully', product, 201);
 };
@@ -57,16 +49,7 @@ const updateProduct = async (req, res) => {
 
   const product = await service.updateProduct(req.params.id, req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'products',
-    action: 'update',
-    recordId: product.id,
-    oldValue: oldProduct,
-    newValue: product,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Product updated successfully', product);
 };
@@ -82,15 +65,7 @@ const deleteProduct = async (req, res) => {
 
   await service.deleteProduct(req.params.id, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'products',
-    action: 'delete',
-    recordId: req.params.id,
-    oldValue: oldProduct,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Product deleted successfully');
 };
@@ -105,15 +80,7 @@ const bulkUpsertProducts = async (req, res) => {
 
   const { results, errors } = await service.bulkUpsertProducts(req.body.products, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'products',
-    action: 'bulk_upsert',
-    recordId: null,
-    newValue: { count: results.length },
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, `Successfully processed ${results.length} products${errors.length ? `, ${errors.length} skipped` : ''}`, { results, errors }, 201);
 };

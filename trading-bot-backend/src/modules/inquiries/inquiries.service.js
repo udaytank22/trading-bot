@@ -1,6 +1,6 @@
 const prisma = require('../../prisma/client');
 const { createNotification, notifyAdmins } = require('../notifications/notifications.service');
-const { createAuditLog } = require('../auditLogs/auditLogs.service');
+
 const inventoryService = require('../inventory/inventory.service');
 
 /**

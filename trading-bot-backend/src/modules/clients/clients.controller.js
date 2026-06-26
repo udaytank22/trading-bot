@@ -1,6 +1,6 @@
 const service = require('./clients.service');
 const { sendSuccess, sendError } = require('../../utils/response');
-const { createAuditLog } = require('../auditLogs/auditLogs.service');
+
 
 /**
  * Get all clients
@@ -33,15 +33,7 @@ const getClient = async (req, res) => {
 const createClient = async (req, res) => {
   const client = await service.createClient(req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'clients',
-    action: 'create',
-    recordId: client.id,
-    newValue: client,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Client created successfully', client, 201);
 };
@@ -57,16 +49,7 @@ const updateClient = async (req, res) => {
 
   const client = await service.updateClient(req.params.id, req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'clients',
-    action: 'update',
-    recordId: client.id,
-    oldValue: oldClient,
-    newValue: client,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Client updated successfully', client);
 };
@@ -82,15 +65,7 @@ const deleteClient = async (req, res) => {
 
   await service.deleteClient(req.params.id, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'clients',
-    action: 'delete',
-    recordId: req.params.id,
-    oldValue: oldClient,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Client deleted successfully');
 };
@@ -101,14 +76,7 @@ const deleteClient = async (req, res) => {
 const bulkImportClients = async (req, res) => {
   const result = await service.bulkImportClients(req.body.clients, req.user.id);
   
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'clients',
-    action: 'import',
-    newValue: { count: result.successCount },
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, `Successfully imported ${result.successCount} clients`, result);
 };

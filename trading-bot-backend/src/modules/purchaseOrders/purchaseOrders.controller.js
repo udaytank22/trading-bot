@@ -1,6 +1,6 @@
 const service = require('./purchaseOrders.service');
 const { sendSuccess, sendError } = require('../../utils/response');
-const { createAuditLog } = require('../auditLogs/auditLogs.service');
+
 const { createNotification } = require('../notifications/notifications.service');
 
 /**
@@ -34,15 +34,7 @@ const getPurchaseOrder = async (req, res) => {
 const createPurchaseOrder = async (req, res) => {
   const po = await service.createPurchaseOrder(req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'purchaseOrders',
-    action: 'create',
-    recordId: po.id,
-    newValue: po,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   await createNotification({
     userId: req.user.id,
@@ -67,16 +59,7 @@ const updatePurchaseOrder = async (req, res) => {
 
   const po = await service.updatePurchaseOrder(req.params.id, req.body, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'purchaseOrders',
-    action: 'update',
-    recordId: po.id,
-    oldValue: old,
-    newValue: po,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Purchase order updated successfully', po);
 };
@@ -92,15 +75,7 @@ const deletePurchaseOrder = async (req, res) => {
 
   await service.deletePurchaseOrder(req.params.id, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'purchaseOrders',
-    action: 'delete',
-    recordId: req.params.id,
-    oldValue: old,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   return sendSuccess(res, 'Purchase order deleted successfully');
 };
@@ -116,16 +91,7 @@ const sendEmail = async (req, res) => {
 
   const po = await service.sendPOEmail(req.params.id, req.user.id);
 
-  await createAuditLog({
-    userId: req.user.id,
-    module: 'purchaseOrders',
-    action: 'update',
-    recordId: po.id,
-    oldValue: old,
-    newValue: po,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent']
-  });
+  
 
   await createNotification({
     userId: req.user.id,
