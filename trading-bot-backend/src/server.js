@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
 const config = require('./config');
 const errorHandler = require('./middleware/error.middleware');
 const { globalLimiter } = require('./middleware/rateLimiter');
@@ -100,6 +101,7 @@ io.on('connection', (socket) => {
 
 // Security and middleware setup
 app.use(helmet());
+app.use(cookieParser());
 app.use(cors(corsOptions));
 const defaultJson = express.json({ limit: '2mb' });
 const defaultUrl = express.urlencoded({ limit: '2mb', extended: true });

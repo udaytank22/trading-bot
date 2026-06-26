@@ -10,6 +10,16 @@ const login = async (req, res) => {
   try {
     const data = await service.login(email, password);
 
+    // Issue httpOnly cookie
+    res.cookie('refreshToken', data.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    const { refreshToken, ...responseData } = data;
+
     // Audit log
     await createAuditLog({
       userId: data.user.id,
@@ -20,7 +30,7 @@ const login = async (req, res) => {
       userAgent: req.headers['user-agent']
     });
 
-    return sendSuccess(res, 'Login successful', data);
+    return sendSuccess(res, 'Login successful', responseData);
   } catch (error) {
     return sendError(res, error.message, [], 400);
   }
@@ -30,10 +40,27 @@ const login = async (req, res) => {
  * Refresh token controller
  */
 const refresh = async (req, res) => {
-  const { refreshToken } = req.body;
+  // Read from cookie instead of body
+  const refreshToken = req.cookies?.refreshToken;
+  
+  if (!refreshToken) {
+    return sendError(res, 'No refresh token provided', [], 401);
+  }
+
   try {
     const data = await service.refreshSession(refreshToken);
-    return sendSuccess(res, 'Token refreshed successfully', data);
+
+    // Issue new httpOnly cookie
+    res.cookie('refreshToken', data.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    const { refreshToken: removedToken, ...responseData } = data;
+
+    return sendSuccess(res, 'Token refreshed successfully', responseData);
   } catch (error) {
     return sendError(res, error.message, [], 401);
   }
@@ -44,6 +71,7 @@ const refresh = async (req, res) => {
  */
 const logout = async (req, res) => {
   await service.logout(req.user.id);
+  res.clearCookie('refreshToken');
 
   // Audit log
   await createAuditLog({

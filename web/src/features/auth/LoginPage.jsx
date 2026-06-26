@@ -27,7 +27,7 @@ const LoginPage = () => {
     try {
       const res = await api.auth.login(email.trim(), password);
       if (res.success && res.data) {
-        const { user, accessToken, refreshToken, token } = res.data;
+        const { user, accessToken, token } = res.data;
         const usedToken = accessToken ?? token;
         const normalizedRole = user.role ? user.role.name : "User";
 
@@ -37,7 +37,7 @@ const LoginPage = () => {
           role: normalizedRole,
           email: user.email,
           roleData: user.role
-        }, usedToken, refreshToken);
+        }, usedToken);
 
         navigate("/");
       } else {

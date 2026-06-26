@@ -10,6 +10,7 @@ export { USE_MOCK };
 // Centralized Axios instance pointing to the API root
 const apiClient = axios.create({
   baseURL: `${BASE_URL.trim()}/api`,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
     'ngrok-skip-browser-warning': 'true',
@@ -81,27 +82,16 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        isRefreshing = false;
-        // No refresh token, trigger logout or auth error
-        return Promise.reject(error);
-      }
-
       try {
-        // Request token refresh using base axios to avoid client request interception
-        const response = await axios.post(`${BASE_URL}/api/auth/refresh`, {
-          refreshToken,
+        // Request token refresh using base axios with credentials
+        const response = await axios.post(`${BASE_URL}/api/auth/refresh`, {}, {
+          withCredentials: true
         });
 
         if (response.data && response.data.success) {
           const newToken = response.data.data.accessToken || response.data.data.token;
-          const newRefreshToken = response.data.data.refreshToken;
 
           localStorage.setItem('token', newToken);
-          if (newRefreshToken) {
-            localStorage.setItem('refreshToken', newRefreshToken);
-          }
 
           apiClient.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
           processQueue(null, newToken);
@@ -115,7 +105,6 @@ apiClient.interceptors.response.use(
         isRefreshing = false;
         // Refresh token invalid or expired: clear tokens and logout
         localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
         window.dispatchEvent(new CustomEvent('auth-logout'));
         return Promise.reject(refreshError);
       }

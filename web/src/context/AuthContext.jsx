@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
     } catch { return null; }
   });
 
-  const login = useCallback((user, token, refreshToken) => {
+  const login = useCallback((user, token) => {
     const profile = user || { name: 'Admin', role: 'admin', email: 'admin@trademind.com' };
     setIsAuthenticated(true);
     setCurrentUser(profile);
@@ -32,9 +32,6 @@ export function AuthProvider({ children }) {
         console.warn('Failed to set Axios default Authorization header', e);
       }
     }
-    if (refreshToken) {
-      localStorage.setItem('refreshToken', refreshToken);
-    }
   }, []);
 
   const logout = useCallback(() => {
@@ -43,7 +40,6 @@ export function AuthProvider({ children }) {
     localStorage.removeItem(STORAGE_KEYS.IS_AUTH);
     localStorage.removeItem(STORAGE_KEYS.USER_PROFILE);
     localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
     try {
       delete apiClient.defaults.headers.common['Authorization'];
     } catch (e) {
@@ -110,23 +106,14 @@ export function AuthProvider({ children }) {
 
     // Proactively refresh access token every 10 minutes (since access token expires in 15m)
     const refreshInterval = setInterval(async () => {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) return;
-
       try {
         const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-        const response = await axios.post(`${BASE_URL}/api/auth/refresh`, {
-          refreshToken,
-        });
+        const response = await axios.post(`${BASE_URL}/api/auth/refresh`, {}, { withCredentials: true });
 
         if (response.data && response.data.success) {
           const newToken = response.data.data.accessToken || response.data.data.token;
-          const newRefreshToken = response.data.data.refreshToken;
 
           localStorage.setItem('token', newToken);
-          if (newRefreshToken) {
-            localStorage.setItem('refreshToken', newRefreshToken);
-          }
           apiClient.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
         }
       } catch (err) {
