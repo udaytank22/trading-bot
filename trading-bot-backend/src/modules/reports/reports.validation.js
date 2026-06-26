@@ -1,17 +1,13 @@
+const { z } = require('zod');
+
 /**
  * Validation rules for Reports module
  */
 const validateDateFilter = {
-  query: (query) => {
-    const errors = [];
-    if (query.startDate && isNaN(Date.parse(query.startDate))) {
-      errors.push('startDate must be a valid date string');
-    }
-    if (query.endDate && isNaN(Date.parse(query.endDate))) {
-      errors.push('endDate must be a valid date string');
-    }
-    return errors;
-  }
+  query: z.object({
+    startDate: z.string().refine((val) => !isNaN(Date.parse(val)), { message: 'startDate must be a valid date string' }).optional(),
+    endDate: z.string().refine((val) => !isNaN(Date.parse(val)), { message: 'endDate must be a valid date string' }).optional()
+  }).passthrough()
 };
 
 module.exports = {

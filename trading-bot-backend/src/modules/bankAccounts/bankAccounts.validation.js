@@ -1,30 +1,35 @@
+const { z } = require('zod');
+
 /**
  * Validation rules for Bank Accounts module
  */
 const validateCreateBankAccount = {
-  body: (body) => {
-    const errors = [];
-    if (!body.bankName || typeof body.bankName !== 'string' || body.bankName.trim() === '') {
-      errors.push('bankName is required');
-    }
-    if (!body.accountHolderName || typeof body.accountHolderName !== 'string' || body.accountHolderName.trim() === '') {
-      errors.push('accountHolderName is required');
-    }
-    if (!body.accountNumber || typeof body.accountNumber !== 'string' || body.accountNumber.trim() === '') {
-      errors.push('accountNumber is required');
-    }
-    return errors;
-  }
+  body: z.object({
+    bankName: z.string().min(1, 'bankName is required'),
+    accountHolderName: z.string().min(1, 'accountHolderName is required'),
+    accountNumber: z.string().min(1, 'accountNumber is required'),
+    ifscCode: z.string().optional(),
+    swiftCode: z.string().optional(),
+    routingNumber: z.string().optional(),
+    currency: z.string().optional(),
+    branchAddress: z.string().optional()
+  }).passthrough()
 };
 
 const validateUpdateBankAccount = {
-  params: (params) => {
-    const errors = [];
-    if (!params.id || params.id.trim() === '') {
-      errors.push('Bank Account ID parameter is required');
-    }
-    return errors;
-  }
+  params: z.object({
+    id: z.string().min(1, 'Bank Account ID parameter is required')
+  }),
+  body: z.object({
+    bankName: z.string().min(1).optional(),
+    accountHolderName: z.string().min(1).optional(),
+    accountNumber: z.string().min(1).optional(),
+    ifscCode: z.string().optional(),
+    swiftCode: z.string().optional(),
+    routingNumber: z.string().optional(),
+    currency: z.string().optional(),
+    branchAddress: z.string().optional()
+  }).passthrough()
 };
 
 module.exports = {

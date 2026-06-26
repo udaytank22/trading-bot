@@ -1,14 +1,12 @@
+const { z } = require('zod');
+
 /**
  * Validation rules for Quotations module
  */
 const validateGetQuotation = {
-  params: (params) => {
-    const errors = [];
-    if (!params.id || params.id.trim() === '') {
-      errors.push('Quotation ID is required');
-    }
-    return errors;
-  }
+  params: z.object({
+    id: z.string().min(1, 'Quotation ID is required')
+  })
 };
 
 module.exports = {

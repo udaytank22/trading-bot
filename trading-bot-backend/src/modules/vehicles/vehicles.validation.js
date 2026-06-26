@@ -1,25 +1,26 @@
+const { z } = require('zod');
+
 const validateCreateVehicle = {
-  body: (body) => {
-    const errors = [];
-    if (!body.vehicle_no || typeof body.vehicle_no !== 'string' || body.vehicle_no.trim() === '') {
-      errors.push('Vehicle number is required and must be a string');
-    }
-    return errors;
-  }
+  body: z.object({
+    vehicle_no: z.string().min(1, 'Vehicle number is required and must be a string'),
+    driverName: z.string().optional(),
+    capacity: z.string().optional(),
+    status: z.string().optional(),
+    currentLocation: z.string().optional()
+  }).passthrough()
 };
 
 const validateUpdateVehicle = {
-  params: (params) => {
-    const errors = [];
-    if (!params.id || params.id.trim() === '') {
-      errors.push('Vehicle ID parameter is required');
-    }
-    return errors;
-  },
-  body: (body) => {
-    const errors = [];
-    return errors;
-  }
+  params: z.object({
+    id: z.string().min(1, 'Vehicle ID parameter is required')
+  }),
+  body: z.object({
+    vehicle_no: z.string().min(1).optional(),
+    driverName: z.string().optional(),
+    capacity: z.string().optional(),
+    status: z.string().optional(),
+    currentLocation: z.string().optional()
+  }).passthrough()
 };
 
 module.exports = {

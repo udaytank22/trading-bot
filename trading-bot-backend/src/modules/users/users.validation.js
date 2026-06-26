@@ -1,46 +1,34 @@
+const { z } = require('zod');
+
 /**
  * Validation rules for Users module
  */
 const validateCreateUser = {
-  body: (body) => {
-    const errors = [];
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!body.email || !emailRegex.test(body.email)) {
-      errors.push('A valid email is required');
-    }
-    if (!body.password || typeof body.password !== 'string' || body.password.length < 6) {
-      errors.push('Password is required and must be at least 6 characters');
-    }
-    if (!body.roleId) {
-      errors.push('roleId is required');
-    } else if (typeof body.roleId !== 'string' && typeof body.roleId !== 'number') {
-      errors.push('roleId must be a string or number');
-    }
-    return errors;
-  }
+  body: z.object({
+    email: z.string().email('A valid email is required'),
+    password: z.string().min(6, 'Password is required and must be at least 6 characters'),
+    roleId: z.coerce.number({
+      required_error: 'roleId is required',
+      invalid_type_error: 'roleId must be a number'
+    }),
+    fullName: z.string().optional(),
+    avatarUrl: z.string().optional()
+  }).passthrough()
 };
 
 const validateUpdateUser = {
-  params: (params) => {
-    const errors = [];
-    if (!params.id || params.id.trim() === '') {
-      errors.push('User ID parameter is required');
-    }
-    return errors;
-  },
-  body: (body) => {
-    const errors = [];
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (body.email && !emailRegex.test(body.email)) {
-      errors.push('Email is invalid');
-    }
-    if (body.password && (typeof body.password !== 'string' || body.password.length < 6)) {
-      errors.push('Password must be at least 6 characters');
-    }
-    return errors;
-  }
+  params: z.object({
+    id: z.string().min(1, 'User ID parameter is required')
+  }),
+  body: z.object({
+    email: z.string().email('Email is invalid').optional(),
+    password: z.string().min(6, 'Password must be at least 6 characters').optional(),
+    roleId: z.coerce.number({
+      invalid_type_error: 'roleId must be a number'
+    }).optional(),
+    fullName: z.string().optional(),
+    avatarUrl: z.string().optional()
+  }).passthrough()
 };
 
 module.exports = {

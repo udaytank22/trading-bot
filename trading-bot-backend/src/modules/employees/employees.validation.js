@@ -1,30 +1,29 @@
+const { z } = require('zod');
+
 /**
  * Validation rules for Employees module
  */
 const validateCreateEmployee = {
-  body: (body) => {
-    const errors = [];
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!body.fullName || typeof body.fullName !== 'string' || body.fullName.trim() === '') {
-      errors.push('fullName is required');
-    }
-    if (!body.email || !emailRegex.test(body.email)) {
-      errors.push('A valid email address is required');
-    }
-    return errors;
-  }
+  body: z.object({
+    fullName: z.string().min(1, 'fullName is required'),
+    email: z.string().email('A valid email address is required'),
+    phone: z.string().optional(),
+    departmentId: z.coerce.number().optional(),
+    managerId: z.coerce.number().optional()
+  }).passthrough()
 };
 
 const validateAttendance = {
-  body: (body) => {
-    const errors = [];
-    const validStatuses = ['PRESENT', 'LATE', 'SICK_LEAVE', 'OFF_DAY'];
-    if (!body.status || !validStatuses.includes(body.status)) {
-      errors.push(`status is required and must be one of: ${validStatuses.join(', ')}`);
-    }
-    return errors;
-  }
+  body: z.object({
+    employeeId: z.coerce.number().optional(),
+    date: z.string().optional(),
+    status: z.enum(['PRESENT', 'LATE', 'SICK_LEAVE', 'OFF_DAY'], {
+      required_error: 'status is required',
+      invalid_type_error: 'status must be one of: PRESENT, LATE, SICK_LEAVE, OFF_DAY'
+    }),
+    clockIn: z.string().optional(),
+    clockOut: z.string().optional()
+  }).passthrough()
 };
 
 module.exports = {
