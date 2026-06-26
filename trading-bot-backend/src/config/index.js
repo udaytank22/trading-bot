@@ -18,7 +18,11 @@ const envSchema = z.object({
   }).min(1, "DATABASE_URL cannot be empty"),
   OUTLOOK_CLIENT_ID: z.string().optional(),
   OUTLOOK_CLIENT_SECRET: z.string().optional(),
-  OUTLOOK_REDIRECT_URI: z.string().default('http://localhost:5000/api/outlook/callback')
+  OUTLOOK_REDIRECT_URI: z.string().default('http://localhost:5000/api/outlook/callback'),
+  RATE_LIMIT_GLOBAL_MAX: z.string().or(z.number()).default(300).transform(Number),
+  RATE_LIMIT_GLOBAL_WINDOW_MS: z.string().or(z.number()).default(60000).transform(Number),
+  RATE_LIMIT_STRICT_MAX: z.string().or(z.number()).default(20).transform(Number),
+  RATE_LIMIT_STRICT_WINDOW_MS: z.string().or(z.number()).default(60000).transform(Number)
 });
 
 const envParsed = envSchema.safeParse(process.env);
