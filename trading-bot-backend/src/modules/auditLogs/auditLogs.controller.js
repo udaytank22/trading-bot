@@ -7,7 +7,7 @@ const { getPaginationParams, getSortingParams, getSearchAndFilters } = require('
  */
 const getAuditLogs = async (req, res) => {
   const { page, limit, skip } = getPaginationParams(req.query);
-  const orderBy = getSortingParams(req.query, 'createdAt', 'desc');
+  const orderBy = getSortingParams(req.query, ['createdAt', 'module', 'action', 'userId'], 'createdAt', 'desc');
   
   // Custom search fields and filters
   const where = getSearchAndFilters(req.query, ['module', 'action'], ['userId', 'module', 'action']);
