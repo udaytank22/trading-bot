@@ -1,5 +1,6 @@
 const prisma = require('../../prisma/client');
 const bcrypt = require('bcryptjs');
+const { invalidateUserCache } = require('../../utils/cache');
 
 /**
  * Get all users who are not deleted
@@ -91,13 +92,15 @@ const updateUser = async (id, data, updaterId) => {
     updateData.password = await bcrypt.hash(data.password, 10);
   }
 
-  return await prisma.user.update({
+  const user = await prisma.user.update({
     where: { id },
     data: updateData,
     include: {
       role: true
     }
   });
+  invalidateUserCache(id);
+  return user;
 };
 
 /**
@@ -117,7 +120,7 @@ const deleteUser = async (id, deleterId) => {
     throw new Error('Super Admin user cannot be deleted');
   }
 
-  return await prisma.user.update({
+  const updatedUser = await prisma.user.update({
     where: { id },
     data: {
       deletedAt: new Date(),
@@ -125,6 +128,8 @@ const deleteUser = async (id, deleterId) => {
       updatedById: deleterId
     }
   });
+  invalidateUserCache(id);
+  return updatedUser;
 };
 
 module.exports = {

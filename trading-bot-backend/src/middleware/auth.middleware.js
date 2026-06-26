@@ -1,6 +1,7 @@
 const prisma = require('../prisma/client');
 const { verifyAccessToken } = require('../utils/token');
 const { sendError } = require('../utils/response');
+const { getUserFromCache, setUserInCache } = require('../utils/cache');
 
 const authMiddleware = async (req, res, next) => {
   try {
@@ -18,24 +19,32 @@ const authMiddleware = async (req, res, next) => {
       return sendError(res, 'Access token is invalid or has expired', [], 401);
     }
 
-    const user = await prisma.user.findFirst({
-      where: {
-        id: decoded.userId,
-        isActive: true,
-        deletedAt: null
-      },
-      include: {
-        role: {
-          include: {
-            permissions: {
-              include: {
-                permission: true
+    let user = getUserFromCache(decoded.userId);
+
+    if (!user) {
+      user = await prisma.user.findFirst({
+        where: {
+          id: decoded.userId,
+          isActive: true,
+          deletedAt: null
+        },
+        include: {
+          role: {
+            include: {
+              permissions: {
+                include: {
+                  permission: true
+                }
               }
             }
           }
         }
+      });
+      
+      if (user) {
+        setUserInCache(decoded.userId, user);
       }
-    });
+    }
 
     if (!user) {
       return sendError(res, 'User account is deactivated or deleted', [], 401);

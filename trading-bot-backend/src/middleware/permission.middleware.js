@@ -17,19 +17,18 @@ const checkPermission = (module, action) => {
         return next();
       }
 
-      // Check if permission is assigned to user's role
-      const rolePermission = await prisma.rolePermission.findFirst({
-        where: {
-          roleId: user.roleId,
-          permission: {
-            module: module,
-            action: action,
-            isActive: true
-          }
-        }
-      });
+      // Check if permission is assigned to user's role using cached user data
+      let hasPermission = false;
+      if (user.role && user.role.permissions) {
+        hasPermission = user.role.permissions.some(rp => 
+          rp.permission && 
+          rp.permission.module === module && 
+          rp.permission.action === action && 
+          rp.permission.isActive === true
+        );
+      }
 
-      if (!rolePermission) {
+      if (!hasPermission) {
         return sendError(
           res,
           `Access Denied: Required permission [${module}:${action}] not granted for your role`,

@@ -1,4 +1,5 @@
 const prisma = require('../../prisma/client');
+const { invalidateAllUserCaches } = require('../../utils/cache');
 
 /**
  * Get all active roles with their associated permissions
@@ -96,7 +97,7 @@ const updateRolePermissions = async (id, permissionIds = []) => {
       });
     }
 
-    return await tx.role.findUnique({
+    const updatedRole = await tx.role.findUnique({
       where: { id },
       include: {
         permissions: {
@@ -106,6 +107,10 @@ const updateRolePermissions = async (id, permissionIds = []) => {
         }
       }
     });
+    
+    invalidateAllUserCaches();
+    
+    return updatedRole;
   });
 };
 
@@ -125,13 +130,17 @@ const deleteRole = async (id) => {
     throw new Error(`Core role '${role.name}' cannot be deleted`);
   }
 
-  return await prisma.role.update({
+  const updatedRole = await prisma.role.update({
     where: { id },
     data: {
       deletedAt: new Date(),
       isActive: false
     }
   });
+
+  invalidateAllUserCaches();
+
+  return updatedRole;
 };
 
 module.exports = {
