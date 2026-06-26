@@ -101,8 +101,24 @@ io.on('connection', (socket) => {
 // Security and middleware setup
 app.use(helmet());
 app.use(cors(corsOptions));
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+const defaultJson = express.json({ limit: '2mb' });
+const defaultUrl = express.urlencoded({ limit: '2mb', extended: true });
+const largeJson = express.json({ limit: '50mb' });
+const largeUrl = express.urlencoded({ limit: '50mb', extended: true });
+
+app.use((req, res, next) => {
+  const isLargePayload = req.originalUrl.includes('/bulk') || req.originalUrl.includes('/documents');
+  if (isLargePayload) {
+    return largeJson(req, res, (err) => {
+      if (err) return next(err);
+      largeUrl(req, res, next);
+    });
+  }
+  return defaultJson(req, res, (err) => {
+    if (err) return next(err);
+    defaultUrl(req, res, next);
+  });
+});
 app.use('/api', globalLimiter);
 
 // Server check endpoint
