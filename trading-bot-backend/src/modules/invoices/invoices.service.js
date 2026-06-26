@@ -590,7 +590,6 @@ module.exports = {
   deleteInvoice,
   generateInvoiceFromShipment,
   generateInvoiceFromInquiry,
-  getInvoiceDashboardStats,
   sendInvoiceEmailAPI,
   executeInvoiceEmailJob,
   generateInvoicePdfBuffer
