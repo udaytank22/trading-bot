@@ -11,6 +11,9 @@ const http = require('http');
 const { Server } = require('socket.io');
 const { verifyAccessToken } = require('./utils/token');
 const chatService = require('./modules/chat/chat.service');
+const crypto = require('crypto');
+const pinoHttp = require('pino-http');
+const logger = require('./utils/logger');
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -57,7 +60,7 @@ io.use((socket, next) => {
 });
 
 io.on('connection', (socket) => {
-  console.log(`[Socket] Client connected: ${socket.id} (User: ${socket.user.userId})`);
+  logger.info(`[Socket] Client connected: ${socket.id} (User: ${socket.user.userId})`);
   
   socket.on('send_message', async (data) => {
     try {
@@ -80,7 +83,7 @@ io.on('connection', (socket) => {
       // Emit to sender so they get the DB ID and timestamp
       socket.emit('message_sent', savedMessage);
     } catch (error) {
-      console.error('[Socket] Error sending message:', error);
+      logger.error({ err: error, socketId: socket.id }, '[Socket] Error sending message');
       socket.emit('message_error', { error: 'Failed to send message' });
     }
   });
@@ -91,12 +94,12 @@ io.on('connection', (socket) => {
       const receiverId = socket.user.userId; // Current user
       await chatService.markAsRead(senderId, receiverId);
     } catch (error) {
-      console.error('[Socket] Error marking messages as read:', error);
+      logger.error({ err: error, socketId: socket.id }, '[Socket] Error marking messages as read');
     }
   });
 
   socket.on('disconnect', () => {
-    console.log(`[Socket] Client disconnected: ${socket.id}`);
+    logger.info(`[Socket] Client disconnected: ${socket.id}`);
   });
 });
 
@@ -105,6 +108,25 @@ app.use(helmet());
 app.use(compression());
 app.use(cookieParser());
 app.use(cors(corsOptions));
+
+// Request ID middleware
+app.use((req, res, next) => {
+  req.id = crypto.randomUUID();
+  res.setHeader('X-Request-ID', req.id);
+  next();
+});
+
+// Pino logger middleware
+app.use(pinoHttp({
+  logger,
+  genReqId: function (req) { return req.id; },
+  customProps: function (req, res) {
+    return {
+      userId: req.user ? req.user.id : undefined
+    }
+  }
+}));
+
 const defaultJson = express.json({ limit: '2mb' });
 const defaultUrl = express.urlencoded({ limit: '2mb', extended: true });
 const largeJson = express.json({ limit: '50mb' });
@@ -168,7 +190,7 @@ app.use((req, res, next) => {
 app.use(errorHandler);
 
 const server = httpServer.listen(config.PORT, () => {
-  console.log(`[Server] running in ${config.NODE_ENV} mode on port ${config.PORT}`);
+  logger.info(`[Server] running in ${config.NODE_ENV} mode on port ${config.PORT}`);
 });
 
 module.exports = server;

@@ -17,7 +17,8 @@ const sendError = (res, message = 'Internal Server Error', errors = [], statusCo
   return res.status(statusCode).json({
     success: false,
     message,
-    errors: Array.isArray(errors) ? errors : [errors]
+    errors: Array.isArray(errors) ? errors : [errors],
+    requestId: res.req && res.req.id ? res.req.id : undefined
   });
 };
 
