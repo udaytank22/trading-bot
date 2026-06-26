@@ -4,8 +4,8 @@ import { DataTable, rowStripeClass, ROW_HOVER_CLS, MultiSelectDropdown } from '@
 import { fetchInventory } from '../../../api/inventory';
 
 const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
-  const { data: suppliersData } = useSuppliers();
-  const { data: productsData } = useProducts();
+  const { data: suppliersData = [] } = useSuppliers();
+  const { data: productsData = [] } = useProducts();
   const [selections, setSelections] = useState({}); // mapping of product index -> array of supplier IDs
   const [isFullscreen, setIsFullscreen] = useState(false);
 

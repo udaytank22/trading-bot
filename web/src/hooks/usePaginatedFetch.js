@@ -6,11 +6,21 @@ export function usePaginatedFetch(fetchFunction, initialPage = 1, initialPageSiz
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchData = useCallback(async (page = meta.currentPage, pageSize = meta.pageSize, extra = {}) => {
+  // Keep a ref to always have the latest meta without needing it as a dep
+  const metaRef = useRef(meta);
+  useEffect(() => { metaRef.current = meta; }, [meta]);
+
+  // Keep a ref to always have the latest additionalParams without triggering re-fetch on every render
+  const additionalParamsRef = useRef(additionalParams);
+  useEffect(() => { additionalParamsRef.current = additionalParams; }, [additionalParams]);
+
+  const fetchData = useCallback(async (page, pageSize, extra = {}) => {
+    const currentPage = page !== undefined ? page : metaRef.current.currentPage;
+    const currentPageSize = pageSize !== undefined ? pageSize : metaRef.current.pageSize;
     setLoading(true);
     setError(null);
     try {
-      const response = await fetchFunction({ page, pageSize, ...additionalParams, ...extra });
+      const response = await fetchFunction({ page: currentPage, pageSize: currentPageSize, ...additionalParamsRef.current, ...extra });
       if (response && response.success) {
         setData(response.data || []);
         if (response.meta) {
@@ -18,10 +28,10 @@ export function usePaginatedFetch(fetchFunction, initialPage = 1, initialPageSiz
         } else {
           // Fallback if backend doesn't send meta properly
           setMeta({
-            totalItems: response.data.length || 0,
-            currentPage: page,
-            pageSize: pageSize,
-            totalPages: Math.ceil((response.data.length || 0) / pageSize) || 1
+            totalItems: (response.data || []).length,
+            currentPage: currentPage,
+            pageSize: currentPageSize,
+            totalPages: Math.ceil(((response.data || []).length) / currentPageSize) || 1
           });
         }
       } else {
@@ -32,7 +42,7 @@ export function usePaginatedFetch(fetchFunction, initialPage = 1, initialPageSiz
     } finally {
       setLoading(false);
     }
-  }, [fetchFunction, additionalParams, meta.currentPage, meta.pageSize]);
+  }, [fetchFunction]);
 
   const paramsString = JSON.stringify(additionalParams);
   const isMounted = useRef(false);
@@ -40,26 +50,27 @@ export function usePaginatedFetch(fetchFunction, initialPage = 1, initialPageSiz
   useEffect(() => {
     if (isMounted.current) {
       setMeta(prev => ({ ...prev, currentPage: 1 }));
-      fetchData(1, meta.pageSize);
+      fetchData(1, metaRef.current.pageSize);
     } else {
       isMounted.current = true;
       fetchData(initialPage, initialPageSize);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paramsString, fetchFunction]);
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = useCallback((newPage) => {
     setMeta(prev => ({ ...prev, currentPage: newPage }));
-    fetchData(newPage, meta.pageSize);
-  };
+    fetchData(newPage, metaRef.current.pageSize);
+  }, [fetchData]);
 
-  const handlePageSizeChange = (newPageSize) => {
+  const handlePageSizeChange = useCallback((newPageSize) => {
     setMeta(prev => ({ ...prev, pageSize: newPageSize, currentPage: 1 }));
     fetchData(1, newPageSize);
-  };
+  }, [fetchData]);
 
-  const refresh = () => {
-    fetchData(meta.currentPage, meta.pageSize);
-  };
+  const refresh = useCallback((silent = false) => {
+    fetchData(metaRef.current.currentPage, metaRef.current.pageSize);
+  }, [fetchData]);
 
   return { data, meta, loading, error, handlePageChange, handlePageSizeChange, refresh, fetchData };
 }
