@@ -11,6 +11,8 @@ const { globalLimiter } = require('./middleware/rateLimiter');
 const { sendError } = require('./utils/response');
 const http = require('http');
 const { Server } = require('socket.io');
+const { createAdapter } = require('@socket.io/redis-adapter');
+const Redis = require('ioredis');
 const { verifyAccessToken } = require('./utils/token');
 const chatService = require('./modules/chat/chat.service');
 const crypto = require('crypto');
@@ -42,6 +44,21 @@ const io = new Server(httpServer, {
     methods: ['GET', 'POST', 'PUT', 'DELETE']
   }
 });
+
+// Setup Redis adapter for Socket.io multi-instance scaling
+const redisHost = process.env.REDIS_HOST || '127.0.0.1';
+const redisPort = process.env.REDIS_PORT || 6379;
+const pubClient = new Redis(redisPort, redisHost, { maxRetriesPerRequest: null });
+const subClient = pubClient.duplicate();
+
+pubClient.on('error', (err) => {
+  logger.error({ err }, 'Redis pubClient error');
+});
+subClient.on('error', (err) => {
+  logger.error({ err }, 'Redis subClient error');
+});
+
+io.adapter(createAdapter(pubClient, subClient));
 
 // Expose io instance to the app and global
 app.set('io', io);
