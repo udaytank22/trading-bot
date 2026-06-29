@@ -1,15 +1,14 @@
 const prisma = require('../../prisma/client');
 
+const { getPaginationParams } = require('../../utils/queryHelper');
+
 /**
  * Get all bank accounts
  */
 const getAllBankAccounts = async (query = {}) => {
-  const { page, pageSize, paginate } = query;
   const where = { deletedAt: null };
 
-
-  const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
-  const take = pageSize ? parseInt(pageSize) : undefined;
+  const { skip, take } = getPaginationParams(query);
 
   const [bankAccounts, total] = await Promise.all([
     prisma.bankAccount.findMany({

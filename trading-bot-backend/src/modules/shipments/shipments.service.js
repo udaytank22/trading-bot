@@ -1,15 +1,15 @@
 const prisma = require('../../prisma/client');
 
+const { getPaginationParams } = require('../../utils/queryHelper');
+const { notifyRole, notifyUser } = require('../notifications/notifications.service');
+
 /**
  * Get all shipments
  */
 const getAllShipments = async (query = {}) => {
-  const { page, pageSize, paginate } = query;
   const where = { deletedAt: null };
 
-
-  const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
-  const take = pageSize ? parseInt(pageSize) : undefined;
+  const { skip, take } = getPaginationParams(query);
 
   const [shipments, total] = await Promise.all([
     prisma.shipment.findMany({
@@ -80,7 +80,7 @@ const createShipment = async (data, creatorId) => {
   const shCount = await prisma.shipment.count();
   const shipmentNumber = `SH-${1000 + shCount + 1}`;
 
-  return await prisma.shipment.create({
+  const createdShipment = await prisma.shipment.create({
     data: {
       shipmentNumber,
       inquiryId: data.inquiryId || null,
@@ -97,6 +97,16 @@ const createShipment = async (data, creatorId) => {
       createdById: creatorId
     }
   });
+
+  await notifyRole('Admin', {
+    title: 'New Shipment Created',
+    message: `Shipment ${shipmentNumber} has been created.`,
+    type: 'SHIPMENT_CREATED',
+    relatedModule: 'SHIPMENT',
+    relatedRecordId: createdShipment.id
+  });
+
+  return createdShipment;
 };
 
 /**
@@ -115,10 +125,22 @@ const updateShipment = async (id, data, updaterId) => {
   if (data.currentStatus !== undefined) updateData.currentStatus = data.currentStatus;
   if (data.trackingRemarks !== undefined) updateData.trackingRemarks = data.trackingRemarks;
 
-  return await prisma.shipment.update({
+  const updatedShipment = await prisma.shipment.update({
     where: { id: parseInt(id, 10) },
     data: updateData
   });
+
+  if (data.currentStatus) {
+    await notifyRole('Admin', {
+      title: 'Shipment Status Updated',
+      message: `Shipment ${updatedShipment.shipmentNumber} is now ${data.currentStatus}.`,
+      type: 'SHIPMENT_STATUS_UPDATED',
+      relatedModule: 'SHIPMENT',
+      relatedRecordId: updatedShipment.id
+    });
+  }
+
+  return updatedShipment;
 };
 
 /**

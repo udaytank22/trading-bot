@@ -22,7 +22,7 @@ const TrackInquiryPage = () => {
     setInquiryData(null);
 
     try {
-      const response = await axios.get(`http://localhost:5000/api/inquiries/public/track/${inquiryId.trim()}`);
+      const response = await axios.get(`http://localhost:5001/api/inquiries/public/track/${inquiryId.trim()}`);
       if (response.data.success) {
         setInquiryData(response.data.data);
       }

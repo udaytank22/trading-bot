@@ -3,7 +3,7 @@
 
 import { http, HttpResponse } from 'msw';
 
-const BASE = 'http://localhost:5000/api';
+const BASE = 'http://localhost:5001/api';
 
 // ── Shared fixture data ──────────────────────────────────────────────────────
 export const MOCK_EMPLOYEES = [

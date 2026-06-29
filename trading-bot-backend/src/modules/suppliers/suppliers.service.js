@@ -1,16 +1,15 @@
 const prisma = require('../../prisma/client');
 const bcrypt = require('bcryptjs');
 
+const { getPaginationParams } = require('../../utils/queryHelper');
+
 /**
  * Get all active suppliers
  */
 const getAllSuppliers = async (query = {}) => {
-  const { page, pageSize, paginate } = query;
   const where = { deletedAt: null };
 
-
-  const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
-  const take = pageSize ? parseInt(pageSize) : undefined;
+  const { skip, take } = getPaginationParams(query);
 
   const [suppliers, total] = await Promise.all([
     prisma.supplier.findMany({

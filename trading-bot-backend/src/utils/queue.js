@@ -1,14 +1,30 @@
 const { Queue, Worker } = require('bullmq');
 const logger = require('./logger');
 
-const connection = {
-  host: process.env.REDIS_HOST || '127.0.0.1',
-  port: process.env.REDIS_PORT || 6379,
-  maxRetriesPerRequest: null
-};
+let connection;
+if (process.env.REDIS_URL) {
+  connection = new require('ioredis')(process.env.REDIS_URL, { maxRetriesPerRequest: null });
+} else {
+  connection = {
+    host: process.env.REDIS_HOST || '127.0.0.1',
+    port: process.env.REDIS_PORT || 6379,
+    maxRetriesPerRequest: null
+  };
+}
 
 const emailQueue = new Queue('email-queue', { connection });
 const documentQueue = new Queue('document-queue', { connection });
+
+const isDev = process.env.NODE_ENV !== 'production';
+
+emailQueue.on('error', (err) => {
+  if (err.code === 'ECONNREFUSED' && isDev) return;
+  logger.error({ err }, 'emailQueue Redis error')
+});
+documentQueue.on('error', (err) => {
+  if (err.code === 'ECONNREFUSED' && isDev) return;
+  logger.error({ err }, 'documentQueue Redis error')
+});
 
 const setupWorkers = () => {
   logger.info('Initializing BullMQ workers...');
@@ -29,6 +45,11 @@ const setupWorkers = () => {
 
   emailWorker.on('failed', (job, err) => {
     logger.error({ jobId: job?.id, err }, 'Email job failed');
+  });
+
+  emailWorker.on('error', (err) => {
+    if (err.code === 'ECONNREFUSED' && isDev) return;
+    logger.error({ err }, 'emailWorker Redis error');
   });
 
   const documentWorker = new Worker('document-queue', async (job) => {
@@ -65,6 +86,11 @@ const setupWorkers = () => {
 
   documentWorker.on('failed', (job, err) => {
     logger.error({ jobId: job?.id, err }, 'Document job failed');
+  });
+
+  documentWorker.on('error', (err) => {
+    if (err.code === 'ECONNREFUSED' && isDev) return;
+    logger.error({ err }, 'documentWorker Redis error');
   });
 };
 

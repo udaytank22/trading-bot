@@ -46,15 +46,22 @@ const io = new Server(httpServer, {
 });
 
 // Setup Redis adapter for Socket.io multi-instance scaling
-const redisHost = process.env.REDIS_HOST || '127.0.0.1';
-const redisPort = process.env.REDIS_PORT || 6379;
-const pubClient = new Redis(redisPort, redisHost, { maxRetriesPerRequest: null });
+let pubClient;
+if (process.env.REDIS_URL) {
+  pubClient = new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: null });
+} else {
+  const redisHost = process.env.REDIS_HOST || '127.0.0.1';
+  const redisPort = process.env.REDIS_PORT || 6379;
+  pubClient = new Redis(redisPort, redisHost, { maxRetriesPerRequest: null });
+}
 const subClient = pubClient.duplicate();
 
 pubClient.on('error', (err) => {
+  if (err.code === 'ECONNREFUSED' && config.NODE_ENV !== 'production') return;
   logger.error({ err }, 'Redis pubClient error');
 });
 subClient.on('error', (err) => {
+  if (err.code === 'ECONNREFUSED' && config.NODE_ENV !== 'production') return;
   logger.error({ err }, 'Redis subClient error');
 });
 

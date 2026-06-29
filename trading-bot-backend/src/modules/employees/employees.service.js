@@ -1,15 +1,14 @@
 const prisma = require('../../prisma/client');
 const bcrypt = require('bcryptjs');
+const { getPaginationParams } = require('../../utils/queryHelper');
+
 /**
  * Get all employees
  */
 const getAllEmployees = async (query = {}) => {
-  const { page, pageSize, paginate } = query;
   const where = { deletedAt: null };
 
-
-  const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
-  const take = pageSize ? parseInt(pageSize) : undefined;
+  const { skip, take } = getPaginationParams(query);
 
   const [employees, total] = await Promise.all([
     prisma.employee.findMany({

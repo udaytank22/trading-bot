@@ -8,43 +8,65 @@ if (!secret) {
   process.exit(1);
 }
 
-// Generate a valid mock admin token
-const token = jwt.sign(
-  {
-    userId: 1, // assuming Super Admin is userId 1
-    email: 'admin@trademind.com',
-    role: 'Super Admin'
-  },
-  secret,
-  { expiresIn: '1h' }
-);
+// Generate valid mock tokens for 50 distinct users
+const NUM_USERS = 50;
+const tokens = [];
+for (let i = 1; i <= NUM_USERS; i++) {
+  tokens.push(
+    jwt.sign(
+      {
+        userId: i,
+        email: `user${i}@trademind.com`,
+        role: i % 10 === 0 ? 'Super Admin' : 'Sales Representative'
+      },
+      secret,
+      { expiresIn: '1h' }
+    )
+  );
+}
 
 const PORT = process.env.PORT || 5001;
 const target = `http://localhost:${PORT}`;
 
-async function runTest(url, connections, amount, title) {
+async function runTest(url, connections, amount, title, method = 'GET', body = null) {
   console.log(`\n=== Running Load Test: ${title} ===`);
   console.log(`URL: ${url}`);
   console.log(`Connections: ${connections}, Target Requests: ${amount}`);
   
   return new Promise((resolve, reject) => {
+    let tokenIndex = 0;
+    
     const instance = autocannon({
       url,
       connections,
-      amount, 
+      amount,
+      method,
+      body: body ? JSON.stringify(body) : undefined,
       headers: {
-        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
+      },
+      setupClient: (client) => {
+        // Rotate through tokens
+        const token = tokens[tokenIndex];
+        tokenIndex = (tokenIndex + 1) % tokens.length;
+        client.setHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        });
       }
     }, (err, result) => {
       if (err) return reject(err);
       
       console.log(`\nResults for ${title}:`);
       console.log(`Total Requests: ${result.requests.total}`);
+      console.log(`2xx Responses: ${result.2xx}`);
+      console.log(`429 Responses: ${result.429}`);
+      console.log(`5xx Errors: ${result.5xx}`);
       console.log(`Total Errors: ${result.errors}`);
       console.log(`Time taken: ${result.duration}s`);
       console.log(`Avg Req/sec: ${result.requests.average}`);
       console.log(`Avg Latency: ${result.latency.average}ms`);
+      console.log(`P95 Latency: ${result.latency.p95}ms`);
       console.log(`P99 Latency: ${result.latency.p99}ms`);
       
       resolve(result);
@@ -55,13 +77,26 @@ async function runTest(url, connections, amount, title) {
 }
 
 async function main() {
-  // We want to simulate a target of 1,000 req/min which is ~16.6 req/sec
-  // We'll run a test for 500 requests over 50 connections
-  
+  // Simulating real traffic mixing lists and creates
   try {
-    await runTest(`${target}/api/clients?page=1&pageSize=50`, 50, 500, 'Clients List (Pagination)');
-    await runTest(`${target}/api/products?page=1&pageSize=50`, 50, 500, 'Products List (Pagination)');
-    await runTest(`${target}/api/inquiries?page=1&pageSize=50`, 50, 500, 'Inquiries List (Pagination)');
+    await runTest(`${target}/api/clients?page=1&pageSize=50`, 50, 1000, 'Clients List (Pagination)');
+    await runTest(`${target}/api/products?page=1&pageSize=50`, 50, 1000, 'Products List (Pagination)');
+    await runTest(`${target}/api/inquiries?page=1&pageSize=50`, 50, 1000, 'Inquiries List (Pagination)');
+    
+    // Mix in some POST requests
+    const dummyClient = {
+      name: "Load Test Client",
+      email: "loadtest@example.com",
+      companyName: "Test Co",
+      phone: "1234567890",
+      address: "123 Test St",
+      city: "Test City",
+      state: "TS",
+      zipCode: "12345",
+      country: "Testland",
+      status: "ACTIVE"
+    };
+    await runTest(`${target}/api/clients`, 20, 200, 'Create Client (Write)', 'POST', dummyClient);
     
     console.log('\nAll load tests completed.');
   } catch (err) {

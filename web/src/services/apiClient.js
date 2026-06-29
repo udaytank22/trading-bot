@@ -1,8 +1,7 @@
 // src/services/apiClient.js
 import axios from 'axios';
-import Swal from 'sweetalert2';
 
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').trim();
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001').trim();
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 export { USE_MOCK };

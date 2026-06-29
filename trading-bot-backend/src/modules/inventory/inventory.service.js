@@ -473,6 +473,8 @@ const dispatchInventoryForInquiry = async (inquiryId, inquiryNumber, userId, use
   });
 };
 
+const { getPaginationParams } = require('../../utils/queryHelper');
+
 /**
  * Get paginated inventory transaction history
  * (INVENTORY_RESERVED, INVENTORY_DISPATCHED, INVENTORY_RELEASED, IN, OUT, ADJUSTMENT)
@@ -481,8 +483,6 @@ const dispatchInventoryForInquiry = async (inquiryId, inquiryNumber, userId, use
  */
 const getInventoryTransactionHistory = async (filters = {}) => {
   const {
-    page = 1,
-    pageSize = 20,
     type,
     itemName,
     startDate,
@@ -520,8 +520,7 @@ const getInventoryTransactionHistory = async (filters = {}) => {
     };
   }
 
-  const skip = (parseInt(page) - 1) * parseInt(pageSize);
-  const take = parseInt(pageSize);
+  const { skip, take } = getPaginationParams(filters);
 
   const [movements, total] = await Promise.all([
     prisma.stockMovement.findMany({

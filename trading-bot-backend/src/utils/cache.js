@@ -7,6 +7,33 @@ const CACHE_KEYS = {
   user: (userId) => `user_${userId}`
 };
 
+const inFlightPromises = new Map();
+
+const getOrFetchUser = async (userId, fetchFn) => {
+  const cachedUser = userCache.get(CACHE_KEYS.user(userId));
+  if (cachedUser) return cachedUser;
+
+  if (inFlightPromises.has(userId)) {
+    return inFlightPromises.get(userId);
+  }
+
+  const promise = fetchFn(userId)
+    .then(user => {
+      if (user) {
+        userCache.set(CACHE_KEYS.user(userId), user);
+      }
+      inFlightPromises.delete(userId);
+      return user;
+    })
+    .catch(err => {
+      inFlightPromises.delete(userId);
+      throw err;
+    });
+
+  inFlightPromises.set(userId, promise);
+  return promise;
+};
+
 const getUserFromCache = (userId) => {
   return userCache.get(CACHE_KEYS.user(userId));
 };
@@ -26,6 +53,7 @@ const invalidateAllUserCaches = () => {
 module.exports = {
   userCache,
   CACHE_KEYS,
+  getOrFetchUser,
   getUserFromCache,
   setUserInCache,
   invalidateUserCache,

@@ -1,15 +1,15 @@
 const prisma = require('../../prisma/client');
 
+const { getPaginationParams } = require('../../utils/queryHelper');
+const { notifyRole, notifyUser } = require('../notifications/notifications.service');
+
 /**
  * Get all purchase orders
  */
 const getAllPurchaseOrders = async (query = {}) => {
-  const { page, pageSize, paginate } = query;
   const where = { deletedAt: null };
 
-
-  const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
-  const take = pageSize ? parseInt(pageSize) : undefined;
+  const { skip, take } = getPaginationParams(query);
 
   const [pos, total] = await Promise.all([
     prisma.purchaseOrder.findMany({
@@ -109,7 +109,7 @@ const createPurchaseOrder = async (data, creatorId) => {
       });
     }
 
-    return await tx.purchaseOrder.findUnique({
+    const createdPo = await tx.purchaseOrder.findUnique({
       where: { id: po.id },
       include: {
         supplier: true,
@@ -117,6 +117,18 @@ const createPurchaseOrder = async (data, creatorId) => {
         items: true
       }
     });
+    
+    return createdPo;
+  }).then(async (createdPo) => {
+    // Fire notifications asynchronously after transaction
+    await notifyRole('Admin', {
+      title: 'New Purchase Order Created',
+      message: `PO ${createdPo.poNumber} has been created for ${createdPo.supplier?.name}.`,
+      type: 'PO_CREATED',
+      relatedModule: 'PURCHASE_ORDER',
+      relatedRecordId: createdPo.id
+    });
+    return createdPo;
   });
 };
 
@@ -181,7 +193,7 @@ const updatePurchaseOrder = async (id, data, updaterId) => {
       });
     }
 
-    return await tx.purchaseOrder.findUnique({
+    const updatedPo = await tx.purchaseOrder.findUnique({
       where: { id },
       include: {
         supplier: true,
@@ -189,6 +201,20 @@ const updatePurchaseOrder = async (id, data, updaterId) => {
         items: true
       }
     });
+
+    return updatedPo;
+  }).then(async (updatedPo) => {
+    // Trigger notification if status changed
+    if (data.status) {
+      await notifyRole('Admin', {
+        title: `Purchase Order Status Updated`,
+        message: `PO ${updatedPo.poNumber} is now ${data.status}.`,
+        type: 'PO_STATUS_UPDATED',
+        relatedModule: 'PURCHASE_ORDER',
+        relatedRecordId: updatedPo.id
+      });
+    }
+    return updatedPo;
   });
 };
 

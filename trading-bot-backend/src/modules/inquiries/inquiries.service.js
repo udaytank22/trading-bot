@@ -33,6 +33,8 @@ const generateInquiryNumber = async () => {
   return candidate;
 };
 
+const { getPaginationParams } = require('../../utils/queryHelper');
+
 /**
  * Get all inquiries with filtering, sorting, pagination
  */
@@ -50,32 +52,30 @@ const getAllInquiries = async (query = {}) => {
     where.inventoryFulfilled = false;
   }
 
-  if (search) {
+  if (typeof search === 'string' && search.trim() !== '') {
     where.OR = [
       { inquiryNumber: { contains: search, mode: 'insensitive' } },
       { vesselName: { contains: search, mode: 'insensitive' } },
       { client: { name: { contains: search, mode: 'insensitive' } } }
     ];
   }
-  if (status) {
+  if (typeof status === 'string' && status.trim() !== '') {
     where.currentStatus = status;
   }
 
-  if (statuses) {
+  if (typeof statuses === 'string' && statuses.trim() !== '') {
     const statusArray = statuses.split(',').map(s => s.trim());
     where.currentStatus = { in: statusArray };
   }
 
-  if (clientIds) {
+  if (typeof clientIds === 'string' && clientIds.trim() !== '') {
     const idsArray = clientIds.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
     where.clientId = { in: idsArray };
-  } else if (clientId) {
+  } else if (typeof clientId === 'string' && clientId.trim() !== '') {
     where.clientId = parseInt(clientId, 10);
   }
 
-
-  const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
-  const take = pageSize ? parseInt(pageSize) : undefined;
+  const { skip, take } = getPaginationParams(query);
 
   const data = await prisma.inquiry.findMany({
     where,

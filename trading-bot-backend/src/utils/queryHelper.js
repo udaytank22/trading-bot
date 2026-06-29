@@ -1,12 +1,18 @@
 /**
  * Extract pagination parameters from query
  */
-const getPaginationParams = (query) => {
+const getPaginationParams = (query, maxLimit = 200, defaultLimit = 50) => {
   const page = parseInt(query.page, 10) || 1;
-  const limit = parseInt(query.limit, 10) || 10;
+  let limit = parseInt(query.limit || query.pageSize, 10) || defaultLimit;
+  
+  // Clamp to maxLimit
+  if (limit > maxLimit) {
+    limit = maxLimit;
+  }
+  
   const skip = (page - 1) * limit;
 
-  return { page, limit, skip };
+  return { page, limit, skip, take: limit };
 };
 
 /**

@@ -4,33 +4,38 @@ const path = require('path');
 const puppeteer = require('puppeteer');
 const browserPool = require('../../utils/browserPool');
 const { sendInvoiceEmail } = require('../../utils/email.service');
+const { notifyRole, notifyUser } = require('../notifications/notifications.service');
+
+const { getPaginationParams } = require('../../utils/queryHelper');
 
 /**
  * Get all invoices (filtered for clients)
  */
 const getAllInvoices = async (user, query = {}) => {
-  const { page, pageSize, paginate, search, statuses, excludeStatuses, inquiryId } = query;
+  const { search, statuses, excludeStatuses, inquiryId } = query;
   const whereClause = { deletedAt: null };
   if (user && user.role === 'Client') {
     whereClause.clientId = user.id;
   }
-  if (inquiryId) {
+  if (typeof inquiryId === 'string' && inquiryId.trim() !== '') {
     const parsedInquiryId = parseInt(inquiryId, 10);
-    if (whereClause.OR) {
-        whereClause.AND = [
-            { OR: whereClause.OR },
-            { OR: [{ inquiryId: parsedInquiryId }, { shipment: { purchaseOrder: { inquiryId: parsedInquiryId } } }] }
-        ];
-        delete whereClause.OR;
-    } else {
-        whereClause.OR = [
-          { inquiryId: parsedInquiryId },
-          { shipment: { purchaseOrder: { inquiryId: parsedInquiryId } } }
-        ];
+    if (!isNaN(parsedInquiryId)) {
+      if (whereClause.OR) {
+          whereClause.AND = [
+              { OR: whereClause.OR },
+              { OR: [{ inquiryId: parsedInquiryId }, { shipment: { purchaseOrder: { inquiryId: parsedInquiryId } } }] }
+          ];
+          delete whereClause.OR;
+      } else {
+          whereClause.OR = [
+            { inquiryId: parsedInquiryId },
+            { shipment: { purchaseOrder: { inquiryId: parsedInquiryId } } }
+          ];
+      }
     }
   }
 
-  if (search) {
+  if (typeof search === 'string' && search.trim() !== '') {
     const searchOr = [
       { invoiceNumber: { contains: search, mode: 'insensitive' } },
       { client: { name: { contains: search, mode: 'insensitive' } } },
@@ -46,21 +51,20 @@ const getAllInvoices = async (user, query = {}) => {
     }
   }
 
-  if (statuses) {
-    whereClause.status = { in: statuses.split(',') };
+  if (typeof statuses === 'string' && statuses.trim() !== '') {
+    whereClause.status = { in: statuses.split(',').map(s => s.trim()) };
   }
 
-  if (excludeStatuses) {
+  if (typeof excludeStatuses === 'string' && excludeStatuses.trim() !== '') {
+    const excludeArr = excludeStatuses.split(',').map(s => s.trim());
     if (whereClause.status) {
-      whereClause.status.notIn = excludeStatuses.split(',');
+      whereClause.status.notIn = excludeArr;
     } else {
-      whereClause.status = { notIn: excludeStatuses.split(',') };
+      whereClause.status = { notIn: excludeArr };
     }
   }
 
-
-  const skip = page && pageSize ? (parseInt(page) - 1) * parseInt(pageSize) : undefined;
-  const take = pageSize ? parseInt(pageSize) : undefined;
+  const { skip, take } = getPaginationParams(query);
 
   const [invoices, total] = await Promise.all([
     prisma.invoice.findMany({
@@ -146,13 +150,24 @@ const createInvoice = async (data, creatorId) => {
       });
     }
 
-    return await tx.invoice.findUnique({
+    const createdInvoice = await tx.invoice.findUnique({
       where: { id: invoice.id },
       include: {
         client: true,
         items: true
       }
     });
+
+    return createdInvoice;
+  }).then(async (createdInvoice) => {
+    await notifyRole('Admin', {
+      title: 'New Invoice Created',
+      message: `Invoice ${createdInvoice.invoiceNumber} has been created for ${createdInvoice.client?.name}.`,
+      type: 'INVOICE_CREATED',
+      relatedModule: 'INVOICE',
+      relatedRecordId: createdInvoice.id
+    });
+    return createdInvoice;
   });
 };
 
@@ -240,13 +255,26 @@ const updateInvoice = async (id, data, updaterId) => {
       }
     }
 
-    return await tx.invoice.findUnique({
+    const updatedInvoice = await tx.invoice.findUnique({
       where: { id: parseInt(id) },
       include: {
         client: true,
         items: true
       }
     });
+
+    return updatedInvoice;
+  }).then(async (updatedInvoice) => {
+    if (data.status) {
+      await notifyRole('Admin', {
+        title: `Invoice Status Updated`,
+        message: `Invoice ${updatedInvoice.invoiceNumber} is now ${data.status}.`,
+        type: 'INVOICE_STATUS_UPDATED',
+        relatedModule: 'INVOICE',
+        relatedRecordId: updatedInvoice.id
+      });
+    }
+    return updatedInvoice;
   });
 };
 

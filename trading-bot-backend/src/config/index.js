@@ -1,4 +1,27 @@
 require('dotenv').config();
+const { z } = require('zod');
+
+const envSchema = z.object({
+  JWT_SECRET: z.string().min(1, "JWT_SECRET is required"),
+  REFRESH_SECRET: z.string().min(1, "REFRESH_SECRET is required"),
+  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
+});
+
+const envVars = {
+  JWT_SECRET: process.env.JWT_SECRET,
+  REFRESH_SECRET: process.env.REFRESH_SECRET,
+  DATABASE_URL: process.env.DATABASE_URL,
+};
+
+const parsedEnv = envSchema.safeParse(envVars);
+
+if (!parsedEnv.success) {
+  console.error("❌ Invalid environment variables:");
+  parsedEnv.error.errors.forEach((err) => {
+    console.error(`  - ${err.path.join('.')}: ${err.message}`);
+  });
+  process.exit(1);
+}
 
 module.exports = {
   PORT: process.env.PORT || 5000,

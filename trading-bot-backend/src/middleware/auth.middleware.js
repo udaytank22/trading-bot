@@ -19,12 +19,12 @@ const authMiddleware = async (req, res, next) => {
       return sendError(res, 'Access token is invalid or has expired', [], 401);
     }
 
-    let user = getUserFromCache(decoded.userId);
+    const { getOrFetchUser } = require('../utils/cache');
 
-    if (!user) {
-      user = await prisma.user.findFirst({
+    const user = await getOrFetchUser(decoded.userId, async (id) => {
+      return await prisma.user.findFirst({
         where: {
-          id: decoded.userId,
+          id: id,
           isActive: true,
           deletedAt: null
         },
@@ -40,11 +40,7 @@ const authMiddleware = async (req, res, next) => {
           }
         }
       });
-      
-      if (user) {
-        setUserInCache(decoded.userId, user);
-      }
-    }
+    });
 
     if (!user) {
       return sendError(res, 'User account is deactivated or deleted', [], 401);
