@@ -7,6 +7,7 @@ import { RightDrawer, ViewDetails, Field, inputCls, EyeIcon, EditIcon, TrashIcon
 import * as XLSX from 'xlsx';
 import { useToast } from '@hooks/useToast';
 import { useAuth } from '@context';
+import { useTablePageSize } from '@hooks/useTablePageSize';
 
 export default function VehiclesTab() {
   const { hasPermission } = useAuth();
@@ -16,7 +17,7 @@ export default function VehiclesTab() {
   const [editItem, setEditItem] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useTablePageSize(50);
   const [isLoading, setIsLoading] = useState(true);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const { showToast } = useToast();
@@ -297,22 +298,19 @@ export default function VehiclesTab() {
               </td>
             </tr>
           )}
-        />
+        paginationProps={{
+          currentPage,
+          totalPages,
+          totalItems: filteredVehicles?.length || 0,
+          itemsPerPage,
+          onPrev: () => setCurrentPage((p) => Math.max(1, p - 1)),
+          onNext: () => setCurrentPage((p) => Math.min(totalPages, p + 1)),
+          onPageChange: (p) => setCurrentPage(p),
+          onItemsPerPageChange: (val) => { setItemsPerPage(val); setCurrentPage(1); },
+          itemLabel: "vehicles"
+        }}
+      />
       )}
-
-      <div className="p-4 border-t border-gray-200 dark:border-[#2a2d33]">
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={filteredVehicles?.length || 0}
-          itemsPerPage={itemsPerPage}
-          onPrev={() => setCurrentPage((p) => Math.max(1, p - 1))}
-          onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-          onPageChange={(p) => setCurrentPage(p)}
-          onItemsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
-          itemLabel="vehicles"
-        />
-      </div>
     </div>
   );
 }

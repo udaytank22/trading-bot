@@ -22,7 +22,7 @@ const authLimiter = rateLimit({
 
 // Unprotected routes
 router.post('/login', authLimiter, validate(validateLogin), asyncWrapper(controller.login));
-router.post('/refresh', stricterLimiter, validate(validateRefresh), asyncWrapper(controller.refresh));
+router.post('/refresh', stricterLimiter, asyncWrapper(controller.refresh));
 
 // Protected routes
 router.post('/logout', authMiddleware, asyncWrapper(controller.logout));

@@ -211,9 +211,8 @@ const deleteSupplier = async (id, updaterId) => {
  * Bulk import suppliers (queues a job)
  */
 const bulkImportSuppliers = async (suppliersArray, updaterId) => {
-  const { documentQueue } = require('../../utils/queue');
-  const job = await documentQueue.add('bulkImportSuppliers', { suppliersArray, updaterId });
-  return { successCount: suppliersArray.length, status: 'queued', jobId: job.id };
+  const result = await executeBulkImportSuppliersJob(suppliersArray, updaterId);
+  return { successCount: result.successCount, status: 'completed' };
 };
 
 /**
@@ -223,58 +222,104 @@ const executeBulkImportSuppliersJob = async (suppliersArray, updaterId) => {
   let successCount = 0;
   const errors = [];
 
+  // Group by provided ID and Email for bulk checking
+  const providedIds = suppliersArray.filter(s => s.id).map(s => parseInt(s.id, 10));
+  const providedEmails = suppliersArray.map(s => s.email.toLowerCase());
+
+  // Fetch existing by IDs and Emails in one go
+  const [existingById, existingByEmail] = await Promise.all([
+    providedIds.length > 0 
+      ? prisma.supplier.findMany({ where: { id: { in: providedIds }, deletedAt: null } })
+      : [],
+    providedEmails.length > 0
+      ? prisma.supplier.findMany({ where: { email: { in: providedEmails }, deletedAt: null } })
+      : []
+  ]);
+
+  const existingIdMap = new Map(existingById.map(s => [s.id, s]));
+  const existingEmailMap = new Map(existingByEmail.map(s => [s.email.toLowerCase(), s]));
+
+  const toCreate = [];
+  const toUpdate = [];
+
   for (const data of suppliersArray) {
-    try {
-      // Determine whether to update or create
-      let shouldUpdate = false;
-      if (data.id) {
-        const existing = await prisma.supplier.findFirst({
-          where: { id: parseInt(data.id, 10), deletedAt: null }
-        });
-        shouldUpdate = !!existing;
+    const parsedId = data.id ? parseInt(data.id, 10) : null;
+    const emailLower = data.email.toLowerCase();
+    
+    let shouldUpdate = false;
+
+    if (parsedId && existingIdMap.has(parsedId)) {
+      shouldUpdate = true;
+    }
+
+    if (shouldUpdate) {
+      toUpdate.push({ data, parsedId });
+    } else {
+      // Create path
+      if (existingEmailMap.has(emailLower)) {
+        errors.push({ email: data.email, error: 'A supplier with this email already exists' });
+        continue;
+      }
+      // Also prevent duplicates within the batch itself
+      if (toCreate.find(item => item.email.toLowerCase() === emailLower)) {
+        errors.push({ email: data.email, error: 'Duplicate email in the import file' });
+        continue;
       }
 
-      if (shouldUpdate) {
-        await prisma.supplier.update({
-          where: { id: parseInt(data.id, 10) },
+      toCreate.push({
+        name: data.name,
+        email: data.email,
+        phone: data.phone || null,
+        company: data.company || null,
+        address: data.address || null,
+        categories: data.categories || [],
+        createdById: updaterId,
+        isActive: data.isActive !== undefined ? data.isActive : true
+      });
+    }
+  }
+
+  // Bulk create
+  if (toCreate.length > 0) {
+    try {
+      const createResult = await prisma.supplier.createMany({
+        data: toCreate,
+        skipDuplicates: true
+      });
+      successCount += createResult.count || toCreate.length;
+    } catch (err) {
+      errors.push({ error: `Failed to bulk create new suppliers: ${err.message}` });
+    }
+  }
+
+  // Bulk update using transactions
+  if (toUpdate.length > 0) {
+    try {
+      const updatePromises = toUpdate.map(item => 
+        prisma.supplier.update({
+          where: { id: item.parsedId },
           data: {
-            name: data.name,
-            email: data.email,
-            phone: data.phone || null,
-            company: data.company || null,
-            address: data.address || null,
-            categories: data.categories !== undefined ? data.categories : [],
-            isActive: data.isActive !== undefined ? data.isActive : true,
+            name: item.data.name,
+            email: item.data.email,
+            phone: item.data.phone || null,
+            company: item.data.company || null,
+            address: item.data.address || null,
+            categories: item.data.categories !== undefined ? item.data.categories : [],
+            isActive: item.data.isActive !== undefined ? item.data.isActive : true,
             updatedById: updaterId
           }
-        });
-      } else {
-        // Check for email duplicate before creating
-        const duplicate = await prisma.supplier.findFirst({
-          where: { email: data.email, deletedAt: null }
-        });
-        if (duplicate) {
-          errors.push({ email: data.email, error: 'A supplier with this email already exists' });
-          continue;
-        }
-
-        await prisma.supplier.create({
-          data: {
-            name: data.name,
-            email: data.email,
-            phone: data.phone || null,
-            company: data.company || null,
-            address: data.address || null,
-            categories: data.categories || [],
-            createdById: updaterId,
-            isActive: data.isActive !== undefined ? data.isActive : true
-          }
-        });
+        })
+      );
+      
+      // Run updates in chunks to avoid overwhelming the DB
+      const chunkSize = 100;
+      for (let i = 0; i < updatePromises.length; i += chunkSize) {
+        const chunk = updatePromises.slice(i, i + chunkSize);
+        await prisma.$transaction(chunk);
+        successCount += chunk.length;
       }
-
-      successCount++;
     } catch (err) {
-      errors.push({ email: data.email || null, error: err.message });
+      errors.push({ error: `Failed to update existing suppliers: ${err.message}` });
     }
   }
 

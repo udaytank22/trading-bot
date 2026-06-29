@@ -154,8 +154,9 @@ function getActionBtn(inq, onAction, currentUser) {
  * @param {function} props.onView      - Open detail drawer
  * @param {function} props.onAction    - Dynamic action handler
  * @param {Object}   props.currentUser - Current logged in user
+ * @param {Object}   [props.paginationProps]
  */
-const InquiryTable = ({ items, onView, onAction, currentUser }) => {
+const InquiryTable = ({ items, onView, onAction, currentUser, paginationProps }) => {
   const COLUMNS_SCHEMA = [
     { key: "sr_no", label: "#", cellClassName: "text-center text-gray-500 text-sm font-medium w-10", renderCell: (_, idx) => idx + 1 },
     { 
@@ -248,6 +249,7 @@ const InquiryTable = ({ items, onView, onAction, currentUser }) => {
       columns={COLUMNS_SCHEMA}
       data={items}
       emptyMessage="No inquiries found."
+      paginationProps={paginationProps}
     />
   );
 };

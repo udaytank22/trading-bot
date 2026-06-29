@@ -162,20 +162,18 @@ export default function InvoicesPage() {
                             </td>
                         </tr>
                     )}
+                    paginationProps={{
+                        currentPage: meta.currentPage,
+                        totalPages: meta.totalPages,
+                        totalItems: meta.totalItems,
+                        itemsPerPage: meta.pageSize,
+                        onPrev: () => handlePageChange(meta.currentPage - 1),
+                        onNext: () => handlePageChange(meta.currentPage + 1),
+                        onPageChange: handlePageChange,
+                        onItemsPerPageChange: handlePageSizeChange,
+                        itemLabel: "invoices"
+                    }}
                 />
-                <div className="p-4 border-t border-gray-200 dark:border-[#2a2d33]">
-                    <Pagination
-                        currentPage={meta.currentPage}
-                        totalPages={meta.totalPages}
-                        totalItems={meta.totalItems}
-                        itemsPerPage={meta.pageSize}
-                        onPrev={() => handlePageChange(meta.currentPage - 1)}
-                        onNext={() => handlePageChange(meta.currentPage + 1)}
-                        onPageChange={handlePageChange}
-                        onItemsPerPageChange={handlePageSizeChange}
-                        itemLabel="invoices"
-                    />
-                </div>
             </div>
 
             {/* Payment Modal */}

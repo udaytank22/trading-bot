@@ -1,8 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useTablePageSize } from './useTablePageSize';
 
-export function usePaginatedFetch(fetchFunction, initialPage = 1, initialPageSize = 10, additionalParams = {}) {
+export function usePaginatedFetch(fetchFunction, initialPage = 1, initialPageSize = 50, additionalParams = {}) {
+  const [globalPageSize, setGlobalPageSize] = useTablePageSize(initialPageSize);
+  
   const [data, setData] = useState([]);
-  const [meta, setMeta] = useState({ totalItems: 0, currentPage: initialPage, pageSize: initialPageSize, totalPages: 1 });
+  const [meta, setMeta] = useState({ totalItems: 0, currentPage: initialPage, pageSize: globalPageSize, totalPages: 1 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -53,10 +56,18 @@ export function usePaginatedFetch(fetchFunction, initialPage = 1, initialPageSiz
       fetchData(1, metaRef.current.pageSize);
     } else {
       isMounted.current = true;
-      fetchData(initialPage, initialPageSize);
+      fetchData(initialPage, globalPageSize);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paramsString, fetchFunction]);
+
+  // Watch for global page size changes
+  useEffect(() => {
+    if (isMounted.current && metaRef.current.pageSize !== globalPageSize) {
+      setMeta(prev => ({ ...prev, pageSize: globalPageSize, currentPage: 1 }));
+      fetchData(1, globalPageSize);
+    }
+  }, [globalPageSize, fetchData]);
 
   const handlePageChange = useCallback((newPage) => {
     setMeta(prev => ({ ...prev, currentPage: newPage }));
@@ -64,9 +75,8 @@ export function usePaginatedFetch(fetchFunction, initialPage = 1, initialPageSiz
   }, [fetchData]);
 
   const handlePageSizeChange = useCallback((newPageSize) => {
-    setMeta(prev => ({ ...prev, pageSize: newPageSize, currentPage: 1 }));
-    fetchData(1, newPageSize);
-  }, [fetchData]);
+    setGlobalPageSize(newPageSize);
+  }, [setGlobalPageSize]);
 
   const refresh = useCallback((silent = false) => {
     fetchData(metaRef.current.currentPage, metaRef.current.pageSize);

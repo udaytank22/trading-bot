@@ -23,12 +23,12 @@ import {
 // ─── Column definitions ─────────────────────────────────────────────────────────
 const COLUMNS = [
   { key: "sr_no", label: "#", className: "w-10 text-center" },
-  { key: "id",          label: "ID" },
-  { key: "bankName",    label: "Bank Name" },
+  { key: "id", label: "ID" },
+  { key: "bankName", label: "Bank Name" },
   { key: "accountInfo", label: "Account Info" },
-  { key: "balance",     label: "Balance" },
-  { key: "status",      label: "Status" },
-  { key: "actions",     label: "Actions", className: "text-right" },
+  { key: "balance", label: "Balance" },
+  { key: "status", label: "Status" },
+  { key: "actions", label: "Actions", className: "text-right" },
 ];
 
 // ─── SVG icon helpers ──────────────────────────────────────────────────────────
@@ -61,7 +61,7 @@ function DeleteIcon() {
  * @param {function} props.onEdit   - Called with the account object to pre-fill modal
  * @param {function} props.onDelete - Called with the account ID; triggers confirm
  */
-const AccountTable = ({ items, onEdit, onDelete }) => {
+const AccountTable = ({ items, onEdit, onDelete, paginationProps }) => {
   const renderRow = (acc, idx) => (
     <tr
       key={acc.id}
@@ -100,11 +100,10 @@ const AccountTable = ({ items, onEdit, onDelete }) => {
         <div className="flex items-baseline gap-1">
           <span className="text-gray-500 font-medium text-xs">{acc.currency}</span>
           <span
-            className={`font-bold ${
-              acc.balance >= 0
+            className={`font-bold ${acc.balance >= 0
                 ? "text-emerald-600 dark:text-emerald-400"
                 : "text-red-600 dark:text-red-400"
-            }`}
+              }`}
           >
             {acc.balance.toLocaleString(undefined, {
               minimumFractionDigits: 2,

@@ -1,5 +1,6 @@
 import { TOAST_MESSAGES } from '../../constants/toastMessages';
 import { useAuth } from '@context';
+import { useSocket } from '@context';
 /**
  * @file InquiriesPage.jsx
  * @description Customer Inquiries management page — list, filter, send RFQ/Quote, confirm deals.
@@ -20,6 +21,7 @@ import React, {
   useState,
   useEffect,
   useCallback,
+  useRef,
 } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -48,6 +50,11 @@ export default function InquiriesPage() {
   const location = useLocation();
   const { currentUser, hasPermission } = useAuth();
   const { toast, showToast } = useToast();
+  const { socket } = useSocket();
+
+  // Real-time new inquiry alert state
+  const [newInquiryAlert, setNewInquiryAlert] = useState(null);
+  const alertTimerRef = useRef(null);
 
   // Filters & pagination
   const [search, setSearch] = useState("");
@@ -94,6 +101,27 @@ export default function InquiriesPage() {
       clearInterval(clock);
     };
   }, [loadData]);
+
+  // Real-time: listen for new_inquiry socket events
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewInquiry = (inquiry) => {
+      // Prepend to the current list immediately
+      loadData(true);
+
+      // Show top-right popup
+      setNewInquiryAlert(inquiry);
+      if (alertTimerRef.current) clearTimeout(alertTimerRef.current);
+      alertTimerRef.current = setTimeout(() => setNewInquiryAlert(null), 5000);
+    };
+
+    socket.on('new_inquiry', handleNewInquiry);
+    return () => {
+      socket.off('new_inquiry', handleNewInquiry);
+      if (alertTimerRef.current) clearTimeout(alertTimerRef.current);
+    };
+  }, [socket, loadData]);
 
   // If navigated here with an `openInquiryId` in location.state, open that inquiry
   const navigate = useNavigate();
@@ -178,6 +206,82 @@ export default function InquiriesPage() {
   return (
     <div className="flex flex-col w-full h-full pb-4 relative overflow-hidden min-w-0">
       <Toast message={toast.message} type={toast.type} />
+
+      {/* ── Real-time new inquiry popup (top-right) ── */}
+      <div
+        style={{
+          position: 'fixed',
+          top: '1.25rem',
+          right: '1.25rem',
+          zIndex: 9999,
+          transition: 'all 0.35s cubic-bezier(0.34,1.56,0.64,1)',
+          transform: newInquiryAlert ? 'translateX(0) scale(1)' : 'translateX(120%) scale(0.9)',
+          opacity: newInquiryAlert ? 1 : 0,
+          pointerEvents: newInquiryAlert ? 'auto' : 'none',
+        }}
+      >
+        {newInquiryAlert && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.75rem',
+              background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
+              border: '1px solid rgba(139,92,246,0.4)',
+              borderRadius: '1rem',
+              padding: '1rem 1.25rem',
+              boxShadow: '0 8px 32px rgba(99,60,180,0.35), 0 2px 8px rgba(0,0,0,0.3)',
+              minWidth: '300px',
+              maxWidth: '360px',
+            }}
+          >
+            {/* Icon */}
+            <div style={{
+              width: '2.25rem', height: '2.25rem', borderRadius: '0.625rem',
+              background: 'rgba(139,92,246,0.25)', display: 'flex',
+              alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            }}>
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#a78bfa" strokeWidth={2.2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+
+            {/* Content */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ margin: 0, fontSize: '0.7rem', color: '#a78bfa', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                New Inquiry
+              </p>
+              <p style={{ margin: '0.15rem 0 0.25rem', fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>
+                {newInquiryAlert.inquiryNumber}
+              </p>
+              <p style={{ margin: 0, fontSize: '0.78rem', color: '#c4b5fd', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {newInquiryAlert.client?.name || 'Unknown client'}
+              </p>
+              <button
+                onClick={() => { navigate(`/inquiries/${newInquiryAlert.id}`); setNewInquiryAlert(null); }}
+                style={{
+                  marginTop: '0.5rem', fontSize: '0.72rem', color: '#7c3aed',
+                  background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)',
+                  borderRadius: '0.375rem', padding: '0.2rem 0.6rem', cursor: 'pointer',
+                  fontWeight: 600, transition: 'background 0.2s',
+                }}
+              >
+                View →
+              </button>
+            </div>
+
+            {/* Close */}
+            <button
+              onClick={() => setNewInquiryAlert(null)}
+              style={{ background: 'none', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: '0.1rem', lineHeight: 1, flexShrink: 0 }}
+            >
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Centralized toolbar: search + status filter + Add Inquiry button */}
       <PageToolbar
@@ -288,26 +392,22 @@ export default function InquiriesPage() {
       ) : (
         /* ── Table view (with pagination) ── */
         <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg transition-colors duration-300">
-          {filteredInquiries.length > 0 ? (
-            <InquiryTable
-              items={filteredInquiries}
-              onView={onView}
-              onAction={handleAction}
-              currentUser={currentUser}
-            />
-          ) : (
-            <EmptyState title="No inquiries found" description="Try changing your search or filter" />
-          )}
-          <Pagination
-            currentPage={meta.currentPage}
-            totalPages={meta.totalPages}
-            totalItems={meta.totalItems}
-            itemsPerPage={meta.pageSize}
-            onPrev={() => handlePageChange(meta.currentPage - 1)}
-            onNext={() => handlePageChange(meta.currentPage + 1)}
-            onPageChange={handlePageChange}
-            onItemsPerPageChange={handlePageSizeChange}
-            itemLabel="records"
+          <InquiryTable
+            items={filteredInquiries}
+            onView={onView}
+            onAction={handleAction}
+            currentUser={currentUser}
+            paginationProps={{
+              currentPage: meta.currentPage,
+              totalPages: meta.totalPages,
+              totalItems: meta.totalItems,
+              itemsPerPage: meta.pageSize,
+              onPrev: () => handlePageChange(meta.currentPage - 1),
+              onNext: () => handlePageChange(meta.currentPage + 1),
+              onPageChange: handlePageChange,
+              onItemsPerPageChange: handlePageSizeChange,
+              itemLabel: "records"
+            }}
           />
         </div>
       )}

@@ -11,6 +11,7 @@ import {
   moveStock
 } from '../../api/inventory';
 import { useAuth } from '@context';
+import { useTablePageSize } from '@hooks/useTablePageSize';
 import { useInventory } from '@hooks/queries/useInventory';
 
 // Components
@@ -95,7 +96,7 @@ export default function InventoryPage() {
 
   // Transactions local state
   const [txCurrentPage, setTxCurrentPage] = useState(1);
-  const [txItemsPerPage, setTxItemsPerPage] = useState(10);
+  const [txItemsPerPage, setTxItemsPerPage] = useTablePageSize(50);
 
   const [txTypeFilter, setTxTypeFilter] = useState('');
   const [txItemSearch, setTxItemSearch] = useState('');
@@ -421,33 +422,18 @@ export default function InventoryPage() {
                 columns={txColumns}
                 data={transactions}
                 emptyMessage={txLoading ? "Loading transactions..." : "No transactions found matching criteria."}
+                paginationProps={txTotalPages > 0 ? {
+                  currentPage: txCurrentPage,
+                  totalPages: txTotalPages,
+                  totalItems: txTotalItems,
+                  itemsPerPage: 10,
+                  onPrev: () => setTxCurrentPage(p => Math.max(1, p - 1)),
+                  onNext: () => setTxCurrentPage(p => Math.min(txTotalPages, p + 1)),
+                  onPageChange: (p) => setTxCurrentPage(p),
+                  onItemsPerPageChange: undefined,
+                  itemLabel: "transactions"
+                } : undefined}
               />
-              
-              {txTotalPages > 1 && (
-                <div className="p-4 border-t border-gray-100 dark:border-[#2a2d33] bg-gray-50/50 dark:bg-[#1f2229]">
-                  {/* Since Pagination component was removed/replaced or uses standard DataTable footer, 
-                      we just render simple prev/next for now, or you can restore <Pagination> if it exists in @components/ui */}
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-gray-500 font-medium">Showing page {txCurrentPage} of {txTotalPages} ({txTotalItems} total items)</span>
-                    <div className="flex gap-2">
-                      <button 
-                        disabled={txCurrentPage === 1} 
-                        onClick={() => setTxCurrentPage(p => Math.max(1, p - 1))}
-                        className="px-3 py-1.5 bg-white border border-gray-200 rounded disabled:opacity-50"
-                      >
-                        Prev
-                      </button>
-                      <button 
-                        disabled={txCurrentPage === txTotalPages} 
-                        onClick={() => setTxCurrentPage(p => Math.min(txTotalPages, p + 1))}
-                        className="px-3 py-1.5 bg-white border border-gray-200 rounded disabled:opacity-50"
-                      >
-                        Next
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         )}

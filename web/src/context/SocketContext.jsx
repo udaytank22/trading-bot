@@ -9,16 +9,17 @@ const SocketContext = createContext();
 export const useSocket = () => useContext(SocketContext);
 
 export const SocketProvider = ({ children }) => {
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   const [socket, setSocket] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const { toast, showToast } = useToast();
 
   useEffect(() => {
-    if (user && user.token) {
-      const newSocket = io(import.meta.env.VITE_API_URL || 'http://localhost:3000', {
-        auth: { token: user.token },
+    const token = localStorage.getItem('token');
+    if (currentUser && token) {
+      const newSocket = io(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001', {
+        auth: { token },
         transports: ['websocket', 'polling']
       });
 
@@ -36,7 +37,7 @@ export const SocketProvider = ({ children }) => {
 
       return () => newSocket.close();
     }
-  }, [user]);
+  }, [currentUser]);
 
   const markAllAsRead = () => setUnreadCount(0);
 

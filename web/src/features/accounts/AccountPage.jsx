@@ -1,6 +1,7 @@
 import { TOAST_MESSAGES } from '../../constants/toastMessages';
 import { useAuth, useUI } from '@context';
 import { useAccounts } from '@hooks/queries';
+import { useTablePageSize } from '@hooks/useTablePageSize';
 import { api } from '@services/api';
 /**
  * @file AccountPage.jsx
@@ -48,14 +49,14 @@ export default function AccountPage() {
   const [search, setSearch]             = useState("");
   const [filter, setFilter]             = useState("All");
   const [currentPage, setCurrentPage]   = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useTablePageSize(50);
   const [accountToEdit, setAccountToEdit] = useState(null); // null = create mode
   const [isModalOpen, setIsModalOpen]   = useState(false);
   const { toast, showToast } = useToast();
 
   // ── Derived: filter accounts by search text and status ────────────────────
   const filteredData = useMemo(() => {
-    return accountsData.filter((item) => {
+    return (accountsData || []).filter((item) => {
       // Apply status filter
       if (filter !== "All" && item.status !== filter) return false;
 
@@ -166,6 +167,17 @@ export default function AccountPage() {
           items={currentData}
           onEdit={canUpdate ? handleEdit : undefined}
           onDelete={canDelete ? handleDelete : undefined}
+          paginationProps={filteredData.length > 0 ? {
+            currentPage,
+            totalPages,
+            totalItems: filteredData.length,
+            itemsPerPage,
+            onPrev: () => setCurrentPage((p) => Math.max(1, p - 1)),
+            onNext: () => setCurrentPage((p) => Math.min(totalPages, p + 1)),
+            onPageChange: (p) => setCurrentPage(p),
+            onItemsPerPageChange: (val) => { setItemsPerPage(val); setCurrentPage(1); },
+            itemLabel: "accounts"
+          } : undefined}
         />
 
         {/* Empty state */}
@@ -179,19 +191,6 @@ export default function AccountPage() {
             <p className="text-sm mt-1 opacity-75">Try adjusting your search or filters.</p>
           </div>
         )}
-
-        {/* Centralized pagination footer */}
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={filteredData.length}
-          itemsPerPage={itemsPerPage}
-          onPrev={() => setCurrentPage((p) => Math.max(1, p - 1))}
-          onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-          onPageChange={(p) => setCurrentPage(p)}
-          onItemsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
-          itemLabel="accounts"
-        />
       </div>
 
       {/* Add / Edit Account modal */}

@@ -16,7 +16,7 @@ export default function Pagination({
   currentPage,
   totalPages,
   totalItems,
-  itemsPerPage = 10,
+  itemsPerPage = 50,
   onPrev,
   onNext,
   onPageChange,
@@ -51,7 +51,7 @@ export default function Pagination({
   const pages = getPageNumbers();
 
   return (
-    <div className="flex items-center justify-between px-1 py-1 select-none">
+    <div className="flex items-center justify-between px-4 py-2 select-none">
       {/* Page Size Dropdown */}
       <div className="flex items-center gap-2.5 text-xs text-gray-500 font-medium">
         <span>Showing</span>

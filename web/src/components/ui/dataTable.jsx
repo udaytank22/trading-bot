@@ -39,6 +39,7 @@
 
 import React, { useRef } from "react";
 import EmptyState from "./emptyState";
+import Pagination from "./pagination";
 import { useVirtualizer } from '@tanstack/react-virtual';
 
 // ─── Shared row stripe helper (exported so individual tables can use it) ───────
@@ -49,14 +50,12 @@ import { useVirtualizer } from '@tanstack/react-virtual';
  * @returns {string} Tailwind class string
  */
 export function rowStripeClass(idx) {
-  return idx % 2 !== 0
-    ? "bg-gray-50/30 dark:bg-[#242830]/20"
-    : "";
+  return "bg-white dark:bg-[#1a1d23]";
 }
 
 /** Standard row hover class used by every table */
 export const ROW_HOVER_CLS =
-  "hover:bg-gray-50/80 dark:hover:bg-white/[0.04] transition-colors";
+  "hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors";
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
@@ -69,6 +68,7 @@ export const ROW_HOVER_CLS =
  * @param {string} [props.emptyMessage="No data found."] - Message shown when data is empty
  * @param {string} [props.maxHeight="max-h-[600px]"] - Tailwind max-height for the scroll container
  * @param {function(): React.ReactNode} [props.renderFooter] - Optional render function for tfoot
+ * @param {Object} [props.paginationProps] - Props to pass to the Pagination component
  */
 export default function DataTable({
   columns = [],
@@ -78,6 +78,7 @@ export default function DataTable({
   maxHeight = "max-h-[600px]",
   className = "",
   renderFooter,
+  paginationProps
 }) {
   const parentRef = useRef(null);
 
@@ -100,7 +101,7 @@ export default function DataTable({
     <div className={`w-full overflow-hidden flex flex-col ${className}`}>
 
       {/* Scrollable container — both axes, styled scrollbar */}
-      <div 
+      <div
         ref={parentRef}
         className={`w-full max-w-full overflow-auto ${maxHeight} custom-scrollbar`}
       >
@@ -110,15 +111,15 @@ export default function DataTable({
 
           {/* ── HEADER ─────────────────────────────────────────────────────── */}
           <thead className="sticky top-0 z-20 transition-all duration-300">
-            <tr className="bg-gray-50 dark:bg-[#1f2229] shadow-sm">
+            <tr className="bg-[#0B4775] shadow-sm">
               {columns.map((col) => (
                 <th
                   key={col.key}
                   className={[
-                    "px-2 sm:px-3 md:px-4 py-2 sm:py-2.5",
-                    "text-gray-400 dark:text-gray-500",
-                    "text-[10px] font-black uppercase tracking-wider",
-                    "border-b border-gray-100 dark:border-white/5",
+                    "px-2 sm:px-3 md:px-4 py-1 sm:py-1.5",
+                    "text-white",
+                    "text-[13px] font-semibold tracking-wide capitalize",
+                    "border-b border-[#0B4775]",
                     col.hidden ?? "",
                     col.className ?? "",
                   ].join(" ")}
@@ -141,7 +142,7 @@ export default function DataTable({
                 {virtualItems.map((virtualRow) => {
                   const idx = virtualRow.index;
                   const row = data[idx];
-                  
+
                   // If renderRow is provided, use it for backwards compatibility.
                   // Otherwise, iterate columns and use col.renderCell or row[col.key]
                   if (renderRow) {
@@ -154,8 +155,8 @@ export default function DataTable({
                   }
 
                   return (
-                    <tr 
-                      key={row.id || idx} 
+                    <tr
+                      key={row.id || idx}
                       ref={virtualizer.measureElement}
                       data-index={idx}
                       className={`${ROW_HOVER_CLS} ${rowStripeClass(idx)}`}
@@ -163,8 +164,8 @@ export default function DataTable({
                       {columns.map((col, cIdx) => {
                         const cellValue = col.renderCell ? col.renderCell(row, idx) : row[col.key];
                         return (
-                          <td 
-                            key={col.key || cIdx} 
+                          <td
+                            key={col.key || cIdx}
                             className={`px-2 sm:px-3 md:px-4 py-3 md:py-4 ${col.hidden ?? ""} ${col.cellClassName ?? ""}`}
                           >
                             {cellValue}
@@ -192,6 +193,11 @@ export default function DataTable({
           {renderFooter && renderFooter()}
         </table>
       </div>
+      {paginationProps && (
+        <div className=" border-t border-gray-200 dark:border-[#2a2d33] bg-white dark:bg-[#1a1d23]">
+          <Pagination {...paginationProps} />
+        </div>
+      )}
     </div>
   );
 }

@@ -45,6 +45,12 @@ const createInquiry = async (req, res) => {
   });
 
   const fullInquiry = await service.getInquiryById(inquiry.id);
+
+  // Broadcast to all connected clients for real-time list update
+  if (global.io) {
+    global.io.emit('new_inquiry', fullInquiry);
+  }
+
   return sendSuccess(res, 'Inquiry created successfully', fullInquiry, 201);
 };
 

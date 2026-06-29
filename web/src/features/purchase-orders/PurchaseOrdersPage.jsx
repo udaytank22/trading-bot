@@ -180,37 +180,30 @@ export default function PurchaseOrdersPage() {
       />
 
       <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg transition-colors duration-300">
-        {mappedPOs.length > 0 ? (
-          <POTable
-            items={mappedPOs}
-            onView={(po) => {
+        <POTable
+          items={mappedPOs}
+          onView={(po) => {
+            navigate(`/purchase-orders/${po.id}`);
+          }}
+          onOrder={hasPermission('purchaseOrders', 'update') ? (po) => {
+            if (po.isGrouped) {
               navigate(`/purchase-orders/${po.id}`);
-            }}
-            onOrder={hasPermission('purchaseOrders', 'update') ? (po) => {
-              if (po.isGrouped) {
-                navigate(`/purchase-orders/${po.id}`);
-              } else {
-                setSelectedPO(po);
-                setIsEmailModalOpen(true);
-              }
-            } : undefined}
-          />
-        ) : (
-          <EmptyState title="No purchase orders found" description="Create your first purchase order to get started" />
-        )}
-
-
-        {/* Centralized pagination footer */}
-        <Pagination
-          currentPage={meta.currentPage}
-          totalPages={meta.totalPages}
-          totalItems={meta.totalItems}
-          itemsPerPage={meta.pageSize}
-          onPrev={() => handlePageChange(meta.currentPage - 1)}
-          onNext={() => handlePageChange(meta.currentPage + 1)}
-          onPageChange={handlePageChange}
-          onItemsPerPageChange={handlePageSizeChange}
-          itemLabel="orders"
+            } else {
+              setSelectedPO(po);
+              setIsEmailModalOpen(true);
+            }
+          } : undefined}
+          paginationProps={{
+            currentPage: meta.currentPage,
+            totalPages: meta.totalPages,
+            totalItems: meta.totalItems,
+            itemsPerPage: meta.pageSize,
+            onPrev: () => handlePageChange(meta.currentPage - 1),
+            onNext: () => handlePageChange(meta.currentPage + 1),
+            onPageChange: handlePageChange,
+            onItemsPerPageChange: handlePageSizeChange,
+            itemLabel: "orders"
+          }}
         />
       </div>
 

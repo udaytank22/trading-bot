@@ -117,65 +117,98 @@ const deleteProduct = async (id, updaterId) => {
  * Bulk upsert products (queues a job)
  */
 const bulkUpsertProducts = async (products, creatorId) => {
-  const { documentQueue } = require('../../utils/queue');
-  const job = await documentQueue.add('bulkUpsertProducts', { products, creatorId });
-  return { results: products, status: 'queued', jobId: job.id };
+  const { results, errors } = await executeBulkUpsertProductsJob(products, creatorId);
+  return { results, errors, status: 'completed' };
 };
 
 /**
  * Execute bulk upsert job (called by Worker)
  */
 const executeBulkUpsertProductsJob = async (products, creatorId) => {
-  const results = [];
+  let successCount = 0;
   const errors = [];
 
+  const providedSkus = products.filter(p => p.sku).map(p => p.sku);
+
+  const existingBySku = await prisma.product.findMany({
+    where: { sku: { in: providedSkus }, deletedAt: null }
+  });
+
+  const existingSkuMap = new Map(existingBySku.map(p => [p.sku, p]));
+
+  const toCreate = [];
+  const toUpdate = [];
+
   for (const item of products) {
-    try {
-      if (!item.name || !item.sku) {
-        errors.push({ sku: item.sku || null, error: 'Name and SKU are required' });
+    if (!item.name || !item.sku) {
+      errors.push({ sku: item.sku || null, error: 'Name and SKU are required' });
+      continue;
+    }
+
+    const existing = existingSkuMap.get(item.sku);
+    
+    if (existing) {
+      toUpdate.push({ data: item, existingId: existing.id, existing });
+    } else {
+      if (toCreate.find(p => p.sku === item.sku)) {
+        errors.push({ sku: item.sku, error: 'Duplicate SKU in the import file' });
         continue;
       }
 
-      const existing = await prisma.product.findFirst({
-        where: { sku: item.sku, deletedAt: null }
+      toCreate.push({
+        name: item.name,
+        sku: item.sku,
+        category: item.category || null,
+        unit: item.unit || null,
+        sellingPrice: item.sellingPrice !== undefined ? parseFloat(item.sellingPrice) : 0,
+        purchasePrice: item.purchasePrice !== undefined ? parseFloat(item.purchasePrice) : 0,
+        isActive: item.isActive !== undefined ? item.isActive : true,
+        createdById: creatorId
       });
-
-      let product;
-      if (existing) {
-        product = await prisma.product.update({
-          where: { id: existing.id },
-          data: {
-            name: item.name,
-            category: item.category || null,
-            unit: item.unit || null,
-            sellingPrice: item.sellingPrice !== undefined ? parseFloat(item.sellingPrice) : existing.sellingPrice,
-            purchasePrice: item.purchasePrice !== undefined ? parseFloat(item.purchasePrice) : existing.purchasePrice,
-            isActive: item.isActive !== undefined ? item.isActive : existing.isActive,
-            updatedById: creatorId
-          }
-        });
-      } else {
-        product = await prisma.product.create({
-          data: {
-            name: item.name,
-            sku: item.sku,
-            category: item.category || null,
-            unit: item.unit || null,
-            sellingPrice: item.sellingPrice !== undefined ? parseFloat(item.sellingPrice) : 0,
-            purchasePrice: item.purchasePrice !== undefined ? parseFloat(item.purchasePrice) : 0,
-            isActive: item.isActive !== undefined ? item.isActive : true,
-            createdById: creatorId
-          }
-        });
-      }
-
-      results.push(product);
-    } catch (err) {
-      errors.push({ sku: item.sku || null, error: err.message });
     }
   }
 
-  return { results, errors };
+  if (toCreate.length > 0) {
+    try {
+      const createResult = await prisma.product.createMany({
+        data: toCreate,
+        skipDuplicates: true
+      });
+      successCount += createResult.count || toCreate.length;
+    } catch (err) {
+      errors.push({ error: `Failed to bulk create new products: ${err.message}` });
+    }
+  }
+
+  if (toUpdate.length > 0) {
+    try {
+      const updatePromises = toUpdate.map(item => 
+        prisma.product.update({
+          where: { id: item.existingId },
+          data: {
+            name: item.data.name,
+            category: item.data.category || null,
+            unit: item.data.unit || null,
+            sellingPrice: item.data.sellingPrice !== undefined ? parseFloat(item.data.sellingPrice) : item.existing.sellingPrice,
+            purchasePrice: item.data.purchasePrice !== undefined ? parseFloat(item.data.purchasePrice) : item.existing.purchasePrice,
+            isActive: item.data.isActive !== undefined ? item.data.isActive : item.existing.isActive,
+            updatedById: creatorId
+          }
+        })
+      );
+      
+      const chunkSize = 100;
+      for (let i = 0; i < updatePromises.length; i += chunkSize) {
+        const chunk = updatePromises.slice(i, i + chunkSize);
+        await prisma.$transaction(chunk);
+        successCount += chunk.length;
+      }
+    } catch (err) {
+      errors.push({ error: `Failed to update existing products: ${err.message}` });
+    }
+  }
+
+  return { results: { successCount }, errors };
 };
 
 module.exports = {

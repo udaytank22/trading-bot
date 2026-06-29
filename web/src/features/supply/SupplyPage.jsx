@@ -242,19 +242,17 @@ export default function SupplyPage() {
             setIsAllotModalOpen(true);
           } : undefined}
           onStatusUpdate={hasPermission('suppliers', 'update') ? handleStatusUpdate : undefined}
-        />
-
-        {/* Centralized pagination footer */}
-        <Pagination
-          currentPage={meta.currentPage}
-          totalPages={meta.totalPages}
-          totalItems={meta.totalItems}
-          itemsPerPage={meta.pageSize}
-          onPrev={() => handlePageChange(meta.currentPage - 1)}
-          onNext={() => handlePageChange(meta.currentPage + 1)}
-          onPageChange={handlePageChange}
-          onItemsPerPageChange={handlePageSizeChange}
-          itemLabel="cargo supplies"
+          paginationProps={{
+            currentPage: meta.currentPage,
+            totalPages: meta.totalPages,
+            totalItems: meta.totalItems,
+            itemsPerPage: meta.pageSize,
+            onPrev: () => handlePageChange(meta.currentPage - 1),
+            onNext: () => handlePageChange(meta.currentPage + 1),
+            onPageChange: handlePageChange,
+            onItemsPerPageChange: handlePageSizeChange,
+            itemLabel: "cargo supplies"
+          }}
         />
       </div>
 

@@ -2,7 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body, #root {
+html,
+body,
+#root {
   margin: 0;
   padding: 0;
   width: 100%;
@@ -25,11 +27,13 @@ html.light body {
 
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;
-  height: 5px; /* Restore height in case it affects some browsers */
+  height: 5px;
+  /* Restore height in case it affects some browsers */
 }
 
 .custom-scrollbar::-webkit-scrollbar:horizontal {
-  display: none; /* Properly hide the horizontal scrollbar */
+  display: none;
+  /* Properly hide the horizontal scrollbar */
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -73,6 +77,8 @@ html.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
 
 /* Hide scrollbar for IE, Edge and Firefox */
 .scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }

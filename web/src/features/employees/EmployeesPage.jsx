@@ -1,5 +1,6 @@
 import { TOAST_MESSAGES } from '../../constants/toastMessages';
-import { useAuth, useUI } from '@context';
+import { useAuth } from '@context';
+import { useTablePageSize } from '@hooks/useTablePageSize';
 import { api } from '@services/api';
 /**
  * @file EmployeesPage.jsx
@@ -47,8 +48,8 @@ export default function EmployeesPage() {
   const [isModalOpen, setIsModalOpen]     = useState(false);      // Add/Edit modal open?
   const [employeeToEdit, setEmployeeToEdit] = useState(null);     // Employee being edited (null = create mode)
   const [employeeToView, setEmployeeToView] = useState(null);     // Employee whose attendance is being viewed
-  const [currentPage, setCurrentPage]     = useState(1);          // Current pagination page
-  const [itemsPerPage, setItemsPerPage]   = useState(10);
+  const [currentPage, setCurrentPage]     = useState(1);
+  const [itemsPerPage, setItemsPerPage]   = useTablePageSize(50);
 
   const { toast, showToast } = useToast();
 

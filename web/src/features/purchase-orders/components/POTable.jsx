@@ -41,8 +41,9 @@ const COLUMNS = [
  * @param {Array}    props.items   - Filtered + paginated PO records
  * @param {function} props.onView  - Open PODrawer for detail view
  * @param {function} props.onOrder - Open POEmailModal to place order
+ * @param {Object}   [props.paginationProps]
  */
-const POTable = ({ items, onView, onOrder }) => {
+const POTable = ({ items, onView, onOrder, paginationProps }) => {
   const renderRow = (po, idx) => (
     <tr
       key={po.po_id}
@@ -136,6 +137,7 @@ const POTable = ({ items, onView, onOrder }) => {
       data={items}
       renderRow={renderRow}
       emptyMessage="No purchase orders found."
+      paginationProps={paginationProps}
     />
   );
 };

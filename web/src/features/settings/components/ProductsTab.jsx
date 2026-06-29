@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { DataTable, rowStripeClass, ROW_HOVER_CLS, Pagination, ExcelImportModal } from '@components/ui';
 import { confirmAction } from '@utils/swal';
 import { useAuth } from '@context';
+import { useTablePageSize } from '@hooks/useTablePageSize';
 import { useProducts } from '@hooks/queries';
 import { api } from '@services/api';
 import { RightDrawer, ViewDetails, Field, inputCls, EyeIcon, EditIcon, TrashIcon } from './shared';
@@ -17,7 +18,7 @@ export default function ProductsTab() {
   const [editItem, setEditItem] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useTablePageSize(50);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const { showToast } = useToast();
 
@@ -262,21 +263,18 @@ export default function ProductsTab() {
             </td>
           </tr>
         )}
+        paginationProps={{
+          currentPage,
+          totalPages,
+          totalItems: filteredProducts?.length || 0,
+          itemsPerPage,
+          onPrev: () => setCurrentPage((p) => Math.max(1, p - 1)),
+          onNext: () => setCurrentPage((p) => Math.min(totalPages, p + 1)),
+          onPageChange: (p) => setCurrentPage(p),
+          onItemsPerPageChange: (val) => { setItemsPerPage(val); setCurrentPage(1); },
+          itemLabel: "products"
+        }}
       />
-
-      <div className="p-4 border-t border-gray-200 dark:border-[#2a2d33]">
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={filteredProducts?.length || 0}
-          itemsPerPage={itemsPerPage}
-          onPrev={() => setCurrentPage((p) => Math.max(1, p - 1))}
-          onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-          onPageChange={(p) => setCurrentPage(p)}
-          onItemsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
-          itemLabel="products"
-        />
-      </div>
     </div>
   );
 }

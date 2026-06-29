@@ -143,9 +143,8 @@ const deleteClient = async (id, updaterId) => {
  * Bulk import clients (queues a job)
  */
 const bulkImportClients = async (clientsArray, updaterId) => {
-  const { documentQueue } = require('../../utils/queue');
-  const job = await documentQueue.add('bulkImportClients', { clientsArray, updaterId });
-  return { successCount: clientsArray.length, status: 'queued', jobId: job.id };
+  const result = await executeBulkImportClientsJob(clientsArray, updaterId);
+  return { successCount: result.successCount, status: 'completed' };
 };
 
 /**
@@ -155,72 +154,116 @@ const executeBulkImportClientsJob = async (clientsArray, updaterId) => {
   let successCount = 0;
   const errors = [];
 
+  const providedIds = clientsArray.filter(c => c.id).map(c => parseInt(c.id, 10));
+  const providedEmails = clientsArray.map(c => c.email.toLowerCase());
+
+  const [existingById, existingByEmail] = await Promise.all([
+    providedIds.length > 0
+      ? prisma.client.findMany({ where: { id: { in: providedIds }, deletedAt: null } })
+      : [],
+    providedEmails.length > 0
+      ? prisma.client.findMany({ where: { email: { in: providedEmails }, deletedAt: null } })
+      : []
+  ]);
+
+  const existingIdMap = new Map(existingById.map(c => [c.id, c]));
+  const existingEmailMap = new Map(existingByEmail.map(c => [c.email.toLowerCase(), c]));
+
+  const toCreate = [];
+  const toUpdate = [];
+
   for (const data of clientsArray) {
-    try {
-      // Determine whether to update or create
-      let shouldUpdate = false;
-      if (data.id) {
-        const existing = await prisma.client.findFirst({
-          where: { id: parseInt(data.id, 10), deletedAt: null }
-        });
-        shouldUpdate = !!existing;
+    const parsedId = data.id ? parseInt(data.id, 10) : null;
+    const emailLower = data.email.toLowerCase();
+    
+    let shouldUpdate = false;
+
+    if (parsedId && existingIdMap.has(parsedId)) {
+      shouldUpdate = true;
+    }
+
+    if (shouldUpdate) {
+      toUpdate.push({ data, parsedId });
+    } else {
+      if (existingEmailMap.has(emailLower)) {
+        errors.push({ email: data.email, error: 'A client with this email already exists' });
+        continue;
+      }
+      if (toCreate.find(item => item.data.email.toLowerCase() === emailLower)) {
+        errors.push({ email: data.email, error: 'Duplicate email in the import file' });
+        continue;
       }
 
-      if (shouldUpdate) {
-        const clientId = parseInt(data.id, 10);
-        await prisma.$transaction(async (tx) => {
-          if (data.vessels) {
-            await tx.clientVessel.deleteMany({ where: { clientId } });
-          }
-          await tx.client.update({
-            where: { id: clientId },
-            data: {
-              name: data.name,
-              email: data.email,
-              phone: data.phone || null,
-              company: data.company || null,
-              address: data.address || null,
-              isActive: data.isActive !== undefined ? data.isActive : true,
-              updatedById: updaterId,
-              ...(data.vessels && data.vessels.length > 0 && {
-                vessels: {
-                  create: data.vessels.map(v => ({ name: v.name, imoNumber: v.imoNumber || null }))
-                }
-              })
-            }
-          });
-        });
-      } else {
-        // Check for email duplicate before creating
-        const duplicate = await prisma.client.findFirst({
-          where: { email: data.email, deletedAt: null }
-        });
-        if (duplicate) {
-          errors.push({ email: data.email, error: 'A client with this email already exists' });
-          continue;
-        }
+      toCreate.push({ data });
+    }
+  }
 
-        await prisma.client.create({
+  if (toCreate.length > 0) {
+    try {
+      const createPromises = toCreate.map(item => 
+        prisma.client.create({
           data: {
-            name: data.name,
-            email: data.email,
-            phone: data.phone || null,
-            company: data.company || null,
-            address: data.address || null,
+            name: item.data.name,
+            email: item.data.email,
+            phone: item.data.phone || null,
+            company: item.data.company || null,
+            address: item.data.address || null,
             createdById: updaterId,
-            isActive: data.isActive !== undefined ? data.isActive : true,
-            ...(data.vessels && data.vessels.length > 0 && {
+            isActive: item.data.isActive !== undefined ? item.data.isActive : true,
+            ...(item.data.vessels && item.data.vessels.length > 0 && {
               vessels: {
-                create: data.vessels.map(v => ({ name: v.name, imoNumber: v.imoNumber || null }))
+                create: item.data.vessels.map(v => ({ name: v.name, imoNumber: v.imoNumber || null }))
               }
             })
           }
-        });
+        })
+      );
+      
+      const chunkSize = 100;
+      for (let i = 0; i < createPromises.length; i += chunkSize) {
+        const chunk = createPromises.slice(i, i + chunkSize);
+        await prisma.$transaction(chunk);
+        successCount += chunk.length;
+      }
+    } catch (err) {
+      errors.push({ error: `Failed to bulk create new clients: ${err.message}` });
+    }
+  }
+
+  if (toUpdate.length > 0) {
+    try {
+      const updateOperations = [];
+      for (const item of toUpdate) {
+        if (item.data.vessels) {
+          updateOperations.push(prisma.clientVessel.deleteMany({ where: { clientId: item.parsedId } }));
+        }
+        updateOperations.push(prisma.client.update({
+          where: { id: item.parsedId },
+          data: {
+            name: item.data.name,
+            email: item.data.email,
+            phone: item.data.phone || null,
+            company: item.data.company || null,
+            address: item.data.address || null,
+            isActive: item.data.isActive !== undefined ? item.data.isActive : true,
+            updatedById: updaterId,
+            ...(item.data.vessels && item.data.vessels.length > 0 && {
+              vessels: {
+                create: item.data.vessels.map(v => ({ name: v.name, imoNumber: v.imoNumber || null }))
+              }
+            })
+          }
+        }));
       }
 
-      successCount++;
+      const chunkSize = 100;
+      for (let i = 0; i < updateOperations.length; i += chunkSize) {
+        const chunk = updateOperations.slice(i, i + chunkSize);
+        await prisma.$transaction(chunk);
+      }
+      successCount += toUpdate.length;
     } catch (err) {
-      errors.push({ email: data.email || null, error: err.message });
+      errors.push({ error: `Failed to update existing clients: ${err.message}` });
     }
   }
 

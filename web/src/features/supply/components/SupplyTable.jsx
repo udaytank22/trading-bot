@@ -38,8 +38,9 @@ const COLUMNS = [
  * @param {function} props.onContact      - Opens ContactModal
  * @param {function} props.onAllot        - Opens AllotVehicleModal
  * @param {function} props.onStatusUpdate - Updates shipment status
+ * @param {Object}   [props.paginationProps]
  */
-const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
+const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate, paginationProps }) => {
   const renderRow = (item, idx) => (
     <tr
       key={item.id || idx}
@@ -176,6 +177,7 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate }) => {
       data={items}
       renderRow={renderRow}
       emptyMessage="No cargo supply records found."
+      paginationProps={paginationProps}
     />
   );
 };

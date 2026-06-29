@@ -78,11 +78,11 @@ const bulkUpsertProducts = async (req, res) => {
     return sendError(res, 'Products array is required', [], 400);
   }
 
-  const { results, errors } = await service.bulkUpsertProducts(req.body.products, req.user.id);
-
+  const { results, errors = [] } = await service.bulkUpsertProducts(req.body.products, req.user.id);
   
+  const count = results?.length !== undefined ? results.length : (results?.successCount || 0);
 
-  return sendSuccess(res, `Successfully processed ${results.length} products${errors.length ? `, ${errors.length} skipped` : ''}`, { results, errors }, 201);
+  return sendSuccess(res, `Successfully processed ${count} products${errors.length ? `, ${errors.length} skipped` : ''}`, { results, errors }, 201);
 };
 
 module.exports = {
