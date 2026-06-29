@@ -21,7 +21,7 @@ const getInquiries = async (req, res) => {
  * Get inquiry by ID
  */
 const getInquiry = async (req, res) => {
-  const inquiry = await service.getInquiryById(req.params.id);
+  const inquiry = await service.getInquiryById(parseInt(req.params.id, 10));
   if (!inquiry) {
     return sendError(res, 'Inquiry not found', [], 404);
   }
@@ -84,12 +84,12 @@ const trackPublicInquiry = async (req, res) => {
  * Update basic details
  */
 const updateInquiry = async (req, res) => {
-  const old = await service.getInquiryById(req.params.id);
+  const old = await service.getInquiryById(parseInt(req.params.id, 10));
   if (!old) {
     return sendError(res, 'Inquiry not found', [], 404);
   }
 
-  const updated = await service.updateInquiry(req.params.id, req.body, req.user.id);
+  const updated = await service.updateInquiry(parseInt(req.params.id, 10), req.body, req.user.id);
 
   
 
@@ -101,12 +101,12 @@ const updateInquiry = async (req, res) => {
  * Delete inquiry (soft delete)
  */
 const deleteInquiry = async (req, res) => {
-  const old = await service.getInquiryById(req.params.id);
+  const old = await service.getInquiryById(parseInt(req.params.id, 10));
   if (!old) {
     return sendError(res, 'Inquiry not found', [], 404);
   }
 
-  await service.deleteInquiry(req.params.id, req.user.id);
+  await service.deleteInquiry(parseInt(req.params.id, 10), req.user.id);
 
   
 
@@ -121,7 +121,7 @@ const deleteInquiry = async (req, res) => {
  * 1. Stock check action handler
  */
 const stockCheck = async (req, res) => {
-  const updated = await service.stockCheck(req.params.id, req.body, req.user.id);
+  const updated = await service.stockCheck(parseInt(req.params.id, 10), req.body, req.user.id);
 
   
 
@@ -143,7 +143,7 @@ const stockCheck = async (req, res) => {
  * 2. Send RFQ action handler
  */
 const sendRFQ = async (req, res) => {
-  const updated = await service.sendRFQ(req.params.id, req.body, req.user.id);
+  const updated = await service.sendRFQ(parseInt(req.params.id, 10), req.body, req.user.id);
 
   
 
@@ -164,7 +164,7 @@ const sendRFQ = async (req, res) => {
  * 3. Receive supplier quote action handler
  */
 const supplierQuote = async (req, res) => {
-  const updated = await service.submitSupplierQuote(req.params.id, req.body, req.user.id);
+  const updated = await service.submitSupplierQuote(parseInt(req.params.id, 10), req.body, req.user.id);
 
   
 
@@ -185,7 +185,7 @@ const supplierQuote = async (req, res) => {
  * 4. Client quotation builder action handler
  */
 const clientQuote = async (req, res) => {
-  const updated = await service.submitClientQuote(req.params.id, req.body, req.user.id);
+  const updated = await service.submitClientQuote(parseInt(req.params.id, 10), req.body, req.user.id);
 
   
 
@@ -217,7 +217,7 @@ const clientQuote = async (req, res) => {
  * 5. Team Lead Review action handler
  */
 const teamLeadApprove = async (req, res) => {
-  const updated = await service.teamLeadApprove(req.params.id, req.body, req.user.id);
+  const updated = await service.teamLeadApprove(parseInt(req.params.id, 10), req.body, req.user.id);
 
   
 
@@ -237,7 +237,7 @@ const teamLeadApprove = async (req, res) => {
  * 6. Admin Approval action handler
  */
 const adminApprove = async (req, res) => {
-  const updated = await service.adminApprove(req.params.id, req.body, req.user.id);
+  const updated = await service.adminApprove(parseInt(req.params.id, 10), req.body, req.user.id);
 
   
 
@@ -260,7 +260,7 @@ const adminApprove = async (req, res) => {
  * 7. Employee Verification action handler
  */
 const finalVerify = async (req, res) => {
-  const updated = await service.finalVerify(req.params.id, req.body, req.user.id);
+  const updated = await service.finalVerify(parseInt(req.params.id, 10), req.body, req.user.id);
 
   
 
@@ -272,7 +272,7 @@ const finalVerify = async (req, res) => {
  * 8. Client Decision action handler
  */
 const clientDecision = async (req, res) => {
-  const updated = await service.clientDecision(req.params.id, req.body, req.user.id);
+  const updated = await service.clientDecision(parseInt(req.params.id, 10), req.body, req.user.id);
 
   
 
@@ -292,7 +292,7 @@ const clientDecision = async (req, res) => {
  * 9. Deal Confirmation action handler
  */
 const confirmDeal = async (req, res) => {
-  const updated = await service.confirmDeal(req.params.id, req.body, req.user.id);
+  const updated = await service.confirmDeal(parseInt(req.params.id, 10), req.body, req.user.id);
 
   
 
@@ -312,7 +312,7 @@ const confirmDeal = async (req, res) => {
  * 10. Close inquiry action handler
  */
 const close = async (req, res) => {
-  const updated = await service.closeInquiry(req.params.id, req.body, req.user.id);
+  const updated = await service.closeInquiry(parseInt(req.params.id, 10), req.body, req.user.id);
 
   
 
@@ -333,7 +333,7 @@ const close = async (req, res) => {
  * Close RFQ manually action handler
  */
 const closeRFQ = async (req, res) => {
-  const updated = await service.closeRFQ(req.params.id, req.user.id);
+  const updated = await service.closeRFQ(parseInt(req.params.id, 10), req.user.id);
 
   
 
@@ -353,7 +353,7 @@ const closeRFQ = async (req, res) => {
  * Select supplier quote action handler
  */
 const selectSupplierQuote = async (req, res) => {
-  const updated = await service.selectSupplierQuote(req.params.id, req.body.quoteId, req.user.id);
+  const updated = await service.selectSupplierQuote(parseInt(req.params.id, 10), req.body.quoteId, req.user.id);
 
   
 

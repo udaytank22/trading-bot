@@ -29,6 +29,7 @@ export default function InquiryDetailsPage() {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'action'
   const [deal, setDeal] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [isTableFullscreen, setIsTableFullscreen] = useState(false);
   const [localMyQuote, setLocalMyQuote] = useState(null);
   const [narrative, setNarrative] = useState('');
@@ -80,6 +81,7 @@ export default function InquiryDetailsPage() {
       }
     }).catch(err => {
       console.error('Failed to fetch inquiry:', err);
+      setError(err.message || String(err));
     }).finally(() => {
       setLoading(false);
     });
@@ -505,6 +507,17 @@ export default function InquiryDetailsPage() {
     const calculated = calculateMargin(deal.seller_quote.products, settings);
     setLocalMyQuote(calculated);
   };
+
+  if (error) {
+    return (
+      <div className="flex flex-col w-full h-full p-8 items-center justify-center">
+        <h2 className="text-red-500 text-2xl font-bold mb-4">Error Loading Page</h2>
+        <pre className="bg-gray-100 dark:bg-gray-800 p-4 rounded text-red-400 max-w-full overflow-auto">
+          {error}
+        </pre>
+      </div>
+    );
+  }
 
   if (loading || !deal) {
     return (
