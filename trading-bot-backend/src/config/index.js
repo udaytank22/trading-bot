@@ -21,7 +21,10 @@ const envSchema = z.object({
   RATE_LIMIT_GLOBAL_MAX: z.string().or(z.number()).default(300).transform(Number),
   RATE_LIMIT_GLOBAL_WINDOW_MS: z.string().or(z.number()).default(60000).transform(Number),
   RATE_LIMIT_STRICT_MAX: z.string().or(z.number()).default(20).transform(Number),
-  RATE_LIMIT_STRICT_WINDOW_MS: z.string().or(z.number()).default(60000).transform(Number)
+  RATE_LIMIT_STRICT_WINDOW_MS: z.string().or(z.number()).default(60000).transform(Number),
+  ALLOWED_ORIGINS: z.string().optional().transform(val => 
+    val ? val.split(',').map(origin => origin.trim()) : ['http://localhost:5000', 'http://localhost:5173']
+  )
 });
 
 const envParsed = envSchema.safeParse(process.env);

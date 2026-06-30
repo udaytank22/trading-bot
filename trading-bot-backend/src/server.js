@@ -26,7 +26,7 @@ const httpServer = http.createServer(app);
 // CORS configuration
 const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin || config.ALLOWED_ORIGINS.includes(origin)) {
+    if (!origin || config.ALLOWED_ORIGINS?.includes(origin)) {
       callback(null, true);
     } else {
       const error = new Error('Not allowed by CORS');
@@ -81,19 +81,19 @@ io.use((socket, next) => {
     // user joins their own room for direct notifications
     socket.join(`user_${decoded.userId}`);
     next();
-  } catch(err) {
+  } catch (err) {
     next(new Error('Authentication error'));
   }
 });
 
 io.on('connection', (socket) => {
   logger.info(`[Socket] Client connected: ${socket.id} (User: ${socket.user.userId})`);
-  
+
   socket.on('send_message', async (data) => {
     try {
       const { receiverId, content, type, fileName, fileSize, fileUrl } = data;
       const senderId = socket.user.userId;
-      
+
       const savedMessage = await chatService.saveMessage({
         senderId,
         receiverId,
@@ -103,10 +103,10 @@ io.on('connection', (socket) => {
         fileSize,
         fileUrl
       });
-      
+
       // Emit to receiver
       io.to(`user_${receiverId}`).emit('receive_message', savedMessage);
-      
+
       // Emit to sender so they get the DB ID and timestamp
       socket.emit('message_sent', savedMessage);
     } catch (error) {
