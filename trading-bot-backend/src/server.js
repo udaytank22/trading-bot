@@ -195,8 +195,6 @@ try {
   console.log('Swagger documentation not found. Run `node swagger.js` to generate it.');
 }
 
-const { globalLimiter } = require('./middleware/rateLimiter');
-app.use('/api', globalLimiter);
 
 // Server check endpoint
 app.get('/', (req, res) => {
