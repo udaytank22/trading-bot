@@ -164,15 +164,23 @@ const InquiryTable = ({ items, onView, onAction, currentUser, paginationProps })
       label: "Order Reference", 
       cellClassName: "font-mono text-gray-900 dark:text-white text-[12px] md:text-[13px] font-bold break-words",
       renderCell: (inq) => (
-        <Tooltip content={inq.products?.map((p) => `${p.product_name} (${p.quantity} ${p.unit})`).join(", ")}>
+        <Tooltip content={
+          inq.products && inq.products.length > 0
+            ? inq.products.map((p) => `${p.product_name} (${p.quantity} ${p.unit})`).join(", ")
+            : `${inq._count?.items || 0} items`
+        }>
           <div className="flex flex-col">
             <span className="cursor-pointer hover:text-purple-400 transition-colors" onClick={() => onView(inq)}>{inq.inquiry_id}</span>
-            {inq.products && inq.products.length > 0 && (
+            {inq.products && inq.products.length > 0 ? (
               <span className="text-gray-500 text-[11px] font-normal font-sans">
                 {inq.products[0].product_name}
                 {inq.products.length > 1 && ` (+${inq.products.length - 1} more)`}
               </span>
-            )}
+            ) : inq._count?.items > 0 ? (
+              <span className="text-gray-500 text-[11px] font-normal font-sans">
+                {inq._count.items} item{inq._count.items !== 1 ? 's' : ''}
+              </span>
+            ) : null}
           </div>
         </Tooltip>
       )

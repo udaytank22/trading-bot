@@ -80,21 +80,18 @@ const getAllInquiries = async (query = {}) => {
   const data = await prisma.inquiry.findMany({
     where,
     include: {
-      client: {
-        select: { id: true, name: true, company: true, email: true }
-      },
-      items: {
-        select: { id: true, description: true, quantity: true, unit: true, product: { select: { name: true } } }
-      },
-      assignedEmployee: {
-        select: { id: true, email: true }
-      },
-      assignedTeamLead: {
-        select: { id: true, email: true }
-      },
-      // Essential for frontend Kanban/List views
-      invoices: { select: { id: true, status: true } },
-      shipments: { select: { currentStatus: true } }
+      client: { select: { id: true, name: true, company: true, email: true } },
+      assignedEmployee: { select: { id: true, email: true } },
+      assignedTeamLead: { select: { id: true, email: true } },
+      _count: {
+        select: {
+          items: true,
+          supplierQuotes: true,
+          statusHistory: true,
+          clientQuotations: true,
+          invoices: true
+        }
+      }
     },
     orderBy: { createdAt: 'desc' },
     skip,
