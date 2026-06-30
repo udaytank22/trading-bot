@@ -19,7 +19,7 @@ export function InventoryForm({ initialData, onSave, onClose }) {
   const [formData, setFormData] = useState(
     initialData || {
       itemName: "",
-      sku: "",
+      impa: "",
       category: "",
       unit: "pcs",
       quantity: "", 
@@ -61,12 +61,12 @@ export function InventoryForm({ initialData, onSave, onClose }) {
           />
         </Field>
 
-        <Field label="SKU">
+        <Field label="IMPA">
           <input
             type="text"
             className={inputCls}
-            value={formData.sku}
-            onChange={set("sku")}
+            value={formData.impa}
+            onChange={set("impa")}
             placeholder="e.g. CW-001"
           />
         </Field>

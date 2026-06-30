@@ -30,7 +30,7 @@ import React from "react";
 /** Maps variant → base Tailwind classes (no size) */
 const VARIANT_CLASSES = {
   primary:
-    "bg-purple-600 hover:bg-purple-500 text-white shadow-lg active:scale-95 border-transparent",
+    "bg-gradient-to-r from-[#0B4775] to-[#2BA1E8] hover:from-[#093a61] hover:to-[#2289c9] text-white shadow-md active:scale-95 border-transparent transition-all",
   secondary:
     "bg-transparent border border-purple-500/40 text-purple-400 hover:bg-purple-500/10",
   danger:

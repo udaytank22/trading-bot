@@ -161,13 +161,18 @@ export default function VendorsTab() {
     const suppliersToImport = [];
     let failCount = 0;
 
-    for (const row of jsonData) {
+    for (const rawRow of jsonData) {
+      const row = Object.keys(rawRow).reduce((acc, key) => {
+        acc[key.trim()] = rawRow[key];
+        return acc;
+      }, {});
+
       if (!row.Name || !row.Email) {
         failCount++;
         continue;
       }
 
-      const rawId = parseInt(row.ID);
+      const rawId = parseInt(row.ID || row.id);
       const data = {
         id: rawId > 0 ? rawId : undefined,
         name: row.Name,
@@ -186,7 +191,12 @@ export default function VendorsTab() {
         const res = await api.suppliers.bulkImportSuppliers(suppliersToImport);
         if (res.success) {
           refresh();
-          showToast(TOAST_MESSAGES.SETTINGS.IMPORT.SUCCESS(res.data?.successCount || suppliersToImport.length, failCount), 'success');
+          if (res.data?.errors && res.data.errors.length > 0) {
+            console.error('Import errors:', res.data.errors);
+            showToast(`Import completed with errors. Successfully imported ${res.data.successCount} vendors. Check console for details.`, 'warning');
+          } else {
+            showToast(TOAST_MESSAGES.SETTINGS.IMPORT.SUCCESS(res.data?.successCount ?? suppliersToImport.length, failCount), 'success');
+          }
         } else {
           showToast(TOAST_MESSAGES.COMMON.IMPORT_FAILED, 'error');
         }
@@ -505,7 +515,7 @@ export default function VendorsTab() {
               <Button
                 onClick={() => setIsFormOpen(true)}
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 Add Vendor
               </Button>
             </>
@@ -524,25 +534,25 @@ export default function VendorsTab() {
       <DataTable
         maxHeight="max-h-none"
         columns={[
-          { key: "srno", label: "#" },
-          { key: "id", label: "Vendor ID" },
+          { key: "srno", label: "#", className: "w-12 text-center" },
+          { key: "id", label: "Vendor ID", className: "w-32" },
           { key: "name", label: "Company Name" },
           { key: "company", label: "Contact / Company" },
           { key: "email", label: "Email" },
-          { key: "status", label: "Status" },
-          { key: "actions", label: "Actions", className: "text-right" },
+          { key: "status", label: "Status", className: "w-28 text-center" },
+          { key: "actions", label: "Actions", className: "w-28 text-center" },
         ]}
         data={suppliersData || []}
         isLoading={loading}
         emptyMessage="No vendors found."
         renderRow={(vendor, i) => (
           <tr key={vendor.id} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
-            <td className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">{((meta.currentPage ? meta.currentPage : 1) - 1) * (meta.pageSize ? meta.pageSize : 10) + i + 1}</td>
-            <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{String(vendor.id).slice(-8)}</td>
-            <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">{vendor.name}</td>
-            <td className="px-5 py-3 text-gray-700 dark:text-gray-300">{vendor.company || '-'}</td>
-            <td className="px-5 py-3">{vendor.email}</td>
-            <td className="px-5 py-3">
+            <td className="px-4 py-3 text-center font-medium text-gray-500 dark:text-gray-400">{((meta.currentPage ? meta.currentPage : 1) - 1) * (meta.pageSize ? meta.pageSize : 10) + i + 1}</td>
+            <td className="px-4 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{String(vendor.id).slice(-8)}</td>
+            <td className="px-4 py-3 font-semibold text-gray-900 dark:text-white">{vendor.name}</td>
+            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{vendor.company || '-'}</td>
+            <td className="px-4 py-3">{vendor.email}</td>
+            <td className="px-4 py-3 text-center">
               <span className={`px-2 py-1 rounded text-[11px] font-bold ${vendor.isActive
                 ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
                 : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
@@ -550,7 +560,7 @@ export default function VendorsTab() {
                 {vendor.isActive ? 'Active' : 'Inactive'}
               </span>
             </td>
-            <td className="px-5 py-3 text-right space-x-3">
+            <td className="px-4 py-3 text-center space-x-3">
               <button onClick={() => setViewItem(vendor)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" title="View"><EyeIcon /></button>
               {canUpdate && <button onClick={() => { setEditItem(vendor); setIsFormOpen(true); }} className="text-blue-500 hover:text-blue-600 transition-colors" title="Edit"><EditIcon /></button>}
               {canDelete && <button onClick={() => handleDelete(vendor.id)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete"><TrashIcon /></button>}

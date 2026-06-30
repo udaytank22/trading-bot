@@ -117,13 +117,18 @@ export default function ClientsTab() {
     const clientsToImport = [];
     let failCount = 0;
 
-    for (const row of jsonData) {
+    for (const rawRow of jsonData) {
+      const row = Object.keys(rawRow).reduce((acc, key) => {
+        acc[key.trim()] = rawRow[key];
+        return acc;
+      }, {});
+
       if (!row.Name || !row.Email) {
         failCount++;
         continue;
       }
 
-      const rawId = parseInt(row.ID);
+      const rawId = parseInt(row.ID || row.id);
       const data = {
         id: rawId > 0 ? rawId : undefined,
         name: row.Name,
@@ -149,7 +154,12 @@ export default function ClientsTab() {
         const res = await api.clients.bulkImportClients(clientsToImport);
         if (res.success) {
           refresh();
-          showToast(TOAST_MESSAGES.SETTINGS.IMPORT.SUCCESS(res.data?.successCount || clientsToImport.length, failCount), 'success');
+          if (res.data?.errors && res.data.errors.length > 0) {
+            console.error('Import errors:', res.data.errors);
+            showToast(`Import completed with errors. Successfully imported ${res.data.successCount} clients. Check console for details.`, 'warning');
+          } else {
+            showToast(TOAST_MESSAGES.SETTINGS.IMPORT.SUCCESS(res.data?.successCount ?? clientsToImport.length, failCount), 'success');
+          }
         } else {
           showToast(TOAST_MESSAGES.COMMON.IMPORT_FAILED, 'error');
         }
@@ -212,7 +222,7 @@ export default function ClientsTab() {
               <Button
                 onClick={() => setIsFormOpen(true)}
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 Add Client
               </Button>
             </>

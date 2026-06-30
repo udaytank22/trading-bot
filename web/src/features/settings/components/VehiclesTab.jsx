@@ -110,9 +110,14 @@ export default function VehiclesTab() {
   const handleImport = async (jsonData) => {
     let failCount = 0;
     const validVehicles = [];
-    for (const row of jsonData) {
+    for (const rawRow of jsonData) {
+      const row = Object.keys(rawRow).reduce((acc, key) => {
+        acc[key.trim()] = rawRow[key];
+        return acc;
+      }, {});
+
       if (!row['Vehicle Number']) { failCount++; continue; }
-      const rawId = parseInt(row.ID);
+      const rawId = parseInt(row.ID || row.id);
       validVehicles.push({
         id: rawId > 0 ? rawId : undefined,
         vehicle_no: row['Vehicle Number'],
@@ -128,7 +133,12 @@ export default function VehiclesTab() {
         const res = await api.vehicles.bulkImport(validVehicles);
         if (res.success) {
           refresh();
-          showToast(TOAST_MESSAGES.SETTINGS.IMPORT.SUCCESS(res.data?.successCount || validVehicles.length, failCount, 'vehicles'), 'success');
+          if (res.data?.errors && res.data.errors.length > 0) {
+            console.error('Import errors:', res.data.errors);
+            showToast(`Import completed with errors. Successfully imported ${res.data.successCount} vehicles. Check console for details.`, 'warning');
+          } else {
+            showToast(TOAST_MESSAGES.SETTINGS.IMPORT.SUCCESS(res.data?.successCount ?? validVehicles.length, failCount, 'vehicles'), 'success');
+          }
         } else {
           showToast(TOAST_MESSAGES.COMMON.IMPORT_FAILED, 'error');
         }
@@ -205,7 +215,7 @@ export default function VehiclesTab() {
                 className="h-9 px-4 bg-purple-600 hover:bg-purple-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 Add Vehicle
               </button>

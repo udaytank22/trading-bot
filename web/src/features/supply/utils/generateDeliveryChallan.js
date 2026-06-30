@@ -166,7 +166,7 @@ export function generateDeliveryChallanPDF(deal, vehicle, challanNo) {
     return [
       idx + 1,
       item.product?.name || item.description || 'Product',
-      item.product?.sku  || '—',
+      item.product?.impa  || '—',
       qty,
       unitPrice.toFixed(2),
       taxable.toFixed(2),

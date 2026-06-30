@@ -128,8 +128,9 @@ export default function InquiryDetailsPage() {
         Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.STOCK_CHECK, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
       }
     } catch (err) {
-      console.error(err);
-      Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to record stock check.', background: '#1a1d23', color: '#fff' });
+      console.error('Stock Check Error:', err, err.response?.data);
+      const errorMsg = err.response?.data?.message || err.message || 'Failed to record stock check.';
+      Swal.fire({ icon: 'error', title: 'Error', text: errorMsg, background: '#1a1d23', color: '#fff' });
     }
   };
 
@@ -235,7 +236,7 @@ export default function InquiryDetailsPage() {
           } else if (deal.my_quote?.products?.[idx]) {
             cost = deal.my_quote.products[idx].my_unit_price || 0;
           }
-          
+
           const qty = p.quantity || 1;
           const my_unit_price = cost * (1 + marginVal / 100) * (1 - discountVal / 100);
           const totalPrice = my_unit_price * qty;
@@ -556,7 +557,7 @@ export default function InquiryDetailsPage() {
       const pName = p.product_name || p.description || "";
       const invMatch = inventoryData.find(inv =>
         inv.itemName.toLowerCase() === pName.toLowerCase() ||
-        (inv.sku && pName.toLowerCase().includes(inv.sku.toLowerCase()))
+        (inv.impa && pName.toLowerCase().includes(inv.impa.toLowerCase()))
       );
       const invStock = invMatch ? (invMatch.stocks?.reduce((acc, st) => acc + st.quantity, 0) || 0) : 0;
       if (invMatch && invStock > 0) {
@@ -722,7 +723,7 @@ export default function InquiryDetailsPage() {
 
                       const inventoryMatch = inventoryData.find(inv =>
                         inv.itemName.toLowerCase() === p.product_name.toLowerCase() ||
-                        (inv.sku && p.product_name.toLowerCase().includes(inv.sku.toLowerCase()))
+                        (inv.impa && p.product_name.toLowerCase().includes(inv.impa.toLowerCase()))
                       );
                       const inventoryStock = inventoryMatch ? (inventoryMatch.stocks?.reduce((acc, st) => acc + st.quantity, 0) || 0) : 0;
 
@@ -1285,13 +1286,6 @@ export default function InquiryDetailsPage() {
           <div className="flex justify-between items-center border-b border-gray-200 dark:border-[#2a2d36] pb-4 mb-4 flex-shrink-0">
             <div className="flex flex-col gap-1">
               <h2 className="text-xl font-bold text-gray-950 dark:text-white">Products Requested ({deal.products.length} items)</h2>
-              <div className="flex items-center gap-3 text-xs text-gray-550 dark:text-gray-400">
-                <span>Client: <strong className="text-gray-900 dark:text-white">{deal?.buyer || 'N/A'}</strong></span>
-                <span>•</span>
-                <span>Vessel: <strong className="text-gray-900 dark:text-white">{deal?.vesselName || deal?.vessel_name || 'N/A'}</strong></span>
-                <span>•</span>
-                <span>Ref: <strong className="text-gray-900 dark:text-white">{deal?.referenceNumber || deal?.ref_no || 'N/A'}</strong></span>
-              </div>
             </div>
             <button
               onClick={() => setIsTableFullscreen(false)}

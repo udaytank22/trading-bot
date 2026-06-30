@@ -52,7 +52,7 @@ const validateStockCheck = {
     id: z.string().min(1, 'Inquiry ID is required')
   }),
   body: z.object({
-    supplierIds: z.array(z.string()).optional()
+    supplierIds: z.array(z.number()).optional()
   }).passthrough()
 };
 

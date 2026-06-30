@@ -157,7 +157,7 @@ export default function InventoryPage() {
     if (!query) return inventory;
     return inventory.filter(
       (item) =>
-        (item.sku && item.sku.toLowerCase().includes(query)) ||
+        (item.impa && item.impa.toLowerCase().includes(query)) ||
         (item.itemName && item.itemName.toLowerCase().includes(query)) ||
         (item.category && item.category.toLowerCase().includes(query)) ||
         (item.status && item.status.toLowerCase().includes(query)),
@@ -306,7 +306,7 @@ export default function InventoryPage() {
             <PageToolbar
               search={search}
               onSearchChange={setSearch}
-              searchPlaceholder="Search inventory by SKU, Name, Category..."
+              searchPlaceholder="Search inventory by IMPA, Name, Category..."
               onAdd={canCreate ? () => setIsFormOpen(true) : undefined}
               addLabel="Add Item"
             />
@@ -337,7 +337,7 @@ export default function InventoryPage() {
                     >
                       <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + idx + 1}</td>
                       <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400">
-                        {item.sku}
+                        {item.impa}
                       </td>
                       <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">
                         {item.itemName}

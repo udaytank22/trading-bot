@@ -148,7 +148,7 @@ model Supplier {
 model Product {
   id                 Int                 @id @default(autoincrement())
   name               String
-  sku                String              @unique
+  impa               String              @unique
   category           String?
   unit               String?
   sellingPrice       Decimal             @db.Decimal(12, 2)
@@ -509,7 +509,7 @@ model Payment {
 model InventoryItem {
   id                Int              @id @default(autoincrement())
   itemName          String
-  sku               String           @unique
+  impa               String           @unique
   category          String?
   unit              String?
   sellingPrice      Decimal          @db.Decimal(12, 2)

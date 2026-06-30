@@ -5,8 +5,21 @@ import Swal from 'sweetalert2';
 import {
   User, Mail, Phone, Building2, Ship, Calendar, FileText,
   Plus, Trash2, ArrowRight, ArrowLeft, Send, CheckCircle2,
-  HelpCircle, AlertCircle, Search
+  HelpCircle, AlertCircle, Search, Download, Upload
 } from 'lucide-react';
+import DatePicker from '../../components/ui/datePicker';
+import ExcelImportModal from '../../components/ui/ExcelImportModal';
+import Select from '../../components/ui/select';
+import Button from '../../components/ui/button';
+import * as XLSX from 'xlsx';
+
+const UNIT_OPTIONS = [
+  { value: 'MT', label: 'MT (Metric Tons)' },
+  { value: 'PCS', label: 'PCS (Pieces)' },
+  { value: 'KG', label: 'KG (Kilograms)' },
+  { value: 'LTRS', label: 'LTRS (Liters)' },
+  { value: 'M', label: 'M (Meters)' }
+];
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001').trim();
 
@@ -15,6 +28,7 @@ export default function RequestProductPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -68,6 +82,44 @@ export default function RequestProductPage() {
     if (formData.items.length === 1) return;
     const nextItems = formData.items.filter((_, i) => i !== index);
     setFormData(prev => ({ ...prev, items: nextItems }));
+  };
+
+  const handleDownloadSample = () => {
+    const sampleData = [
+      { Description: 'Wire Rope 10mm', Quantity: 500, Unit: 'M' },
+      { Description: 'Steel Plates', Quantity: 20, Unit: 'MT' }
+    ];
+    const ws = XLSX.utils.json_to_sheet(sampleData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Sample Items");
+    XLSX.writeFile(wb, "Sample_Requirement_Items.xlsx");
+  };
+
+  const handleImport = (importedData) => {
+    const newItems = importedData.map(row => ({
+      description: row.Description || row.description || '',
+      quantity: parseInt(row.Quantity || row.quantity) || 1,
+      unit: row.Unit || row.unit || 'MT'
+    })).filter(item => item.description);
+
+    if (newItems.length > 0) {
+      setFormData(prev => {
+        const items = prev.items.length === 1 && !prev.items[0].description
+          ? newItems
+          : [...prev.items, ...newItems];
+        return { ...prev, items };
+      });
+      setIsImportModalOpen(false);
+      Swal.fire({
+        title: 'Success',
+        text: `Imported ${newItems.length} items successfully.`,
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+      });
+    } else {
+      Swal.fire('Error', 'No valid items found in Excel', 'error');
+    }
   };
 
   // Step Validation
@@ -369,12 +421,12 @@ export default function RequestProductPage() {
                       <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 text-indigo-500" /> Expected Delivery Date
                       </label>
-                      <input
-                        type="date"
+                      <DatePicker
                         name="expectedDeliveryDate"
                         value={formData.expectedDeliveryDate}
                         onChange={handleInputChange}
-                        className={`block w-full px-4 py-3.5 bg-slate-50 border ${errors.expectedDeliveryDate ? 'border-red-500' : 'border-slate-200'} rounded-2xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white text-sm font-medium transition-all`}
+                        className={`w-full px-4 py-3.5 h-auto bg-slate-50 border ${errors.expectedDeliveryDate ? 'border-red-500' : 'border-slate-200'} rounded-2xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white text-sm font-medium transition-all`}
+                        placeholder="dd-mm-yyyy"
                       />
                       {errors.expectedDeliveryDate && <p className="text-xs font-semibold text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {errors.expectedDeliveryDate}</p>}
                     </div>
@@ -400,18 +452,39 @@ export default function RequestProductPage() {
               {/* STEP 3: PRODUCT LINE ITEMS */}
               {step === 3 && (
                 <div className="space-y-6 animate-in fade-in duration-300">
-                  <div className="flex justify-between items-center border-b border-slate-100 pb-4">
-                    <div>
+                  <div className="border-b border-slate-100 pb-5 mb-2">
+                    <div className="mb-4">
                       <h3 className="text-xl font-bold text-slate-900">Requirement Items</h3>
                       <p className="text-sm text-slate-500 mt-1">List all products, quantities, and measurement units requested.</p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={addItemRow}
-                      className="flex items-center gap-1 px-4 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 rounded-xl text-xs font-bold transition-all border border-indigo-100"
-                    >
-                      <Plus className="w-4 h-4" /> Add Product
-                    </button>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={handleDownloadSample}
+                          className="flex items-center gap-2 px-4 py-2 bg-white text-purple-700 hover:bg-purple-50 rounded-lg text-sm font-semibold transition-all border border-purple-400 shadow-sm"
+                          title="Download Sample Format"
+                        >
+                          <Download className="w-4 h-4" /> Sample
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsImportModalOpen(true)}
+                          className="flex items-center gap-2 px-4 py-2 bg-white text-emerald-600 hover:bg-emerald-50 rounded-lg text-sm font-semibold transition-all border border-emerald-400 shadow-sm"
+                          title="Import from Excel"
+                        >
+                          <Upload className="w-4 h-4" /> Import
+                        </button>
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={addItemRow}
+                        variant="primary"
+                        className="px-5 py-2.5 rounded-lg"
+                      >
+                        <Plus className="w-4 h-4" /> Add Product
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Dynamic Items List */}
@@ -460,17 +533,13 @@ export default function RequestProductPage() {
                         {/* Unit */}
                         <div className="w-full sm:w-32 space-y-1.5">
                           <label className="text-[10px] uppercase font-bold text-slate-500 pl-1">Unit</label>
-                          <select
+                          <Select
                             value={item.unit}
-                            onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
-                            className="block w-full px-3 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-medium transition-all shadow-sm"
-                          >
-                            <option value="MT">MT (Metric Tons)</option>
-                            <option value="PCS">PCS (Pieces)</option>
-                            <option value="KG">KG (Kilograms)</option>
-                            <option value="LTRS">LTRS (Liters)</option>
-                            <option value="M">M (Meters)</option>
-                          </select>
+                            onChange={(val) => handleItemChange(index, 'unit', val)}
+                            options={UNIT_OPTIONS}
+                            className="w-full px-4 py-3 h-auto bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-medium transition-all shadow-sm"
+                            variant="form"
+                          />
                         </div>
 
                         {/* Remove button */}
@@ -533,6 +602,13 @@ export default function RequestProductPage() {
 
             </form>
           </div>
+          
+          <ExcelImportModal
+            isOpen={isImportModalOpen}
+            onClose={() => setIsImportModalOpen(false)}
+            onImport={handleImport}
+            expectedColumns={['Description', 'Quantity', 'Unit']}
+          />
         </div>
       </div>
 

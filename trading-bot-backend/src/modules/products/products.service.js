@@ -36,16 +36,16 @@ const getProductById = async (id) => {
  * Create product
  */
 const createProduct = async (data, creatorId) => {
-  // Check for duplicate product (by sku)
+  // Check for duplicate product (by impa)
   const existingProduct = await prisma.product.findFirst({
     where: {
-      sku: data.sku,
+      impa: data.impa,
       deletedAt: null
     }
   });
 
   if (existingProduct) {
-    const err = new Error(`A product with this SKU already exists.`);
+    const err = new Error(`A product with this IMPA already exists.`);
     err.statusCode = 400;
     throw err;
   }
@@ -53,7 +53,7 @@ const createProduct = async (data, creatorId) => {
   return await prisma.product.create({
     data: {
       name: data.name,
-      sku: data.sku,
+      impa: data.impa,
       category: data.category || null,
       unit: data.unit || null,
       sellingPrice: data.sellingPrice,
@@ -69,17 +69,17 @@ const createProduct = async (data, creatorId) => {
  */
 const updateProduct = async (id, data, updaterId) => {
   const productId = parseInt(id, 10);
-  // Check for duplicate product (by sku) excluding the current product
+  // Check for duplicate product (by impa) excluding the current product
   const existingProduct = await prisma.product.findFirst({
     where: {
       id: { not: productId },
-      sku: data.sku,
+      impa: data.impa,
       deletedAt: null
     }
   });
 
   if (existingProduct) {
-    const err = new Error(`A product with this SKU already exists.`);
+    const err = new Error(`A product with this IMPA already exists.`);
     err.statusCode = 400;
     throw err;
   }
@@ -88,7 +88,7 @@ const updateProduct = async (id, data, updaterId) => {
     where: { id: productId },
     data: {
       name: data.name,
-      sku: data.sku,
+      impa: data.impa,
       category: data.category,
       unit: data.unit,
       sellingPrice: data.sellingPrice,
@@ -128,36 +128,36 @@ const executeBulkUpsertProductsJob = async (products, creatorId) => {
   let successCount = 0;
   const errors = [];
 
-  const providedSkus = products.filter(p => p.sku).map(p => p.sku);
+  const providedImpas = products.filter(p => p.impa).map(p => p.impa);
 
-  const existingBySku = await prisma.product.findMany({
-    where: { sku: { in: providedSkus }, deletedAt: null }
+  const existingByImpa = await prisma.product.findMany({
+    where: { impa: { in: providedImpas }, deletedAt: null }
   });
 
-  const existingSkuMap = new Map(existingBySku.map(p => [p.sku, p]));
+  const existingImpaMap = new Map(existingByImpa.map(p => [p.impa, p]));
 
   const toCreate = [];
   const toUpdate = [];
 
   for (const item of products) {
-    if (!item.name || !item.sku) {
-      errors.push({ sku: item.sku || null, error: 'Name and SKU are required' });
+    if (!item.name || !item.impa) {
+      errors.push({ impa: item.impa || null, error: 'Name and IMPA are required' });
       continue;
     }
 
-    const existing = existingSkuMap.get(item.sku);
+    const existing = existingImpaMap.get(item.impa);
     
     if (existing) {
       toUpdate.push({ data: item, existingId: existing.id, existing });
     } else {
-      if (toCreate.find(p => p.sku === item.sku)) {
-        errors.push({ sku: item.sku, error: 'Duplicate SKU in the import file' });
+      if (toCreate.find(p => p.impa === item.impa)) {
+        errors.push({ impa: item.impa, error: 'Duplicate IMPA in the import file' });
         continue;
       }
 
       toCreate.push({
         name: item.name,
-        sku: item.sku,
+        impa: item.impa,
         category: item.category || null,
         unit: item.unit || null,
         sellingPrice: item.sellingPrice !== undefined ? parseFloat(item.sellingPrice) : 0,

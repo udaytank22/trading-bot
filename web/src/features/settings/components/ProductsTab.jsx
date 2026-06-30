@@ -33,7 +33,7 @@ export default function ProductsTab() {
     if (!q) return list;
     return list.filter(p =>
       p.name.toLowerCase().includes(q) ||
-      (p.sku && p.sku.toLowerCase().includes(q)) ||
+      (p.impa && p.impa.toLowerCase().includes(q)) ||
       (p.category && p.category.toLowerCase().includes(q))
     );
   }, [productsData, search]);
@@ -67,7 +67,7 @@ export default function ProductsTab() {
       const data = {
         name: formData.name,
         category: formData.category,
-        sku: formData.sku || `SKU-${Date.now().toString().slice(-4)}`,
+        impa: formData.impa || `IMPA-${Date.now().toString().slice(-4)}`,
         sellingPrice: parseFloat(formData.sellingPrice) || 0,
         purchasePrice: parseFloat(formData.purchasePrice) || 0,
         unit: formData.unit || 'pcs'
@@ -94,7 +94,7 @@ export default function ProductsTab() {
       dataToExport = productsData.map(prod => ({
         ID: prod.id,
         Name: prod.name || "",
-        SKU: prod.sku || "",
+        IMPA: prod.impa || "",
         Category: prod.category || "",
         Unit: prod.unit || "pcs",
         "Selling Price": prod.sellingPrice || 0,
@@ -104,7 +104,7 @@ export default function ProductsTab() {
       dataToExport = [{
         ID: "",
         Name: "Industrial Valve",
-        SKU: "VLV-1001",
+        IMPA: "VLV-1001",
         Category: "Mechanical",
         Unit: "pcs",
         "Selling Price": 1500.00,
@@ -121,16 +121,22 @@ export default function ProductsTab() {
     let failCount = 0;
     const validProducts = [];
 
-    for (const row of jsonData) {
+    for (const rawRow of jsonData) {
+      const row = Object.keys(rawRow).reduce((acc, key) => {
+        acc[key.trim()] = rawRow[key];
+        return acc;
+      }, {});
+
       if (!row.Name) {
         failCount++;
         continue;
       }
 
+      const rawId = parseInt(row.ID || row.id);
       validProducts.push({
-        id: row.ID || undefined,
+        id: rawId > 0 ? rawId : undefined,
         name: row.Name,
-        sku: row.SKU || `SKU-${Date.now().toString().slice(-4)}`,
+        impa: row.IMPA || `IMPA-${Date.now().toString().slice(-4)}`,
         category: row.Category || 'General',
         unit: row.Unit || 'pcs',
         sellingPrice: parseFloat(row["Selling Price"]) || 0,
@@ -207,7 +213,7 @@ export default function ProductsTab() {
               <Button
                 onClick={() => setIsFormOpen(true)}
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 Add Product
               </Button>
             </>
@@ -220,7 +226,7 @@ export default function ProductsTab() {
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onImport={handleImport}
-        expectedColumns={['ID', 'Name', 'SKU', 'Category', 'Unit', 'Selling Price', 'Purchase Price']}
+        expectedColumns={['ID', 'Name', 'IMPA', 'Category', 'Unit', 'Selling Price', 'Purchase Price']}
       />
 
       <DataTable
@@ -230,7 +236,7 @@ export default function ProductsTab() {
           { key: "id", label: "Product ID" },
           { key: "name", label: "Name" },
           { key: "category", label: "Category" },
-          { key: "sku", label: "SKU" },
+          { key: "impa", label: "IMPA" },
           { key: "sellingPrice", label: "Selling Price" },
           { key: "purchasePrice", label: "Purchase Price" },
           { key: "actions", label: "Actions", className: "text-right" },
@@ -248,7 +254,7 @@ export default function ProductsTab() {
                 {prod.category || 'Uncategorized'}
               </span>
             </td>
-            <td className="px-5 py-3 font-mono">{prod.sku}</td>
+            <td className="px-5 py-3 font-mono">{prod.impa}</td>
             <td className="px-5 py-3">₹{parseFloat(prod.sellingPrice || 0).toFixed(2)}</td>
             <td className="px-5 py-3">₹{parseFloat(prod.purchasePrice || 0).toFixed(2)}</td>
             <td className="px-5 py-3 text-right space-x-3">
@@ -275,10 +281,10 @@ export default function ProductsTab() {
 }
 
 function ProductForm({ initialData, onSave, onClose }) {
-  const [formData, setFormData] = useState(initialData || { name: '', category: '', sku: '', sellingPrice: '', purchasePrice: '', unit: 'pcs' });
+  const [formData, setFormData] = useState(initialData || { name: '', category: '', impa: '', sellingPrice: '', purchasePrice: '', unit: 'pcs' });
 
   React.useEffect(() => {
-    setFormData(initialData || { name: '', category: '', sku: '', sellingPrice: '', purchasePrice: '', unit: 'pcs' });
+    setFormData(initialData || { name: '', category: '', impa: '', sellingPrice: '', purchasePrice: '', unit: 'pcs' });
   }, [initialData]);
 
   const set = (key) => (e) => setFormData(prev => ({ ...prev, [key]: e.target.value }));
@@ -288,7 +294,7 @@ function ProductForm({ initialData, onSave, onClose }) {
       <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4 content-start">
         <Field label="Name"><input type="text" className={inputCls} value={formData.name} onChange={set('name')} placeholder="e.g. Industrial Widget A" /></Field>
         <Field label="Category"><input type="text" className={inputCls} value={formData.category} onChange={set('category')} placeholder="e.g. Mechanical" /></Field>
-        <Field label="SKU"><input type="text" className={inputCls} value={formData.sku} onChange={set('sku')} placeholder="e.g. IND-WDG-01" /></Field>
+        <Field label="IMPA"><input type="text" className={inputCls} value={formData.impa} onChange={set('impa')} placeholder="e.g. IND-WDG-01" /></Field>
         <Field label="Unit"><input type="text" className={inputCls} value={formData.unit} onChange={set('unit')} placeholder="e.g. pcs" /></Field>
         <Field label="Selling Price"><input type="number" className={inputCls} value={formData.sellingPrice} onChange={set('sellingPrice')} placeholder="e.g. 1500" /></Field>
         <Field label="Purchase Price"><input type="number" className={inputCls} value={formData.purchasePrice} onChange={set('purchasePrice')} placeholder="e.g. 1000" /></Field>

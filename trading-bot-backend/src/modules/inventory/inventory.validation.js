@@ -6,7 +6,7 @@ const { z } = require('zod');
 const validateCreateItem = {
   body: z.object({
     itemName: z.string().min(1, 'itemName is required'),
-    sku: z.string().min(1, 'sku is required'),
+    impa: z.string().min(1, 'impa is required'),
     description: z.string().optional(),
     sellingPrice: z.coerce.number({
       required_error: 'sellingPrice is required and must be a number',

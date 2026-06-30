@@ -49,7 +49,7 @@ const notifyRole = async (roleName, { title, message, type, relatedModule, relat
           message,
           type: type || 'SYSTEM',
           relatedModule,
-          relatedRecordId: relatedRecordId ? String(relatedRecordId) : null
+          relatedRecordId: relatedRecordId ? parseInt(relatedRecordId, 10) : null
         }
       });
       notifications.push(notification);

@@ -1449,12 +1449,12 @@ const confirmDeal = async (id, data, userId) => {
             where: { name: item.description, deletedAt: null }
           });
           if (!product) {
-            const skuCount = await tx.product.count();
-            const sku = `SKU-${1000 + skuCount + 1}`;
+            const impaCount = await tx.product.count();
+            const impa = `IMPA-${1000 + impaCount + 1}`;
             product = await tx.product.create({
               data: {
                 name: item.description,
-                sku,
+                impa,
                 category: "General",
                 unit: item.unit || "PCS",
                 sellingPrice: parseFloat(sqItem.totalPrice) / item.quantity,

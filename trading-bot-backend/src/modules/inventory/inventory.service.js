@@ -43,11 +43,11 @@ const getInventoryItemById = async (id) => {
  * Create a new inventory catalog item
  */
 const createInventoryItem = async (data, creatorId) => {
-  // Check for duplicate inventory item (by sku or itemName)
+  // Check for duplicate inventory item (by impa or itemName)
   const existingItem = await prisma.inventoryItem.findFirst({
     where: {
       OR: [
-        { sku: data.sku },
+        { impa: data.impa },
         { itemName: data.itemName }
       ],
       deletedAt: null
@@ -55,7 +55,7 @@ const createInventoryItem = async (data, creatorId) => {
   });
 
   if (existingItem) {
-    const err = new Error(`An inventory item with this ${existingItem.sku === data.sku ? 'SKU' : 'item name'} already exists.`);
+    const err = new Error(`An inventory item with this ${existingItem.impa === data.impa ? 'IMPA' : 'item name'} already exists.`);
     err.statusCode = 400;
     throw err;
   }
@@ -63,7 +63,7 @@ const createInventoryItem = async (data, creatorId) => {
   return await prisma.inventoryItem.create({
     data: {
       itemName: data.itemName,
-      sku: data.sku,
+      impa: data.impa,
       category: data.category || null,
       unit: data.unit || null,
       sellingPrice: parseFloat(data.sellingPrice),
@@ -80,12 +80,12 @@ const createInventoryItem = async (data, creatorId) => {
  */
 const updateInventoryItem = async (id, data, updaterId) => {
   const itemId = parseInt(id, 10);
-  // Check for duplicate inventory item (by sku or itemName) excluding the current item
+  // Check for duplicate inventory item (by impa or itemName) excluding the current item
   const existingItem = await prisma.inventoryItem.findFirst({
     where: {
       id: { not: itemId },
       OR: [
-        { sku: data.sku },
+        { impa: data.impa },
         { itemName: data.itemName }
       ],
       deletedAt: null
@@ -93,7 +93,7 @@ const updateInventoryItem = async (id, data, updaterId) => {
   });
 
   if (existingItem) {
-    const err = new Error(`An inventory item with this ${existingItem.sku === data.sku ? 'SKU' : 'item name'} already exists.`);
+    const err = new Error(`An inventory item with this ${existingItem.impa === data.impa ? 'IMPA' : 'item name'} already exists.`);
     err.statusCode = 400;
     throw err;
   }
@@ -102,7 +102,7 @@ const updateInventoryItem = async (id, data, updaterId) => {
     where: { id: itemId },
     data: {
       itemName: data.itemName,
-      sku: data.sku,
+      impa: data.impa,
       category: data.category,
       unit: data.unit,
       sellingPrice: data.sellingPrice ? parseFloat(data.sellingPrice) : undefined,
@@ -220,7 +220,7 @@ const createStockMovement = async (data, creatorId) => {
 
 /**
  * Check whether all inquiry items are available in inventory.
- * Matches by itemName (case-insensitive) or SKU.
+ * Matches by itemName (case-insensitive) or IMPA.
  *
  * @param {Array<{description: string, quantity: number}>} inquiryItems
  * @returns {{ allAvailable: boolean, availableItems: Array, unavailableItems: Array }}
@@ -239,11 +239,11 @@ const checkInventoryAvailability = async (inquiryItems) => {
   for (const inquiryItem of inquiryItems) {
     const descLower = inquiryItem.description.toLowerCase().trim();
 
-    // Match by itemName (case-insensitive) or SKU
+    // Match by itemName (case-insensitive) or IMPA
     const match = allInventory.find(inv => {
       const nameLower = inv.itemName.toLowerCase().trim();
-      const skuLower = (inv.sku || '').toLowerCase().trim();
-      return nameLower === descLower || skuLower === descLower;
+      const impaLower = (inv.impa || '').toLowerCase().trim();
+      return nameLower === descLower || impaLower === descLower;
     });
 
     if (!match) {
@@ -527,7 +527,7 @@ const getInventoryTransactionHistory = async (filters = {}) => {
       where,
       include: {
         inventoryItem: {
-          select: { id: true, itemName: true, sku: true, unit: true }
+          select: { id: true, itemName: true, impa: true, unit: true }
         },
         warehouse: {
           select: { id: true, name: true }

@@ -117,7 +117,7 @@ export default function DataTable({
                 <th
                   key={col.key}
                   className={[
-                    "px-2 sm:px-3 md:px-4 py-1 sm:py-1.5",
+                    "px-4 py-3 text-left whitespace-nowrap",
                     "text-white",
                     "text-[13px] font-semibold tracking-wide capitalize",
                     "border-b border-[#0B4775]",

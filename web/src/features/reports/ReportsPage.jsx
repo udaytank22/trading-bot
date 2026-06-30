@@ -136,7 +136,7 @@ export default function ReportsPage() {
         return {
           title: 'Inventory Stock Report',
           columns: [
-            { header: 'SKU', key: 'sku' },
+            { header: 'IMPA', key: 'impa' },
             { header: 'Item Name', key: 'itemName' },
             { header: 'Category', key: 'category' },
             { header: 'Total Qty', key: 'totalQty' },

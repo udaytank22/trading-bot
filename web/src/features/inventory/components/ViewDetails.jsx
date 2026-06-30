@@ -18,7 +18,7 @@ const getTypeStyle = (type) => {
 
 export function ViewDetails({ item, onClose }) {
   const details = {
-    "SKU": item.sku,
+    "IMPA": item.impa,
     "Item Name": item.itemName,
     "Category": item.category || 'N/A',
     "Unit": item.unit || 'N/A',

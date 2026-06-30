@@ -39,7 +39,7 @@ const AdminApprovalModal = ({ isOpen, onClose, onConfirm, deal, isPageMode, inve
     if (supplierProductNames.has(p.product_name.toLowerCase())) return acc; // already covered by supplier quote
     const invMatch = inventoryData.find(inv =>
       inv.itemName.toLowerCase() === p.product_name.toLowerCase() ||
-      (inv.sku && p.product_name.toLowerCase().includes(inv.sku.toLowerCase()))
+      (inv.impa && p.product_name.toLowerCase().includes(inv.impa.toLowerCase()))
     );
     const invStock = invMatch ? (invMatch.stocks?.reduce((s, st) => s + st.quantity, 0) || 0) : 0;
     if (invMatch && invStock > 0) {

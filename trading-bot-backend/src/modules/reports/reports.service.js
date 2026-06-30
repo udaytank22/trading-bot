@@ -308,7 +308,7 @@ const getInventoryReport = async () => {
     return {
       id: item.id,
       itemName: item.itemName,
-      sku: item.sku,
+      impa: item.impa,
       category: item.category,
       unit: item.unit,
       sellingPrice: item.sellingPrice.toNumber(),

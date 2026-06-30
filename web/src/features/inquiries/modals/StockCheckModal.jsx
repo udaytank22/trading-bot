@@ -32,7 +32,7 @@ const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
       // Check if product is in internal inventory
       const inventoryMatch = inventoryData.find(inv => 
         inv.itemName.toLowerCase() === product.product_name.toLowerCase() ||
-        (inv.sku && product.product_name.toLowerCase().includes(inv.sku.toLowerCase()))
+        (inv.impa && product.product_name.toLowerCase().includes(inv.impa.toLowerCase()))
       );
 
       let inventoryStock = 0;

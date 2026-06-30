@@ -187,7 +187,7 @@ export const ProductsTabSchema1 = [
   { key: "id", label: "Product ID" },
   { key: "name", label: "Name" },
   { key: "category", label: "Category" },
-  { key: "sku", label: "SKU" },
+  { key: "impa", label: "IMPA" },
   { key: "sellingPrice", label: "Selling Price" },
   { key: "purchasePrice", label: "Purchase Price" },
   { key: "actions", label: "Actions", className: "text-right" },

@@ -92,7 +92,7 @@ export function generateGatePassPDF(deal, vehicle, gatePassNo) {
               items.push({
                   description: sub.cargoDetails,
                   quantity: sub.quantity || 1,
-                  product: { sku: '-' }
+                  product: { impa: '-' }
               });
           }
       });
@@ -101,7 +101,7 @@ export function generateGatePassPDF(deal, vehicle, gatePassNo) {
   const tableRows = items.map((item, idx) => {
     return [
       idx + 1,
-      item.product?.sku || '-', // Style
+      item.product?.impa || '-', // Style
       item.product?.name || item.description || 'Product', // Particular
       item.quantity || 1, // Quantity
       '', // Ctn (empty for manual entry or -)

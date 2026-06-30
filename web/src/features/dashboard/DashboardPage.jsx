@@ -45,6 +45,7 @@ function StatCard({ value, label, colorClass, onClick }) {
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
 
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -94,8 +95,11 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            Welcome back, {currentUser?.name?.split(' ')[0] || 'User'}! 👋
+          </h1>
           {error && (
-            <p className="bg-red-500/20 text-red-400 px-4 py-2 rounded-lg border border-red-500/30 text-sm font-medium">
+            <p className="mt-2 bg-red-500/20 text-red-400 px-4 py-2 rounded-lg border border-red-500/30 text-sm font-medium">
               {error}
             </p>
           )}
