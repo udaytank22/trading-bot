@@ -59,9 +59,9 @@ async function runTest(url, connections, amount, title, method = 'GET', body = n
       
       console.log(`\nResults for ${title}:`);
       console.log(`Total Requests: ${result.requests.total}`);
-      console.log(`2xx Responses: ${result.2xx}`);
-      console.log(`429 Responses: ${result.429}`);
-      console.log(`5xx Errors: ${result.5xx}`);
+      console.log(`2xx Responses: ${result['2xx']}`);
+      console.log(`429 Responses: ${result['429']}`);
+      console.log(`5xx Errors: ${result['5xx']}`);
       console.log(`Total Errors: ${result.errors}`);
       console.log(`Time taken: ${result.duration}s`);
       console.log(`Avg Req/sec: ${result.requests.average}`);
