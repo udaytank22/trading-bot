@@ -37,8 +37,53 @@ async function main() {
   await prisma.vehicle.deleteMany();
   await prisma.document.deleteMany();
   
-  console.log('Seeding Large Dataset...');
+  console.log('Seeding load test users (IDs 1-50)...');
+  let salesRepRole = await prisma.role.findFirst({ where: { name: 'Sales Representative' } });
+  if (!salesRepRole) {
+    salesRepRole = await prisma.role.create({ data: { name: 'Sales Representative' } });
+  }
+  const superAdminRole = await prisma.role.findFirst({ where: { name: 'Super Admin' } });
+
+  // Grant read permissions for clients, products, inquiries, and create for clients
+  const permsToGrant = [
+    { module: 'CLIENT', action: 'READ' },
+    { module: 'CLIENT', action: 'CREATE' },
+    { module: 'PRODUCT', action: 'READ' },
+    { module: 'INQUIRY', action: 'READ' }
+  ];
   
+  for (const p of permsToGrant) {
+    let perm = await prisma.permission.findFirst({ where: { module: p.module, action: p.action } });
+    if (!perm) {
+      perm = await prisma.permission.create({ data: { module: p.module, action: p.action } });
+    }
+    const hasRolePerm = await prisma.rolePermission.findFirst({ where: { roleId: salesRepRole.id, permissionId: perm.id } });
+    if (!hasRolePerm) {
+      await prisma.rolePermission.create({ data: { roleId: salesRepRole.id, permissionId: perm.id } });
+    }
+  }
+
+  const usersData = Array.from({ length: 50 }).map((_, i) => {
+    const id = i + 101;
+    return {
+      id,
+      email: `user${id}@trademind.com`,
+      password: 'password123', // In real app it should be hashed, but mock is fine if login uses this or bypasses it
+      roleId: id % 10 === 0 ? superAdminRole.id : salesRepRole.id,
+      isActive: true,
+    };
+  });
+  
+  for (const u of usersData) {
+    await prisma.user.upsert({
+      where: { id: u.id },
+      update: { email: u.email, roleId: u.roleId },
+      create: u
+    });
+  }
+  
+  console.log('Seeding Large Dataset...');
+
   // 1. Clients (5000)
   console.log('Creating 5,000 clients...');
   const clientsData = Array.from({ length: 5000 }).map(() => ({

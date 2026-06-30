@@ -11,13 +11,22 @@ if (!secret) {
 // Generate valid mock tokens for 50 distinct users
 const NUM_USERS = 50;
 const tokens = [];
-for (let i = 1; i <= NUM_USERS; i++) {
+const users = Array.from({ length: NUM_USERS }).map((_, i) => {
+  const id = i + 101;
+  return {
+    id,
+    email: `user${id}@trademind.com`,
+    role: i % 10 === 0 ? 'Super Admin' : 'Sales Representative'
+  };
+});
+
+for (const user of users) {
   tokens.push(
     jwt.sign(
       {
-        userId: i,
-        email: `user${i}@trademind.com`,
-        role: i % 10 === 0 ? 'Super Admin' : 'Sales Representative'
+        userId: user.id,
+        email: user.email,
+        role: user.role
       },
       secret,
       { expiresIn: '1h' }
@@ -60,13 +69,13 @@ async function runTest(url, connections, amount, title, method = 'GET', body = n
       console.log(`\nResults for ${title}:`);
       console.log(`Total Requests: ${result.requests.total}`);
       console.log(`2xx Responses: ${result['2xx']}`);
-      console.log(`429 Responses: ${result['429']}`);
+      console.log(`429 Responses: ${result.statusCodeStats['429'] ? result.statusCodeStats['429'].count : 0}`);
       console.log(`5xx Errors: ${result['5xx']}`);
       console.log(`Total Errors: ${result.errors}`);
       console.log(`Time taken: ${result.duration}s`);
       console.log(`Avg Req/sec: ${result.requests.average}`);
       console.log(`Avg Latency: ${result.latency.average}ms`);
-      console.log(`P95 Latency: ${result.latency.p95}ms`);
+      console.log(`P97.5 Latency: ${result.latency.p97_5}ms`);
       console.log(`P99 Latency: ${result.latency.p99}ms`);
       
       resolve(result);

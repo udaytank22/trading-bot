@@ -61,7 +61,7 @@ function DeleteIcon() {
  * @param {function} props.onEdit   - Called with the account object to pre-fill modal
  * @param {function} props.onDelete - Called with the account ID; triggers confirm
  */
-const AccountTable = ({ items, onEdit, onDelete, paginationProps }) => {
+const AccountTable = ({ items, onEdit, onDelete, paginationProps, isLoading }) => {
   const renderRow = (acc, idx) => (
     <tr
       key={acc.id}
@@ -151,6 +151,7 @@ const AccountTable = ({ items, onEdit, onDelete, paginationProps }) => {
       columns={COLUMNS}
       data={items}
       renderRow={renderRow}
+      isLoading={isLoading}
       emptyMessage="No bank accounts found."
     />
   );

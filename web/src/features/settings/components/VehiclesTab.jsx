@@ -268,6 +268,7 @@ export default function VehiclesTab() {
             { key: "actions", label: "Actions", className: "text-right" },
           ]}
           data={currentItems}
+          isLoading={isLoading}
           emptyMessage="No vehicles found."
           renderRow={(vehicle, i) => (
             <tr key={vehicle.id} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>

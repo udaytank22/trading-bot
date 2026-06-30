@@ -361,7 +361,7 @@ export default function InquiriesPage() {
               </button>
             </div>
             {hasPermission("inquiries", "create") && (
-              <Button variant="primary" size="sm" onClick={() => setIsAddModalOpen(true)}>
+              <Button variant="primary" onClick={() => setIsAddModalOpen(true)}>
                 <PlusIcon />
                 Add Inquiry
               </Button>

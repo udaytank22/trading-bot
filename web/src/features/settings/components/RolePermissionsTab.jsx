@@ -459,6 +459,7 @@ export default function RolePermissionsTab() {
                             });
                             return row;
                           })}
+                          isLoading={loading}
                           emptyMessage="No modules match the search filter inside this role."
                         />
                       </div>

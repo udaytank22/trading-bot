@@ -55,12 +55,12 @@ const SIZE_CLASSES = {
  * Only used when variant="icon".
  */
 const ICON_COLOR_CLASSES = {
-  blue:   "text-blue-500/70   hover:text-blue-500   hover:bg-blue-500/10",
-  red:    "text-red-500/70    hover:text-red-500    hover:bg-red-500/10",
+  blue: "text-blue-500/70   hover:text-blue-500   hover:bg-blue-500/10",
+  red: "text-red-500/70    hover:text-red-500    hover:bg-red-500/10",
   purple: "text-purple-500/70 hover:text-purple-500 hover:bg-purple-500/10",
-  green:  "text-emerald-500/70 hover:text-emerald-500 hover:bg-emerald-500/10",
-  amber:  "text-amber-500/70  hover:text-amber-500  hover:bg-amber-500/10",
-  gray:   "text-gray-400      hover:text-gray-200   hover:bg-white/[0.06]",
+  green: "text-emerald-500/70 hover:text-emerald-500 hover:bg-emerald-500/10",
+  amber: "text-amber-500/70  hover:text-amber-500  hover:bg-amber-500/10",
+  gray: "text-gray-400      hover:text-gray-200   hover:bg-white/[0.06]",
 };
 
 // ─── Component ─────────────────────────────────────────────────────────────────
@@ -77,7 +77,7 @@ const ICON_COLOR_CLASSES = {
  */
 export default function Button({
   variant = "primary",
-  size = "md",
+  size = "sm",
   color = "gray",
   disabled = false,
   loading = false,

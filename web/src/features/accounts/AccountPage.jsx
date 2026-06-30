@@ -39,7 +39,7 @@ const FILTER_OPTIONS = [
 // ─── Main Page Component ───────────────────────────────────────────────────────
 export default function AccountPage() {
   // Global accounts data from AppContext
-  const { data: accountsData, refetch: refreshAll } = useAccounts();
+  const { data: accountsData, refetch: refreshAll, isLoading } = useAccounts();
   const { hasPermission } = useAuth();
   const canCreate = hasPermission('bankAccounts', 'create');
   const canUpdate = hasPermission('bankAccounts', 'update');
@@ -165,6 +165,7 @@ export default function AccountPage() {
       <div className="flex-1 bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl shadow-sm flex flex-col overflow-hidden">
         <AccountTable
           items={currentData}
+          isLoading={isLoading}
           onEdit={canUpdate ? handleEdit : undefined}
           onDelete={canDelete ? handleDelete : undefined}
           paginationProps={filteredData.length > 0 ? {

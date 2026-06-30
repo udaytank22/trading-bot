@@ -6,11 +6,12 @@ import Swal from 'sweetalert2';
 import { useAuth } from '@context';
 import { useProducts } from '@hooks/queries';
 import { api } from '@services/api';
-import { RightDrawer, ViewDetails, Field, inputCls, EyeIcon, EditIcon, TrashIcon, CenterModal } from './shared';
+import { RightDrawer, ViewDetails, Field, inputCls, EyeIcon, EditIcon, TrashIcon, CenterModal, HeaderButton } from './shared';
 import * as XLSX from 'xlsx';
 import { useToast } from '@hooks/useToast';
 import { VendorsTabSchema1 } from '@config/tableSchemas';
 import { usePaginatedFetch } from '@hooks/usePaginatedFetch';
+import Button from '@components/ui/button';
 
 export default function VendorsTab() {
   const { hasPermission } = useAuth();
@@ -483,37 +484,30 @@ export default function VendorsTab() {
 
         {/* Right Side - Buttons */}
         <div className="flex flex-wrap items-center gap-3 justify-start sm:justify-end">
-          <button
+          <HeaderButton
             onClick={handleDownloadSample}
-            className="h-9 px-4 bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2"
+            color="gray"
+            icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
             Sample
-          </button>
+          </HeaderButton>
 
           {canCreate && (
             <>
-              <button
+              <HeaderButton
                 onClick={() => setIsImportModalOpen(true)}
-                className="h-9 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2"
+                color="emerald"
+                icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>}
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
                 Import
-              </button>
+              </HeaderButton>
 
-              <button
+              <Button
                 onClick={() => setIsFormOpen(true)}
-                className="h-9 px-4 bg-purple-600 hover:bg-purple-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                 Add Vendor
-              </button>
+              </Button>
             </>
           )}
         </div>
@@ -539,6 +533,7 @@ export default function VendorsTab() {
           { key: "actions", label: "Actions", className: "text-right" },
         ]}
         data={suppliersData || []}
+        isLoading={loading}
         emptyMessage="No vendors found."
         renderRow={(vendor, i) => (
           <tr key={vendor.id} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
