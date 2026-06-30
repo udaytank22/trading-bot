@@ -6,7 +6,6 @@ const validate = require('../../middleware/validation.middleware');
 const { validateLogin, validateRefresh, validateChangePassword } = require('./auth.validation');
 const asyncWrapper = require('../../utils/asyncWrapper');
 const rateLimit = require('express-rate-limit');
-const { stricterLimiter } = require('../../middleware/rateLimiter');
 
 // Rate limiter for authentication attempts
 const authLimiter = rateLimit({
@@ -20,9 +19,11 @@ const authLimiter = rateLimit({
   legacyHeaders: false
 });
 
+const { strictLimiter } = require('../../middleware/rateLimiter');
+
 // Unprotected routes
 router.post('/login', authLimiter, validate(validateLogin), asyncWrapper(controller.login));
-router.post('/refresh', stricterLimiter, asyncWrapper(controller.refresh));
+router.post('/refresh', strictLimiter, validate(validateRefresh), asyncWrapper(controller.refresh));
 
 // Protected routes
 router.post('/logout', authMiddleware, asyncWrapper(controller.logout));

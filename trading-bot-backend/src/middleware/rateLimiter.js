@@ -52,12 +52,12 @@ const rateLimitKeyGenerator = (req) => {
  * Sensible default rate limiter applied to all API endpoints
  */
 const globalLimiter = rateLimit({
-  windowMs: config.RATE_LIMIT_WINDOW_MS,
-  max: config.RATE_LIMIT_MAX,
+  windowMs: config.RATE_LIMIT_GLOBAL_WINDOW_MS,
+  max: config.RATE_LIMIT_GLOBAL_MAX,
   keyGenerator: rateLimitKeyGenerator,
   message: {
     success: false,
-    message: 'Too many requests. Please slow down and try again later.'
+    message: 'Too many requests from this IP, please try again later.'
   },
   standardHeaders: true,
   legacyHeaders: false
@@ -66,9 +66,9 @@ const globalLimiter = rateLimit({
 /**
  * Stricter rate limiter for expensive or sensitive endpoints (e.g., refresh token, PDF generation)
  */
-const stricterLimiter = rateLimit({
-  windowMs: config.STRICT_RATE_LIMIT_WINDOW_MS,
-  max: config.STRICT_RATE_LIMIT_MAX,
+const strictLimiter = rateLimit({
+  windowMs: config.RATE_LIMIT_STRICT_WINDOW_MS,
+  max: config.RATE_LIMIT_STRICT_MAX,
   keyGenerator: rateLimitKeyGenerator,
   message: {
     success: false,
@@ -80,5 +80,5 @@ const stricterLimiter = rateLimit({
 
 module.exports = {
   globalLimiter,
-  stricterLimiter
+  strictLimiter
 };
