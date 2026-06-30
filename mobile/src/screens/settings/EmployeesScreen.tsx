@@ -2,19 +2,18 @@ import React, { useState, useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
-import { ScaledSheet } from 'react-native-size-matters';
-import { View, FlatList, TouchableOpacity, Alert } from 'react-native';
-import { useAppStore } from '../store/appStore';
-import AppText from '../components/common/AppText';
-import AppCard from '../components/common/AppCard';
-import AppHeader from '../components/layout/AppHeader';
-import AppSearch from '../components/inputs/AppSearch';
-import AppButton from '../components/common/AppButton';
-import AppModal from '../components/modals/AppModal';
-import AppInput from '../components/inputs/AppInput';
-import AppDropdown from '../components/inputs/AppDropdown';
-import AppAvatar from '../components/common/AppAvatar';
-import { Employee } from '../data/users';
+import { View, FlatList, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { useAppStore } from '../../store/appStore';
+import AppText from '../../components/common/AppText';
+import AppCard from '../../components/common/AppCard';
+import AppHeader from '../../components/layout/AppHeader';
+import AppSearch from '../../components/inputs/AppSearch';
+import AppButton from '../../components/common/AppButton';
+import AppModal from '../../components/modals/AppModal';
+import AppInput from '../../components/inputs/AppInput';
+import AppDropdown from '../../components/inputs/AppDropdown';
+import AppAvatar from '../../components/common/AppAvatar';
+import { Employee } from '../../data/users';
 
 export const EmployeesScreen = () => {
   const theme = useAppStore((state) => state.theme);
@@ -213,34 +212,34 @@ export const EmployeesScreen = () => {
   );
 };
 
-const styles = ScaledSheet.create({
+const styles = StyleSheet.create({
   appButton: {
-    marginTop: '16@ms',
+    marginTop: 16,
   },
   appButton1: {
-    height: '34.0@vs',
-    paddingHorizontal: '14@ms',
+    height: 34.0,
+    paddingHorizontal: 14,
   },
   appCard: {
-    marginBottom: '12@ms',
-    padding: '14@ms',
+    marginBottom: 12,
+    padding: 14,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   appText: {
     textAlign: 'center',
-    fontSize: '14@ms',
+    fontSize: 14,
     color: '#6b7280',
   },
   appText1: {
-    fontSize: '10@ms',
+    fontSize: 10,
     fontWeight: 'bold',
     color: '#ef4444',
   },
   appText2: {
     color: '#6b7280',
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText3: {
     color: '#9ca3af',
@@ -259,29 +258,29 @@ const styles = ScaledSheet.create({
     backgroundColor: '#0c0e12',
   },
   style: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
   },
   touchableOpacity: {
-    padding: '8@ms',
-    borderRadius: '12@ms',
+    padding: 8,
+    borderRadius: 12,
     borderWidth: 1,
   },
   view: {
-    marginTop: '32@ms',
+    marginTop: 32,
   },
   view1: {
-    marginLeft: '12@ms',
+    marginLeft: 12,
     flex: 1,
   },
   view2: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    paddingRight: '12@ms',
+    paddingRight: 12,
   },
   view3: {
     flex: 1,
-    padding: '16@ms',
+    padding: 16,
   },
 });
 

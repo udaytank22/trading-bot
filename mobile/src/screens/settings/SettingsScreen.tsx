@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
-import { ScaledSheet } from 'react-native-size-matters';
-import { View, ScrollView, Alert } from 'react-native';
-import { useAppStore } from '../store/appStore';
-import AppText from '../components/common/AppText';
-import AppCard from '../components/common/AppCard';
-import AppHeader from '../components/layout/AppHeader';
-import AppInput from '../components/inputs/AppInput';
-import AppButton from '../components/common/AppButton';
+import { View, ScrollView, Alert, StyleSheet } from 'react-native';
+import { useAppStore } from '../../store/appStore';
+import AppText from '../../components/common/AppText';
+import AppCard from '../../components/common/AppCard';
+import AppHeader from '../../components/layout/AppHeader';
+import AppInput from '../../components/inputs/AppInput';
+import AppButton from '../../components/common/AppButton';
 
 export const SettingsScreen = () => {
   const theme = useAppStore((state) => state.theme);
@@ -89,37 +88,37 @@ export const SettingsScreen = () => {
   );
 };
 
-const styles = ScaledSheet.create({
+const styles = StyleSheet.create({
   appButton: {
-    borderRadius: '16@ms',
+    borderRadius: 16,
   },
   appCard: {
-    marginBottom: '24@ms',
-    padding: '16@ms',
+    marginBottom: 24,
+    padding: 16,
   },
   appCard1: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
   },
   appText: {
-    fontSize: '12@ms',
+    fontSize: 12,
     color: '#6b7280',
-    marginTop: '4@ms',
+    marginTop: 4,
   },
   appText1: {
     color: '#9ca3af',
   },
   appText2: {
-    fontSize: '12@ms',
+    fontSize: 12,
     color: '#6b7280',
-    marginTop: '4@ms',
+    marginTop: 4,
   },
   appText3: {
     color: '#9ca3af',
   },
   appText4: {
     fontWeight: 'bold',
-    marginBottom: '12@ms',
-    marginLeft: '4@ms',
+    marginBottom: 12,
+    marginLeft: 4,
   },
   safeAreaView: {
     flex: 1,
@@ -130,11 +129,11 @@ const styles = ScaledSheet.create({
   },
   scrollView: {
     flex: 1,
-    padding: '16@ms',
+    padding: 16,
   },
   view: {
-    paddingTop: '12@ms',
-    marginTop: '12@ms',
+    paddingTop: 12,
+    marginTop: 12,
     borderTopWidth: 1,
     borderColor: '#f3f4f6',
   },

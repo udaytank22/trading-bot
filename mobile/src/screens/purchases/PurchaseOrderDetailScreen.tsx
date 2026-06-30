@@ -2,17 +2,16 @@ import React, { useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
-import { ScaledSheet } from 'react-native-size-matters';
-import { View, ScrollView } from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
-import { useAppStore } from '../store/appStore';
-import AppText from '../components/common/AppText';
-import AppCard from '../components/common/AppCard';
-import AppHeader from '../components/layout/AppHeader';
-import AppStatusBadge from '../components/common/AppStatusBadge';
-import { formatUSD, formatDateString } from '../utils/marginEngine';
-import { RootStackParamList } from '../navigation/types';
-import AppButton from '../components/common/AppButton';
+import { useAppStore } from '../../store/appStore';
+import AppText from '../../components/common/AppText';
+import AppCard from '../../components/common/AppCard';
+import AppHeader from '../../components/layout/AppHeader';
+import AppStatusBadge from '../../components/common/AppStatusBadge';
+import { formatUSD, formatDateString } from '../../utils/marginEngine';
+import { RootStackParamList } from '../../navigation/types';
+import AppButton from '../../components/common/AppButton';
 
 type PurchaseOrderDetailScreenRouteProp = RouteProp<RootStackParamList, 'PurchaseOrderDetail'>;
 
@@ -99,15 +98,15 @@ export const PurchaseOrderDetailScreen = () => {
   );
 };
 
-const styles = ScaledSheet.create({
+const styles = StyleSheet.create({
   appButton: {
-    marginTop: '16@ms',
+    marginTop: 16,
   },
   appCard: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
   },
   appCard1: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
   },
   appText: {
     color: '#7c3aed',
@@ -125,7 +124,7 @@ const styles = ScaledSheet.create({
   },
   appText2: {
     flex: 1,
-    marginRight: '8@ms',
+    marginRight: 8,
     color: '#374151',
   },
   appText2Dark: {
@@ -133,22 +132,22 @@ const styles = ScaledSheet.create({
   },
   appText3: {
     fontWeight: 'bold',
-    marginBottom: '14@ms',
+    marginBottom: 14,
   },
   appText4: {
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText5: {
     color: '#9ca3af',
   },
   appText6: {
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText7: {
     color: '#9ca3af',
   },
   appText8: {
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText9: {
     color: '#9ca3af',
@@ -174,11 +173,11 @@ const styles = ScaledSheet.create({
   },
   scrollView: {
     flex: 1,
-    padding: '16@ms',
+    padding: 16,
   },
   view: {
-    marginTop: '16@ms',
-    paddingTop: '14@ms',
+    marginTop: 16,
+    paddingTop: 14,
     borderTopWidth: 1,
     borderColor: '#f3f4f6',
     flexDirection: 'row',
@@ -189,7 +188,7 @@ const styles = ScaledSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: '10@ms',
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderColor: '#f3f4f6',
   },
@@ -210,7 +209,7 @@ const styles = ScaledSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '14@ms',
+    marginBottom: 14,
   },
   viewDark: {
     borderColor: 'rgba(255, 255, 255, 0.05)',

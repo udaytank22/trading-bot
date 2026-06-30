@@ -1,6 +1,6 @@
 import React from 'react';
 import { ScaledSheet } from 'react-native-size-matters';
-import { Modal, View, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { Modal, View, Pressable, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import AppText from '../common/AppText';
 import { useAppStore } from '../../store/appStore';
 
@@ -21,7 +21,7 @@ export const AppModal: React.FC<AppModalProps> = ({
   const isDark = theme === 'dark';
 
   const modalOverlayStyle = styles.modalOverlayStyle;
-  
+
   // Backdrop touchable needs absolute layout to cover screen
   const backdropStyle = {
     position: 'absolute' as const,
@@ -35,7 +35,7 @@ export const AppModal: React.FC<AppModalProps> = ({
     styles.modalWrapperStyle,
     isDark ? styles.modalWrapperDark : styles.modalWrapperLight,
   ];
-  
+
   const headerStyle = [
     styles.headerStyle,
     isDark ? styles.headerStyleDark : styles.headerStyleLight,
@@ -52,19 +52,18 @@ export const AppModal: React.FC<AppModalProps> = ({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
       >
         <View style={modalOverlayStyle}>
           {/* Backdrop close */}
-          <TouchableOpacity 
-            style={backdropStyle} 
-            activeOpacity={1} 
-            onPress={onClose} 
+          <Pressable
+            style={backdropStyle}
+            onPress={onClose}
           />
-          
-          <View 
+
+          <View
             style={modalWrapperStyle}
           >
             {/* Modal Header */}
@@ -72,14 +71,14 @@ export const AppModal: React.FC<AppModalProps> = ({
               <AppText variant="h3" style={titleStyle}>
                 {title}
               </AppText>
-              <TouchableOpacity 
+              <Pressable
                 onPress={onClose}
                 style={closeBtnStyle}
               >
                 <AppText style={closeTextStyle}>
                   ✕
                 </AppText>
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
             {/* Modal Content */}
@@ -118,13 +117,12 @@ const styles = ScaledSheet.create({
   },
   modalOverlayStyle: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     backgroundColor: 'rgba(0, 0, 0, 0.70)',
-    padding: '16@ms',
+
   },
   modalWrapperStyle: {
     width: '100%',
-    maxHeight: '80%',
     borderRadius: '24@ms',
     overflow: 'hidden',
     borderWidth: 1,

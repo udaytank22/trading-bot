@@ -1,30 +1,31 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useContext } from 'react';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAppStore } from '../store/appStore';
+import { AuthContext } from '../services/context/authContext';
 import { RootStackParamList, TabParamList } from './types';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Import Screens
-import LoginScreen from '../screens/LoginScreen';
-import DashboardScreen from '../screens/DashboardScreen';
-import InquiriesScreen from '../screens/InquiriesScreen';
-import InquiryDetailScreen from '../screens/InquiryDetailScreen';
-import SupplyScreen from '../screens/SupplyScreen';
-import MoreScreen from '../screens/MoreScreen';
-import PurchaseOrdersScreen from '../screens/PurchaseOrdersScreen';
-import PurchaseOrderDetailScreen from '../screens/PurchaseOrderDetailScreen';
-import InvoicesScreen from '../screens/InvoicesScreen';
-import InvoiceDetailScreen from '../screens/InvoiceDetailScreen';
-import InventoryScreen from '../screens/InventoryScreen';
-import EmployeesScreen from '../screens/EmployeesScreen';
-import AccountsScreen from '../screens/AccountsScreen';
-import ProfileScreen from '../screens/ProfileScreen';
-import SettingsScreen from '../screens/SettingsScreen';
-import NotificationsScreen from '../screens/NotificationsScreen';
-import TodoScreen from '../screens/TodoScreen';
+import LoginScreen from '../screens/auth/LoginScreen';
+import DashboardScreen from '../screens/dashboard/DashboardScreen';
+import InquiriesScreen from '../screens/crm/InquiriesScreen';
+import InquiryDetailScreen from '../screens/crm/InquiryDetailScreen';
+import SupplyScreen from '../screens/inventory/SupplyScreen';
+import MoreScreen from '../screens/settings/MoreScreen';
+import PurchaseOrdersScreen from '../screens/purchases/PurchaseOrdersScreen';
+import PurchaseOrderDetailScreen from '../screens/purchases/PurchaseOrderDetailScreen';
+import InvoicesScreen from '../screens/sales/InvoicesScreen';
+import InvoiceDetailScreen from '../screens/sales/InvoiceDetailScreen';
+import InventoryScreen from '../screens/inventory/InventoryScreen';
+import EmployeesScreen from '../screens/settings/EmployeesScreen';
+import AccountsScreen from '../screens/crm/AccountsScreen';
+import ProfileScreen from '../screens/auth/ProfileScreen';
+import SettingsScreen from '../screens/settings/SettingsScreen';
+import NotificationsScreen from '../screens/settings/NotificationsScreen';
+import TodoScreen from '../screens/settings/TodoScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
@@ -141,7 +142,9 @@ const TabNavigator = () => {
 // ─── Root Navigator ───────────────────────────────────────────────────────────
 
 export const RootNavigator = () => {
-  const { isAuthenticated, theme, initStore } = useAppStore();
+  const { theme, initStore } = useAppStore();
+  const authContext = useContext(AuthContext);
+  const isAuthenticated = !!authContext?.userToken;
 
   useEffect(() => {
     initStore();

@@ -2,19 +2,18 @@ import React, { useState, useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
-import { ScaledSheet } from 'react-native-size-matters';
-import { View, FlatList, TouchableOpacity, ScrollView } from 'react-native';
-import { useAppStore } from '../store/appStore';
-import AppText from '../components/common/AppText';
-import AppCard from '../components/common/AppCard';
-import AppHeader from '../components/layout/AppHeader';
-import AppSearch from '../components/inputs/AppSearch';
-import AppButton from '../components/common/AppButton';
-import AppModal from '../components/modals/AppModal';
-import AppInput from '../components/inputs/AppInput';
-import AppDropdown from '../components/inputs/AppDropdown';
-import AppBadge from '../components/common/AppBadge';
-import { TodoItem, mockLeaves } from '../data/activities';
+import { View, FlatList, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { useAppStore } from '../../store/appStore';
+import AppText from '../../components/common/AppText';
+import AppCard from '../../components/common/AppCard';
+import AppHeader from '../../components/layout/AppHeader';
+import AppSearch from '../../components/inputs/AppSearch';
+import AppButton from '../../components/common/AppButton';
+import AppModal from '../../components/modals/AppModal';
+import AppInput from '../../components/inputs/AppInput';
+import AppDropdown from '../../components/inputs/AppDropdown';
+import AppBadge from '../../components/common/AppBadge';
+import { TodoItem, mockLeaves } from '../../data/activities';
 
 interface SubTabButtonProps {
   type: 'TASKS' | 'CALENDAR';
@@ -303,59 +302,59 @@ export const TodoScreen = () => {
   );
 };
 
-const styles = ScaledSheet.create({
+const styles = StyleSheet.create({
   appBadge: {
-    marginRight: '8@ms',
+    marginRight: 8,
   },
   appButton: {
-    marginTop: '16@ms',
+    marginTop: 16,
   },
   appButton1: {
-    height: '34.0@vs',
-    paddingHorizontal: '14@ms',
+    height: 34.0,
+    paddingHorizontal: 14,
   },
   appCard: {
     borderWidth: 1,
   },
   appCard1: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
   },
   appCard2: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
   },
   appText: {
     color: '#6b7280',
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText1: {
-    marginTop: '4@ms',
+    marginTop: 4,
   },
   appText10: {
     fontWeight: 'bold',
-    marginBottom: '12@ms',
+    marginBottom: 12,
   },
   appText11: {
     textAlign: 'center',
-    fontSize: '14@ms',
+    fontSize: 14,
     color: '#6b7280',
   },
   appText12: {
     color: '#ef4444',
     fontWeight: 'bold',
-    fontSize: '14@ms',
+    fontSize: 14,
   },
   appText13: {
     color: '#6b7280',
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText14: {
     color: '#ffffff',
-    fontSize: '12@ms',
+    fontSize: 12,
     fontWeight: 'bold',
   },
   appText2: {
     fontWeight: 'bold',
-    marginBottom: '4@ms',
+    marginBottom: 4,
   },
   appText3: {
     color: '#6b7280',
@@ -369,7 +368,7 @@ const styles = ScaledSheet.create({
   appText5: {
     fontWeight: 'bold',
     color: '#3b82f6',
-    marginBottom: '12@ms',
+    marginBottom: 12,
   },
   appText6: {
     color: '#6b7280',
@@ -395,37 +394,37 @@ const styles = ScaledSheet.create({
   },
   scrollView: {
     flex: 1,
-    padding: '16@ms',
+    padding: 16,
   },
   style: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
   },
   touchableOpacity: {
-    padding: '4@ms',
+    padding: 4,
   },
   view: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: '10@ms',
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderColor: '#f3f4f6',
   },
   view1: {
-    width: '40@s',
-    height: '40@vs',
-    borderRadius: '9999@ms',
+    width: 40,
+    height: 40,
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: '12@ms',
+    marginRight: 12,
   },
   view10: {
     flexDirection: 'row',
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderColor: '#eef2f6',
-    paddingHorizontal: '8@ms',
-    marginBottom: '12@ms',
+    paddingHorizontal: 8,
+    marginBottom: 12,
   },
   view10Dark: {
     backgroundColor: '#12141c',
@@ -434,30 +433,30 @@ const styles = ScaledSheet.create({
   view2: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: '8@ms',
+    padding: 8,
   },
   view3: {
-    width: '40@s',
-    height: '40@vs',
-    borderRadius: '9999@ms',
+    width: 40,
+    height: 40,
+    borderRadius: 9999,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: '12@ms',
+    marginRight: 12,
   },
   view4: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: '8@ms',
+    padding: 8,
     borderBottomWidth: 1,
     borderColor: '#f3f4f6',
-    paddingBottom: '12@ms',
-    marginBottom: '8@ms',
+    paddingBottom: 12,
+    marginBottom: 8,
   },
   view4Dark: {
     borderColor: 'rgba(255, 255, 255, 0.04)',
   },
   view5: {
-    marginTop: '32@ms',
+    marginTop: 32,
   },
   view6: {
     flexDirection: 'row',
@@ -470,18 +469,18 @@ const styles = ScaledSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-    paddingRight: '12@ms',
+    paddingRight: 12,
   },
   view9: {
     flex: 1,
-    padding: '16@ms',
+    padding: 16,
   },
   viewDark: {
     borderColor: 'rgba(255, 255, 255, 0.04)',
   },
   subTabButton: {
     flex: 1,
-    paddingVertical: '8@ms',
+    paddingVertical: 8,
     alignItems: 'center',
     borderBottomWidth: 2,
   },
@@ -511,8 +510,8 @@ const styles = ScaledSheet.create({
     fontWeight: '600',
   },
   taskCard: {
-    marginBottom: '10@ms',
-    padding: '12@ms',
+    marginBottom: 10,
+    padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -521,13 +520,13 @@ const styles = ScaledSheet.create({
     opacity: 0.55,
   },
   checkbox: {
-    width: '24@s',
-    height: '24@vs',
-    borderRadius: '8@ms',
+    width: 24,
+    height: 24,
+    borderRadius: 8,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: '12@ms',
+    marginRight: 12,
   },
   checkboxCompleted: {
     backgroundColor: '#7c3aed',
@@ -540,7 +539,7 @@ const styles = ScaledSheet.create({
     borderColor: '#4b5563',
   },
   taskTitle: {
-    fontSize: '14@ms',
+    fontSize: 14,
     fontWeight: '600',
   },
   taskTitleCompleted: {

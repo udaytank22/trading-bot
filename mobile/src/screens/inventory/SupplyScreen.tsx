@@ -2,19 +2,18 @@ import React, { useState, useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
-import { ScaledSheet } from 'react-native-size-matters';
-import { View, FlatList, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { useAppStore } from '../store/appStore';
-import AppText from '../components/common/AppText';
-import AppCard from '../components/common/AppCard';
-import AppHeader from '../components/layout/AppHeader';
-import AppSearch from '../components/inputs/AppSearch';
-import AppStatusBadge from '../components/common/AppStatusBadge';
-import AppButton from '../components/common/AppButton';
-import AppBottomSheet from '../components/modals/AppBottomSheet';
-import AppInput from '../components/inputs/AppInput';
-import AppAlert from '../components/modals/AppAlert';
-import { SupplyItem } from '../data/activities';
+import { View, FlatList, TouchableOpacity, ScrollView, Alert, StyleSheet } from 'react-native';
+import { useAppStore } from '../../store/appStore';
+import AppText from '../../components/common/AppText';
+import AppCard from '../../components/common/AppCard';
+import AppHeader from '../../components/layout/AppHeader';
+import AppSearch from '../../components/inputs/AppSearch';
+import AppStatusBadge from '../../components/common/AppStatusBadge';
+import AppButton from '../../components/common/AppButton';
+import AppBottomSheet from '../../components/modals/AppBottomSheet';
+import AppInput from '../../components/inputs/AppInput';
+import AppAlert from '../../components/modals/AppAlert';
+import { SupplyItem } from '../../data/activities';
 
 type SupplyFilter = 'All' | 'PENDING' | 'LOADING' | 'IN_TRANSIT' | 'DELIVERED';
 
@@ -349,18 +348,18 @@ export const SupplyScreen = () => {
   );
 };
 
-const styles = ScaledSheet.create({
+const styles = StyleSheet.create({
   appButton: {
-    marginTop: '16@ms',
+    marginTop: 16,
   },
   appButton1: {
-    marginTop: '16@ms',
+    marginTop: 16,
   },
   appCard: {
-    marginBottom: '14@ms',
+    marginBottom: 14,
   },
   appText: {
-    marginBottom: '8@ms',
+    marginBottom: 8,
   },
   appText1: {
     color: '#9ca3af',
@@ -375,38 +374,38 @@ const styles = ScaledSheet.create({
     fontFamily: 'monospace',
     color: '#7c3aed',
     fontWeight: 'bold',
-    fontSize: '12@ms',
+    fontSize: 12,
   },
   appText12Dark: {
     color: '#c084fc',
   },
   appText2: {
-    marginBottom: '8@ms',
+    marginBottom: 8,
   },
   appText3: {
     color: '#9ca3af',
   },
   appText4: {
-    marginBottom: '16@ms',
-    fontSize: '12@ms',
+    marginBottom: 16,
+    fontSize: 12,
   },
   appText5: {
-    marginBottom: '16@ms',
-    fontSize: '12@ms',
+    marginBottom: 16,
+    fontSize: 12,
   },
   appText6: {
     textAlign: 'center',
-    fontSize: '14@ms',
+    fontSize: 14,
     color: '#6b7280',
   },
   appText7: {
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText8: {
     color: '#9ca3af',
   },
   appText9: {
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   safeAreaView: {
     flex: 1,
@@ -416,25 +415,25 @@ const styles = ScaledSheet.create({
     backgroundColor: '#0c0e12',
   },
   style: {
-    height: '38.0@vs',
-    borderRadius: '12@ms',
+    height: 38.0,
+    borderRadius: 12,
   },
   style1: {
-    gap: '24@ms',
+    gap: 24,
   },
   style2: {
-    marginBottom: '12@ms',
+    marginBottom: 12,
   },
   view: {
-    padding: '16@ms',
+    padding: 16,
     backgroundColor: '#eef2f6',
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    borderRadius: '12@ms',
-    marginBottom: '16@ms',
+    borderRadius: 12,
+    marginBottom: 16,
   },
   view1: {
-    marginTop: '32@ms',
+    marginTop: 32,
   },
   view2: {
     alignItems: 'flex-end',
@@ -442,44 +441,44 @@ const styles = ScaledSheet.create({
   view3: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingTop: '4@ms',
+    paddingTop: 4,
   },
   view4: {
-    marginBottom: '12@ms',
+    marginBottom: 12,
   },
   view5: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '12@ms',
+    marginBottom: 12,
   },
   view6: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
   },
   view7: {
     flex: 1,
-    padding: '16@ms',
+    padding: 16,
   },
   viewDark: {
     backgroundColor: 'rgba(255, 255, 255, 0.02)',
     borderColor: 'rgba(255, 255, 255, 0.04)',
   },
   tabButton: {
-    paddingVertical: '8@ms',
-    borderRadius: '9999@ms',
+    paddingVertical: 8,
+    borderRadius: 9999,
     justifyContent: 'center',
     alignItems: 'center',
   },
   tabButtonSelected: {
-    paddingHorizontal: '28@ms',
+    paddingHorizontal: 28,
     backgroundColor: '#4648D4',
   },
   tabButtonUnselected: {
-    paddingHorizontal: '12@ms',
+    paddingHorizontal: 12,
     backgroundColor: 'transparent',
   },
   tabText: {
-    fontSize: '15@ms',
+    fontSize: 15,
   },
   tabTextSelected: {
     color: '#ffffff',

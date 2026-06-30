@@ -2,18 +2,17 @@ import React, { useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
-import { ScaledSheet } from 'react-native-size-matters';
-import { View, ScrollView } from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
-import { useAppStore } from '../store/appStore';
-import AppText from '../components/common/AppText';
-import AppCard from '../components/common/AppCard';
-import AppHeader from '../components/layout/AppHeader';
-import AppStatusBadge from '../components/common/AppStatusBadge';
-import { formatUSD, formatDateString } from '../utils/marginEngine';
-import { RootStackParamList } from '../navigation/types';
-import AppButton from '../components/common/AppButton';
-import AppAlert from '../components/modals/AppAlert';
+import { useAppStore } from '../../store/appStore';
+import AppText from '../../components/common/AppText';
+import AppCard from '../../components/common/AppCard';
+import AppHeader from '../../components/layout/AppHeader';
+import AppStatusBadge from '../../components/common/AppStatusBadge';
+import { formatUSD, formatDateString } from '../../utils/marginEngine';
+import { RootStackParamList } from '../../navigation/types';
+import AppButton from '../../components/common/AppButton';
+import AppAlert from '../../components/modals/AppAlert';
 import { useState } from 'react';
 
 type InvoiceDetailScreenRouteProp = RouteProp<RootStackParamList, 'InvoiceDetail'>;
@@ -162,15 +161,15 @@ export const InvoiceDetailScreen = () => {
   );
 };
 
-const styles = ScaledSheet.create({
+const styles = StyleSheet.create({
   appButton: {
-    marginTop: '16@ms',
+    marginTop: 16,
   },
   appCard: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
   },
   appCard1: {
-    marginBottom: '16@ms',
+    marginBottom: 16,
   },
   appText: {
     color: '#7c3aed',
@@ -180,7 +179,7 @@ const styles = ScaledSheet.create({
     fontWeight: 'bold',
   },
   appText10: {
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText11: {
     color: '#9ca3af',
@@ -203,23 +202,23 @@ const styles = ScaledSheet.create({
   },
   appText4: {
     fontWeight: 'bold',
-    marginBottom: '14@ms',
+    marginBottom: 14,
   },
   appText5: {
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText6: {
     color: '#9ca3af',
   },
   appText7: {
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appText8: {
     color: '#9ca3af',
   },
   appText9: {
     color: '#6b7280',
-    marginTop: '2@ms',
+    marginTop: 2,
   },
   appTextDark: {
     color: '#c084fc',
@@ -242,19 +241,19 @@ const styles = ScaledSheet.create({
   },
   scrollView: {
     flex: 1,
-    padding: '16@ms',
+    padding: 16,
   },
   style: {
-    marginTop: '8@ms',
-    marginBottom: '32@ms',
+    marginTop: 8,
+    marginBottom: 32,
   },
   style1: {
-    marginTop: '8@ms',
-    marginBottom: '32@ms',
+    marginTop: 8,
+    marginBottom: 32,
   },
   view: {
-    marginTop: '16@ms',
-    paddingTop: '14@ms',
+    marginTop: 16,
+    paddingTop: 14,
     borderTopWidth: 1,
     borderColor: '#f3f4f6',
     flexDirection: 'row',
@@ -264,10 +263,10 @@ const styles = ScaledSheet.create({
   view1: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: '6@ms',
+    marginTop: 6,
   },
   view2: {
-    paddingBottom: '12@ms',
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderColor: '#f3f4f6',
   },
@@ -288,7 +287,7 @@ const styles = ScaledSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '14@ms',
+    marginBottom: 14,
   },
   viewDark: {
     borderColor: 'rgba(255, 255, 255, 0.05)',

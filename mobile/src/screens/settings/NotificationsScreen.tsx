@@ -2,12 +2,11 @@ import React, { useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 
-import { ScaledSheet } from 'react-native-size-matters';
-import { View, FlatList } from 'react-native';
-import { useAppStore } from '../store/appStore';
-import AppText from '../components/common/AppText';
-import AppCard from '../components/common/AppCard';
-import AppHeader from '../components/layout/AppHeader';
+import { View, FlatList, StyleSheet } from 'react-native';
+import { useAppStore } from '../../store/appStore';
+import AppText from '../../components/common/AppText';
+import AppCard from '../../components/common/AppCard';
+import AppHeader from '../../components/layout/AppHeader';
 
 export const NotificationsScreen = () => {
   const theme = useAppStore((state) => state.theme);
@@ -96,13 +95,13 @@ export const NotificationsScreen = () => {
   );
 };
 
-const styles = ScaledSheet.create({
+const styles = StyleSheet.create({
   contentContainer: {
-    padding: '16@ms',
+    padding: 16,
   },
   appText: {
     textAlign: 'center',
-    fontSize: '14@ms',
+    fontSize: 14,
     color: '#6b7280',
   },
   appText1: {},
@@ -110,7 +109,7 @@ const styles = ScaledSheet.create({
     color: '#9ca3af',
   },
   appText2: {
-    fontSize: '10@ms',
+    fontSize: 10,
     color: '#6b7280',
   },
   appText3: {},
@@ -118,7 +117,7 @@ const styles = ScaledSheet.create({
     color: '#ffffff',
   },
   appText4: {
-    fontSize: '16@ms',
+    fontSize: 16,
   },
   safeAreaView: {
     flex: 1,
@@ -128,20 +127,20 @@ const styles = ScaledSheet.create({
     backgroundColor: '#0c0e12',
   },
   view: {
-    marginTop: '32@ms',
+    marginTop: 32,
   },
   view1: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '4@ms',
+    marginBottom: 4,
   },
   view2: {
     flex: 1,
   },
   card: {
-    marginBottom: '14@ms',
-    padding: '16@ms',
+    marginBottom: 14,
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
@@ -153,12 +152,12 @@ const styles = ScaledSheet.create({
     borderLeftColor: '#7c3aed',
   },
   iconContainer: {
-    width: '36@s',
-    height: '36@vs',
-    borderRadius: '12@ms',
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: '14@ms',
+    marginRight: 14,
   },
   iconInquiry: {
     backgroundColor: '#f3e8ff',
