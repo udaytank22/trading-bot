@@ -111,8 +111,10 @@ export default function SupplyPage() {
         
         const cargoItems = new Set();
         group.subShipments.forEach(s => {
-          if (s.purchaseOrder?.items) {
+          if (s.purchaseOrder?.items && s.purchaseOrder.items.length > 0) {
              s.purchaseOrder.items.forEach(i => cargoItems.add(i.product?.name || i.description || 'Product'));
+          } else if (s.purchaseOrder?._count?.items > 0) {
+             cargoItems.add(`${s.purchaseOrder._count.items} item${s.purchaseOrder._count.items !== 1 ? 's' : ''}`);
           } else if (s.cargoDetails) {
              cargoItems.add(s.cargoDetails);
           } else if (s.cargo) {
@@ -128,8 +130,8 @@ export default function SupplyPage() {
           supplier: item.supplier?.name || item.supplier || 'Unknown Supplier',
           customer: item.client?.name || item.inquiry?.customer || '—',
           vessel: item.inquiry?.vesselName || item.inquiry?.vessel || item.destination || '—',
-          cargo: item.cargoDetails || item.cargo || 'Cargo',
-          products: [{ product_name: item.cargoDetails || item.cargo || 'Cargo' }],
+          cargo: item.cargoDetails || item.cargo || (item.purchaseOrder?._count?.items ? `${item.purchaseOrder._count.items} items` : 'Cargo'),
+          products: [{ product_name: item.cargoDetails || item.cargo || (item.purchaseOrder?._count?.items ? `${item.purchaseOrder._count.items} items` : 'Cargo') }],
           destination: item.inquiry?.vesselName || item.inquiry?.vessel || item.client?.name || item.destination || '—',
           status: item.currentStatus || item.status || '—',
           date: item.createdAt || item.date

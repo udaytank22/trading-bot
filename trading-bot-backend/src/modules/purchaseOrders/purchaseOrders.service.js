@@ -15,23 +15,13 @@ const getAllPurchaseOrders = async (query = {}) => {
     prisma.purchaseOrder.findMany({
       where,
       include: {
-        supplier: true,
-        client: true,
+        supplier: { select: { id: true, name: true, email: true } },
+        client: { select: { id: true, name: true, email: true } },
         inquiry: {
-          include: {
-            items: true,
-            supplierQuotes: {
-              include: {
-                items: true,
-                supplier: true
-              }
-            }
-          }
+          select: { id: true, inquiryNumber: true, vesselName: true }
         },
-        items: {
-          include: {
-            product: true
-          }
+        _count: {
+          select: { items: true }
         }
       },
       orderBy: { createdAt: 'desc' },

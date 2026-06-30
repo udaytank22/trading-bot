@@ -78,12 +78,24 @@ const POTable = ({ items, onView, onOrder, paginationProps }) => {
       {/* ── First product + "+N more" badge ───────────────────────────── */}
       <td className="px-3 md:px-6 py-4">
         <div className="flex flex-col gap-1">
-          <Tooltip content={po.products.map((p) => p.product_name).join(", ")}>
-            <span className="text-gray-600 dark:text-gray-300 text-sm cursor-default">
-              {po.products[0]?.product_name}
-            </span>
+          <Tooltip content={
+            po.products && po.products.length > 0
+              ? po.products.map((p) => p.product_name).join(", ")
+              : `${po._count?.items || 0} items`
+          }>
+            {po.products && po.products.length > 0 ? (
+              <span className="text-gray-600 dark:text-gray-300 text-sm cursor-default">
+                {po.products[0]?.product_name}
+              </span>
+            ) : po._count?.items > 0 ? (
+              <span className="text-gray-600 dark:text-gray-300 text-sm cursor-default">
+                {po._count.items} item{po._count.items !== 1 ? 's' : ''}
+              </span>
+            ) : (
+              <span className="text-gray-400 text-sm cursor-default">—</span>
+            )}
           </Tooltip>
-          {po.products.length > 1 && (
+          {po.products && po.products.length > 1 && (
             <Tooltip content={po.products.map((p) => p.product_name).join(", ")}>
               <span className="inline-block w-fit px-2 py-[2px] bg-gray-100 dark:bg-gray-700/60 text-gray-600 dark:text-gray-300 text-[10px] font-bold rounded-lg cursor-default border border-gray-200 dark:border-none">
                 +{po.products.length - 1} more

@@ -16,23 +16,17 @@ const getAllShipments = async (query = {}) => {
       where,
       include: {
         inquiry: {
-          include: {
-            clientQuotations: {
-              include: { items: { include: { inquiryItem: true } } }
-            }
-          }
+          select: { id: true, inquiryNumber: true, vesselName: true }
         },
         purchaseOrder: {
-          include: {
-            items: {
-              include: {
-                product: true
-              }
-            }
+          select: { 
+            id: true, 
+            poNumber: true, 
+            _count: { select: { items: true } } 
           }
         },
-        supplier: true,
-        client: true
+        supplier: { select: { id: true, name: true, email: true } },
+        client: { select: { id: true, name: true, email: true } }
       },
       orderBy: { createdAt: 'desc' },
       skip,
