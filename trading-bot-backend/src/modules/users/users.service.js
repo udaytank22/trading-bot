@@ -2,17 +2,29 @@ const prisma = require('../../prisma/client');
 const bcrypt = require('bcryptjs');
 const { invalidateUserCache } = require('../../utils/cache');
 
+const { getPaginationParams } = require('../../utils/queryHelper');
+
 /**
  * Get all users who are not deleted
  */
-const getAllUsers = async () => {
-  return await prisma.user.findMany({
-    where: { deletedAt: null },
-    include: {
-      role: true
-    },
-    orderBy: { createdAt: 'desc' }
-  });
+const getAllUsers = async (query = {}) => {
+  const where = { deletedAt: null };
+  const { skip, take } = getPaginationParams(query);
+
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      include: {
+        role: true
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take
+    }),
+    prisma.user.count({ where })
+  ]);
+
+  return { data: users, total };
 };
 
 /**

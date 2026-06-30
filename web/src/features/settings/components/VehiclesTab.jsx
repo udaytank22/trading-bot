@@ -11,14 +11,10 @@ import { useTablePageSize } from '@hooks/useTablePageSize';
 
 export default function VehiclesTab() {
   const { hasPermission } = useAuth();
-  const [vehicles, setVehicles] = useState([]);
   const [search, setSearch] = useState('');
   const [viewItem, setViewItem] = useState(null);
   const [editItem, setEditItem] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useTablePageSize(50);
-  const [isLoading, setIsLoading] = useState(true);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const { showToast } = useToast();
 
@@ -26,36 +22,16 @@ export default function VehiclesTab() {
   const canUpdate = hasPermission('vehicles', 'update');
   const canDelete = hasPermission('vehicles', 'delete');
 
-  const fetchVehicles = async () => {
-    try {
-      setIsLoading(true);
-      const res = await api.vehicles.getVehicles();
-      setVehicles(res.data || []);
-    } catch (e) {
-      console.error('Failed to fetch vehicles:', e);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchVehicles();
-  }, []);
-
-  const filteredVehicles = useMemo(() => {
-    const q = search.toLowerCase().trim();
-    if (!q) return vehicles;
-    return vehicles.filter(v =>
-      (v.vehicle_no && v.vehicle_no.toLowerCase().includes(q)) ||
-      (v.driver_name && v.driver_name.toLowerCase().includes(q)) ||
-      (v.type && v.type.toLowerCase().includes(q))
-    );
-  }, [vehicles, search]);
-
-  const totalPages = Math.max(1, Math.ceil((filteredVehicles?.length || 0) / itemsPerPage));
-  const currentItems = useMemo(() => {
-    return filteredVehicles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  }, [filteredVehicles, currentPage, itemsPerPage]);
+  const {
+    data: vehiclesData,
+    meta,
+    loading: isLoading,
+    handlePageChange,
+    handlePageSizeChange,
+    refresh
+  } = usePaginatedFetch(api.vehicles.getVehicles, 1, 50, {
+    search
+  });
 
   const handleDelete = async (id) => {
     const isConfirmed = await confirmAction({
@@ -151,7 +127,7 @@ export default function VehiclesTab() {
       try {
         const res = await api.vehicles.bulkImport(validVehicles);
         if (res.success) {
-          fetchVehicles();
+          refresh();
           showToast(TOAST_MESSAGES.SETTINGS.IMPORT.SUCCESS(res.data?.successCount || validVehicles.length, failCount, 'vehicles'), 'success');
         } else {
           showToast(TOAST_MESSAGES.COMMON.IMPORT_FAILED, 'error');
@@ -191,21 +167,16 @@ export default function VehiclesTab() {
 
       <div className="p-2 border-b border-gray-200 dark:border-[#2a2d33] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
-        {/* Left Side - Search */}
         <div className="w-full sm:w-auto">
           <input
             type="text"
             placeholder="Search products..."
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setCurrentPage(1);
-            }}
+            onChange={(e) => setSearch(e.target.value)}
             className="w-full sm:w-64 bg-gray-50 dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-9 px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors"
           />
         </div>
 
-        {/* Right Side - Buttons */}
         <div className="flex flex-wrap items-center gap-3 justify-start sm:justify-end">
           <button
             onClick={handleDownloadSample}
@@ -251,67 +222,61 @@ export default function VehiclesTab() {
         expectedColumns={['ID', 'Vehicle Number', 'Type', 'Capacity', 'Driver Name', 'Phone', 'Status']}
       />
 
-      {isLoading ? (
-        <div className="flex justify-center items-center h-32 text-gray-500">Loading vehicles...</div>
-      ) : (
-
-        <DataTable
-          maxHeight="max-h-none"
-          columns={[
-            { key: "srno", label: "#" },
-            { key: "vehicle_no", label: "Vehicle Number" },
-            { key: "type", label: "Type" },
-            { key: "capacity", label: "Capacity" },
-            { key: "driver_name", label: "Driver Name" },
-            { key: "document", label: "Document" },
-            { key: "status", label: "Status" },
-            { key: "actions", label: "Actions", className: "text-right" },
-          ]}
-          data={currentItems}
-          isLoading={isLoading}
-          emptyMessage="No vehicles found."
-          renderRow={(vehicle, i) => (
-            <tr key={vehicle.id} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
-              <td className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">{(currentPage - 1) * itemsPerPage + i + 1}</td>
-              <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">{vehicle.vehicle_no}</td>
-              <td className="px-5 py-3 text-gray-700 dark:text-gray-300">{vehicle.type || '-'}</td>
-              <td className="px-5 py-3 text-gray-700 dark:text-gray-300">{vehicle.capacity || '-'}</td>
-              <td className="px-5 py-3">{vehicle.driver_name} {vehicle.phone ? `(${vehicle.phone})` : ''}</td>
-              <td className="px-5 py-3">
-                {vehicle.documents && vehicle.documents.length > 0 ? (
-                  <span className="px-2 py-1 bg-purple-100 text-purple-600 rounded text-xs font-bold whitespace-nowrap">{vehicle.documents.length} Uploaded</span>
-                ) : (
-                  <span className="text-gray-400 text-xs">-</span>
-                )}
-              </td>
-              <td className="px-5 py-3">
-                <span className={`px-2 py-1 rounded text-[11px] font-bold ${vehicle.status === 'Active'
-                  ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
-                  : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                  }`}>
-                  {vehicle.status || 'Active'}
-                </span>
-              </td>
-              <td className="px-5 py-3 text-right space-x-3">
-                <button onClick={() => setViewItem(vehicle)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" title="View"><EyeIcon /></button>
-                {canUpdate && <button onClick={() => { setEditItem(vehicle); setIsFormOpen(true); }} className="text-blue-500 hover:text-blue-600 transition-colors" title="Edit"><EditIcon /></button>}
-                {canDelete && <button onClick={() => handleDelete(vehicle.id)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete"><TrashIcon /></button>}
-              </td>
-            </tr>
-          )}
-        paginationProps={{
-          currentPage,
-          totalPages,
-          totalItems: filteredVehicles?.length || 0,
-          itemsPerPage,
-          onPrev: () => setCurrentPage((p) => Math.max(1, p - 1)),
-          onNext: () => setCurrentPage((p) => Math.min(totalPages, p + 1)),
-          onPageChange: (p) => setCurrentPage(p),
-          onItemsPerPageChange: (val) => { setItemsPerPage(val); setCurrentPage(1); },
-          itemLabel: "vehicles"
-        }}
+      <DataTable
+        maxHeight="max-h-none"
+        columns={[
+          { key: "srno", label: "#" },
+          { key: "vehicle_no", label: "Vehicle Number" },
+          { key: "type", label: "Type" },
+          { key: "capacity", label: "Capacity" },
+          { key: "driver_name", label: "Driver Name" },
+          { key: "document", label: "Document" },
+          { key: "status", label: "Status" },
+          { key: "actions", label: "Actions", className: "text-right" },
+        ]}
+        data={vehiclesData}
+        isLoading={isLoading}
+        emptyMessage="No vehicles found."
+        renderRow={(vehicle, i) => (
+          <tr key={vehicle.id} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
+            <td className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">{(meta.currentPage - 1) * meta.pageSize + i + 1}</td>
+            <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">{vehicle.vehicle_no}</td>
+            <td className="px-5 py-3 text-gray-700 dark:text-gray-300">{vehicle.type || '-'}</td>
+            <td className="px-5 py-3 text-gray-700 dark:text-gray-300">{vehicle.capacity || '-'}</td>
+            <td className="px-5 py-3">{vehicle.driver_name} {vehicle.phone ? `(${vehicle.phone})` : ''}</td>
+            <td className="px-5 py-3">
+              {vehicle.documents && vehicle.documents.length > 0 ? (
+                <span className="px-2 py-1 bg-purple-100 text-purple-600 rounded text-xs font-bold whitespace-nowrap">{vehicle.documents.length} Uploaded</span>
+              ) : (
+                <span className="text-gray-400 text-xs">-</span>
+              )}
+            </td>
+            <td className="px-5 py-3">
+              <span className={`px-2 py-1 rounded text-[11px] font-bold ${vehicle.status === 'Active'
+                ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
+                : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
+                }`}>
+                {vehicle.status || 'Active'}
+              </span>
+            </td>
+            <td className="px-5 py-3 text-right space-x-3">
+              <button onClick={() => setViewItem(vehicle)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" title="View"><EyeIcon /></button>
+              {canUpdate && <button onClick={() => { setEditItem(vehicle); setIsFormOpen(true); }} className="text-blue-500 hover:text-blue-600 transition-colors" title="Edit"><EditIcon /></button>}
+              {canDelete && <button onClick={() => handleDelete(vehicle.id)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete"><TrashIcon /></button>}
+            </td>
+          </tr>
+        )}
       />
-      )}
+      
+      <div className="p-4 border-t border-gray-200 dark:border-[#2a2d33]">
+        <Pagination 
+          currentPage={meta.currentPage}
+          totalPages={meta.totalPages}
+          onPageChange={handlePageChange}
+          itemsPerPage={meta.pageSize}
+          onItemsPerPageChange={handlePageSizeChange}
+        />
+      </div>
     </div>
   );
 }

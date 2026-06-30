@@ -13,7 +13,7 @@ export default function AllotVehicleModal({ deal, isOpen, onClose, onAllot, moda
     if (isOpen) {
       setLoading(true);
       // Fetch vehicles from the API
-      api.vehicles.getVehicles().then(res => {
+      api.vehicles.getVehicles({ limit: 1000 }).then(res => {
         if(res.success && res.data) {
            setVehicles(res.data)
         } else {

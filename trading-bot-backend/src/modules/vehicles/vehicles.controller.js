@@ -2,8 +2,14 @@ const service = require('./vehicles.service');
 const { sendSuccess, sendError } = require('../../utils/response');
 
 const getVehicles = async (req, res) => {
-  const vehicles = await service.getAllVehicles();
-  return sendSuccess(res, 'Vehicles retrieved successfully', vehicles);
+  const { data, total } = await service.getAllVehicles(req.query);
+  const meta = {
+    totalItems: total,
+    currentPage: req.query.page ? parseInt(req.query.page) : 1,
+    pageSize: req.query.pageSize ? parseInt(req.query.pageSize) : total,
+    totalPages: req.query.pageSize ? Math.ceil(total / parseInt(req.query.pageSize)) : 1
+  };
+  return sendSuccess(res, 'Vehicles retrieved successfully', data, 200, meta);
 };
 
 const getVehicle = async (req, res) => {

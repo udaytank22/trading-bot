@@ -6,15 +6,22 @@ const { sendSuccess, sendError } = require('../../utils/response');
  * Get all users
  */
 const getUsers = async (req, res) => {
-  const users = await service.getAllUsers();
+  const { data, total } = await service.getAllUsers(req.query);
   
   // Format to never return password hash
-  const data = users.map((u) => {
+  const formattedData = data.map((u) => {
     const { password, refreshToken, ...rest } = u;
     return rest;
   });
 
-  return sendSuccess(res, 'Users list retrieved successfully', data);
+  const meta = {
+    totalItems: total,
+    currentPage: req.query.page ? parseInt(req.query.page) : 1,
+    pageSize: req.query.pageSize ? parseInt(req.query.pageSize) : total,
+    totalPages: req.query.pageSize ? Math.ceil(total / parseInt(req.query.pageSize)) : 1
+  };
+
+  return sendSuccess(res, 'Users list retrieved successfully', formattedData, 200, meta);
 };
 
 /**

@@ -5,8 +5,14 @@ const { sendSuccess, sendError } = require('../../utils/response');
  * Get all quotations
  */
 const getQuotations = async (req, res) => {
-  const quotations = await service.getAllQuotations();
-  return sendSuccess(res, 'Client quotations list retrieved successfully', quotations);
+  const { data, total } = await service.getAllQuotations(req.query);
+  const meta = {
+    totalItems: total,
+    currentPage: req.query.page ? parseInt(req.query.page) : 1,
+    pageSize: req.query.pageSize ? parseInt(req.query.pageSize) : total,
+    totalPages: req.query.pageSize ? Math.ceil(total / parseInt(req.query.pageSize)) : 1
+  };
+  return sendSuccess(res, 'Client quotations list retrieved successfully', data, 200, meta);
 };
 
 /**

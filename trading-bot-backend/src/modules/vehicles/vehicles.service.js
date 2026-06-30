@@ -1,15 +1,23 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-const getAllVehicles = async () => {
-  return await prisma.vehicle.findMany({
-    where: {
-      deletedAt: null
-    },
-    orderBy: {
-      createdAt: 'desc'
-    }
-  });
+const { getPaginationParams } = require('../../utils/queryHelper');
+
+const getAllVehicles = async (query = {}) => {
+  const where = { deletedAt: null };
+  const { skip, take } = getPaginationParams(query);
+
+  const [vehicles, total] = await Promise.all([
+    prisma.vehicle.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take
+    }),
+    prisma.vehicle.count({ where })
+  ]);
+
+  return { data: vehicles, total };
 };
 
 const getVehicleById = async (id) => {

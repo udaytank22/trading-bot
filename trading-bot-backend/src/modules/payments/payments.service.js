@@ -1,17 +1,29 @@
 const prisma = require('../../prisma/client');
 
+const { getPaginationParams } = require('../../utils/queryHelper');
+
 /**
  * Get all payments
  */
-const getAllPayments = async () => {
-  return await prisma.payment.findMany({
-    where: { deletedAt: null },
-    include: {
-      invoice: true,
-      bankAccount: true
-    },
-    orderBy: { createdAt: 'desc' }
-  });
+const getAllPayments = async (query = {}) => {
+  const where = { deletedAt: null };
+  const { skip, take } = getPaginationParams(query);
+
+  const [payments, total] = await Promise.all([
+    prisma.payment.findMany({
+      where,
+      include: {
+        invoice: true,
+        bankAccount: true
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take
+    }),
+    prisma.payment.count({ where })
+  ]);
+
+  return { data: payments, total };
 };
 
 /**

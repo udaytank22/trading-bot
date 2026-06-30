@@ -1,20 +1,32 @@
 const prisma = require('../../prisma/client');
 
+const { getPaginationParams } = require('../../utils/queryHelper');
+
 /**
  * Get all client quotations
  */
-const getAllQuotations = async () => {
-  return await prisma.clientQuotation.findMany({
-    where: { deletedAt: null },
-    include: {
-      inquiry: {
-        include: {
-          client: true
+const getAllQuotations = async (query = {}) => {
+  const where = { deletedAt: null };
+  const { skip, take } = getPaginationParams(query);
+
+  const [quotations, total] = await Promise.all([
+    prisma.clientQuotation.findMany({
+      where,
+      include: {
+        inquiry: {
+          include: {
+            client: true
+          }
         }
-      }
-    },
-    orderBy: { createdAt: 'desc' }
-  });
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take
+    }),
+    prisma.clientQuotation.count({ where })
+  ]);
+
+  return { data: quotations, total };
 };
 
 /**

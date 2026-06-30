@@ -7,8 +7,14 @@ const { createNotification } = require('../notifications/notifications.service')
  * Get all payments
  */
 const getPayments = async (req, res) => {
-  const payments = await service.getAllPayments();
-  return sendSuccess(res, 'Payments list retrieved successfully', payments);
+  const { data, total } = await service.getAllPayments(req.query);
+  const meta = {
+    totalItems: total,
+    currentPage: req.query.page ? parseInt(req.query.page) : 1,
+    pageSize: req.query.pageSize ? parseInt(req.query.pageSize) : total,
+    totalPages: req.query.pageSize ? Math.ceil(total / parseInt(req.query.pageSize)) : 1
+  };
+  return sendSuccess(res, 'Payments list retrieved successfully', data, 200, meta);
 };
 
 /**

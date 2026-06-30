@@ -39,7 +39,7 @@ export default function VendorsTab() {
   useEffect(() => {
     if (viewItem && viewItem.email) {
       setIsCheckingUser(true);
-      api.users.getUsers()
+      api.users.getUsers({ limit: 1000 })
         .then(res => {
           const matchedUser = res.data?.find(u => u.email === viewItem.email);
           setVendorUser(matchedUser || null);
