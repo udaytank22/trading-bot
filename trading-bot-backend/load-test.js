@@ -16,7 +16,7 @@ const users = Array.from({ length: NUM_USERS }).map((_, i) => {
   return {
     id,
     email: `user${id}@trademind.com`,
-    role: i % 10 === 0 ? 'Super Admin' : 'Sales Representative'
+    role: 'Admin'
   };
 });
 

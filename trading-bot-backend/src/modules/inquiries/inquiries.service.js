@@ -80,22 +80,11 @@ const getAllInquiries = async (query = {}) => {
   const data = await prisma.inquiry.findMany({
     where,
     include: {
-      client: true,
+      client: {
+        select: { id: true, name: true, company: true, email: true }
+      },
       items: {
-        include: {
-          product: true
-        }
-      },
-      suppliers: {
-        include: {
-          supplier: true
-        }
-      },
-      supplierQuotes: {
-        include: {
-          supplier: true,
-          items: true
-        }
+        select: { id: true, description: true, quantity: true, unit: true, product: { select: { name: true } } }
       },
       assignedEmployee: {
         select: { id: true, email: true }
@@ -103,15 +92,9 @@ const getAllInquiries = async (query = {}) => {
       assignedTeamLead: {
         select: { id: true, email: true }
       },
-      statusHistory: {
-        orderBy: { createdAt: 'desc' }
-      },
-      clientQuotations: {
-        include: {
-          items: true
-        }
-      },
-      invoices: { select: { id: true, status: true } }
+      // Essential for frontend Kanban/List views
+      invoices: { select: { id: true, status: true } },
+      shipments: { select: { currentStatus: true } }
     },
     orderBy: { createdAt: 'desc' },
     skip,
