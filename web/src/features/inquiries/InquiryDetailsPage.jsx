@@ -1,6 +1,6 @@
 import { TOAST_MESSAGES } from '../../constants/toastMessages';
 import { InquiryDetailsPageSchema1, InquiryDetailsPageSchema2, InquiryDetailsPageSchema3 } from '@config/tableSchemas';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@context';
 import { api } from '@services/api';
@@ -70,7 +70,7 @@ export default function InquiryDetailsPage() {
     setPendingSelections(init);
   };
 
-  useEffect(() => {
+  const loadData = useCallback(() => {
     setLoading(true);
     api.inquiries.getInquiry(id).then(res => {
       if (res.success && res.data) {
@@ -86,6 +86,10 @@ export default function InquiryDetailsPage() {
       setLoading(false);
     });
   }, [id]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // Set default tab if passed in location.state
   useEffect(() => {
@@ -104,8 +108,8 @@ export default function InquiryDetailsPage() {
       cancelButtonColor: "#ef4444",
       confirmButtonText: "Yes, proceed",
       cancelButtonText: "Cancel",
-      background: "#1a1d23",
-      color: "#fff"
+      background: "#ffffffff",
+      color: "#000000ff"
     });
     return result.isConfirmed;
   };
@@ -123,7 +127,7 @@ export default function InquiryDetailsPage() {
         .filter(id => typeof id === 'number' || (typeof id === 'string' && !String(id).startsWith('INTERNAL_INV_')));
       const res = await api.inquiries.stockCheck(deal.id, supplierIds);
       if (res.success) {
-        refreshAll();
+        loadData();
         setActiveTab("overview");
         Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.STOCK_CHECK, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
       }
@@ -173,7 +177,7 @@ export default function InquiryDetailsPage() {
         }
       });
       if (res.success) {
-        refreshAll();
+        loadData();
         setActiveTab("overview");
         Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.QUOTE_APPROVED, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
       }
@@ -214,7 +218,7 @@ export default function InquiryDetailsPage() {
         });
 
         if (res.success) {
-          refreshAll();
+          loadData();
           setActiveTab("overview");
           Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.QUOTE_SUBMITTED_TL, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
         }
@@ -266,7 +270,7 @@ export default function InquiryDetailsPage() {
           }
         });
         if (res.success) {
-          refreshAll();
+          loadData();
           setActiveTab("overview");
           Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.MARGIN_APPROVED, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
         }
@@ -286,7 +290,7 @@ export default function InquiryDetailsPage() {
 
   const handleMultiEmailClose = () => {
     setIsMultiEmailModalOpen(false);
-    refreshAll();
+    loadData();
     setActiveTab("overview");
   };
 
@@ -306,14 +310,14 @@ export default function InquiryDetailsPage() {
       if (result.isConfirmed) {
         const res = await api.inquiries.clientDecision(deal.id, true);
         if (res.success) {
-          refreshAll();
+          loadData();
           setActiveTab("overview");
           Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.DEAL_ACCEPTED, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
         }
       } else if (result.dismiss === Swal.DismissReason.cancel) {
         const res = await api.inquiries.clientDecision(deal.id, false);
         if (res.success) {
-          refreshAll();
+          loadData();
           setActiveTab("overview");
           Swal.fire({ icon: 'warning', title: 'Rejected', text: 'Deal rejected and closed.', background: '#1a1d23', color: '#fff' });
         }
@@ -330,7 +334,7 @@ export default function InquiryDetailsPage() {
     try {
       const res = await api.inquiries.confirmDeal(deal.id);
       if (res.success) {
-        refreshAll();
+        loadData();
         setActiveTab("overview");
         Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.DEAL_CONFIRMED, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
       }
@@ -349,7 +353,7 @@ export default function InquiryDetailsPage() {
     try {
       const res = await api.inquiries.closeRFQ(deal.id);
       if (res.success) {
-        refreshAll();
+        loadData();
         setActiveTab("overview");
         Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.RFQ_CLOSED, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
       }
@@ -761,9 +765,9 @@ export default function InquiryDetailsPage() {
                                     {perProductSupplierName}
                                   </span>
                                 ) : (
-                                  // No quote selected yet — show inquiry-level assigned suppliers (RFQ_READY stage)
+                                  // No quote selected yet — show category-assigned suppliers for this product (RFQ_READY stage)
                                   (() => {
-                                    const inquirySuppliers = (deal.suppliers || []).map(s => s.supplier || s).filter(s => s && s.name);
+                                    const inquirySuppliers = getProductSuppliers(p).filter(s => s && s.name);
                                     return inquirySuppliers.length > 0 ? inquirySuppliers.map(s => (
                                       <span key={s.id} className="px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-bold rounded truncate" title={s.name}>
                                         {s.name}
@@ -1275,7 +1279,7 @@ export default function InquiryDetailsPage() {
         deal={dealEnrichedForEmail}
         initialEmailType="QUOTE"
         onStatusUpdate={() => {
-          refreshAll();
+          loadData();
           setActiveTab("overview");
         }}
       />

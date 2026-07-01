@@ -37,12 +37,18 @@ export default function ClientRFQsPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [suppliersRes, inquiriesRes, shipmentsRes, invoicesRes] = await Promise.all([
+      const results = await Promise.allSettled([
         api.suppliers.getSuppliers(),
-        api.inquiries.getInquiries(),
+        api.inquiries.getInquiries({ includeAll: true }),
         api.shipments.getShipments(),
         api.invoices.getInvoices(),
       ]);
+
+      const suppliersRes = results[0].status === 'fulfilled' ? results[0].value : { data: [] };
+      const inquiriesRes = results[1].status === 'fulfilled' ? results[1].value : { data: [] };
+      const shipmentsRes = results[2].status === 'fulfilled' ? results[2].value : { data: [] };
+      const invoicesRes = results[3].status === 'fulfilled' ? results[3].value : { data: [] };
+
       setSuppliers(suppliersRes.data || []);
       setInquiries(inquiriesRes.data || []);
       setShipments(shipmentsRes.data || []);
@@ -233,7 +239,7 @@ export default function ClientRFQsPage() {
       if (res.success) {
         // Refresh local lists and close quoting panel
         setSelectedInquiry(null);
-        const inquiriesRes = await api.inquiries.getInquiries();
+        const inquiriesRes = await api.inquiries.getInquiries({ includeAll: true });
         setInquiries(inquiriesRes.data || []);
       }
     } catch (err) {

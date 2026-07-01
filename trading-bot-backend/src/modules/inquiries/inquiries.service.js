@@ -77,22 +77,32 @@ const getAllInquiries = async (query = {}) => {
 
   const { skip, take } = getPaginationParams(query);
 
+  const includeConfig = {
+    client: { select: { id: true, name: true, company: true, email: true } },
+    assignedEmployee: { select: { id: true, email: true } },
+    assignedTeamLead: { select: { id: true, email: true } },
+    _count: {
+      select: {
+        items: true,
+        supplierQuotes: true,
+        statusHistory: true,
+        clientQuotations: true,
+        invoices: true
+      }
+    }
+  };
+
+  if (query.includeAll === 'true' || query.includeAll === true) {
+    includeConfig.items = { include: { product: true } };
+    includeConfig.suppliers = { include: { supplier: true } };
+    includeConfig.supplierQuotes = { include: { items: true, supplier: true } };
+    includeConfig.invoices = { select: { id: true, status: true } };
+    includeConfig.shipments = { select: { currentStatus: true } };
+  }
+
   const data = await prisma.inquiry.findMany({
     where,
-    include: {
-      client: { select: { id: true, name: true, company: true, email: true } },
-      assignedEmployee: { select: { id: true, email: true } },
-      assignedTeamLead: { select: { id: true, email: true } },
-      _count: {
-        select: {
-          items: true,
-          supplierQuotes: true,
-          statusHistory: true,
-          clientQuotations: true,
-          invoices: true
-        }
-      }
-    },
+    include: includeConfig,
     orderBy: { createdAt: 'desc' },
     skip,
     take

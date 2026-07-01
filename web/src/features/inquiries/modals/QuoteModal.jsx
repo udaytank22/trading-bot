@@ -142,11 +142,7 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
             <div className="flex justify-between items-center flex-wrap gap-2">
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Base Quoted Prices (Supplier)</h3>
               {deal?.seller_quote ? (
-                deal.seller_quote.is_multi_supplier ? (
-                  <span className="px-2 py-0.5 bg-purple-500/10 text-purple-650 dark:text-purple-400 text-[10px] font-bold rounded">
-                    Multi-Supplier Sourcing
-                  </span>
-                ) : (
+                deal.seller_quote.is_multi_supplier ? null : (
                   <span className="px-2 py-0.5 bg-purple-500/10 text-purple-650 dark:text-purple-400 text-[10px] font-bold rounded">
                     Using: {deal.seller_quote.seller_name}
                   </span>

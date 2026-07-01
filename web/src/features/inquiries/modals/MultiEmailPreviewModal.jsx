@@ -1,12 +1,22 @@
-
 import React, { useState } from 'react';
 import { api } from '@services/api';
 import { formatINR } from '@services/marginEngine';
 import Swal from 'sweetalert2';
 import { DataTable } from '@components/ui';
+import { generateRFQPdf } from '../utils/rfqPdfGenerator';
 
 const EmailDraftCard = ({ rfq, inquiryId, buyerName, allProducts }) => {
   const products = allProducts.filter(p => rfq.products.includes(p.product_name));
+
+  const handleViewRFQ = () => {
+    const doc = generateRFQPdf(rfq, inquiryId, buyerName, products);
+    window.open(doc.output('bloburl'), '_blank');
+  };
+
+  const handleDownloadRFQ = () => {
+    const doc = generateRFQPdf(rfq, inquiryId, buyerName, products);
+    doc.save(`RFQ_Order_${inquiryId}_${rfq.supplierName.replace(/\s+/g, '_')}.pdf`);
+  };
 
   return (
     <div className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm mb-6">
@@ -44,6 +54,40 @@ const EmailDraftCard = ({ rfq, inquiryId, buyerName, allProducts }) => {
           <div className="pt-4 text-gray-500 font-bold text-[11px]">
             TradeMind Sourcing Team
           </div>
+
+          <div className="mt-6 pt-4 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="text-gray-400 font-bold uppercase text-[10px]">Attachments:</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg border border-red-100 dark:border-red-500/20 w-fit shadow-sm">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                <span className="font-bold text-xs tracking-wide">RFQ_Order_{inquiryId}.pdf</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handleViewRFQ}
+                className="px-3 py-1.5 text-[11px] font-bold text-purple-600 dark:text-purple-400 bg-purple-50 hover:bg-purple-100 dark:bg-purple-500/10 dark:hover:bg-purple-500/20 border border-purple-200 dark:border-purple-500/20 rounded-lg transition-colors flex items-center gap-1.5"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                View PDF
+              </button>
+              <button 
+                onClick={handleDownloadRFQ}
+                className="px-3 py-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/20 rounded-lg transition-colors flex items-center gap-1.5"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -77,10 +121,21 @@ export default function MultiEmailPreviewModal({ isOpen, onClose, stagedRFQs, in
 
       if (onStatusUpdate) onStatusUpdate(inquiryDeal.inquiry_id, 'RFQ_SENT');
 
-      setSendState('success');
-      setTimeout(() => {
-        onClose();
-      }, 2500);
+      setSendState('idle');
+      onClose();
+      
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'All RFQs Sent!',
+        text: `Status updated to RFQ Sent for ${inquiryDeal.inquiry_id}`,
+        showConfirmButton: false,
+        timer: 3500,
+        timerProgressBar: true,
+        background: '#1a1d23',
+        color: '#fff'
+      });
     } catch (err) {
       setSendState('idle');
       alert("Failed to send some emails. Please try again.");
@@ -90,28 +145,15 @@ export default function MultiEmailPreviewModal({ isOpen, onClose, stagedRFQs, in
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl w-full max-w-5xl h-full max-h-[90vh] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-
-        {sendState === 'success' ? (
-          <div className="flex flex-col items-center justify-center p-16 h-full text-center">
-            <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mb-6">
-              <svg className="w-10 h-10 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="text-white text-2xl font-bold mb-2">All RFQs Sent!</h2>
-            <p className="text-gray-400">Status updated to RFQ Sent for {inquiryDeal.inquiry_id}</p>
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
+          <div>
+            <h2 className="text-lg font-bold dark:text-white">Review RFQ Drafts</h2>
+            <p className="text-xs text-gray-500 mt-0.5">Prepare to send {stagedRFQs.length} emails</p>
           </div>
-        ) : (
-          <>
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
-              <div>
-                <h2 className="text-lg font-bold text-white">Review RFQ Drafts</h2>
-                <p className="text-xs text-gray-500 mt-0.5">Prepare to send {stagedRFQs.length} emails</p>
-              </div>
-              <button onClick={onClose} disabled={sendState === 'sending'} className="text-gray-400 hover:text-white transition-colors text-xl leading-none">
-                &times;
-              </button>
-            </div>
+          <button onClick={onClose} disabled={sendState === 'sending'} className="text-gray-400 hover:text-white transition-colors text-xl leading-none">
+            &times;
+          </button>
+        </div>
 
             <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-gray-100 dark:bg-[#0c0e12]">
               {stagedRFQs.map((rfq, idx) => (
@@ -157,8 +199,6 @@ export default function MultiEmailPreviewModal({ isOpen, onClose, stagedRFQs, in
                 )}
               </button>
             </div>
-          </>
-        )}
       </div>
     </div>
   );
