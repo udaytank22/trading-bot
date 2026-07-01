@@ -18,9 +18,12 @@ const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode, inven
 
   const quote = deal.my_quote;
   // Base products from supplier quotes
-  const supplierProducts = quote?.products && quote.products.length > 0
-    ? quote.products
-    : (deal.seller_quote?.products || []).map((sqp, idx) => {
+  const quoteProducts = quote?.items || quote?.products || [];
+  const sellerQuoteProducts = deal.seller_quote?.items || deal.seller_quote?.products || [];
+  
+  const supplierProducts = quoteProducts.length > 0
+    ? quoteProducts
+    : sellerQuoteProducts.map((sqp, idx) => {
       const dp = deal.products?.[idx] || {};
       return {
         product_name: sqp.product_name,
@@ -34,12 +37,13 @@ const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode, inven
     });
 
   // Merge in inventory-sourced products
-  const supplierProductNames = new Set(supplierProducts.map(p => p.product_name.toLowerCase()));
+  const supplierProductNames = new Set(supplierProducts.map(p => (p.product_name || '').toLowerCase()));
   const inventoryProducts = (deal.products || []).reduce((acc, p) => {
-    if (supplierProductNames.has(p.product_name.toLowerCase())) return acc;
+    const pName = p.product_name || '';
+    if (supplierProductNames.has(pName.toLowerCase())) return acc;
     const invMatch = inventoryData.find(inv =>
-      inv.itemName.toLowerCase() === p.product_name.toLowerCase() ||
-      (inv.impa && p.product_name.toLowerCase().includes(inv.impa.toLowerCase()))
+      (inv.itemName || '').toLowerCase() === pName.toLowerCase() ||
+      (inv.impa && pName.toLowerCase().includes(inv.impa.toLowerCase()))
     );
     const invStock = invMatch ? (invMatch.stocks?.reduce((s, st) => s + st.quantity, 0) || 0) : 0;
     if (invMatch && invStock > 0) {
@@ -85,7 +89,7 @@ const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode, inven
   });
 
   const filteredProducts = updatedProducts.filter(p =>
-    p.product_name.toLowerCase().includes(productSearch.toLowerCase())
+    (p.product_name || '').toLowerCase().includes((productSearch || '').toLowerCase())
   );
 
   const totalSellerCost = updatedProducts.reduce((sum, p) => sum + (p.seller_unit_price * (p.quantity || 1)), 0);
@@ -121,7 +125,7 @@ const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode, inven
       {!isPageMode && (
         <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
           <div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Final Quotation Verification</h2>
+            <h2 className="text-sm font-bold text-gray-900 dark:text-white">Final Quotation Verification</h2>
             <p className="text-xs text-gray-500 mt-0.5">Review pricing breakdown for {deal.inquiry_id}</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors text-xl leading-none">&times;</button>
@@ -134,19 +138,19 @@ const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode, inven
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="bg-gray-100 dark:bg-[#0c0e12] p-4 rounded-2xl border border-gray-200 dark:border-[#2a2d33]">
             <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Total Cost</p>
-            <p className="text-lg font-mono font-bold text-gray-900 dark:text-white">{formatINR(totalSellerCost)}</p>
+            <p className="text-sm font-mono font-bold text-gray-900 dark:text-white">{formatINR(totalSellerCost)}</p>
           </div>
           <div className="bg-purple-500/5 p-4 rounded-2xl border border-purple-500/20">
             <p className="text-[10px] font-bold text-purple-500/70 uppercase tracking-widest mb-1.5">Final Quote</p>
-            <p className="text-lg font-mono font-bold text-purple-400">{formatINR(totalFinalPrice)}</p>
+            <p className="text-sm font-mono font-bold text-purple-400">{formatINR(totalFinalPrice)}</p>
           </div>
           <div className="bg-emerald-500/5 p-4 rounded-2xl border border-emerald-500/20">
             <p className="text-[10px] font-bold text-emerald-500/70 uppercase tracking-widest mb-1.5">Gross Profit</p>
-            <p className={`text-lg font-mono font-bold ${totalProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{formatINR(totalProfit)}</p>
+            <p className={`text-sm font-mono font-bold ${totalProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{formatINR(totalProfit)}</p>
           </div>
           <div className="bg-blue-500/5 p-4 rounded-2xl border border-blue-500/20">
             <p className="text-[10px] font-bold text-blue-500/70 uppercase tracking-widest mb-1.5">Margin %</p>
-            <p className={`text-lg font-mono font-bold ${profitPct >= 10 ? 'text-blue-400' : 'text-amber-400'}`}>
+            <p className={`text-sm font-mono font-bold ${profitPct >= 10 ? 'text-blue-400' : 'text-amber-400'}`}>
               {profitPct.toFixed(1)}%
             </p>
           </div>

@@ -165,7 +165,7 @@ export default function TodoPage() {
           {/* Header */}
           <div className="flex items-center justify-between mb-2">
             <div>
-              <h1 className="text-gray-900 dark:text-gray-300 font-bold text-lg mb-1 transition-colors">Daily Agenda</h1>
+              <h1 className="text-gray-900 dark:text-gray-300 font-bold text-sm mb-1 transition-colors">Daily Agenda</h1>
               <p className="text-gray-500 dark:text-gray-400 text-[13px] transition-colors">Wednesday, October 25th, 2023</p>
             </div>
             <button className="flex items-center gap-2 bg-white dark:bg-[#2a2e40] hover:bg-gray-100 dark:hover:bg-[#34384a] text-gray-700 dark:text-gray-300 px-4 py-2 rounded-xl text-sm font-medium transition-colors border border-gray-200 dark:border-white/5 shadow-sm">

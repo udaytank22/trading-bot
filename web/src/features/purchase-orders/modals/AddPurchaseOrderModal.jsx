@@ -296,7 +296,7 @@ export default function AddPurchaseOrderModal({ isOpen, onClose, onSubmit }) {
 
       <div className="mt-8">
         <div className="flex justify-between items-center mb-4">
-          <h4 className="font-bold text-gray-900 dark:text-white text-lg">
+          <h4 className="font-bold text-gray-900 dark:text-white text-sm">
             Products
           </h4>
 

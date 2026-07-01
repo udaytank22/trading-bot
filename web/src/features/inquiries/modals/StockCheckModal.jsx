@@ -154,7 +154,7 @@ const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
     <div className={containerStyle}>
       <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
         <div className="flex flex-col">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Product Vendor Assignment</h2>
+          <h2 className="text-sm font-bold text-gray-900 dark:text-white">Product Vendor Assignment</h2>
           <p className="text-xs text-gray-500 mt-1">Select the relevant vendors for each product in this inquiry.</p>
         </div>
         <div className="flex items-center gap-3">

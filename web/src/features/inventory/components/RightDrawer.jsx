@@ -12,7 +12,7 @@ export function RightDrawer({ isOpen, title, onClose, children }) {
 
       <div className="relative w-full max-w-3xl max-h-[85vh] bg-white dark:bg-[#1a1d23] shadow-2xl flex flex-col rounded-2xl overflow-hidden border border-gray-200 dark:border-[#2a2d33] animate-fade-in">
         <div className="px-6 py-4 border-b border-gray-100 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
-          <h3 className="font-bold text-gray-900 dark:text-white text-lg">
+          <h3 className="font-bold text-gray-900 dark:text-white text-sm">
             {title}
           </h3>
 

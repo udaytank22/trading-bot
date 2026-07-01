@@ -123,19 +123,6 @@ export default function MultiEmailPreviewModal({ isOpen, onClose, stagedRFQs, in
 
       setSendState('idle');
       onClose();
-      
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'success',
-        title: 'All RFQs Sent!',
-        text: `Status updated to RFQ Sent for ${inquiryDeal.inquiry_id}`,
-        showConfirmButton: false,
-        timer: 3500,
-        timerProgressBar: true,
-        background: '#1a1d23',
-        color: '#fff'
-      });
     } catch (err) {
       setSendState('idle');
       alert("Failed to send some emails. Please try again.");
@@ -147,7 +134,7 @@ export default function MultiEmailPreviewModal({ isOpen, onClose, stagedRFQs, in
       <div className="bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl w-full max-w-5xl h-full max-h-[90vh] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
         <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
           <div>
-            <h2 className="text-lg font-bold dark:text-white">Review RFQ Drafts</h2>
+            <h2 className="text-sm font-bold dark:text-white">Review RFQ Drafts</h2>
             <p className="text-xs text-gray-500 mt-0.5">Prepare to send {stagedRFQs.length} emails</p>
           </div>
           <button onClick={onClose} disabled={sendState === 'sending'} className="text-gray-400 hover:text-white transition-colors text-xl leading-none">

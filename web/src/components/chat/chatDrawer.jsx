@@ -185,7 +185,7 @@ const ChatDrawer = ({ isOpen, onClose }) => {
             </div>
           ) : (
             <>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+              <h2 className="text-sm font-bold text-gray-900 dark:text-white">
                 Direct Messages
               </h2>
               <button

@@ -35,45 +35,78 @@ export default function GroupedSupplyDetails({
   // Aggregate all products across all sub-shipments
   const items = useMemo(() => {
     const list = [];
-      deal.subShipments?.forEach(ship => {
-        if (ship.purchaseOrder?.items) {
-          ship.purchaseOrder.items.forEach(item => {
-            list.push({
-              id: item.id,
-              description: item.description || item.product?.name || item.product_name || '',
-              product: item.product,
-              quantity: item.quantity,
-              unitPrice: item.unitPrice || item.unit_price || 0,
-              totalPrice: item.totalPrice || item.total_price || 0,
-              supplier: ship.supplier?.name || ship.supplier || 'Unknown Supplier',
-              shipmentId: ship.id
-            });
-          });
-        } else if (ship.inventoryFulfilled && deal.inquiry?.clientQuotations?.[0]?.items?.length > 0) {
-          deal.inquiry.clientQuotations[0].items.forEach(cqi => {
-            list.push({
-              id: cqi.id,
-              description: cqi.inquiryItem?.description || 'Internal Product',
-              product: null,
-              quantity: cqi.quantity,
-              unitPrice: parseFloat(cqi.sellingPrice || 0),
-              totalPrice: parseFloat(cqi.totalPrice || 0),
-              supplier: 'Internal Inventory',
-              shipmentId: ship.id
-            });
-          });
-        } else if (ship.cargoDetails) {
+    deal.subShipments?.forEach(ship => {
+      if (ship.purchaseOrder?.items) {
+        ship.purchaseOrder.items.forEach(item => {
           list.push({
-            id: Math.random(),
-            description: ship.cargoDetails,
-            quantity: ship.quantity || '—',
-            unitPrice: 0,
-            totalPrice: 0,
-            supplier: ship.supplier?.name || ship.supplier || 'Internal Inventory',
+            id: item.id,
+            description: item.description || item.product?.name || item.product_name || '',
+            product: item.product,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice || item.unit_price || 0,
+            totalPrice: item.totalPrice || item.total_price || 0,
+            supplier: ship.supplier?.name || ship.supplier || 'Unknown Supplier',
             shipmentId: ship.id
           });
+        });
+      } else if (ship.inventoryFulfilled && deal.inquiry?.clientQuotations?.[0]?.items?.length > 0) {
+        deal.inquiry.clientQuotations[0].items.forEach(cqi => {
+          list.push({
+            id: cqi.id,
+            description: cqi.inquiryItem?.description || 'Internal Product',
+            product: null,
+            quantity: cqi.quantity,
+            unitPrice: parseFloat(cqi.sellingPrice || 0),
+            totalPrice: parseFloat(cqi.totalPrice || 0),
+            supplier: 'Internal Inventory',
+            shipmentId: ship.id
+          });
+        });
+      } else if (ship.cargoDetails) {
+        let extractedQty = ship.quantity || ship.qty;
+        let baseDescription = typeof ship.cargoDetails === 'string' ? ship.cargoDetails : '';
+
+        if (!extractedQty && baseDescription) {
+          const match = baseDescription.match(/\(x(\d+)\)/);
+          if (match) {
+            extractedQty = parseInt(match[1], 10);
+            baseDescription = baseDescription.replace(/\(x\d+\)/, '').trim();
+          }
         }
-      });
+        extractedQty = extractedQty || '—';
+
+        let totalPrice = ship.amount || ship.totalAmount || ship.total_amount || ship.totalPrice || ship.total_price || 0;
+        let unitPrice = ship.unitPrice || ship.unit_price || 0;
+
+        // Try to fetch price from clientQuotations based on matching description
+        if (!unitPrice && deal.inquiry?.clientQuotations?.[0]?.items) {
+          const quoteItems = deal.inquiry.clientQuotations[0].items;
+          const matchedItem = quoteItems.find(cqi => {
+            const desc = cqi.inquiryItem?.description || cqi.inquiryItem?.product?.name || cqi.inquiryItem?.product_name || '';
+            return desc.toLowerCase().includes(baseDescription.toLowerCase()) || baseDescription.toLowerCase().includes(desc.toLowerCase());
+          });
+          if (matchedItem) {
+            unitPrice = parseFloat(matchedItem.sellingPrice || matchedItem.unitPrice || matchedItem.unit_price || 0);
+          }
+        }
+
+        if (!totalPrice && unitPrice && extractedQty !== '—') {
+          totalPrice = unitPrice * extractedQty;
+        } else if (!unitPrice && extractedQty !== '—' && totalPrice) {
+          unitPrice = totalPrice / extractedQty;
+        }
+
+        list.push({
+          id: ship.id || Math.random(),
+          description: ship.cargoDetails,
+          quantity: extractedQty,
+          unitPrice: unitPrice,
+          totalPrice: totalPrice,
+          supplier: ship.supplier?.name || ship.supplier || 'Internal Inventory',
+          shipmentId: ship.id
+        });
+      }
+    });
     return list;
   }, [deal.subShipments, deal.inquiry]);
 
@@ -104,7 +137,7 @@ export default function GroupedSupplyDetails({
 
   return (
     <div className="w-full animate-in fade-in duration-300 pb-6">
-      <div className="max-w-7xl mx-auto py-2 px-2 md:px-4 flex flex-col gap-4">
+      <div className="max-w-7xl mx-auto flex flex-col gap-4">
 
         {/* HEADER BAR */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 dark:border-[#2a2d36] pb-4 gap-4">
@@ -119,7 +152,7 @@ export default function GroupedSupplyDetails({
               Supply
             </button>
             <span className="text-gray-300 dark:text-[#2a2d36] font-light">|</span>
-            <span className="font-mono text-gray-900 dark:text-white text-lg font-bold tracking-wide">{deal.shipmentNumber}</span>
+            <span className="font-mono text-gray-900 dark:text-white text-sm font-bold tracking-wide">{deal.shipmentNumber}</span>
           </div>
 
           <div className="flex items-center gap-3">
@@ -138,19 +171,19 @@ export default function GroupedSupplyDetails({
               </Button>
             )}
             {(deal.status === "ORDER_PLACED" || deal.status === "ORDER PLACED" || deal.status === "PENDING" || deal.status === "CONFIRMED") && deal.status !== "CLOSED" && deal.subShipments?.every(s => s.inventoryFulfilled) && deal.subShipments?.every(s => s.currentStatus !== "CLOSED" && s.status !== "CLOSED") && canUpdate && (
-                <button
-                  onClick={() => {
-                    setAllotModalDeal(deal);
-                    setAllotModalMode("group_initial_delivery");
-                    setIsAllotModalOpen(true);
-                  }}
-                  className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-white hover:bg-gray-50 dark:bg-[#1e2028] dark:hover:bg-[#242830] text-purple-600 dark:text-purple-400 border border-purple-500/30 transition-all shadow-sm"
-                >
-                  Allot Vehicle
-                </button>
+              <button
+                onClick={() => {
+                  setAllotModalDeal(deal);
+                  setAllotModalMode("group_initial_delivery");
+                  setIsAllotModalOpen(true);
+                }}
+                className="px-3.5 py-2 rounded-xl text-xs uppercase tracking-wider font-bold bg-white hover:bg-gray-50 dark:bg-[#1e2028] dark:hover:bg-[#242830] text-purple-600 dark:text-purple-400 border border-purple-500/30 transition-all shadow-sm"
+              >
+                Allot Vehicle
+              </button>
             )}
             {((deal.status === "VEHICLE_ALLOTTED" || deal.status === "LOADING") || deal.subShipments?.some(s => s.inventoryFulfilled && (s.currentStatus === 'LOADING' || s.currentStatus === 'VEHICLE_ALLOTTED' || s.status === 'LOADING' || s.status === 'VEHICLE_ALLOTTED'))) && deal.status !== "OUT_FOR_DELIVERY" && deal.status !== "OUT FOR DELIVERY" && deal.status !== "DISPATCHED" && deal.status !== "DELIVERED" && deal.status !== "COMPLETED" && canUpdate && (
-                <button
+              <button
                 onClick={async () => {
                   const result = await Swal.fire({
                     title: 'Mark as Dispatched?',
@@ -195,23 +228,23 @@ export default function GroupedSupplyDetails({
 
         {/* METADATA CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white dark:bg-[#1e2028] p-5 rounded-xl border border-gray-200 dark:border-[#2a2d36] shadow-sm">
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Vessel</p>
-            <p className="text-lg font-bold text-gray-900 dark:text-white">{vessel}</p>
+          <div className="bg-white dark:bg-[#1e2028] p-3 rounded-xl border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Vessel</p>
+            <p className="text-md font-bold text-gray-900 dark:text-white">{vessel}</p>
           </div>
-          <div className="bg-white dark:bg-[#1e2028] p-5 rounded-xl border border-gray-200 dark:border-[#2a2d36] shadow-sm">
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Date</p>
-            <p className="text-lg font-bold text-gray-900 dark:text-white">{formatDate(deal.date)}</p>
+          <div className="bg-white dark:bg-[#1e2028] p-3 rounded-xl border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Date</p>
+            <p className="text-md font-bold text-gray-900 dark:text-white">{formatDate(deal.date)}</p>
           </div>
-          <div className="bg-white dark:bg-[#1e2028] p-5 rounded-xl border border-gray-200 dark:border-[#2a2d36] shadow-sm">
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Total Amount</p>
-            <p className="text-lg font-mono font-bold text-purple-600 dark:text-purple-400">{formatINR(totalAmount)}</p>
+          <div className="bg-white dark:bg-[#1e2028] p-3 rounded-xl border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Amount</p>
+            <p className="text-md font-mono font-bold text-purple-600 dark:text-purple-400">{formatINR(totalAmount)}</p>
           </div>
         </div>
 
         {/* SHIPMENTS TRACKING SECTION */}
-        <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
-          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Vendor Shipments Tracking</h3>
+        <div className="bg-white dark:bg-[#1e2028] rounded-xl p-3 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Vendor Shipments Tracking</h3>
           <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-[#2a2d36] bg-gray-50/50 dark:bg-[#242830]/30 shadow-inner">
             <DataTable
               columns={shipmentColumns}
@@ -221,24 +254,24 @@ export default function GroupedSupplyDetails({
                 const shipmentStatus = shipment.currentStatus || shipment.status;
                 return (
                   <tr key={shipment.id || idx} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}>
-                    <td className="px-6 py-4 font-mono text-sm text-gray-500">
+                    <td className="px-6 py-2 font-mono text-sm text-gray-500">
                       SH-{shipment.id}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-2">
                       <p className="text-sm font-bold text-gray-900 dark:text-white">
                         {shipment.supplier?.name || shipment.supplier || 'Unknown Supplier'}
                       </p>
                     </td>
-                    <td className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+                    <td className="px-6 py-2 text-sm font-semibold text-gray-600 dark:text-gray-300">
                       {shipment.vehicleDetails || 'Not Allotted'}
                     </td>
-                    <td className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
+                    <td className="px-6 py-2 text-sm font-semibold text-gray-600 dark:text-gray-300">
                       {shipment.driverDetails || 'Not Assigned'}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-2">
                       <StatusBadge status={shipmentStatus} />
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-2 text-right">
                       {(shipmentStatus === "IN_TRANSIT" || shipmentStatus === "DISPATCHED") && canUpdate && (
                         <button
                           onClick={async () => {
@@ -272,7 +305,7 @@ export default function GroupedSupplyDetails({
         </div>
 
         {/* PRODUCTS TABLE */}
-        <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+        <div className="bg-white dark:bg-[#1e2028] rounded-xl p-3 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
           <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Ordered Products</h3>
           <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-[#2a2d36] bg-gray-50/50 dark:bg-[#242830]/30 shadow-inner">
             <DataTable
@@ -281,21 +314,21 @@ export default function GroupedSupplyDetails({
               emptyMessage="No products found."
               renderRow={(item, idx) => (
                 <tr key={item.id || idx} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}>
-                  <td className="px-6 py-4 text-gray-500 text-sm font-medium">{idx + 1}</td>
-                  <td className="px-6 py-4">
-                    <p className="text-sm font-bold text-gray-900 dark:text-white">{item.description}</p>
+                  <td className="px-6 py-2 text-gray-500 text-sm font-medium">{idx + 1}</td>
+                  <td className="px-6 py-2">
+                    <p className="text-sm font-bold text-gray-900 dark:text-white">{item.description || item.product?.name || item.product_name || '—'}</p>
                   </td>
-                  <td className="px-6 py-4 text-sm font-semibold text-gray-600 dark:text-gray-300">
-                    {item.supplier}
+                  <td className="px-6 py-2 text-sm font-semibold text-gray-600 dark:text-gray-300">
+                    {item.supplier?.name || item.supplier_name || item.supplier || '—'}
                   </td>
-                  <td className="px-6 py-4 font-mono text-sm text-gray-500">
-                    {formatINR(parseFloat(item.unitPrice))}
+                  <td className="px-6 py-2 font-mono text-sm text-gray-500">
+                    {formatINR(parseFloat(item.unitPrice || item.unit_price || 0))}
                   </td>
-                  <td className="px-6 py-4 text-sm font-bold text-gray-700 dark:text-gray-200">
-                    {item.quantity}
+                  <td className="px-6 py-2 text-sm font-bold text-gray-700 dark:text-gray-200">
+                    {item.quantity || item.qty || 0}
                   </td>
-                  <td className="px-6 py-4 font-mono font-bold text-purple-600 dark:text-purple-400 text-right">
-                    {formatINR(parseFloat(item.totalPrice))}
+                  <td className="px-6 py-2 font-mono font-bold text-purple-600 dark:text-purple-400 text-right">
+                    {formatINR(parseFloat(item.totalPrice || item.total_price || 0))}
                   </td>
                 </tr>
               )}
@@ -307,10 +340,10 @@ export default function GroupedSupplyDetails({
         {/* Order Context & Financial Summary */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Order Context */}
-          <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Order Context</h3>
+          <div className="bg-white dark:bg-[#1e2028] rounded-xl p-3 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Order Context</h3>
             <div className="space-y-3">
-              <div className="flex flex-col bg-gray-50 dark:bg-[#242830]/30 p-4 rounded-xl border border-gray-200 dark:border-[#2a2d36]">
+              <div className="flex flex-col bg-gray-50 dark:bg-[#242830]/30 p-3 rounded-xl border border-gray-200 dark:border-[#2a2d36]">
                 <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Customer / Buyer</span>
                 <span className="text-gray-900 dark:text-white font-extrabold text-base mt-1">{customer}</span>
               </div>
@@ -328,7 +361,7 @@ export default function GroupedSupplyDetails({
           </div>
 
           {/* Financial Summary */}
-          <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+          <div className="bg-white dark:bg-[#1e2028] rounded-xl p-3 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
             <h4 className="text-xs font-bold uppercase tracking-widest text-purple-600 dark:text-purple-400 mb-4">Financial Summary</h4>
             <div className="space-y-4">
               <div className="flex justify-between items-center">

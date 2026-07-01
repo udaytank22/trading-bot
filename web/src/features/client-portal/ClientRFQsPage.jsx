@@ -536,7 +536,7 @@ export default function ClientRFQsPage() {
               Back to RFQs
             </button>
             <span className="text-gray-300 dark:text-[#2a2d36] font-light">|</span>
-            <span className="font-mono text-gray-950 dark:text-white text-lg font-bold tracking-wide">
+            <span className="font-mono text-gray-950 dark:text-white text-sm font-bold tracking-wide">
               Quote Details — {viewingQuoteInquiry.inquiry_id}
             </span>
           </div>
@@ -631,7 +631,7 @@ export default function ClientRFQsPage() {
                   <div className="border-t border-dashed border-gray-200 dark:border-[#2a2d33] pt-3.5 mt-2">
                     <div className="flex justify-between items-center text-sm font-black text-gray-900 dark:text-white">
                       <span className="uppercase tracking-wider text-[10px] text-gray-400 font-bold">Final Quoted Amount</span>
-                      <span className="font-mono text-lg font-extrabold text-purple-650 dark:text-purple-400 bg-purple-500/10 px-3.5 py-1.5 rounded-xl border border-purple-500/20">
+                      <span className="font-mono text-sm font-extrabold text-purple-650 dark:text-purple-400 bg-purple-500/10 px-3.5 py-1.5 rounded-xl border border-purple-500/20">
                         ₹{Number(myQuote.finalAmount).toLocaleString()}
                       </span>
                     </div>
@@ -665,7 +665,7 @@ export default function ClientRFQsPage() {
               Back to Confirmed Orders
             </button>
             <span className="text-gray-300 dark:text-[#2a2d36] font-light">|</span>
-            <span className="font-mono text-gray-950 dark:text-white text-lg font-bold tracking-wide">
+            <span className="font-mono text-gray-950 dark:text-white text-sm font-bold tracking-wide">
               Order Details — {selectedOrder.shipmentNumber}
             </span>
           </div>
@@ -817,12 +817,12 @@ export default function ClientRFQsPage() {
   }
 
   return (
-    <div className="w-full h-full flex flex-col space-y-6">
+    <div className="w-full h-full flex flex-col space-y-4">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#1a1d23] p-6 rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-[#1a1d23] p-3 rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Supplier Quotation Portal</h1>
-          <p className="text-xs text-gray-500 mt-1">Submit product unit prices for requested inquiries.</p>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white">Supplier Quotation Portal</h1>
+          <p className="text-sm text-gray-500 mt-1">Submit product unit prices for requested inquiries.</p>
         </div>
 
         {/* Supplier Profile Info / Selector */}
@@ -858,14 +858,14 @@ export default function ClientRFQsPage() {
       </div>
 
       {/* Tab Switcher */}
-      <div className="flex items-center gap-6 border-b border-gray-200 dark:border-[#2a2d33] pb-1">
+      <div className="flex items-center gap-6 border-b border-gray-200 dark:border-[#2a2d33]">
         <button
           onClick={() => {
             setActiveTab("rfqs");
             setSelectedInquiry(null);
             setSelectedOrder(null);
           }}
-          className={`pb-3 text-sm font-bold tracking-wide transition-colors relative ${activeTab === "rfqs"
+          className={`pb-2 text-sm font-bold tracking-wide transition-colors relative ${activeTab === "rfqs"
             ? "text-purple-600 dark:text-white"
             : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
@@ -881,7 +881,7 @@ export default function ClientRFQsPage() {
             setSelectedInquiry(null);
             setSelectedOrder(null);
           }}
-          className={`pb-3 text-sm font-bold tracking-wide transition-colors relative ${activeTab === "orders"
+          className={`pb-2 text-sm font-bold tracking-wide transition-colors relative ${activeTab === "orders"
             ? "text-purple-600 dark:text-white"
             : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
@@ -897,7 +897,7 @@ export default function ClientRFQsPage() {
             setSelectedInquiry(null);
             setSelectedOrder(null);
           }}
-          className={`pb-3 text-sm font-bold tracking-wide transition-colors relative ${activeTab === "invoices"
+          className={`pb-2 text-sm font-bold tracking-wide transition-colors relative ${activeTab === "invoices"
             ? "text-purple-600 dark:text-white"
             : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
@@ -914,11 +914,7 @@ export default function ClientRFQsPage() {
           <>
             {/* Left Column: RFQ List */}
             <div className="flex flex-col bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden lg:col-span-12">
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center">
-                <h2 className="text-sm font-bold text-gray-800 dark:text-white uppercase tracking-wider">
-                  My RFQs & Quotations ({activeRFQs.length})
-                </h2>
-              </div>
+
 
               <div className="flex-1 overflow-auto custom-scrollbar">
                 <DataTable
@@ -1020,11 +1016,7 @@ export default function ClientRFQsPage() {
           <>
             {/* Left Column: Confirmed Orders List */}
             <div className="flex flex-col bg-white dark:bg-[#1a1d23] rounded-2xl border border-gray-200 dark:border-[#2a2d33] shadow-sm overflow-hidden lg:col-span-12">
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center">
-                <h2 className="text-sm font-bold text-gray-800 dark:text-white uppercase tracking-wider">
-                  Confirmed Orders ({activeOrders.length})
-                </h2>
-              </div>
+
 
               <div className="flex-1 overflow-auto custom-scrollbar">
                 <DataTable

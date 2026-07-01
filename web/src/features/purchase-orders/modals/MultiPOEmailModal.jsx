@@ -148,35 +148,17 @@ export default function MultiPOEmailModal({ groupedPo, isOpen, onClose, onStatus
         }
         if (onStatusUpdate) onStatusUpdate(po.id, "ORDERED", pdfBase64);
       });
-      setSendState("success");
-      setTimeout(() => {
-        onClose();
-      }, 2500);
+      setSendState("idle");
+      onClose();
     }, 1500);
   };
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-gray-50 dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl w-full max-w-5xl h-full max-h-[90vh] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-        {sendState === "success" ? (
-          <div className="flex flex-col items-center justify-center p-16 h-full text-center">
-            <div className="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mb-6">
-              <svg className="w-10 h-10 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              All PO Emails Sent Successfully!
-            </h2>
-            <p className="text-gray-400">
-              Status updated to Ordered for all vendors.
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
               <div>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
+                <h2 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
                   Send All Purchase Orders
                 </h2>
                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">
@@ -232,8 +214,6 @@ export default function MultiPOEmailModal({ groupedPo, isOpen, onClose, onStatus
                 )}
               </button>
             </div>
-          </>
-        )}
       </div>
     </div>
   );

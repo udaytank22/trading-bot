@@ -522,7 +522,7 @@ export default function SupplyDetailsPage() {
               Supply
             </button>
             <span className="text-gray-300 dark:text-[#2a2d36] font-light">|</span>
-            <span className="font-mono text-gray-900 dark:text-white text-lg font-bold tracking-wide">
+            <span className="font-mono text-gray-900 dark:text-white text-sm font-bold tracking-wide">
               {deal.shipmentNumber || `SH-${deal.id}`}
             </span>
           </div>

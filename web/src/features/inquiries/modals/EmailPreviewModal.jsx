@@ -87,17 +87,6 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
       }
       
       setSendState('success');
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'success',
-        title: 'Emails have been successfully dispatched.',
-        showConfirmButton: false,
-        timer: 3000,
-        background: '#1a1d23',
-        color: '#fff'
-      });
-      
       setTimeout(() => {
         onClose();
       }, 500);
@@ -132,7 +121,7 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
             </svg>
             <h2 className="text-white text-3xl font-bold mb-3 tracking-wide">Email Sent Successfully!</h2>
-            <p className="text-gray-800 dark:text-gray-300 font-bold text-lg">{deal.buyer_name}</p>
+            <p className="text-gray-800 dark:text-gray-300 font-bold text-sm">{deal.buyer_name}</p>
             <p className="text-gray-500 text-sm mb-6 pb-6 border-b border-gray-200 dark:border-[#2a2d36] w-full max-w-[300px] mx-auto">{deal.buyer_email}</p>
             <p className="text-blue-400 text-sm font-bold tracking-wide uppercase bg-blue-500/10 px-4 py-2 rounded-lg">Deal status updated to {isRFQ ? 'RFQ Sent' : 'Quote Sent'}</p>
           </div>
@@ -141,7 +130,7 @@ export default function EmailPreviewModal({ deal, initialEmailType = 'RFQ', isOp
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
               <div>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Review Email Before Sending</h2>
+                <h2 className="text-sm font-bold text-gray-900 dark:text-white">Review Email Before Sending</h2>
                 <p className="text-xs text-gray-500 mt-0.5">Check carefully before approving</p>
               </div>
               <button onClick={onClose} disabled={sendState === 'sending'} className="text-gray-400 hover:text-white transition-colors text-xl leading-none">

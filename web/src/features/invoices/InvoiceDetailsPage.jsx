@@ -182,7 +182,7 @@ export default function InvoiceDetailsPage() {
               Invoices
             </button>
             <span className="text-gray-300 dark:text-[#2a2d36] font-light">|</span>
-            <span className="font-mono text-gray-900 dark:text-white text-lg font-bold tracking-wide">INQ-{inquiryData?.inquiryNumber || inquiryData?.inquiry_id || id}</span>
+            <span className="font-mono text-gray-900 dark:text-white text-sm font-bold tracking-wide">INQ-{inquiryData?.inquiryNumber || inquiryData?.inquiry_id || id}</span>
           </div>
 
           {!hasClientInvoice ? (
@@ -278,15 +278,15 @@ export default function InvoiceDetailsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           <div className="bg-white dark:bg-[#1e2028] p-5 rounded-xl border border-gray-200 dark:border-[#2a2d36] shadow-sm">
             <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Customer</p>
-            <p className="text-lg font-bold text-gray-900 dark:text-white">{inquiryData?.clientName || inquiryData?.buyer_name || 'N/A'}</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-white">{inquiryData?.clientName || inquiryData?.buyer_name || 'N/A'}</p>
           </div>
           <div className="bg-white dark:bg-[#1e2028] p-5 rounded-xl border border-gray-200 dark:border-[#2a2d36] shadow-sm">
             <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Vessel</p>
-            <p className="text-lg font-bold text-gray-900 dark:text-white">{inquiryData?.vesselName || 'N/A'}</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-white">{inquiryData?.vesselName || 'N/A'}</p>
           </div>
           <div className="bg-white dark:bg-[#1e2028] p-5 rounded-xl border border-gray-200 dark:border-[#2a2d36] shadow-sm">
             <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Total Invoices</p>
-            <p className="text-lg font-mono font-bold text-purple-600 dark:text-purple-400">{supplierInvoices.length}</p>
+            <p className="text-sm font-mono font-bold text-purple-600 dark:text-purple-400">{supplierInvoices.length}</p>
           </div>
         </div>
 

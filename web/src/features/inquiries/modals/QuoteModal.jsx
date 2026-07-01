@@ -111,7 +111,7 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
       {!isPageMode && (
         <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23]">
           <div className="flex items-center gap-4">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+            <h2 className="text-sm font-bold text-gray-900 dark:text-white">
               {isClientQuoting ? "Coat Item Prices" : isTLReview ? "Set Margin & Discount" : "Send Quote"}
             </h2>
           </div>
@@ -305,7 +305,7 @@ const QuoteModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
                 </div>
                 <div className="flex justify-between items-center text-sm font-black text-gray-900 dark:text-white border-t border-dashed border-gray-200 dark:border-[#2a2d33] pt-4 mt-2">
                   <span className="uppercase tracking-wider text-[11px] text-gray-600 dark:text-gray-400 font-bold">Final Client Quote Amount</span>
-                  <span className="font-mono text-lg font-extrabold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-3.5 py-1.5 rounded-xl border border-purple-500/20 shadow-sm">
+                  <span className="font-mono text-sm font-extrabold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-3.5 py-1.5 rounded-xl border border-purple-500/20 shadow-sm">
                     ₹ {new Intl.NumberFormat('en-IN').format(Math.round(calculations.totalFinalPrice))}
                   </span>
                 </div>

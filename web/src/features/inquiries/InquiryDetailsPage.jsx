@@ -129,7 +129,6 @@ export default function InquiryDetailsPage() {
       if (res.success) {
         loadData();
         setActiveTab("overview");
-        Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.STOCK_CHECK, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
       }
     } catch (err) {
       console.error('Stock Check Error:', err, err.response?.data);
@@ -179,7 +178,6 @@ export default function InquiryDetailsPage() {
       if (res.success) {
         loadData();
         setActiveTab("overview");
-        Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.QUOTE_APPROVED, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
       }
     } catch (err) {
       console.error(err);
@@ -220,7 +218,6 @@ export default function InquiryDetailsPage() {
         if (res.success) {
           loadData();
           setActiveTab("overview");
-          Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.QUOTE_SUBMITTED_TL, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
         }
       } else if (deal.status === "TL_REVIEW") {
         const confirmed = await confirmAction(
@@ -272,7 +269,6 @@ export default function InquiryDetailsPage() {
         if (res.success) {
           loadData();
           setActiveTab("overview");
-          Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.MARGIN_APPROVED, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
         }
       }
     } catch (err) {
@@ -312,7 +308,6 @@ export default function InquiryDetailsPage() {
         if (res.success) {
           loadData();
           setActiveTab("overview");
-          Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.DEAL_ACCEPTED, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
         }
       } else if (result.dismiss === Swal.DismissReason.cancel) {
         const res = await api.inquiries.clientDecision(deal.id, false);
@@ -336,7 +331,6 @@ export default function InquiryDetailsPage() {
       if (res.success) {
         loadData();
         setActiveTab("overview");
-        Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.DEAL_CONFIRMED, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
       }
     } catch (err) {
       console.error(err);
@@ -355,7 +349,6 @@ export default function InquiryDetailsPage() {
       if (res.success) {
         loadData();
         setActiveTab("overview");
-        Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.RFQ_CLOSED, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 1500 });
       }
     } catch (err) {
       console.error(err);
@@ -430,7 +423,6 @@ export default function InquiryDetailsPage() {
         // Collapse all expanded quote cards and switch to Review Margin tab
         setExpandedQuotes({});
         setActiveTab('action');
-        Swal.fire({ toast: true, position: 'top-end', icon: 'success', ...TOAST_MESSAGES.INQUIRIES.SOURCING_CONFIRMED, background: '#1a1d23', color: '#fff', showConfirmButton: false, timer: 2000 });
       }
     } catch {
       Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to confirm sourcing selections.', background: '#1a1d23', color: '#fff' });
@@ -632,11 +624,11 @@ export default function InquiryDetailsPage() {
   const currentDealWithLocalQuote = { ...deal, my_quote: displayQuote };
 
   return (
-    <div className="w-full animate-in fade-in duration-300">
+    <div className="w-full animate-in fade-in duration-300 p-1">
       <div className=" mx-auto flex flex-col gap-4">
 
         {/* HEADER BAR */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 dark:border-[#2a2d36] pb-4 gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 dark:border-[#2a2d36] pb-2 gap-4">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/inquiries')}
@@ -648,7 +640,7 @@ export default function InquiryDetailsPage() {
               Inquiries
             </button>
             <span className="text-gray-300 dark:text-[#2a2d36] font-light">|</span>
-            <span className="font-mono text-gray-950 dark:text-white text-lg font-bold tracking-wide">{deal.inquiry_id}</span>
+            <span className="font-mono text-gray-950 dark:text-white text-sm font-bold tracking-wide">{deal.inquiry_id}</span>
           </div>
 
           <div className="flex items-center gap-3">
@@ -699,10 +691,10 @@ export default function InquiryDetailsPage() {
             <div className="lg:col-span-2 space-y-6">
 
               {/* Products Requested */}
-              <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
-                <div className="flex justify-between items-center mb-4">
+              <div className="bg-white dark:bg-[#1e2028] rounded-xlborder border-gray-200 dark:border-[#2a2d36] shadow-sm">
+                <div className="flex justify-between items-center mb-2">
                   <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Products Requested <a className="font-bold text-gray-500">({deal.products.length} items) </a></h3>
-                  {deal.products.length > 4 && (
+                  {deal.products.length > 5 && (
                     <button
                       onClick={() => setIsTableFullscreen(true)}
                       className="text-[10px] font-bold text-purple-650 dark:text-purple-400 hover:text-purple-500 transition-colors flex items-center gap-1.5"
@@ -717,7 +709,7 @@ export default function InquiryDetailsPage() {
                 <div className="overflow-x-auto rounded-xl border border-gray-250 dark:border-[#2a2d36] bg-gray-50/50 dark:bg-[#242830]/30 shadow-inner">
                   <DataTable
                     columns={requestTableColumns}
-                    data={deal.products.slice(0, 4)}
+                    data={deal.products.slice(0, 5)}
                     emptyMessage="No products requested."
                     renderRow={(p, i) => {
                       const hasSuppliersCol = deal?.suppliers && deal.suppliers.length > 0;
@@ -788,8 +780,8 @@ export default function InquiryDetailsPage() {
               </div>
 
               {/* Seller Quote */}
-              <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
-                <div className="flex justify-between items-center mb-4">
+              <div className="bg-white dark:bg-[#1e2028] rounded-xl p-3 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+                <div className="flex justify-between items-center mb-2">
                   <div>
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Supplier Quotations</h3>
                     {deal.status === 'TL_REVIEW' && (() => {
@@ -991,8 +983,8 @@ export default function InquiryDetailsPage() {
               </div>
 
               {/* Client Quote */}
-              <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Quotation Built for Buyer</h3>
+              <div className="bg-white dark:bg-[#1e2028] rounded-xl p-3 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Quotation Built for Buyer</h3>
                 {!displayQuote ? (
                   deal.seller_quote ? (
                     <button
@@ -1014,11 +1006,11 @@ export default function InquiryDetailsPage() {
                       emptyMessage="No quote prepared."
                       renderRow={(p, i) => (
                         <tr key={i} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
-                          <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + i + 1}</td>
-                          <td className="px-4 py-3 font-semibold">{p.product_name}</td>
-                          <td className="px-4 py-3 font-mono text-purple-600 dark:text-purple-400 font-bold">{formatINR(p.my_unit_price)}</td>
-                          <td className="px-4 py-3 font-mono text-emerald-500 font-semibold">{p.margin_percent || p.applied_margin_percent}%</td>
-                          <td className="px-4 py-3 font-mono text-gray-900 dark:text-white text-right font-extrabold">{formatINR(p.total_price || p.total_my_price)}</td>
+                          <td className="px-5 py-2 font-medium text-purple-600 dark:text-purple-400 font-mono">{(1 - 1) * 10 + i + 1}</td>
+                          <td className="px-4 py-2 font-semibold">{p.product_name}</td>
+                          <td className="px-4 py-2 font-mono text-purple-600 dark:text-purple-400 font-bold">{formatINR(p.my_unit_price)}</td>
+                          <td className="px-4 py-2 font-mono text-emerald-500 font-semibold">{p.margin_percent || p.applied_margin_percent}%</td>
+                          <td className="px-4 py-2 font-mono text-gray-900 dark:text-white text-right font-extrabold">{formatINR(p.total_price || p.total_my_price)}</td>
                         </tr>
                       )}
                     />
@@ -1028,26 +1020,20 @@ export default function InquiryDetailsPage() {
 
               {/* PO and Invoice Details */}
               {(deal.purchaseOrders?.length > 0 || deal.invoices?.length > 0) && (
-                <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
-                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Post-Confirmation Documents</h3>
+                <div className="bg-white dark:bg-[#1e2028] rounded-xl p-3 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Post-Confirmation Documents</h3>
 
                   <div className="space-y-6">
                     {/* Purchase Orders */}
                     {deal.purchaseOrders?.length > 0 && (
                       <div>
-                        <h4 className="text-[11px] font-bold text-gray-900 dark:text-white uppercase mb-3 flex items-center gap-2">
-                          <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                          </svg>
-                          Purchase Orders
-                        </h4>
                         <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-[#2a2d36]">
                           <DataTable
                             columns={[
-                              { key: 'poNumber', label: 'PO Number', cellClassName: 'px-4 py-3 font-mono font-semibold text-purple-600 dark:text-purple-400', renderCell: (po) => <button onClick={() => navigate(`/purchase-orders/${po.id}`)} className="hover:underline">{po.poNumber}</button> },
-                              { key: 'supplier', label: 'Supplier', cellClassName: 'px-4 py-3 font-medium text-gray-800 dark:text-gray-200', renderCell: (po) => po.supplier?.name || 'N/A' },
-                              { key: 'status', label: 'Status', cellClassName: 'px-4 py-3', renderCell: (po) => <StatusBadge status={po.status} /> },
-                              { key: 'amount', label: 'Amount', cellClassName: 'px-4 py-3 font-mono font-bold text-gray-900 dark:text-white text-right', renderCell: (po) => formatINR(po.amount) }
+                              { key: 'poNumber', label: 'PO Number', cellClassName: 'px-4 py-2 font-mono font-semibold text-purple-600 dark:text-purple-400', renderCell: (po) => <button onClick={() => navigate(`/purchase-orders/${po.id}`)} className="hover:underline">{po.poNumber}</button> },
+                              { key: 'supplier', label: 'Supplier', cellClassName: 'px-4 py-2 font-medium text-gray-800 dark:text-gray-200', renderCell: (po) => po.supplier?.name || 'N/A' },
+                              { key: 'status', label: 'Status', cellClassName: 'px-4 py-2', renderCell: (po) => <StatusBadge status={po.status} /> },
+                              { key: 'amount', label: 'Amount', cellClassName: 'px-4 py-2 font-mono font-bold text-gray-900 dark:text-white text-right', renderCell: (po) => formatINR(po.amount) }
                             ]}
                             data={deal.purchaseOrders}
                             emptyMessage="No Purchase Orders found."
@@ -1069,11 +1055,11 @@ export default function InquiryDetailsPage() {
                         <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-[#2a2d36]">
                           <DataTable
                             columns={[
-                              { key: 'invoiceNumber', label: 'Invoice #', cellClassName: 'px-4 py-3 font-mono font-semibold text-purple-600 dark:text-purple-400', renderCell: (inv) => <button onClick={() => navigate(`/invoices/${inv.id}`)} className="hover:underline">{inv.invoiceNumber}</button> },
-                              { key: 'status', label: 'Status', cellClassName: 'px-4 py-3', renderCell: (inv) => <StatusBadge status={inv.status} /> },
-                              { key: 'total', label: 'Total', cellClassName: 'px-4 py-3 font-mono font-bold text-gray-900 dark:text-white text-right', renderCell: (inv) => formatINR(inv.total) },
-                              { key: 'paid', label: 'Paid', cellClassName: 'px-4 py-3 font-mono font-bold text-emerald-500 text-right', renderCell: (inv) => formatINR(inv.paidAmount) },
-                              { key: 'pending', label: 'Pending', cellClassName: 'px-4 py-3 font-mono font-bold text-red-500 text-right', renderCell: (inv) => formatINR(inv.pendingAmount) }
+                              { key: 'invoiceNumber', label: 'Invoice #', cellClassName: 'px-4 py-1 font-mono font-semibold text-purple-600 dark:text-purple-400', renderCell: (inv) => <button onClick={() => navigate(`/invoices/${inv.id}`)} className="hover:underline">{inv.invoiceNumber}</button> },
+                              { key: 'status', label: 'Status', cellClassName: 'px-4 py-1', renderCell: (inv) => <StatusBadge status={inv.status} /> },
+                              { key: 'total', label: 'Total', cellClassName: 'px-4 py-1 font-mono font-bold text-gray-900 dark:text-white text-right', renderCell: (inv) => formatINR(inv.total) },
+                              { key: 'paid', label: 'Paid', cellClassName: 'px-4 py-1 font-mono font-bold text-emerald-500 text-right', renderCell: (inv) => formatINR(inv.paidAmount) },
+                              { key: 'pending', label: 'Pending', cellClassName: 'px-4 py-1 font-mono font-bold text-red-500 text-right', renderCell: (inv) => formatINR(inv.pendingAmount) }
                             ]}
                             data={deal.invoices}
                             emptyMessage="No Invoices found."
@@ -1092,8 +1078,8 @@ export default function InquiryDetailsPage() {
             <div className="space-y-6">
 
               {/* Context Card */}
-              <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
-                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Sourcing Context</h3>
+              <div className="bg-white dark:bg-[#1e2028] rounded-xl p-3 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Sourcing Context</h3>
                 <div className="space-y-4">
                   <div>
                     <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider block">Customer Name</span>
@@ -1124,8 +1110,8 @@ export default function InquiryDetailsPage() {
 
               {/* Financials Card */}
               {displayQuote && (
-                <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm animate-fade-in">
-                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Financial Summary</h3>
+                <div className="bg-white dark:bg-[#1e2028] rounded-xl p-3 border border-gray-200 dark:border-[#2a2d36] shadow-sm animate-fade-in">
+                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Financial Summary</h3>
                   <div className="space-y-3.5">
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-gray-400 font-medium">Total Cost Price:</span>

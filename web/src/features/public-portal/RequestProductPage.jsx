@@ -187,7 +187,7 @@ export default function RequestProductPage() {
               <p class="text-slate-600">Your requirement has been saved successfully.</p>
               <div class="p-4 bg-slate-50 rounded-xl flex items-center justify-between border border-slate-200">
                 <span class="text-xs font-bold text-slate-500 uppercase">Inquiry ID:</span>
-                <span class="text-lg font-black text-indigo-600">${inqNumber}</span>
+                <span class="text-sm font-black text-indigo-600">${inqNumber}</span>
               </div>
               <p class="text-xs text-slate-500 leading-relaxed mt-2">
                 Our global sourcing managers have been notified. We will verify stock availability, initiate supplier RFQs, and compile a finalized margin sheet shortly.
@@ -232,7 +232,7 @@ export default function RequestProductPage() {
             <h1 className="text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">
               Global Sourcing <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-blue-500">Portal</span>
             </h1>
-            <p className="text-slate-500 text-lg leading-relaxed">
+            <p className="text-slate-500 text-sm leading-relaxed">
               Submit your product requirement specifications. Our automated desk matches logistics, verifies warehousing stocks, and generates custom RFQs.
             </p>
           </div>

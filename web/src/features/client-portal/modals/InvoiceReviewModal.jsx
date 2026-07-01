@@ -215,7 +215,7 @@ export default function InvoiceReviewModal({ isOpen, onClose, previewData, onSen
               {/* Header */}
               <div className="px-6 py-4 border-b border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
+                  <h2 className="text-sm font-bold text-gray-900 dark:text-white tracking-tight">
                     Send Invoice by Email
                   </h2>
                   <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">

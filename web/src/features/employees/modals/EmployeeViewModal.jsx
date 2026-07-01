@@ -160,7 +160,7 @@ export default function EmployeeViewModal({ isOpen, onClose, employee }) {
               {employee.avatar}
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">{employee.name}</h2>
+              <h2 className="text-sm font-bold text-gray-900 dark:text-white leading-tight">{employee.name}</h2>
               <p className="text-xs text-gray-500 mt-0.5">{employee.id} · {employee.department}</p>
             </div>
           </div>
@@ -334,7 +334,7 @@ function StatCard({ label, count, color }) {
 
   return (
     <div className={`rounded-lg border p-2 text-center ${colors[color]}`}>
-      <span className="text-lg font-bold block leading-tight">{count}</span>
+      <span className="text-sm font-bold block leading-tight">{count}</span>
       <span className="text-[9px] font-bold uppercase tracking-wider opacity-70">{label}</span>
     </div>
   );

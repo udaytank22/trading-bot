@@ -110,7 +110,7 @@ export default function InquiryInvoiceEmailModal({ inquiry, isOpen, onClose, onS
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
             </svg>
             <h2 className="text-gray-900 dark:text-white text-3xl font-bold mb-3 tracking-wide">Invoice Sent Successfully!</h2>
-            <p className="text-gray-800 dark:text-gray-300 font-bold text-lg">{inquiry.client?.name}</p>
+            <p className="text-gray-800 dark:text-gray-300 font-bold text-sm">{inquiry.client?.name}</p>
             <p className="text-gray-500 text-sm mb-6 pb-6 border-b border-gray-200 dark:border-[#2a2d36] w-full max-w-[300px] mx-auto">{inquiry.client?.email}</p>
             <p className="text-blue-400 text-sm font-bold tracking-wide uppercase bg-blue-500/10 px-4 py-2 rounded-lg">Status updated to Invoice Sent</p>
           </div>

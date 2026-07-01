@@ -89,7 +89,7 @@ const TrackInquiryPage = () => {
             <h1 className="text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">
               Track Your <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-blue-500">Requirement</span>
             </h1>
-            <p className="text-slate-500 text-lg mt-4">
+            <p className="text-slate-500 text-sm mt-4">
               Enter your Inquiry ID to get real-time updates on your sourcing request and shipments.
             </p>
           </div>
@@ -104,14 +104,14 @@ const TrackInquiryPage = () => {
                 placeholder="e.g. INQ-1002"
                 value={inquiryId}
                 onChange={(e) => setInquiryId(e.target.value.toUpperCase())}
-                className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-sm transition-all text-lg font-medium"
+                className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-sm transition-all text-sm font-medium"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading || !inquiryId.trim()}
-              className="w-full py-4 px-6 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white rounded-2xl font-semibold text-lg transition-all shadow-md hover:shadow-xl disabled:shadow-none flex justify-center items-center group"
+              className="w-full py-4 px-6 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white rounded-2xl font-semibold text-sm transition-all shadow-md hover:shadow-xl disabled:shadow-none flex justify-center items-center group"
             >
               {loading ? (
                 <div className="flex items-center space-x-2">
@@ -307,7 +307,7 @@ const TrackInquiryPage = () => {
                           <span className="font-semibold text-slate-700">{item.description}</span>
                         </div>
                         <div className="text-right">
-                          <span className="text-lg font-bold text-slate-900">{item.quantity}</span>
+                          <span className="text-sm font-bold text-slate-900">{item.quantity}</span>
                           <span className="text-xs text-slate-500 font-medium ml-1">{item.unit || 'PCS'}</span>
                         </div>
                       </div>

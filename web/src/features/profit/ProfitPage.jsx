@@ -9,7 +9,7 @@ import { DataTable, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
 function SummaryCard({ value, label, colorClass, icon }) {
   return (
     <div className={`${colorClass} rounded-xl p-4 hover:brightness-110 transition-all cursor-default shadow-sm flex items-center gap-3`}>
-      <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center text-lg">{icon}</div>
+      <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center text-sm">{icon}</div>
       <div>
         <div className="text-[18px] font-black leading-none mb-1 tracking-tighter">{value}</div>
         <div className="text-[10px] font-black tracking-[0.1em] uppercase opacity-75">{label}</div>
@@ -115,7 +115,7 @@ export default function ProfitPage() {
         {/* Net Profit card */}
         <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-xl p-4 shadow-lg shadow-purple-500/20 group relative overflow-hidden flex items-center gap-3">
           <div className="absolute -top-8 -right-8 w-28 h-28 bg-white/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700" />
-          <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center text-lg relative z-10">💰</div>
+          <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center text-sm relative z-10">💰</div>
           <div className="relative z-10">
             <div className="flex items-center gap-2 mb-0.5">
               <div className="text-[18px] font-black text-white tracking-tighter leading-none">{formatINR(totalProfit)}</div>

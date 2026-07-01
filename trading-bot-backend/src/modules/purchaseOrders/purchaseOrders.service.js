@@ -20,6 +20,11 @@ const getAllPurchaseOrders = async (query = {}) => {
         inquiry: {
           select: { id: true, inquiryNumber: true, vesselName: true }
         },
+        items: {
+          include: {
+            product: true
+          }
+        },
         _count: {
           select: { items: true }
         }
@@ -38,8 +43,9 @@ const getAllPurchaseOrders = async (query = {}) => {
  * Get purchase order by ID
  */
 const getPurchaseOrderById = async (id) => {
+  const poId = parseInt(id, 10);
   return await prisma.purchaseOrder.findFirst({
-    where: { id, deletedAt: null },
+    where: { id: poId, deletedAt: null },
     include: {
       supplier: true,
       client: true,
@@ -126,6 +132,7 @@ const createPurchaseOrder = async (data, creatorId) => {
  * Update Purchase Order
  */
 const updatePurchaseOrder = async (id, data, updaterId) => {
+  const poId = parseInt(id, 10);
   return await prisma.$transaction(async (tx) => {
     const updateData = {
       updatedById: updaterId
@@ -137,7 +144,7 @@ const updatePurchaseOrder = async (id, data, updaterId) => {
     if (data.attachment) updateData.attachment = data.attachment;
 
     const po = await tx.purchaseOrder.update({
-      where: { id },
+      where: { id: poId },
       data: updateData
     });
 
@@ -160,7 +167,7 @@ const updatePurchaseOrder = async (id, data, updaterId) => {
       }
 
       await tx.shipment.updateMany({
-        where: { purchaseOrderId: id },
+        where: { purchaseOrderId: poId },
         data: { currentStatus: 'ORDER_PLACED' }
       });
     }
@@ -168,12 +175,12 @@ const updatePurchaseOrder = async (id, data, updaterId) => {
     if (data.items && data.items.length > 0) {
       // Clear existing
       await tx.purchaseOrderItem.deleteMany({
-        where: { purchaseOrderId: id }
+        where: { purchaseOrderId: poId }
       });
       // Write new
       await tx.purchaseOrderItem.createMany({
         data: data.items.map((item) => ({
-          purchaseOrderId: id,
+          purchaseOrderId: poId,
           productId: item.productId,
           description: item.description || '',
           quantity: parseInt(item.quantity, 10),
@@ -184,7 +191,7 @@ const updatePurchaseOrder = async (id, data, updaterId) => {
     }
 
     const updatedPo = await tx.purchaseOrder.findUnique({
-      where: { id },
+      where: { id: poId },
       include: {
         supplier: true,
         client: true,
@@ -212,8 +219,9 @@ const updatePurchaseOrder = async (id, data, updaterId) => {
  * Soft delete Purchase Order
  */
 const deletePurchaseOrder = async (id, updaterId) => {
+  const poId = parseInt(id, 10);
   return await prisma.purchaseOrder.update({
-    where: { id },
+    where: { id: poId },
     data: {
       deletedAt: new Date(),
       isActive: false,
@@ -226,8 +234,9 @@ const deletePurchaseOrder = async (id, updaterId) => {
  * Update PO email status
  */
 const sendPOEmail = async (id, updaterId) => {
+  const poId = parseInt(id, 10);
   return await prisma.purchaseOrder.update({
-    where: { id },
+    where: { id: poId },
     data: {
       emailStatus: 'SENT',
       updatedById: updaterId

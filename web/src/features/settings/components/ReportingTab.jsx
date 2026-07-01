@@ -181,7 +181,7 @@ export default function ReportingTab() {
     <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-sm animate-fade-in flex-1 overflow-hidden flex flex-col">
       <div className="p-2 border-b border-gray-200 dark:border-[#2a2d33] flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap w-full sm:w-auto">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Reporting Overview</h2>
+          <h2 className="text-sm font-bold text-gray-900 dark:text-white">Reporting Overview</h2>
           <button
             type="button"
             onClick={() => setActiveSubTab('clients')}

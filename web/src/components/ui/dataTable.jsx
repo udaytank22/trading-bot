@@ -117,7 +117,7 @@ export default function DataTable({
                 <th
                   key={col.key}
                   className={[
-                    "px-4 py-3 text-left whitespace-nowrap",
+                    "px-4 py-2 text-left whitespace-nowrap",
                     "text-white",
                     "text-[13px] font-semibold tracking-wide capitalize",
                     "border-b border-[#0B4775]",
@@ -179,7 +179,7 @@ export default function DataTable({
                         return (
                           <td
                             key={col.key || cIdx}
-                            className={`px-2 sm:px-3 md:px-4 py-3 md:py-4 ${col.hidden ?? ""} ${col.cellClassName ?? ""}`}
+                            className={`px-2 sm:px-3 md:px-4 py-2 ${col.hidden ?? ""} ${col.cellClassName ?? ""}`}
                           >
                             {cellValue}
                           </td>

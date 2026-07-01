@@ -107,7 +107,7 @@ function EmployeeCard({ emp, onEdit, onDelete, onView }) {
       {/* Name and Role */}
       <h3 
         onClick={() => onView(emp)}
-        className="text-gray-900 dark:text-white font-bold text-lg text-center leading-tight cursor-pointer hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+        className="text-gray-900 dark:text-white font-bold text-sm text-center leading-tight cursor-pointer hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
       >
         {emp.name}
       </h3>

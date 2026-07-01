@@ -25,13 +25,13 @@ import {
 // ─── Column definitions ─────────────────────────────────────────────────────────
 const COLUMNS = [
   { key: "sr_no", label: "#", className: "w-10 text-center" },
-  { key: "po_id",    label: "PO ID" },
+  { key: "po_id", label: "PO ID" },
   { key: "customer", label: "Customer" },
-  { key: "vessel",   label: "Vessel",  hidden: "hidden lg:table-cell" },
+  { key: "vessel", label: "Vessel", hidden: "hidden lg:table-cell" },
   { key: "products", label: "Products" },
-  { key: "date",     label: "Date",    hidden: "hidden xl:table-cell" },
-  { key: "status",   label: "Status" },
-  { key: "actions",  label: "Actions", className: "text-right" },
+  { key: "date", label: "Date", hidden: "hidden xl:table-cell" },
+  { key: "status", label: "Status" },
+  { key: "actions", label: "Actions", className: "text-right" },
 ];
 
 // ─── Component ─────────────────────────────────────────────────────────────────
@@ -49,16 +49,16 @@ const POTable = ({ items, onView, onOrder, paginationProps }) => {
       key={po.po_id}
       className={`${ROW_HOVER_CLS} ${rowStripeClass(idx)}`}
     >
-      <td className="px-3 md:px-6 py-4 text-center text-gray-500 text-sm font-medium">{idx + 1}</td>
+      <td className="px-3 md:px-6 py-2 text-center text-gray-500 text-sm font-medium">{idx + 1}</td>
       {/* ── PO ID (monospace) ─────────────────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4 font-mono text-gray-400 text-[12px] break-words">
+      <td className="px-3 md:px-6 py-2 font-mono text-gray-400 text-[12px] break-words">
         <Tooltip content={po.po_id}>
           <span className="cursor-default">{po.po_id}</span>
         </Tooltip>
       </td>
 
       {/* ── Customer name ─────────────────────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4">
+      <td className="px-3 md:px-6 py-2">
         <Tooltip content={po.customer}>
           <span className="text-gray-900 dark:text-white font-bold text-sm cursor-default">
             {po.customer}
@@ -67,7 +67,7 @@ const POTable = ({ items, onView, onOrder, paginationProps }) => {
       </td>
 
       {/* ── Vessel name ───────────────────────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4 hidden lg:table-cell">
+      <td className="px-3 md:px-6 py-2 hidden lg:table-cell">
         <Tooltip content={po.vessel}>
           <span className="text-gray-600 dark:text-gray-300 text-sm font-medium cursor-default">
             {po.vessel}
@@ -76,7 +76,7 @@ const POTable = ({ items, onView, onOrder, paginationProps }) => {
       </td>
 
       {/* ── First product + "+N more" badge ───────────────────────────── */}
-      <td className="px-3 md:px-6 py-4">
+      <td className="px-3 md:px-6 py-2">
         <div className="flex flex-col gap-1">
           <Tooltip content={
             po.products && po.products.length > 0
@@ -106,19 +106,19 @@ const POTable = ({ items, onView, onOrder, paginationProps }) => {
       </td>
 
       {/* ── Date (hidden on small screens) ────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4 hidden xl:table-cell">
+      <td className="px-3 md:px-6 py-2 hidden xl:table-cell">
         <Tooltip content={new Date(po.date).toLocaleString("en-GB")}>
           <DateCell isoString={po.date} />
         </Tooltip>
       </td>
 
       {/* ── Status badge ──────────────────────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4">
+      <td className="px-3 md:px-6 py-2">
         <StatusBadge status={po.status} />
       </td>
 
       {/* ── Actions ───────────────────────────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4 text-right">
+      <td className="px-3 md:px-6 py-2 text-right">
         <div className="flex items-center justify-end gap-2">
           <Button
             variant="secondary"

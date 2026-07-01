@@ -164,10 +164,10 @@ export default function PODetailsPage() {
 
   return (
     <div className="w-full animate-in fade-in duration-300 pb-6">
-      <div className="max-w-7xl mx-auto py-2 px-2 md:px-4 flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
 
         {/* HEADER BAR */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 dark:border-[#2a2d36] pb-4 gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 dark:border-[#2a2d36] pb-2 gap-2">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/purchase-orders')}
@@ -179,7 +179,7 @@ export default function PODetailsPage() {
               Purchase Orders
             </button>
             <span className="text-gray-300 dark:text-[#2a2d36] font-light">|</span>
-            <span className="font-mono text-gray-900 dark:text-white text-lg font-bold tracking-wide">{poNumber}</span>
+            <span className="font-mono text-gray-900 dark:text-white text-sm font-bold tracking-wide">{poNumber}</span>
           </div>
 
           <div className="flex items-center gap-3">
@@ -211,17 +211,17 @@ export default function PODetailsPage() {
 
         {/* METADATA CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white dark:bg-[#1e2028] p-5 rounded-xl border border-gray-200 dark:border-[#2a2d36] shadow-sm">
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Vessel</p>
-            <p className="text-lg font-bold text-gray-900 dark:text-white">{vessel}</p>
+          <div className="bg-white dark:bg-[#1e2028] p-3 rounded-xl border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Vessel</p>
+            <p className="text-md font-bold text-gray-900 dark:text-white">{vessel}</p>
           </div>
-          <div className="bg-white dark:bg-[#1e2028] p-5 rounded-xl border border-gray-200 dark:border-[#2a2d36] shadow-sm">
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Date</p>
-            <p className="text-lg font-bold text-gray-900 dark:text-white">{formatDate(poDate)}</p>
+          <div className="bg-white dark:bg-[#1e2028] p-3 rounded-xl border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Date</p>
+            <p className="text-md font-bold text-gray-900 dark:text-white">{formatDate(poDate)}</p>
           </div>
-          <div className="bg-white dark:bg-[#1e2028] p-5 rounded-xl border border-gray-200 dark:border-[#2a2d36] shadow-sm">
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Total Amount</p>
-            <p className="text-lg font-mono font-bold text-purple-600 dark:text-purple-400">{formatINR(totalAmount)}</p>
+          <div className="bg-white dark:bg-[#1e2028] p-3 rounded-xl border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Amount</p>
+            <p className="text-md font-mono font-bold text-purple-600 dark:text-purple-400">{formatINR(totalAmount)}</p>
           </div>
         </div>
 
@@ -229,19 +229,19 @@ export default function PODetailsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
           {/* Sourcing Context */}
-          <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Sourcing Context</h3>
+          <div className="h-fit bg-white dark:bg-[#1e2028] rounded-xl p-3 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Sourcing Context</h3>
             <div className="space-y-3">
-              <div className="flex flex-col bg-gray-50 dark:bg-[#242830]/30 p-4 rounded-xl border border-gray-200 dark:border-[#2a2d36]">
+              <div className="flex flex-col bg-gray-50 dark:bg-[#242830]/30 p-2 rounded-xl border border-gray-200 dark:border-[#2a2d36]">
                 <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Customer / Buyer</span>
-                <span className="text-gray-900 dark:text-white font-extrabold text-base mt-1">{customer}</span>
+                <span className="text-gray-900 dark:text-white font-bold text-base mt-1">{customer}</span>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="flex flex-col bg-gray-50 dark:bg-[#242830]/30 p-3.5 rounded-xl border border-gray-200 dark:border-[#2a2d36]">
+                <div className="flex flex-col bg-gray-50 dark:bg-[#242830]/30 p-2.5 rounded-xl border border-gray-200 dark:border-[#2a2d36]">
                   <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">PO ID</span>
                   <span className="font-mono text-gray-900 dark:text-white font-bold text-xs mt-1">{poNumber}</span>
                 </div>
-                <div className="flex flex-col bg-gray-50 dark:bg-[#242830]/30 p-3.5 rounded-xl border border-gray-200 dark:border-[#2a2d36]">
+                <div className="flex flex-col bg-gray-50 dark:bg-[#242830]/30 p-2.5 rounded-xl border border-gray-200 dark:border-[#2a2d36]">
                   <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Status</span>
                   <span className="text-gray-900 dark:text-white font-bold text-xs mt-1">{po.status}</span>
                 </div>
@@ -250,9 +250,9 @@ export default function PODetailsPage() {
           </div>
 
           {/* Financial Summary */}
-          <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+          <div className="bg-white dark:bg-[#1e2028] rounded-xl p-3 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
             <h4 className="text-xs font-bold uppercase tracking-widest text-purple-600 dark:text-purple-400 mb-4">Financial Summary</h4>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Subtotal (Excl. Tax)</span>
                 <span className="text-gray-900 dark:text-white font-bold font-mono">{formatINR(subtotal)}</span>
@@ -273,30 +273,32 @@ export default function PODetailsPage() {
         </div>
 
         {po.isGrouped && po.subPOs && po.subPOs.length > 0 && (
-          <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm mb-4">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Separate Vendor POs</h3>
+          <div className="bg-white dark:bg-[#1e2028] rounded-xl p-3 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Separate Vendor POs</h3>
             <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-[#2a2d36] bg-gray-50/50 dark:bg-[#242830]/30 shadow-inner">
               <DataTable
                 columns={[
+                  { key: 'sNo', label: 'Sr.No' },
                   { key: 'supplier', label: 'Vendor' },
                   { key: 'poNumber', label: 'PO Number' },
                   { key: 'amount', label: 'Amount' },
-                  { key: 'action', label: '', className: 'text-right' }
+                  { key: 'action', label: 'Action', className: 'text-right' }
                 ]}
                 data={po.subPOs}
                 emptyMessage="No vendor POs found."
                 renderRow={(subPo, idx) => (
                   <tr key={subPo.id || idx} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}>
-                    <td className="px-6 py-4 text-gray-900 dark:text-white font-bold">
+                    <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{idx + 1}</td>
+                    <td className="px-6 py-2 text-gray-900 dark:text-white font-bold">
                       {subPo.supplier?.name || 'Unknown Supplier'}
                     </td>
-                    <td className="px-6 py-4 font-mono text-gray-500">
+                    <td className="px-6 py-2 font-mono text-gray-500">
                       {subPo.poNumber}
                     </td>
-                    <td className="px-6 py-4 font-mono font-bold text-purple-600 dark:text-purple-400">
+                    <td className="px-6 py-2 font-mono font-bold text-purple-600 dark:text-purple-400">
                       {formatINR(parseFloat(subPo.amount || 0))}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-2">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => {
@@ -359,9 +361,9 @@ export default function PODetailsPage() {
         )}
 
         {/* ORDER ITEMS - Full Width */}
-        <div className="mb-8">
-          <div className="bg-white dark:bg-[#1e2028] rounded-xl p-6 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">
+        <div>
+          <div className="bg-white dark:bg-[#1e2028] rounded-xl p-3 border border-gray-200 dark:border-[#2a2d36] shadow-sm">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
               Order Items ({items.length})
             </h3>
             <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-[#2a2d36] bg-gray-50/50 dark:bg-[#242830]/30 shadow-inner">
@@ -375,21 +377,21 @@ export default function PODetailsPage() {
                   return (
                     <tr key={idx} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}>
                       <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{idx + 1}</td>
-                      <td className="px-6 py-4 text-gray-900 dark:text-white font-bold">
+                      <td className="px-6 py-2 text-gray-900 dark:text-white font-bold">
                         {item.product?.name || item.product_name || item.description || '—'}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-2">
                         <span className="px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-bold rounded">
                           {vendorName}
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-mono text-gray-400">
+                      <td className="px-6 py-2 font-mono text-gray-400">
                         {formatINR(item.unitPrice || item.unit_price || 0)}
                       </td>
-                      <td className="px-6 py-4 font-mono text-gray-900 dark:text-white font-medium">
+                      <td className="px-6 py-2 font-mono text-gray-900 dark:text-white font-medium">
                         {item.quantity} PCS
                       </td>
-                      <td className="px-6 py-4 text-right font-mono font-bold text-purple-600 dark:text-purple-400 text-base">
+                      <td className="px-6 py-2 text-right font-mono font-bold text-purple-600 dark:text-purple-400 text-base">
                         {formatINR(item.totalPrice || item.total_price || 0)}
                       </td>
                     </tr>

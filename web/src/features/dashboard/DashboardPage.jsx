@@ -125,9 +125,13 @@ export default function DashboardPage() {
           {isRefreshing ? "Refreshing..." : "Refresh Data"}
         </button>
       </div>
+      <p className="text-right text-xs text-gray-500 mb-3 font-medium">
+        Last updated: {lastUpdated}
+      </p>
+
 
       {/* Stat cards */}
-      <div className="grid grid-cols-4 gap-3 mb-1">
+      <div className="grid grid-cols-4 gap-3 mb-3">
         <StatCard
           value={todayCount}
           label="Total Inquiries Today"
@@ -160,9 +164,6 @@ export default function DashboardPage() {
         />
       </div>
 
-      <p className="text-right text-xs text-gray-500 mb-3 font-medium">
-        Last updated: {lastUpdated}
-      </p>
 
       {/* Content row */}
       <div className="flex gap-4 mt-0">
