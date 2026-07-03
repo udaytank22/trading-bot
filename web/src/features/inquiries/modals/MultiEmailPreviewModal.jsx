@@ -65,9 +65,9 @@ const EmailDraftCard = ({ rfq, inquiryId, buyerName, allProducts }) => {
                 <span className="font-bold text-xs tracking-wide">RFQ_Order_{inquiryId}.pdf</span>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
-              <button 
+              <button
                 onClick={handleViewRFQ}
                 className="px-3 py-1.5 text-[11px] font-bold text-purple-600 dark:text-purple-400 bg-purple-50 hover:bg-purple-100 dark:bg-purple-500/10 dark:hover:bg-purple-500/20 border border-purple-200 dark:border-purple-500/20 rounded-lg transition-colors flex items-center gap-1.5"
               >
@@ -77,7 +77,7 @@ const EmailDraftCard = ({ rfq, inquiryId, buyerName, allProducts }) => {
                 </svg>
                 View PDF
               </button>
-              <button 
+              <button
                 onClick={handleDownloadRFQ}
                 className="px-3 py-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/20 rounded-lg transition-colors flex items-center gap-1.5"
               >
@@ -109,8 +109,8 @@ export default function MultiEmailPreviewModal({ isOpen, onClose, stagedRFQs, in
       cancelButtonColor: "#ef4444",
       confirmButtonText: "Yes, send all",
       cancelButtonText: "Cancel",
-      background: "#1a1d23",
-      color: "#fff"
+      background: "#fff",
+      color: "#000"
     });
     if (!result.isConfirmed) return;
 
@@ -142,50 +142,50 @@ export default function MultiEmailPreviewModal({ isOpen, onClose, stagedRFQs, in
           </button>
         </div>
 
-            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-gray-100 dark:bg-[#0c0e12]">
-              {stagedRFQs.map((rfq, idx) => (
-                <EmailDraftCard
-                  key={idx}
-                  rfq={rfq}
-                  inquiryId={inquiryDeal.inquiry_id}
-                  buyerName={inquiryDeal.buyer_name}
-                  allProducts={inquiryDeal.products}
-                />
-              ))}
-            </div>
+        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-gray-100 dark:bg-[#0c0e12]">
+          {stagedRFQs.map((rfq, idx) => (
+            <EmailDraftCard
+              key={idx}
+              rfq={rfq}
+              inquiryId={inquiryDeal.inquiry_id}
+              buyerName={inquiryDeal.buyer_name}
+              allProducts={inquiryDeal.products}
+            />
+          ))}
+        </div>
 
-            <div className="p-5 border-t border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
-              <button
-                onClick={onClose}
-                disabled={sendState === 'sending'}
-                className="px-6 py-2.5 text-gray-400 font-bold text-sm hover:text-white transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
+        <div className="p-5 border-t border-gray-200 dark:border-[#2a2d33] flex justify-between items-center bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
+          <button
+            onClick={onClose}
+            disabled={sendState === 'sending'}
+            className="px-6 py-2.5 text-gray-400 font-bold text-sm hover:text-white transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
 
-              <button
-                onClick={handleSendAll}
-                disabled={sendState === 'sending'}
-                className="flex items-center gap-2.5 px-8 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl transition-all shadow-lg shadow-emerald-600/20 disabled:opacity-50 active:scale-95"
-              >
-                {sendState === 'sending' ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Sending All...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                    </svg>
-                    Send {stagedRFQs.length} RFQs Now
-                  </>
-                )}
-              </button>
-            </div>
+          <button
+            onClick={handleSendAll}
+            disabled={sendState === 'sending'}
+            className="flex items-center gap-2.5 px-8 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl transition-all shadow-lg shadow-emerald-600/20 disabled:opacity-50 active:scale-95"
+          >
+            {sendState === 'sending' ? (
+              <>
+                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Sending All...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+                Send {stagedRFQs.length} RFQs Now
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
