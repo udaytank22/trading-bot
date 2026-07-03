@@ -300,8 +300,8 @@ export default function InquiryDetailsPage() {
       cancelButtonColor: "#ef4444",
       confirmButtonText: "Accept Quote",
       cancelButtonText: "Reject Quote",
-      background: "#1a1d23",
-      color: "#fff",
+      background: "#fff",
+      color: "#000",
     }).then(async (result) => {
       if (result.isConfirmed) {
         const res = await api.inquiries.clientDecision(deal.id, true);
@@ -425,7 +425,7 @@ export default function InquiryDetailsPage() {
         setActiveTab('action');
       }
     } catch {
-      Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to confirm sourcing selections.', background: '#1a1d23', color: '#fff' });
+      Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to confirm sourcing selections.', background: '#fff', color: '#000' });
     } finally {
       setIsConfirmingSource(false);
     }
@@ -490,9 +490,9 @@ export default function InquiryDetailsPage() {
         { key: 'srno', label: 'Sr. No.' },
         { key: "product", label: "Product Name" },
         { key: "category", label: "Category" },
-        { key: "qty", label: "Qty" },
-        { key: "unit", label: "Unit" },
-        { key: "suppliers", label: "Assigned Vendors" }
+        { key: "qty", label: "Qty", className: "text-center" },
+        { key: "unit", label: "Unit", className: "text-center" },
+        { key: "suppliers", label: "Assigned Vendors", className: "text-left" }
       ];
     }
     return InquiryDetailsPageSchema1;
@@ -624,7 +624,7 @@ export default function InquiryDetailsPage() {
   const currentDealWithLocalQuote = { ...deal, my_quote: displayQuote };
 
   return (
-    <div className="w-full animate-in fade-in duration-300 p-1">
+    <div className="w-full animate-in fade-in duration-300 p-2">
       <div className=" mx-auto flex flex-col gap-4">
 
         {/* HEADER BAR */}
@@ -691,8 +691,8 @@ export default function InquiryDetailsPage() {
             <div className="lg:col-span-2 space-y-6">
 
               {/* Products Requested */}
-              <div className="bg-white dark:bg-[#1e2028] rounded-xlborder border-gray-200 dark:border-[#2a2d36] shadow-sm">
-                <div className="flex justify-between items-center mb-2">
+              <div className="bg-white dark:bg-[#1e2028] rounded-xl border border-gray-200 dark:border-[#2a2d36] shadow-sm p-3">
+                <div className="flex justify-between items-center mb-2 ">
                   <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Products Requested <a className="font-bold text-gray-500">({deal.products.length} items) </a></h3>
                   {deal.products.length > 5 && (
                     <button
@@ -706,7 +706,7 @@ export default function InquiryDetailsPage() {
                     </button>
                   )}
                 </div>
-                <div className="overflow-x-auto rounded-xl border border-gray-250 dark:border-[#2a2d36] bg-gray-50/50 dark:bg-[#242830]/30 shadow-inner">
+                <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-[#2a2d36] bg-gray-50/50 dark:bg-[#1e2028]">
                   <DataTable
                     columns={requestTableColumns}
                     data={deal.products.slice(0, 5)}
@@ -741,8 +741,8 @@ export default function InquiryDetailsPage() {
                               {p.category || 'General'}
                             </span>
                           </td>
-                          <td className="px-4 py-3 font-mono font-medium">{p.quantity}</td>
-                          <td className="px-4 py-3 text-gray-450 font-medium">{p.unit}</td>
+                          <td className="px-4 py-3 font-mono font-medium text-center">{p.quantity}</td>
+                          <td className="px-4 py-3 text-gray-450 font-medium text-center">{p.unit}</td>
                           {hasSuppliersCol && (
                             <td className="px-4 py-3">
                               <div className="flex flex-wrap gap-1 max-w-[220px]">
@@ -1033,7 +1033,7 @@ export default function InquiryDetailsPage() {
                               { key: 'poNumber', label: 'PO Number', cellClassName: 'px-4 py-2 font-mono font-semibold text-purple-600 dark:text-purple-400', renderCell: (po) => <button onClick={() => navigate(`/purchase-orders/${po.id}`)} className="hover:underline">{po.poNumber}</button> },
                               { key: 'supplier', label: 'Supplier', cellClassName: 'px-4 py-2 font-medium text-gray-800 dark:text-gray-200', renderCell: (po) => po.supplier?.name || 'N/A' },
                               { key: 'status', label: 'Status', cellClassName: 'px-4 py-2', renderCell: (po) => <StatusBadge status={po.status} /> },
-                              { key: 'amount', label: 'Amount', cellClassName: 'px-4 py-2 font-mono font-bold text-gray-900 dark:text-white text-right', renderCell: (po) => formatINR(po.amount) }
+                              { key: 'amount', label: 'Amount', className: 'text-right', cellClassName: 'px-4 py-2 font-mono font-bold text-gray-900 dark:text-white text-right', renderCell: (po) => formatINR(po.amount) }
                             ]}
                             data={deal.purchaseOrders}
                             emptyMessage="No Purchase Orders found."
@@ -1057,9 +1057,9 @@ export default function InquiryDetailsPage() {
                             columns={[
                               { key: 'invoiceNumber', label: 'Invoice #', cellClassName: 'px-4 py-1 font-mono font-semibold text-purple-600 dark:text-purple-400', renderCell: (inv) => <button onClick={() => navigate(`/invoices/${inv.id}`)} className="hover:underline">{inv.invoiceNumber}</button> },
                               { key: 'status', label: 'Status', cellClassName: 'px-4 py-1', renderCell: (inv) => <StatusBadge status={inv.status} /> },
-                              { key: 'total', label: 'Total', cellClassName: 'px-4 py-1 font-mono font-bold text-gray-900 dark:text-white text-right', renderCell: (inv) => formatINR(inv.total) },
-                              { key: 'paid', label: 'Paid', cellClassName: 'px-4 py-1 font-mono font-bold text-emerald-500 text-right', renderCell: (inv) => formatINR(inv.paidAmount) },
-                              { key: 'pending', label: 'Pending', cellClassName: 'px-4 py-1 font-mono font-bold text-red-500 text-right', renderCell: (inv) => formatINR(inv.pendingAmount) }
+                              { key: 'total', label: 'Total', className: 'text-right', cellClassName: 'px-4 py-1 font-mono font-bold text-gray-900 dark:text-white text-right', renderCell: (inv) => formatINR(inv.total) },
+                              { key: 'paid', label: 'Paid', className: 'text-right', cellClassName: 'px-4 py-1 font-mono font-bold text-emerald-500 text-right', renderCell: (inv) => formatINR(inv.paidAmount) },
+                              { key: 'pending', label: 'Pending', className: 'text-right', cellClassName: 'px-4 py-1 font-mono font-bold text-red-500 text-right', renderCell: (inv) => formatINR(inv.pendingAmount) }
                             ]}
                             data={deal.invoices}
                             emptyMessage="No Invoices found."
@@ -1271,9 +1271,9 @@ export default function InquiryDetailsPage() {
       />
 
       {isTableFullscreen && (
-        <div className="fixed inset-0 z-[200] bg-white dark:bg-[#15171c] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 p-6">
+        <div className="fixed inset-0 z-[200] bg-white dark:bg-[#15171c] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
           {/* Header */}
-          <div className="flex justify-between items-center border-b border-gray-200 dark:border-[#2a2d36] pb-4 mb-4 flex-shrink-0">
+          <div className="flex justify-between items-center border-b border-gray-200 dark:border-[#2a2d36] p-3 mb-2 flex-shrink-0 ">
             <div className="flex flex-col gap-1">
               <h2 className="text-xl font-bold text-gray-950 dark:text-white">Products Requested ({deal.products.length} items)</h2>
             </div>

@@ -20,7 +20,7 @@ const AdminApprovalModal = ({ isOpen, onClose, onConfirm, deal, isPageMode, inve
   // Base products from supplier quotes
   const quoteProducts = quote?.items || quote?.products || [];
   const sellerQuoteProducts = deal.seller_quote?.items || deal.seller_quote?.products || [];
-  
+
   const supplierProducts = quoteProducts.length > 0
     ? quoteProducts
     : sellerQuoteProducts.map((sqp, idx) => {
@@ -37,10 +37,33 @@ const AdminApprovalModal = ({ isOpen, onClose, onConfirm, deal, isPageMode, inve
     });
 
   // Merge in inventory-sourced products (those in inventoryData that match inquiry items but have no supplier quote)
-  const supplierProductNames = new Set(supplierProducts.map(p => (p.product_name || '').toLowerCase()));
+  const mergedSupplierProducts = supplierProducts.map(p => {
+    const pName = (p.product_name || '').toLowerCase();
+    if (!p.supplier_name || p.supplier_name === 'N/A') {
+      const invMatch = inventoryData.find(inv =>
+        (inv.itemName || '').toLowerCase() === pName ||
+        (inv.impa && pName.includes(inv.impa.toLowerCase()))
+      );
+      const invStock = invMatch ? (invMatch.stocks?.reduce((s, st) => s + st.quantity, 0) || 0) : 0;
+      if (invMatch && invStock > 0) {
+        const costPrice = parseFloat(invMatch.purchasePrice) || 0;
+        const sellPrice = parseFloat(invMatch.sellingPrice) || 0;
+        return {
+          ...p,
+          supplier_name: 'Internal Inventory',
+          seller_unit_price: costPrice,
+          my_unit_price: sellPrice > 0 ? sellPrice : p.my_unit_price,
+          _fromInventory: true,
+        };
+      }
+    }
+    return p;
+  });
+
+  const existingProductNames = new Set(mergedSupplierProducts.map(p => (p.product_name || '').toLowerCase()));
   const inventoryProducts = (deal.products || []).reduce((acc, p) => {
     const pName = p.product_name || '';
-    if (supplierProductNames.has(pName.toLowerCase())) return acc; // already covered by supplier quote
+    if (existingProductNames.has(pName.toLowerCase())) return acc;
     const invMatch = inventoryData.find(inv =>
       (inv.itemName || '').toLowerCase() === pName.toLowerCase() ||
       (inv.impa && pName.toLowerCase().includes(inv.impa.toLowerCase()))
@@ -64,7 +87,7 @@ const AdminApprovalModal = ({ isOpen, onClose, onConfirm, deal, isPageMode, inve
     return acc;
   }, []);
 
-  const products = [...supplierProducts, ...inventoryProducts];
+  const products = [...mergedSupplierProducts, ...inventoryProducts];
 
   const marginVal = parseFloat(margin) || 0;
   const discountVal = parseFloat(discount) || 0;
@@ -173,25 +196,29 @@ const AdminApprovalModal = ({ isOpen, onClose, onConfirm, deal, isPageMode, inve
           <div className="overflow-x-auto">
             <DataTable
               columns={[
-                { key: 'index', label: '#', cellClassName: 'px-4 py-3 font-mono text-purple-500 font-bold text-xs w-8', renderCell: (_, i) => i + 1 },
-                { key: 'product_name', label: 'Product', cellClassName: 'px-4 py-3', renderCell: (p) => (
-                  <>
-                    <p className="font-semibold text-gray-900 dark:text-white text-xs">{p.product_name}</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">{p.quantity} {p.unit}</p>
-                  </>
-                )},
-                { key: 'supplier_name', label: 'Sourced From', cellClassName: 'px-4 py-3', renderCell: (p) => {
-                  const supplierColor = supplierColorMap[p.supplier_name] || supplierColors[0];
-                  return (
-                    <span className={`px-2 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider ${supplierColor}`}>
-                      {p.supplier_name || 'N/A'}
-                    </span>
-                  );
-                }},
-                { key: 'quantity', label: 'Qty', cellClassName: 'px-4 py-3 font-mono text-center text-gray-500' },
-                { key: 'seller_unit_price', label: 'Cost / Unit', cellClassName: 'px-4 py-3 font-mono text-right text-gray-400', renderCell: (p) => formatINR(p.seller_unit_price) },
-                { key: 'my_unit_price', label: 'Sell / Unit', cellClassName: 'px-4 py-3 font-mono text-right font-bold text-purple-400', renderCell: (p) => formatINR(p.my_unit_price) },
-                { key: 'total_price', label: 'Total Value', cellClassName: 'px-4 py-3 font-mono text-right font-bold text-gray-900 dark:text-white', renderCell: (p) => formatINR(p.total_price) }
+                { key: 'index', label: '#', className: 'text-center w-8', cellClassName: ' font-mono text-purple-500 font-bold text-xs w-8', renderCell: (_, i) => i + 1 },
+                {
+                  key: 'product_name', label: 'Product', className: 'text-center', cellClassName: '', renderCell: (p) => (
+                    <>
+                      <p className="font-semibold text-gray-900 dark:text-white text-xs">{p.product_name}</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">{p.quantity} {p.unit}</p>
+                    </>
+                  )
+                },
+                {
+                  key: 'supplier_name', label: 'Sourced From', className: 'text-center', cellClassName: '', renderCell: (p) => {
+                    const supplierColor = supplierColorMap[p.supplier_name] || supplierColors[0];
+                    return (
+                      <span className={`px-2 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider ${supplierColor}`}>
+                        {p.supplier_name || 'N/A'}
+                      </span>
+                    );
+                  }
+                },
+                { key: 'quantity', label: 'Qty', className: 'text-center', cellClassName: ' font-mono text-center text-gray-500' },
+                { key: 'seller_unit_price', label: 'Cost / Unit', className: 'text-center', cellClassName: ' text-center', renderCell: (p) => formatINR(p.seller_unit_price) },
+                { key: 'my_unit_price', label: 'Sell / Unit', className: 'text-center', cellClassName: ' text-center', renderCell: (p) => formatINR(p.my_unit_price) },
+                { key: 'total_price', label: 'Total Value', className: 'text-center', cellClassName: ' text-right', renderCell: (p) => formatINR(p.total_price) }
               ]}
               data={filteredProducts}
               emptyMessage="No products."
@@ -210,9 +237,9 @@ const AdminApprovalModal = ({ isOpen, onClose, onConfirm, deal, isPageMode, inve
                       </span>
                     </td>
                     <td className="px-4 py-3 font-mono text-center text-gray-500">{p.quantity}</td>
-                    <td className="px-4 py-3 font-mono text-right text-gray-400">{formatINR(p.seller_unit_price)}</td>
-                    <td className="px-4 py-3 font-mono text-right font-bold text-purple-400">{formatINR(p.my_unit_price)}</td>
-                    <td className="px-4 py-3 font-mono text-right font-bold text-gray-900 dark:text-white">{formatINR(p.total_price)}</td>
+                    <td className="px-4 py-3 font-mono text-center text-gray-400">{formatINR(p.seller_unit_price)}</td>
+                    <td className="px-4 py-3 font-mono text-center font-bold text-purple-400">{formatINR(p.my_unit_price)}</td>
+                    <td className="px-4 py-3 font-mono text-center font-bold text-gray-900 dark:text-white">{formatINR(p.total_price)}</td>
                   </tr>
                 );
               }}
@@ -220,9 +247,9 @@ const AdminApprovalModal = ({ isOpen, onClose, onConfirm, deal, isPageMode, inve
                 <tfoot>
                   <tr className="bg-gray-50 dark:bg-[#0c0e12] border-t-2 border-gray-200 dark:border-[#2a2d33]">
                     <td colSpan={4} className="px-4 py-3 font-bold text-xs text-gray-500 uppercase tracking-wider">Totals</td>
-                    <td className="px-4 py-3 font-mono text-right font-bold text-gray-500">{formatINR(totalSellerCost)}</td>
+                    <td className="px-4 py-3 font-mono text-center font-bold text-gray-500">{formatINR(totalSellerCost)}</td>
                     <td className="px-4 py-3"></td>
-                    <td className="px-4 py-3 font-mono text-right font-extrabold text-gray-900 dark:text-white text-sm">{formatINR(totalFinalPrice)}</td>
+                    <td className="px-4 py-3 font-mono text-center font-extrabold text-gray-900 dark:text-white text-sm">{formatINR(totalFinalPrice)}</td>
                   </tr>
                 </tfoot>
               )}
