@@ -42,6 +42,9 @@ export default function InquiryDetailsPage() {
   const [isConfirmingSource, setIsConfirmingSource] = useState(false);
   const [isEmailPreviewModalOpen, setIsEmailPreviewModalOpen] = useState(false);
 
+  // Stock check header actions state (lifted from StockCheckModal footer)
+  const [stockCheckActions, setStockCheckActions] = useState(null);
+
   const [inventoryData, setInventoryData] = useState([]);
 
   useEffect(() => {
@@ -644,6 +647,27 @@ export default function InquiryDetailsPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Stock Check header actions (Cancel / vendor count / Confirm) */}
+            {activeTab === 'action' && deal.status === 'PENDING' && stockCheckActions && (
+              <>
+                <button
+                  onClick={stockCheckActions.onCancel}
+                  className="px-4 py-2 rounded-xl border border-gray-200 dark:border-[#2a2d33] text-gray-700 dark:text-gray-300 text-xs font-bold hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors"
+                >
+                  Cancel
+                </button>
+                <span className="text-xs font-semibold text-gray-500">
+                  {stockCheckActions.vendorCount} vendors selected
+                </span>
+                <button
+                  onClick={stockCheckActions.onConfirm}
+                  disabled={stockCheckActions.vendorCount === 0}
+                  className="px-4 py-2 rounded-xl bg-purple-600 text-white text-xs font-bold hover:bg-purple-500 transition-colors shadow-sm shadow-purple-600/20 disabled:opacity-50"
+                >
+                  Confirm & Save
+                </button>
+              </>
+            )}
             <StatusBadge status={deal.status} />
             {canPerformAction && actionConfig && (
               <button
@@ -1146,9 +1170,11 @@ export default function InquiryDetailsPage() {
               <StockCheckModal
                 isOpen={true}
                 isPageMode={true}
+                hideFooter={true}
                 onClose={() => setActiveTab("overview")}
                 onConfirm={handleStockConfirm}
                 deal={deal}
+                onSelectionChange={setStockCheckActions}
               />
             )}
             {deal.status === "RFQ_SENT" && (

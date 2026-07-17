@@ -1,9 +1,9 @@
-import React, { useState, useMemo, useRef, useEffect, useLayoutEffect } from "react";
+import React, { useState, useMemo, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { useProducts, useSuppliers } from '@hooks/queries';
 import { DataTable, rowStripeClass, ROW_HOVER_CLS, MultiSelectDropdown } from '@components/ui';
 import { fetchInventory } from '../../../api/inventory';
 
-const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
+const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode, hideFooter, onSelectionChange }) => {
   const { data: suppliersData = [] } = useSuppliers();
   const { data: productsData = [] } = useProducts();
   const [selections, setSelections] = useState({}); // mapping of product index -> array of supplier IDs
@@ -87,6 +87,26 @@ const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
 
     onConfirm([...realSuppliers, ...internalInvSuppliers]);
   };
+
+  // Keep a ref to always have the latest confirm handler
+  const confirmRef = useRef(handleConfirm);
+  confirmRef.current = handleConfirm;
+
+  const cancelHandler = useCallback(() => {
+    setIsFullscreen(false);
+    if (!isPageMode) onClose();
+  }, [isPageMode, onClose]);
+
+  // Notify parent of selection changes so it can render header buttons
+  useEffect(() => {
+    if (onSelectionChange) {
+      onSelectionChange({
+        vendorCount: uniqueSelectedSupplierIds.length,
+        onConfirm: () => confirmRef.current(),
+        onCancel: cancelHandler
+      });
+    }
+  }, [uniqueSelectedSupplierIds.length, onSelectionChange, cancelHandler]);
 
   const handleAutoSelectAll = () => {
     const newSelections = {};
@@ -204,23 +224,25 @@ const StockCheckModal = ({ isOpen, onClose, onConfirm, deal, isPageMode }) => {
         />
       </div>
 
-      <div className="p-5 border-t border-gray-200 dark:border-[#2a2d33] flex gap-3 bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
-        <button onClick={() => { setIsFullscreen(false); if (!isPageMode) onClose(); }} className="px-6 py-2.5 rounded-lg border border-gray-200 dark:border-[#2a2d33] text-gray-700 dark:text-gray-300 text-sm font-bold hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors">
-          Cancel
-        </button>
-        <div className="flex-1 flex gap-4 items-center justify-end">
-          <span className="text-xs font-semibold text-gray-500">
-            {uniqueSelectedSupplierIds.length} total vendors selected
-          </span>
-          <button
-            onClick={handleConfirm}
-            disabled={uniqueSelectedSupplierIds.length === 0}
-            className="px-6 py-2.5 rounded-lg bg-purple-600 text-white text-sm font-bold hover:bg-purple-500 transition-colors shadow-lg shadow-purple-600/20 disabled:opacity-50"
-          >
-            Confirm & Save Assignments
+      {!hideFooter && (
+        <div className="p-5 border-t border-gray-200 dark:border-[#2a2d33] flex gap-3 bg-gray-50 dark:bg-[#1a1d23] flex-shrink-0">
+          <button onClick={() => { setIsFullscreen(false); if (!isPageMode) onClose(); }} className="px-6 py-2.5 rounded-lg border border-gray-200 dark:border-[#2a2d33] text-gray-700 dark:text-gray-300 text-sm font-bold hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors">
+            Cancel
           </button>
+          <div className="flex-1 flex gap-4 items-center justify-end">
+            <span className="text-xs font-semibold text-gray-500">
+              {uniqueSelectedSupplierIds.length} total vendors selected
+            </span>
+            <button
+              onClick={handleConfirm}
+              disabled={uniqueSelectedSupplierIds.length === 0}
+              className="px-6 py-2.5 rounded-lg bg-purple-600 text-white text-sm font-bold hover:bg-purple-500 transition-colors shadow-lg shadow-purple-600/20 disabled:opacity-50"
+            >
+              Confirm & Save Assignments
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 
