@@ -66,6 +66,41 @@ const normalizeInquiry = (inq) => {
         };
       })
     };
+  } else if (inq.supplierQuotes && inq.supplierQuotes.length > 0) {
+    // Auto-composite seller quote from available quotes (e.g. cheapest available)
+    const products = (inq.items || []).map(inquiryItem => {
+      let bestQi = null;
+      let bestQ = null;
+      for (const q of inq.supplierQuotes) {
+        const qi = (q.items || []).find(x => x.inquiryItemId === inquiryItem.id);
+        if (qi) {
+          if (!bestQi || parseFloat(qi.unitPrice) < parseFloat(bestQi.unitPrice)) {
+            bestQi = qi;
+            bestQ = q;
+          }
+        }
+      }
+      if (bestQi) {
+        return {
+          product_name: inquiryItem.description,
+          seller_unit_price: parseFloat(bestQi.unitPrice) || 0,
+          supplier_name: bestQ.supplier?.name || 'N/A',
+          moq: bestQi.quantity || inquiryItem.quantity || 1,
+          lead_time: 'Ready'
+        };
+      }
+      return null;
+    }).filter(Boolean);
+
+    if (products.length > 0) {
+      seller_quote = {
+        id: 'auto-composite',
+        seller_name: 'Available Suppliers',
+        seller_email: '',
+        is_multi_supplier: true,
+        products
+      };
+    }
   }
 
   const latestClientQuote = inq.clientQuotations && inq.clientQuotations.length > 0
@@ -79,7 +114,26 @@ const normalizeInquiry = (inq) => {
     products: latestClientQuote.items ? latestClientQuote.items.map(item => {
       const inquiryItem = inq.items?.find(ii => ii.id === item.inquiryItemId);
       // Find the selected supplier quote item for this product
-      const sel = selectedItemMap[item.inquiryItemId];
+      let sel = selectedItemMap[item.inquiryItemId];
+      
+      // If not selected, try to find the best available
+      if (!sel && inq.supplierQuotes) {
+        let bestQi = null;
+        let bestQ = null;
+        for (const q of inq.supplierQuotes) {
+          const qi = (q.items || []).find(x => x.inquiryItemId === item.inquiryItemId);
+          if (qi) {
+             if (!bestQi || parseFloat(qi.unitPrice) < parseFloat(bestQi.unitPrice)) {
+                bestQi = qi;
+                bestQ = q;
+             }
+          }
+        }
+        if (bestQi) {
+           sel = { item: bestQi, quote: bestQ };
+        }
+      }
+
       const sellerPrice = sel
         ? parseFloat(sel.item.unitPrice)
         : (latestQuote?.items?.find(qi => qi.inquiryItemId === item.inquiryItemId)

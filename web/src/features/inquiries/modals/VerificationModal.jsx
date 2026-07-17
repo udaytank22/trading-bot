@@ -20,7 +20,7 @@ const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode, inven
   // Base products from supplier quotes
   const quoteProducts = quote?.items || quote?.products || [];
   const sellerQuoteProducts = deal.seller_quote?.items || deal.seller_quote?.products || [];
-  
+
   const supplierProducts = quoteProducts.length > 0
     ? quoteProducts
     : sellerQuoteProducts.map((sqp, idx) => {
@@ -173,56 +173,47 @@ const VerificationModal = ({ isOpen, onClose, onConfirm, deal, isPageMode, inven
           <div className="overflow-x-auto">
             <DataTable
               columns={[
-                { key: 'index', label: '#', cellClassName: 'px-4 py-3 font-mono text-purple-500 font-bold text-xs w-8', renderCell: (_, i) => i + 1 },
-                { key: 'product_name', label: 'Product', cellClassName: 'px-4 py-3', renderCell: (p) => (
-                  <>
-                    <p className="font-semibold text-gray-900 dark:text-white text-xs">{p.product_name}</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">{p.quantity} {p.unit}</p>
-                  </>
-                )},
-                { key: 'supplier_name', label: 'Sourced From', cellClassName: 'px-4 py-3', renderCell: (p) => {
-                  const supplierColor = supplierColorMap[p.supplier_name] || supplierColors[0];
-                  return (
-                    <span className={`px-2 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider ${supplierColor}`}>
-                      {p.supplier_name || 'N/A'}
-                    </span>
-                  );
-                }},
-                { key: 'quantity', label: 'Qty', cellClassName: 'px-4 py-3 font-mono text-center text-gray-500' },
-                { key: 'seller_unit_price', label: 'Cost / Unit', cellClassName: 'px-4 py-3 font-mono text-right text-gray-400', renderCell: (p) => formatINR(p.seller_unit_price) },
-                { key: 'my_unit_price', label: 'Sell / Unit', cellClassName: 'px-4 py-3 font-mono text-right font-bold text-purple-400', renderCell: (p) => formatINR(p.my_unit_price) },
-                { key: 'total_price', label: 'Total Value', cellClassName: 'px-4 py-3 font-mono text-right font-bold text-gray-900 dark:text-white', renderCell: (p) => formatINR(p.total_price) }
-              ]}
-              data={filteredProducts}
-              emptyMessage="No products."
-              renderRow={(p, i) => {
-                const supplierColor = supplierColorMap[p.supplier_name] || supplierColors[0];
-                return (
-                  <tr key={i} className={`border-b border-gray-100 dark:border-[#2a2d33]/50 last:border-0 transition-colors ${i % 2 === 0 ? '' : 'bg-gray-50/40 dark:bg-[#0c0e12]/30'} hover:bg-purple-500/5`}>
-                    <td className="px-4 py-3 font-mono text-purple-500 font-bold text-xs">{i + 1}</td>
-                    <td className="px-4 py-3">
+                { key: 'index', label: '#', className: 'text-center w-8', cellClassName: 'px-4 py-3 font-mono text-purple-500 font-bold text-xs text-center', renderCell: (_, i) => i + 1 },
+                {
+                  key: 'product_name', label: 'Product', cellClassName: 'px-4 py-3', renderCell: (p) => (
+                    <>
                       <p className="font-semibold text-gray-900 dark:text-white text-xs">{p.product_name}</p>
                       <p className="text-[10px] text-gray-400 mt-0.5">{p.quantity} {p.unit}</p>
-                    </td>
-                    <td className="px-4 py-3">
+                    </>
+                  )
+                },
+                {
+                  key: 'supplier_name', label: 'Sourced From', cellClassName: 'px-4 py-3', renderCell: (p) => {
+                    const supplierColor = supplierColorMap[p.supplier_name] || supplierColors[0];
+                    return (
                       <span className={`px-2 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider ${supplierColor}`}>
                         {p.supplier_name || 'N/A'}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 font-mono text-center text-gray-500">{p.quantity}</td>
-                    <td className="px-4 py-3 font-mono text-right text-gray-400">{formatINR(p.seller_unit_price)}</td>
-                    <td className="px-4 py-3 font-mono text-right font-bold text-purple-400">{formatINR(p.my_unit_price)}</td>
-                    <td className="px-4 py-3 font-mono text-right font-bold text-gray-900 dark:text-white">{formatINR(p.total_price)}</td>
-                  </tr>
-                );
-              }}
+                    );
+                  }
+                },
+                { key: 'quantity', label: 'Qty', className: 'text-center', cellClassName: 'px-4 py-3 font-mono text-center text-gray-500' },
+                { key: 'seller_unit_price', label: 'Cost / Unit', className: 'text-center', cellClassName: 'px-4 py-3 font-mono text-center text-gray-400', renderCell: (p) => formatINR(p.seller_unit_price) },
+                { key: 'my_unit_price', label: 'Sell / Unit', className: 'text-center', cellClassName: 'px-4 py-3 font-mono text-center font-bold text-purple-400', renderCell: (p) => formatINR(p.my_unit_price) },
+                { key: 'total_price', label: 'Total Value', className: 'text-center', cellClassName: 'px-4 py-3 font-mono text-center font-bold text-gray-900 dark:text-white', renderCell: (p) => formatINR(p.total_price) }
+              ]}
+              data={filteredProducts}
+              emptyMessage="No products."
               renderFooter={() => (
                 <tfoot>
                   <tr className="bg-gray-50 dark:bg-[#0c0e12] border-t-2 border-gray-200 dark:border-[#2a2d33]">
-                    <td colSpan={4} className="px-4 py-3 font-bold text-xs text-gray-500 uppercase tracking-wider">Totals</td>
-                    <td className="px-4 py-3 font-mono text-right font-bold text-gray-500">{formatINR(totalSellerCost)}</td>
-                    <td className="px-4 py-3"></td>
-                    <td className="px-4 py-3 font-mono text-right font-extrabold text-gray-900 dark:text-white text-sm">{formatINR(totalFinalPrice)}</td>
+                    {/* col 1: # */}
+                    <td className="px-4 py-3" />
+                    {/* col 2+3: Product + Sourced From → label */}
+                    <td colSpan={2} className="px-4 py-3 font-bold text-xs text-gray-500 uppercase tracking-wider">Totals</td>
+                    {/* col 4: Qty → empty */}
+                    <td className="px-4 py-3" />
+                    {/* col 5: Cost / Unit */}
+                    <td className="px-4 py-3 font-mono text-center font-bold text-gray-500">{formatINR(totalSellerCost)}</td>
+                    {/* col 6: Sell / Unit → empty */}
+                    <td className="px-4 py-3" />
+                    {/* col 7: Total Value */}
+                    <td className="px-4 py-3 font-mono text-center font-extrabold text-gray-900 dark:text-white text-sm">{formatINR(totalFinalPrice)}</td>
                   </tr>
                 </tfoot>
               )}
