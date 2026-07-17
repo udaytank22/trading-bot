@@ -56,6 +56,7 @@ export default function InquiriesPage() {
   // Real-time new inquiry alert state
   const [newInquiryAlert, setNewInquiryAlert] = useState(null);
   const alertTimerRef = useRef(null);
+  const justCreatedByMeRef = useRef(false);
 
   // Filters & pagination
   const [search, setSearch] = useState("");
@@ -110,6 +111,12 @@ export default function InquiriesPage() {
     const handleNewInquiry = (inquiry) => {
       // Prepend to the current list immediately
       loadData(true);
+
+      // Skip the real-time popup if *this* user just created the inquiry
+      if (justCreatedByMeRef.current) {
+        justCreatedByMeRef.current = false;
+        return;
+      }
 
       // Show top-right popup
       setNewInquiryAlert(inquiry);
@@ -184,6 +191,9 @@ export default function InquiriesPage() {
             unit: "Box"
           }
         ];
+
+      // Flag so the socket handler won't show a duplicate popup
+      justCreatedByMeRef.current = true;
 
       const res = await api.inquiries.createInquiry({
         clientId,
