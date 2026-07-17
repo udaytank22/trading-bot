@@ -108,10 +108,10 @@ export default function DataTable({
       >
 
         {/* Main table — auto layout so columns size to content */}
-        <table className="w-full text-left text-sm table-auto border-collapse">
+        <table className="w-full table-auto border-collapse text-sm">
 
           {/* ── HEADER ─────────────────────────────────────────────────────── */}
-          <thead className="sticky top-0 z-20 transition-all duration-300">
+          <thead className="sticky top-0 transition-all duration-300">
             <tr className="bg-[#0B4775] shadow-sm">
               {columns.map((col) => (
                 <th
@@ -178,8 +178,12 @@ export default function DataTable({
                         const cellValue = col.renderCell ? col.renderCell(row, idx) : row[col.key];
                         return (
                           <td
-                            key={col.key || cIdx}
-                            className={`px-2 sm:px-3 md:px-4 py-2 ${col.hidden ?? ""} ${col.cellClassName ?? ""}`}
+                            className={[
+                              "px-2 sm:px-3 md:px-4 py-2",
+                              col.hidden ?? "",
+                              col.className ?? "",
+                              col.cellClassName ?? "",
+                            ].join(" ")}
                           >
                             {cellValue}
                           </td>
