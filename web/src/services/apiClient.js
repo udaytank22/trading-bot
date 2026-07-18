@@ -27,11 +27,9 @@ apiClient.interceptors.request.use(
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-    } else {
-      // No token – trigger logout flow
-      window.dispatchEvent(new CustomEvent('auth-logout'));
-      return Promise.reject(new Error('Authentication token missing'));
     }
+    // If there's no token, we don't attach the Authorization header.
+    // This allows the response interceptor to handle silent token refresh if the server returns 401.
     return config;
   },
   (error) => Promise.reject(error)
@@ -102,9 +100,11 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null);
         isRefreshing = false;
-        // Refresh token invalid or expired: clear tokens and logout
-        localStorage.removeItem('token');
-        window.dispatchEvent(new CustomEvent('auth-logout'));
+        // Only clear tokens and log out if the server explicitly rejects the refresh token (401 or 403)
+        if (refreshError.response && (refreshError.response.status === 401 || refreshError.response.status === 403)) {
+          localStorage.removeItem('token');
+          window.dispatchEvent(new CustomEvent('auth-logout'));
+        }
         return Promise.reject(refreshError);
       }
     }

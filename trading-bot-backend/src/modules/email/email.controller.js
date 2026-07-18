@@ -22,7 +22,15 @@ const getAuthStatus = async (req, res, next) => {
  */
 const getEmails = async (req, res, next) => {
   try {
-    const emails = await emailService.fetchInboxEmails(50);
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 50;
+    const search = req.query.search || '';
+    const folder = req.query.folder || 'inbox';
+
+    const { emails, total } = await emailService.fetchInboxEmails(page, limit, search, folder);
+    
+    res.setHeader('X-Total-Count', total);
+    res.setHeader('Access-Control-Expose-Headers', 'X-Total-Count');
     res.json(emails);
   } catch (error) {
     if (error.message === 'Gmail not configured') {
@@ -83,9 +91,37 @@ const sendTestEmail = async (req, res, next) => {
   }
 };
 
+/**
+ * Send custom email (e.g. for compose, reply, forward)
+ */
+const sendCustomEmail = async (req, res, next) => {
+  try {
+    const { to, subject, html, text } = req.body;
+    if (!to) {
+      return res.status(400).json({ message: 'Recipient email (to) is required' });
+    }
+
+    await emailService.sendEmail({
+      to,
+      subject: subject || '(No Subject)',
+      html: html || '',
+      text: text || '',
+    });
+
+    res.json({ success: true, message: `Email sent to ${to}` });
+  } catch (error) {
+    if (error.message === 'Gmail not configured') {
+      return res.status(401).json({ message: 'Gmail not configured' });
+    }
+    console.error('Send email error:', error);
+    next(error);
+  }
+};
+
 module.exports = {
   getAuthStatus,
   getEmails,
   getEmailById,
   sendTestEmail,
+  sendCustomEmail,
 };

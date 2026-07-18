@@ -1,10 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import api from '../../../services/api';
-import { Loader2, Reply, Trash } from 'lucide-react';
+import api from '../../../services/apiClient';
+import { Loader2, Reply, Trash, CornerUpRight, AlertCircle } from 'lucide-react';
 
 const EmailDetail = ({ email }) => {
   const [fullEmail, setFullEmail] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // Reply/Forward Compose states
+  const [activeMode, setActiveMode] = useState('none'); // 'none', 'reply', 'forward'
+  const [to, setTo] = useState('');
+  const [subject, setSubject] = useState('');
+  const [body, setBody] = useState('');
+  const [sending, setSending] = useState(false);
+  const [statusMessage, setStatusMessage] = useState(null);
+  const [statusType, setStatusType] = useState('success'); // 'success', 'error'
 
   useEffect(() => {
     const fetchFullEmail = async () => {
@@ -23,6 +32,8 @@ const EmailDetail = ({ email }) => {
 
     if (email) {
       fetchFullEmail();
+      setActiveMode('none');
+      setStatusMessage(null);
     }
   }, [email.id]);
 
@@ -36,6 +47,69 @@ const EmailDetail = ({ email }) => {
 
   const senderName = fullEmail.sender?.emailAddress?.name;
   const senderEmail = fullEmail.sender?.emailAddress?.address;
+
+  const handleReplyClick = () => {
+    setActiveMode('reply');
+    setTo(senderEmail || '');
+    setSubject(fullEmail.subject.startsWith('Re:') ? fullEmail.subject : `Re: ${fullEmail.subject}`);
+    
+    // Generate draft body with original email details
+    const originalDate = new Date(fullEmail.receivedDateTime).toLocaleString();
+    const cleanText = (fullEmail.body?.content || fullEmail.bodyPreview || '')
+      .replace(/<[^>]*>/g, '') // Strip HTML tags if HTML
+      .trim();
+    const draftBody = `\n\n\nOn ${originalDate}, ${senderName || senderEmail} wrote:\n> ` + cleanText.split('\n').join('\n> ');
+    
+    setBody(draftBody);
+    setStatusMessage(null);
+  };
+
+  const handleForwardClick = () => {
+    setActiveMode('forward');
+    setTo('');
+    setSubject(fullEmail.subject.startsWith('Fwd:') ? fullEmail.subject : `Fwd: ${fullEmail.subject}`);
+    
+    // Generate draft body with forwarded header and details
+    const originalDate = new Date(fullEmail.receivedDateTime).toLocaleString();
+    const cleanText = (fullEmail.body?.content || fullEmail.bodyPreview || '')
+      .replace(/<[^>]*>/g, '') // Strip HTML tags
+      .trim();
+    const draftBody = `\n\n---------- Forwarded message ---------\nFrom: ${senderName ? `${senderName} <${senderEmail}>` : senderEmail}\nDate: ${originalDate}\nSubject: ${fullEmail.subject}\n\n${cleanText}`;
+    
+    setBody(draftBody);
+    setStatusMessage(null);
+  };
+
+  const handleSend = async (e) => {
+    e.preventDefault();
+    if (!to.trim()) {
+      setStatusType('error');
+      setStatusMessage('Recipient email (To) is required.');
+      return;
+    }
+    
+    setSending(true);
+    setStatusMessage(null);
+    try {
+      await api.post('/email/send', {
+        to,
+        subject,
+        text: body
+      });
+      setStatusType('success');
+      setStatusMessage('Email sent successfully!');
+      setTimeout(() => {
+        setActiveMode('none');
+        setStatusMessage(null);
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to send email', err);
+      setStatusType('error');
+      setStatusMessage(err.response?.data?.message || 'Failed to send email. Please try again.');
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -51,8 +125,23 @@ const EmailDetail = ({ email }) => {
           </div>
         </div>
         <div className="flex gap-2">
-          <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-md transition-colors" title="Reply">
+          <button 
+            onClick={handleReplyClick}
+            className={`p-2 rounded-md transition-colors ${
+              activeMode === 'reply' ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-100'
+            }`} 
+            title="Reply"
+          >
             <Reply className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={handleForwardClick}
+            className={`p-2 rounded-md transition-colors ${
+              activeMode === 'forward' ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-100'
+            }`} 
+            title="Forward"
+          >
+            <CornerUpRight className="w-5 h-5" />
           </button>
           <button className="p-2 text-red-500 hover:bg-red-50 rounded-md transition-colors" title="Delete">
             <Trash className="w-5 h-5" />
@@ -72,6 +161,98 @@ const EmailDetail = ({ email }) => {
           </pre>
         )}
       </div>
+
+      {/* Reply/Forward Compose Form */}
+      {activeMode !== 'none' && (
+        <form onSubmit={handleSend} className="mt-6 border-t border-gray-200 pt-6 bg-gray-50 -mx-6 -mb-6 p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-sm font-semibold text-gray-700 capitalize">
+              {activeMode} Email
+            </h3>
+            <button
+              type="button"
+              onClick={() => setActiveMode('none')}
+              className="text-xs text-gray-500 hover:text-gray-700 font-medium"
+            >
+              Cancel
+            </button>
+          </div>
+
+          {statusMessage && (
+            <div className={`p-3 rounded-md mb-4 text-sm flex items-center gap-2 ${
+              statusType === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+            }`}>
+              {statusType === 'success' ? (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <AlertCircle className="w-5 h-5" />
+              )}
+              {statusMessage}
+            </div>
+          )}
+
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">To</label>
+              <input
+                type="email"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+                disabled={activeMode === 'reply' || sending}
+                placeholder="recipient@example.com"
+                className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white disabled:bg-gray-100 disabled:text-gray-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Subject</label>
+              <input
+                type="text"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                disabled={sending}
+                className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Message</label>
+              <textarea
+                rows={6}
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                disabled={sending}
+                className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white font-sans"
+                placeholder="Type your message here..."
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setActiveMode('none')}
+                disabled={sending}
+                className="px-4 py-2 text-sm border border-gray-200 rounded-md hover:bg-gray-100 transition-colors text-gray-700"
+              >
+                Discard
+              </button>
+              <button
+                type="submit"
+                disabled={sending}
+                className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center gap-2 transition-colors disabled:opacity-50"
+              >
+                {sending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  'Send Email'
+                )}
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
     </div>
   );
 };

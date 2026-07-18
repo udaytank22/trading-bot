@@ -1,3 +1,4 @@
+// Trigger reload of env variables
 require('./utils/sentry');
 const express = require('express');
 const Sentry = require('@sentry/node');
@@ -246,6 +247,14 @@ app.use(errorHandler);
 
 const server = httpServer.listen(config.PORT, () => {
   logger.info(`[Server] running in ${config.NODE_ENV} mode on port ${config.PORT}`);
+  
+  // Start background Gmail IMAP email listener for real-time notifications
+  try {
+    const { startEmailListener } = require('./modules/email/email.service');
+    startEmailListener();
+  } catch (err) {
+    logger.error({ err }, '[Server] Failed to start real-time IMAP email listener');
+  }
 });
 
 module.exports = server;

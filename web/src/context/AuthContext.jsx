@@ -118,7 +118,10 @@ export function AuthProvider({ children }) {
         }
       } catch (err) {
         console.error('Proactive token refresh failed:', err);
-        logout();
+        // Only clear tokens and log out if the server explicitly rejects the refresh token (401 or 403)
+        if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+          logout();
+        }
       }
     }, 10 * 60 * 1000); // 10 minutes
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { clsx } from 'clsx';
 import { Mail, MailOpen } from 'lucide-react';
 
-const EmailList = ({ emails, selectedId, onSelect }) => {
+const EmailList = ({ emails, selectedId, onSelect, folder }) => {
   if (!emails || emails.length === 0) {
     return (
       <div className="p-8 text-center text-gray-500">
@@ -31,7 +31,9 @@ const EmailList = ({ emails, selectedId, onSelect }) => {
                 <Mail className="w-4 h-4 text-blue-600 flex-shrink-0" />
               )}
               <span className="truncate text-sm text-gray-900">
-                {email.sender?.emailAddress?.name || email.sender?.emailAddress?.address}
+                {folder === 'sent' && email.to && email.to.length > 0
+                  ? `To: ${email.to[0].name || email.to[0].address}`
+                  : (email.sender?.emailAddress?.name || email.sender?.emailAddress?.address)}
               </span>
             </div>
             <span className="text-xs text-gray-500 whitespace-nowrap ml-2">

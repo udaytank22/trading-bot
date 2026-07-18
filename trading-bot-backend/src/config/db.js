@@ -49,7 +49,7 @@ prisma.$use(async (params, next) => {
       data: {
         module: params.model || 'Unknown',
         action: params.action.toUpperCase(),
-        recordId: recordId ? String(recordId) : null,
+        recordId: recordId ? parseInt(recordId, 10) : null,
         oldValue: oldValue ? JSON.stringify(oldValue) : null,
         newValue: (['create', 'update'].includes(params.action) && result) ? JSON.stringify(result) : null,
         ipAddress: req?.ip || null,

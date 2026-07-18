@@ -2,6 +2,7 @@ const nodemailer = require('nodemailer');
 const Imap = require('imap');
 const { simpleParser } = require('mailparser');
 const config = require('../../config');
+const logger = require('../../utils/logger');
 
 /**
  * Gmail SMTP transporter using Nodemailer
@@ -224,7 +225,7 @@ const sendQuoteEmail = async (inquiry) => {
  * @param {number} maxResults - Maximum number of emails to fetch
  * @returns {Promise<Array>} Array of parsed email objects
  */
-const fetchInboxEmails = (maxResults = 50) => {
+const fetchInboxEmails = (page = 1, limit = 50, search = '', folder = 'inbox', retries = 2) => {
   return new Promise((resolve, reject) => {
     if (!config.GMAIL_USER || !config.GMAIL_APP_PASSWORD) {
       return reject(new Error('Gmail not configured'));
@@ -240,75 +241,139 @@ const fetchInboxEmails = (maxResults = 50) => {
     });
 
     const emails = [];
+    let totalMessages = 0;
 
     imap.once('ready', () => {
-      imap.openBox('INBOX', true, (err, box) => {
+      const targetFolder = folder === 'sent' ? '[Gmail]/Sent Mail' : 'INBOX';
+      imap.openBox(targetFolder, true, (err, box) => {
         if (err) {
           imap.end();
           return reject(err);
         }
 
-        const totalMessages = box.messages.total;
-        if (totalMessages === 0) {
-          imap.end();
-          return resolve([]);
-        }
+        const runFetch = (seqNos, totalCount, isUid = false) => {
+          if (seqNos.length === 0) {
+            imap.end();
+            return resolve({ emails: [], total: totalCount });
+          }
 
-        const startSeq = Math.max(1, totalMessages - maxResults + 1);
-        const fetchRange = `${startSeq}:${totalMessages}`;
+          const f = isUid
+            ? imap.fetch(seqNos, {
+                bodies: '',
+                struct: true,
+              })
+            : imap.seq.fetch(seqNos, {
+                bodies: '',
+                struct: true,
+              });
 
-        const f = imap.seq.fetch(fetchRange, {
-          bodies: '',
-          struct: true,
-        });
-
-        f.on('message', (msg) => {
-          msg.on('body', (stream) => {
-            simpleParser(stream, (err, parsed) => {
-              if (err) {
-                console.error('Parse error:', err);
-                return;
-              }
-              emails.push({
-                id: parsed.messageId || `msg-${Date.now()}-${Math.random()}`,
-                subject: parsed.subject || '(No Subject)',
-                sender: {
-                  emailAddress: {
-                    name: parsed.from?.value?.[0]?.name || '',
-                    address: parsed.from?.value?.[0]?.address || '',
+          f.on('message', (msg) => {
+            msg.on('body', (stream) => {
+              simpleParser(stream, (err, parsed) => {
+                if (err) {
+                  console.error('Parse error:', err);
+                  return;
+                }
+                emails.push({
+                  id: parsed.messageId || `msg-${Date.now()}-${Math.random()}`,
+                  subject: parsed.subject || '(No Subject)',
+                  sender: {
+                    emailAddress: {
+                      name: parsed.from?.value?.[0]?.name || '',
+                      address: parsed.from?.value?.[0]?.address || '',
+                    },
                   },
-                },
-                bodyPreview: (parsed.text || '').substring(0, 200),
-                body: {
-                  contentType: parsed.html ? 'html' : 'text',
-                  content: parsed.html || parsed.text || '',
-                },
-                receivedDateTime: parsed.date?.toISOString() || new Date().toISOString(),
-                isRead: false,
+                  to: parsed.to?.value?.map(t => ({
+                    name: t.name || '',
+                    address: t.address || ''
+                  })) || [],
+                  bodyPreview: (parsed.text || '').substring(0, 200),
+                  body: {
+                    contentType: parsed.html ? 'html' : 'text',
+                    content: parsed.html || parsed.text || '',
+                  },
+                  receivedDateTime: parsed.date?.toISOString() || new Date().toISOString(),
+                  isRead: false,
+                });
               });
             });
           });
-        });
 
-        f.once('error', (err) => {
-          imap.end();
-          reject(err);
-        });
+          f.once('error', (err) => {
+            imap.end();
+            reject(err);
+          });
 
-        f.once('end', () => {
-          imap.end();
-        });
+          f.once('end', () => {
+            imap.end();
+          });
+        };
+
+        if (search && search.trim()) {
+          const query = search.trim();
+          imap.search([['TEXT', query]], (searchErr, results) => {
+            if (searchErr) {
+              imap.end();
+              return reject(searchErr);
+            }
+
+            totalMessages = results.length;
+            if (totalMessages === 0) {
+              imap.end();
+              return resolve({ emails: [], total: 0 });
+            }
+
+            // Sort sequence numbers descending to get newest first
+            results.sort((a, b) => b - a);
+
+            const startIndex = (page - 1) * limit;
+            if (startIndex >= totalMessages) {
+              imap.end();
+              return resolve({ emails: [], total: totalMessages });
+            }
+
+            const pageResults = results.slice(startIndex, startIndex + limit);
+            runFetch(pageResults, totalMessages, true);
+          });
+        } else {
+          totalMessages = box.messages.total;
+          if (totalMessages === 0) {
+            imap.end();
+            return resolve({ emails: [], total: 0 });
+          }
+
+          const startIndex = (page - 1) * limit;
+          if (startIndex >= totalMessages) {
+            imap.end();
+            return resolve({ emails: [], total: totalMessages });
+          }
+
+          const startSeq = Math.max(1, totalMessages - (page * limit) + 1);
+          const endSeq = totalMessages - startIndex;
+          const fetchRange = `${startSeq}:${endSeq}`;
+          runFetch(fetchRange, totalMessages);
+        }
       });
     });
 
     imap.once('error', (err) => {
-      reject(err);
+      if (retries > 0 && (err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT' || err.message?.includes('closed') || err.message?.includes('reset'))) {
+        logger.warn(`[IMAP] Connection failed with ${err.code || err.message}. Retrying... (${retries} left)`);
+        try { imap.end(); } catch (e) {}
+        setTimeout(() => {
+          fetchInboxEmails(page, limit, search, folder, retries - 1)
+            .then(resolve)
+            .catch(reject);
+        }, 1000);
+      } else {
+        reject(err);
+      }
     });
 
     imap.once('end', () => {
       // Sort newest first
       emails.sort((a, b) => new Date(b.receivedDateTime) - new Date(a.receivedDateTime));
-      resolve(emails);
+      resolve({ emails, total: totalMessages });
     });
 
     imap.connect();
@@ -323,8 +388,67 @@ const fetchInboxEmails = (maxResults = 50) => {
 const fetchEmailById = async (messageId) => {
   // For simplicity, fetch all and find by ID
   // In production, you'd search by Message-ID header
-  const emails = await fetchInboxEmails(100);
+  const { emails } = await fetchInboxEmails(1, 100);
   return emails.find(e => e.id === messageId) || null;
+};
+
+let persistentImap = null;
+
+const startEmailListener = () => {
+  if (!config.GMAIL_USER || !config.GMAIL_APP_PASSWORD) {
+    logger.warn('[IMAP Listener] Gmail not configured. Real-time email updates will be disabled.');
+    return;
+  }
+
+  const connectListener = () => {
+    logger.info('[IMAP Listener] Connecting to Gmail IMAP for real-time notifications...');
+    
+    persistentImap = new Imap({
+      user: config.GMAIL_USER,
+      password: config.GMAIL_APP_PASSWORD,
+      host: 'imap.gmail.com',
+      port: 993,
+      tls: true,
+      tlsOptions: { rejectUnauthorized: false },
+      keepalive: {
+        interval: 10000,
+        idleInterval: 300000,
+        forceNoop: true
+      }
+    });
+
+    persistentImap.once('ready', () => {
+      persistentImap.openBox('INBOX', false, (err, box) => {
+        if (err) {
+          logger.error('[IMAP Listener] OpenBox INBOX error:', err);
+          persistentImap.end();
+          return;
+        }
+
+        logger.info('[IMAP Listener] Connected and listening to INBOX for new mail...');
+
+        persistentImap.on('mail', (numNewMsgs) => {
+          logger.info(`[IMAP Listener] New mail received! Count: ${numNewMsgs}`);
+          if (global.io) {
+            global.io.emit('new_email', { count: numNewMsgs });
+          }
+        });
+      });
+    });
+
+    persistentImap.once('error', (err) => {
+      logger.error('[IMAP Listener] IMAP error:', err);
+    });
+
+    persistentImap.once('close', (hadError) => {
+      logger.warn(`[IMAP Listener] Connection closed. hadError: ${hadError}. Reconnecting in 10s...`);
+      setTimeout(connectListener, 10000);
+    });
+
+    persistentImap.connect();
+  };
+
+  connectListener();
 };
 
 module.exports = {
@@ -333,4 +457,5 @@ module.exports = {
   sendQuoteEmail,
   fetchInboxEmails,
   fetchEmailById,
+  startEmailListener,
 };

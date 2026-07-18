@@ -15,4 +15,7 @@ router.get('/emails/:id', authMiddleware, emailController.getEmailById);
 // Send a test email (for verifying SMTP setup)
 router.post('/send-test', authMiddleware, emailController.sendTestEmail);
 
+// Send a custom email (reply, forward)
+router.post('/send', authMiddleware, emailController.sendCustomEmail);
+
 module.exports = router;
