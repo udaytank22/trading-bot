@@ -33,11 +33,19 @@ export default function Topbar({ onToggleSidebar }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const firstName = currentUser?.name?.split(" ")[0] || "Admin";
   const todayDate = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  const [currentTime, setCurrentTime] = useState(() => new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }));
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
   const roleLower = currentUser?.role?.toLowerCase();
   const isAdmin = roleLower === 'admin' || roleLower === 'super admin';
 
   const [suggestions, setSuggestions] = useState([]);
-  
+
   React.useEffect(() => {
     const q = searchQuery.trim();
     if (!q) {
@@ -100,23 +108,23 @@ export default function Topbar({ onToggleSidebar }) {
           {showSuggestions && searchQuery.trim().length > 0 && suggestions.length > 0 && (
             <div className="absolute left-0 mt-1 w-full bg-white dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d33] rounded-md shadow-lg z-50">
               {suggestions.map((inq) => (
-                  <button
-                    key={inq.inquiry_id}
-                    onClick={() => {
-                      setShowSuggestions(false);
-                      setSearchQuery(inq.inquiry_id);
-                      navigate("/inquiries", { state: { openInquiryId: inq.inquiry_id } });
-                    }}
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors"
-                  >
-                    <span className="font-mono text-xs text-gray-700 dark:text-gray-200">
-                      {inq.inquiry_id}
-                    </span>
-                    <div className="text-[11px] text-gray-500 truncate">
-                      {inq.buyer_name} · {inq.products?.[0]?.product_name}
-                    </div>
-                  </button>
-                ))}
+                <button
+                  key={inq.inquiry_id}
+                  onClick={() => {
+                    setShowSuggestions(false);
+                    setSearchQuery(inq.inquiry_id);
+                    navigate("/inquiries", { state: { openInquiryId: inq.inquiry_id } });
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors"
+                >
+                  <span className="font-mono text-xs text-gray-700 dark:text-gray-200">
+                    {inq.inquiry_id}
+                  </span>
+                  <div className="text-[11px] text-gray-500 truncate">
+                    {inq.buyer_name} · {inq.products?.[0]?.product_name}
+                  </div>
+                </button>
+              ))}
             </div>
           )}
         </div>
@@ -125,13 +133,8 @@ export default function Topbar({ onToggleSidebar }) {
       <div className="flex items-center gap-6">
         <div className="hidden lg:flex items-center gap-4">
           <span className="text-[12px] font-medium text-slate-500 dark:text-gray-400">
-            {todayDate}
+            {todayDate} · {currentTime}
           </span>
-          {/* <div className="flex items-center bg-[#eef2fc] dark:bg-purple-900/20 px-4 py-1.5 rounded-full">
-            <span className="text-[11px] font-bold text-slate-500 dark:text-gray-300 tracking-wider">
-              WELCOME BACK, <span className="text-purple-600 dark:text-purple-400 uppercase">{firstName}</span>
-            </span>
-          </div> */}
         </div>
 
         <div className="flex items-center gap-1 text-slate-500 dark:text-gray-400">

@@ -10,7 +10,7 @@ const EmailDetail = ({ email }) => {
     const fetchFullEmail = async () => {
       setLoading(true);
       try {
-        const res = await api.get(`/outlook/emails/${email.id}`);
+        const res = await api.get(`/email/emails/${email.id}`);
         setFullEmail(res.data);
       } catch (err) {
         console.error('Failed to load email details', err);

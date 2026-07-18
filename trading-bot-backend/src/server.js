@@ -227,7 +227,8 @@ app.use('/api/notifications', require('./modules/notifications/notifications.rou
 app.use('/api/reports', require('./modules/reports/reports.routes'));
 app.use('/api/audit-logs', require('./modules/auditLogs/auditLogs.routes'));
 app.use('/api/vehicles', require('./modules/vehicles/vehicles.routes'));
-app.use('/api/outlook', require('./modules/outlook/outlook.routes'));
+app.use('/api/email', require('./modules/email/email.routes'));
+// app.use('/api/outlook', require('./modules/outlook/outlook.routes'));
 app.use('/api/chat', require('./modules/chat/chat.routes'));
 
 // Catch-all route not found handler

@@ -12,6 +12,8 @@ model User {
   email                 String                 @unique
   password              String
   refreshToken          String?
+  gmailAccessToken      String?
+  gmailRefreshToken     String?
   outlookAccessToken    String?
   outlookRefreshToken   String?
   outlookAccountId      String?

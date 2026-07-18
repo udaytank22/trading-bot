@@ -24,7 +24,7 @@ const InboxPage = () => {
   const fetchEmails = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/outlook/emails');
+      const res = await api.get('/email/emails');
       setEmails(res.data);
       setIsAuthenticated(true);
     } catch (err) {
@@ -40,9 +40,11 @@ const InboxPage = () => {
 
   const handleAuthenticate = async () => {
     try {
-      const res = await api.get('/outlook/auth-url');
-      if (res.data.url) {
-        window.location.href = res.data.url;
+      const res = await api.get('/email/auth-status');
+      if (res.data.authenticated) {
+        fetchEmails();
+      } else {
+        setError('Gmail is not configured. Please set GMAIL_USER and GMAIL_APP_PASSWORD in the backend .env file.');
       }
     } catch (err) {
       setError('Failed to get authentication URL');
@@ -55,13 +57,13 @@ const InboxPage = () => {
         <Mail className="w-16 h-16 text-gray-400" />
         <h2 className="text-2xl font-semibold text-gray-800">Connect Your Inbox</h2>
         <p className="text-gray-600 text-center max-w-md">
-          Authenticate with Microsoft Outlook to view and manage your emails directly within the Trading Bot platform.
+          Authenticate with Gmail to view and manage your emails directly within the Trading Bot platform.
         </p>
         <button
           onClick={handleAuthenticate}
           className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
         >
-          Connect Outlook
+          Connect Gmail
         </button>
       </div>
     );

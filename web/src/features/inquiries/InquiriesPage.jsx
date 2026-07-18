@@ -65,7 +65,13 @@ export default function InquiriesPage() {
   const [filter, setFilter] = useState(initialFilterState);
   const [clientFilter, setClientFilter] = useState([]);
   const [clients, setClients] = useState([]);
-  const [viewMode, setViewMode] = useState("kanban"); // 'table' | 'kanban'
+  const [viewMode, setViewMode] = useState(() => {
+    return sessionStorage.getItem("inquiries_viewMode") || "kanban";
+  }); // 'table' | 'kanban'
+
+  useEffect(() => {
+    sessionStorage.setItem("inquiries_viewMode", viewMode);
+  }, [viewMode]);
 
   useEffect(() => {
     api.clients.getClients({ paginate: 'false' })

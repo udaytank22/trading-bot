@@ -2,6 +2,7 @@ const service = require('./inquiries.service');
 const { sendSuccess, sendError } = require('../../utils/response');
 
 const { notifyAdmins, createNotification } = require('../notifications/notifications.service');
+const emailService = require('../email/email.service');
 
 /**
  * Get all inquiries
@@ -151,8 +152,6 @@ const stockCheck = async (req, res) => {
 const sendRFQ = async (req, res) => {
   const updated = await service.sendRFQ(parseInt(req.params.id, 10), req.body, req.user.id);
 
-  
-
   await createNotification({
     userId: req.user.id,
     title: 'RFQ Dispatched',
@@ -163,6 +162,12 @@ const sendRFQ = async (req, res) => {
   });
 
   const fullInquiry = await service.getInquiryById(updated.id);
+
+  // Dispatch RFQ emails to suppliers asynchronously (don't block response)
+  emailService.sendRFQEmail(fullInquiry).catch(err => {
+    console.error('Background RFQ email dispatch failed:', err.message);
+  });
+
   return sendSuccess(res, 'RFQ status dispatched successfully', fullInquiry);
 };
 
@@ -268,9 +273,13 @@ const adminApprove = async (req, res) => {
 const finalVerify = async (req, res) => {
   const updated = await service.finalVerify(parseInt(req.params.id, 10), req.body, req.user.id);
 
-  
-
   const fullInquiry = await service.getInquiryById(updated.id);
+
+  // Dispatch quote email to client asynchronously (don't block response)
+  emailService.sendQuoteEmail(fullInquiry).catch(err => {
+    console.error('Background quote email dispatch failed:', err.message);
+  });
+
   return sendSuccess(res, 'Final verification logged. Dispatched to client.', fullInquiry);
 };
 
