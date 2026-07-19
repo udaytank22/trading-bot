@@ -1,0 +1,11 @@
+=== Load Test Results ===
+Requests/sec: 200
+Total Requests: 4000
+2xx Responses: 3999
+429 Responses: 0
+5xx Errors: 0
+Total Errors: 0
+Time taken: 20.04s
+p50 Latency: 14ms
+p97.5 Latency: 50ms
+p99 Latency: 61ms
