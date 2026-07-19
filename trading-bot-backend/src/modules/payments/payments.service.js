@@ -1,6 +1,7 @@
 const prisma = require('../../prisma/client');
 
 const { getPaginationParams } = require('../../utils/queryHelper');
+const { notifyRole, notifyUser } = require('../notifications/notifications.service');
 
 /**
  * Get all payments
@@ -43,8 +44,9 @@ const getPaymentById = async (id) => {
  * Log a payment and adjust invoice balance
  */
 const createPayment = async (data, creatorId) => {
+  let invoice;
   return await prisma.$transaction(async (tx) => {
-    const invoice = await tx.invoice.findUnique({
+    invoice = await tx.invoice.findUnique({
       where: { id: data.invoiceId }
     });
 
@@ -88,6 +90,15 @@ const createPayment = async (data, creatorId) => {
     });
 
     return payment;
+  }).then(async (payment) => {
+    await notifyRole('Admin', {
+      title: 'Payment Recorded',
+      message: `A payment of $${payment.amount} has been logged for Invoice ${invoice.invoiceNumber}.`,
+      type: 'PAYMENT_CREATED',
+      relatedModule: 'PAYMENT',
+      relatedRecordId: payment.id
+    });
+    return payment;
   });
 };
 
@@ -95,6 +106,7 @@ const createPayment = async (data, creatorId) => {
  * Delete a payment entry and revert invoice balances
  */
 const deletePayment = async (id, updaterId) => {
+  let invoice;
   return await prisma.$transaction(async (tx) => {
     const payment = await tx.payment.findUnique({
       where: { id }
@@ -104,7 +116,7 @@ const deletePayment = async (id, updaterId) => {
       throw new Error('Payment not found');
     }
 
-    const invoice = await tx.invoice.findUnique({
+    invoice = await tx.invoice.findUnique({
       where: { id: payment.invoiceId }
     });
 
@@ -143,6 +155,15 @@ const deletePayment = async (id, updaterId) => {
       }
     });
 
+    return deleted;
+  }).then(async (deleted) => {
+    await notifyRole('Admin', {
+      title: 'Payment Reverted',
+      message: `Payment of $${deleted.amount} for Invoice ${invoice.invoiceNumber} has been deleted and reverted.`,
+      type: 'PAYMENT_DELETED',
+      relatedModule: 'PAYMENT',
+      relatedRecordId: deleted.id
+    });
     return deleted;
   });
 };
