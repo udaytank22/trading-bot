@@ -140,13 +140,20 @@ describe('Invoices API', () => {
         });
       }
 
-      let user = await prisma.user.findFirst({ where: { email: 'superadmin@trademind.com' } });
+      let user = await prisma.user.findFirst({
+        where: {
+          email: 'test-superadmin-hardening@example.com',
+          isActive: true,
+          deletedAt: null
+        }
+      });
       if (!user) {
         user = await prisma.user.create({
           data: {
-            email: 'superadmin@trademind.com',
+            email: 'test-superadmin-hardening@example.com',
             password: 'hashedpassword',
-            roleId: role.id
+            roleId: role.id,
+            isActive: true
           }
         });
       }
