@@ -11,7 +11,7 @@
     "prisma:seed": "prisma db seed",
     "prisma:seed-mock": "node prisma/seed-mock.js",
     "docs:generate": "node swagger.js",
-    "test": "cross-env NODE_ENV=test jest"
+    "test": "cross-env NODE_ENV=test PORT=0 jest --runInBand --forceExit"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

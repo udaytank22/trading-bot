@@ -22,7 +22,8 @@ const validate = (schema) => {
       else if (typeof partSchema.parse === 'function') {
         const result = partSchema.safeParse(partData);
         if (!result.success) {
-          const zodErrors = result.error.errors.map(e => `${e.path.join('.')}: ${e.message}`);
+          const zodIssues = result.error.issues || result.error.errors || [];
+          const zodErrors = zodIssues.map(e => `${e.path.join('.')}: ${e.message}`);
           errors.push(...zodErrors);
         } else {
           // Assign coerced data back to req
