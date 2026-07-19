@@ -36,3 +36,11 @@ Every request processed by the backend generates a unique `reqId`.
 ## 4. Emergency Procedures
 *   **Database Rollback**: If a Prisma migration fails or causes issues, use `npx prisma migrate resolve --rolled-back ...` to recover.
 *   **Clearing Queues**: If background tasks (BullMQ) are stuck, you can flush the Redis DB or use a tool like BullMQ Dashboard (if exposed internally) to clear failed jobs.
+
+## 5. Database Configuration
+
+### Connection Pooling & Limits
+Prisma Client manages an internal connection pool. By default, Prisma configures a pool size of **5 connections** per server instance. In a production environment with high concurrency or horizontal scaling:
+*   **Connection Limit Suffix**: You **must** append the `?connection_limit=N` query parameter to your `DATABASE_URL` environment variable (e.g., `postgresql://user:pass@host:5432/db?connection_limit=20`).
+*   **Instance Scaling**: If you are running multiple backend instances (e.g., in a Kubernetes cluster or PM2 cluster), ensure that `(Number of instances) * (connection_limit)` does not exceed the maximum allowed connection limit of your PostgreSQL database (typically configured in `max_connections` inside `postgresql.conf`).
+*   **Warning**: Failing to specify the connection limit suffix in production can lead to database connection exhaustion (if scaled high) or execution bottlenecks (if set too low for single instances processing heavy parallel workloads).
