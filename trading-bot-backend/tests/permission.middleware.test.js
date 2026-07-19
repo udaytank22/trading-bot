@@ -1,6 +1,6 @@
 const request = require('supertest');
 const server = require('../src/server');
-const checkPermission = require('../src/middleware/permission.middleware');
+const { checkPermission } = require('../src/middleware/permission.middleware');
 const { sendError } = require('../src/utils/response');
 
 // Mock a simple express app to test the middleware directly
@@ -13,13 +13,13 @@ app.get('/test-permission',
     req.user = {
       role: {
         permissions: [
-          { permission: { name: 'VIEW_DASHBOARD' } }
+          { permission: { module: 'dashboard', action: 'view', isActive: true } }
         ]
       }
     };
     next();
   },
-  checkPermission('VIEW_DASHBOARD'),
+  checkPermission('dashboard', 'view'),
   (req, res) => res.json({ success: true })
 );
 
@@ -30,7 +30,7 @@ app.get('/test-permission-denied',
     };
     next();
   },
-  checkPermission('VIEW_DASHBOARD'),
+  checkPermission('dashboard', 'view'),
   (req, res) => res.json({ success: true })
 );
 
