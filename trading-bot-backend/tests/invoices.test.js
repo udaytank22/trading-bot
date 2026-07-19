@@ -2,6 +2,7 @@ const request = require('supertest');
 const server = require('../src/server');
 const jwt = require('jsonwebtoken');
 const config = require('../src/config');
+const prisma = require('../src/config/db');
 
 describe('Invoices API', () => {
   let token;
@@ -131,8 +132,26 @@ describe('Invoices API', () => {
   describe('Query Hardening Regression Tests', () => {
     let superAdminToken;
 
-    beforeAll(() => {
-      superAdminToken = jwt.sign({ userId: 1 }, config.JWT_SECRET || 'secret', { expiresIn: '1h' });
+    beforeAll(async () => {
+      let role = await prisma.role.findFirst({ where: { name: 'Super Admin' } });
+      if (!role) {
+        role = await prisma.role.create({
+          data: { name: 'Super Admin' }
+        });
+      }
+
+      let user = await prisma.user.findFirst({ where: { email: 'superadmin@trademind.com' } });
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            email: 'superadmin@trademind.com',
+            password: 'hashedpassword',
+            roleId: role.id
+          }
+        });
+      }
+
+      superAdminToken = jwt.sign({ userId: user.id }, config.JWT_SECRET || 'secret', { expiresIn: '1h' });
     });
 
     it('should return 400 when statuses is a bracket-notation query object', async () => {
