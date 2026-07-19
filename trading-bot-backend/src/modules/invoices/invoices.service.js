@@ -1,7 +1,6 @@
 const prisma = require('../../prisma/client');
 const ejs = require('ejs');
 const path = require('path');
-const puppeteer = require('puppeteer');
 const browserPool = require('../../utils/browserPool');
 const { sendInvoiceEmail } = require('../../utils/email.service');
 const { notifyRole, notifyUser } = require('../notifications/notifications.service');

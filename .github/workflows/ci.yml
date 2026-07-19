@@ -68,3 +68,8 @@ jobs:
 
     - name: Build / Check
       run: npm run build --if-present
+
+    - name: Check Swagger Docs Drift
+      run: |
+        node swagger.js
+        git diff --exit-code swagger-output.json
