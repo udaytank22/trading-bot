@@ -123,4 +123,32 @@ describe('Invoices API', () => {
       .send({ inquiryId: 1 });
     expect(res.statusCode).toBe(401);
   });
+
+  /* ------------------------------------------------------------------ */
+  /*  Query Hardening Regression Tests                                   */
+  /* ------------------------------------------------------------------ */
+
+  describe('Query Hardening Regression Tests', () => {
+    let superAdminToken;
+
+    beforeAll(() => {
+      superAdminToken = jwt.sign({ userId: 1 }, config.JWT_SECRET || 'secret', { expiresIn: '1h' });
+    });
+
+    it('should return 400 when statuses is a bracket-notation query object', async () => {
+      const res = await request(server)
+        .get('/api/invoices?statuses[not]=PAID')
+        .set('Authorization', `Bearer ${superAdminToken}`);
+      expect(res.statusCode).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('should return 400 when inquiryId is a bracket-notation query object', async () => {
+      const res = await request(server)
+        .get('/api/invoices?inquiryId[not]=1')
+        .set('Authorization', `Bearer ${superAdminToken}`);
+      expect(res.statusCode).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+  });
 });

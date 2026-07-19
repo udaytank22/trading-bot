@@ -13,6 +13,16 @@ const { getPaginationParams } = require('../../utils/queryHelper');
  */
 const getAllInvoices = async (user, query = {}) => {
   const { search, statuses, excludeStatuses, inquiryId } = query;
+  
+  // Guard against bracket-notation object injection
+  for (const field of ['search', 'statuses', 'excludeStatuses', 'inquiryId']) {
+    if (query[field] !== undefined && typeof query[field] === 'object') {
+      const err = new Error(`Invalid filter parameter for field: ${field}`);
+      err.statusCode = 400;
+      throw err;
+    }
+  }
+
   const whereClause = { deletedAt: null };
   if (user && user.role === 'Client') {
     whereClause.clientId = user.id;
