@@ -26,12 +26,16 @@ const login = async (email, password) => {
   });
 
   if (!user) {
-    throw new Error('Invalid email or password');
+    const err = new Error('Invalid email or password');
+    err.statusCode = 401;
+    throw err;
   }
 
   const isPasswordMatch = await bcrypt.compare(password, user.password);
   if (!isPasswordMatch) {
-    throw new Error('Invalid email or password');
+    const err = new Error('Invalid email or password');
+    err.statusCode = 401;
+    throw err;
   }
 
   const accessToken = generateAccessToken(user);

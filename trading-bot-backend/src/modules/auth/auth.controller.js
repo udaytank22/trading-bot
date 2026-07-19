@@ -25,7 +25,8 @@ const login = async (req, res) => {
 
     return sendSuccess(res, 'Login successful', responseData);
   } catch (error) {
-    return sendError(res, error.message, [], 400);
+    const statusCode = error.statusCode || 400;
+    return sendError(res, error.message, [], statusCode);
   }
 };
 

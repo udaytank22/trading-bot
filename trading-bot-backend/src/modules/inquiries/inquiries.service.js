@@ -46,6 +46,16 @@ const getAllInquiries = async (query = {}) => {
   }
 
   const { page, pageSize, paginate, status, statuses, clientId, clientIds, search, excludeInventoryFulfilled } = query;
+
+  // Guard against bracket-notation object injection
+  for (const field of ['status', 'statuses', 'clientId', 'clientIds', 'search', 'excludeInventoryFulfilled']) {
+    if (query[field] !== undefined && typeof query[field] === 'object') {
+      const err = new Error(`Invalid filter parameter for field: ${field}`);
+      err.statusCode = 400;
+      throw err;
+    }
+  }
+
   const where = { deletedAt: null };
 
   if (excludeInventoryFulfilled === 'true') {

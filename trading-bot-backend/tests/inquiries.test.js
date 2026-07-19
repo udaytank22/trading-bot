@@ -2,6 +2,7 @@ const request = require('supertest');
 const server = require('../src/server');
 const jwt = require('jsonwebtoken');
 const config = require('../src/config');
+const prisma = require('../src/config/db');
 
 describe('Inquiries API', () => {
   let token;
@@ -225,5 +226,58 @@ describe('Inquiries API', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ approved: true });
     expect(res.statusCode).toBe(401);
+  });
+
+  /* ------------------------------------------------------------------ */
+  /*  Query Hardening Regression Tests                                   */
+  /* ------------------------------------------------------------------ */
+
+  describe('Query Hardening Regression Tests', () => {
+    let superAdminToken;
+
+    beforeAll(async () => {
+      let role = await prisma.role.findFirst({ where: { name: 'Super Admin' } });
+      if (!role) {
+        role = await prisma.role.create({
+          data: { name: 'Super Admin' }
+        });
+      }
+
+      let user = await prisma.user.findFirst({
+        where: {
+          email: 'test-superadmin-hardening@example.com',
+          isActive: true,
+          deletedAt: null
+        }
+      });
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            email: 'test-superadmin-hardening@example.com',
+            password: 'hashedpassword',
+            roleId: role.id,
+            isActive: true
+          }
+        });
+      }
+
+      superAdminToken = jwt.sign({ userId: user.id }, config.JWT_SECRET || 'secret', { expiresIn: '1h' });
+    });
+
+    it('should return 400 when status is a bracket-notation query object', async () => {
+      const res = await request(server)
+        .get('/api/inquiries?status[not]=PENDING')
+        .set('Authorization', `Bearer ${superAdminToken}`);
+      expect(res.statusCode).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('should return 400 when search is a bracket-notation query object', async () => {
+      const res = await request(server)
+        .get('/api/inquiries?search[not]=foo')
+        .set('Authorization', `Bearer ${superAdminToken}`);
+      expect(res.statusCode).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
   });
 });
