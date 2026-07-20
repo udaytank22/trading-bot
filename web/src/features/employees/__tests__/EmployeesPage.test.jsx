@@ -17,6 +17,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { http, HttpResponse } from 'msw';
+import { API_BASE_URL } from '../../../config/env';
 
 import EmployeesPage from '@features/employees/EmployeesPage';
 import { server } from '../../../mocks/server';
@@ -112,7 +113,7 @@ describe('EmployeesPage', () => {
   it('shows empty state when API returns no employees', async () => {
     // Override the handler for this test only
     server.use(
-      http.get('http://localhost:5001/api/employees', () =>
+      http.get(`${API_BASE_URL}/api/employees`, () =>
         HttpResponse.json({
           success: true,
           data: [],
@@ -141,7 +142,7 @@ describe('EmployeesPage', () => {
   it('filters employees when search term is entered', async () => {
     // Override handler to filter by search query
     server.use(
-      http.get('http://localhost:5001/api/employees', ({ request }) => {
+      http.get(`${API_BASE_URL}/api/employees`, ({ request }) => {
         const url = new URL(request.url);
         const search = url.searchParams.get('search') || '';
         const filtered = MOCK_EMPLOYEES.filter((e) =>
