@@ -1,47 +1,28 @@
-// src/services/apiClient.js
 import axios from 'axios';
 import { API_BASE_URL } from '../config/env';
 
 const BASE_URL = API_BASE_URL;
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
+const API_PREFIX = '/api';
 
-export { USE_MOCK };
-
-// Centralized Axios instance pointing to the API root
+/**
+ * Shared Axios instance for all standard API requests.
+ */
 const apiClient = axios.create({
-  baseURL: `${BASE_URL.trim()}/api`,
-  withCredentials: true,
+  baseURL: `${BASE_URL}${API_PREFIX}`,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
-    'ngrok-skip-browser-warning': 'true',
+    'ngrok-skip-browser-warning': 'true'
   },
+  withCredentials: true
 });
 
-// Request Interceptor: Attach access token
-apiClient.interceptors.request.use(
-  (config) => {
-    // Bypass token check for login and refresh endpoints
-    if (config.url && (config.url.includes('/auth/login') || config.url.includes('/auth/refresh'))) {
-      return config;
-    }
-
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    // If there's no token, we don't attach the Authorization header.
-    // This allows the response interceptor to handle silent token refresh if the server returns 401.
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Response Interceptor: Handle token refresh on 401 Unauthorized
+// Flag to prevent infinite refresh loops
 let isRefreshing = false;
 let failedQueue = [];
 
 const processQueue = (error, token = null) => {
-  failedQueue.forEach((prom) => {
+  failedQueue.forEach(prom => {
     if (error) {
       prom.reject(error);
     } else {
@@ -51,72 +32,69 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
-apiClient.interceptors.response.use(
-  (response) => {
-    return response;
+// Request Interceptor: Attach Auth Token if available
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
   },
+  (error) => Promise.reject(error)
+);
+
+// Response Interceptor: Handle Global Errors & Token Refresh
+apiClient.interceptors.response.use(
+  (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // Skip token refresh if the request failed was the login/refresh endpoint
-    if (
-      error.response &&
-      error.response.status === 401 &&
-      !originalRequest._retry &&
-      !originalRequest.url.includes('/auth/login') &&
-      !originalRequest.url.includes('/auth/refresh')
-    ) {
+    // Handle 401 Unauthorized
+    if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return apiClient(originalRequest);
-          })
-          .catch((err) => Promise.reject(err));
+        }).then(token => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return apiClient(originalRequest);
+        }).catch(err => Promise.reject(err));
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
 
       try {
-        // Request token refresh using base axios with credentials
-        const response = await axios.post(`${BASE_URL}/api/auth/refresh`, {}, {
-          withCredentials: true
-        });
-
-        if (response.data && response.data.success) {
-          const newToken = response.data.data.accessToken || response.data.data.token;
-
-          localStorage.setItem('token', newToken);
-
-          apiClient.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-          processQueue(null, newToken);
-          isRefreshing = false;
-
-          originalRequest.headers.Authorization = `Bearer ${newToken}`;
-          return apiClient(originalRequest);
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
         }
+
+        const response = await axios.post(`${BASE_URL}${API_PREFIX}/auth/refresh`, { refreshToken });
+        const { token } = response.data;
+
+        localStorage.setItem('token', token);
+        apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        originalRequest.headers['Authorization'] = `Bearer ${token}`;
+
+        processQueue(null, token);
+        return apiClient(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        isRefreshing = false;
-        // Only clear tokens and log out if the server explicitly rejects the refresh token (401 or 403)
-        if (refreshError.response && (refreshError.response.status === 401 || refreshError.response.status === 403)) {
-          localStorage.removeItem('token');
-          window.dispatchEvent(new CustomEvent('auth-logout'));
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        sessionStorage.removeItem('token');
+        
+        if (!window.location.hash.includes('/login')) {
+          window.location.hash = '#/login';
         }
         return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
 
-    // Only show error alert if it's not a first 401 (which is handled by silent token refresh above)
-    const isFirst401 = error.response && error.response.status === 401 && !originalRequest?._retry && !originalRequest?.url?.includes('/auth/login') && !originalRequest?.url?.includes('/auth/refresh');
-    const isLoginRequest = originalRequest?.url?.includes('/auth/login');
-
-    if (!isFirst401 && !isLoginRequest) {
-      // Components handle their own errors and show specific toasts.
-      // We removed the global Swal.fire to prevent overriding specific component error toasts.
+    if (error.response?.status >= 500) {
       console.error('API Error:', error.response?.data?.message || error.message);
     }
 
@@ -130,11 +108,13 @@ export default apiClient;
  * Legacy compatibility wrappers for apiGet and apiPost.
  *
  * Audit Summary (Phase 5 Data Fetching Consistency):
- * - Active call sites in web/src: 0 (All web feature modules have been migrated to React Query hooks
- *   under src/hooks/queries or modular API services using apiClient directly).
- * - Remaining usages: None within web/src.
- * - Purpose: Retained for potential legacy sheetsService/mock operations or external scripts
- *   that route to non-standard prefixes (/webhook, /sheets).
+ * - Call Sites in web/src: 0 active call sites remaining.
+ * - Migration Status: All core feature modules (Inquiries, Invoices, Accounts, Clients, Suppliers,
+ *   Employees, Inventory, Purchase Orders, Dashboard) have been fully migrated to use @tanstack/react-query
+ *   hooks (src/hooks/queries/*) or modular resource services built on apiClient (src/services/api/*).
+ * - Retained Usages & Legitimate Purpose: `apiGet` and `apiPost` are intentionally preserved strictly
+ *   for non-standard API prefixes (`/webhook`, `/sheets`) and potential legacy Google Sheets integrations
+ *   or external scripts that bypass the standard `/api` prefix.
  */
 export async function apiGet(path) {
   // If the path starts with webhook or sheets, route directly to BASE_URL instead of /api
