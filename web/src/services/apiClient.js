@@ -125,7 +125,16 @@ apiClient.interceptors.response.use(
 
 export default apiClient;
 
-// Compatibility wrappers for older sheetsService and mock operations
+/**
+ * Legacy compatibility wrappers for apiGet and apiPost.
+ *
+ * Audit Summary (Phase 5 Data Fetching Consistency):
+ * - Active call sites in web/src: 0 (All web feature modules have been migrated to React Query hooks
+ *   under src/hooks/queries or modular API services using apiClient directly).
+ * - Remaining usages: None within web/src.
+ * - Purpose: Retained for potential legacy sheetsService/mock operations or external scripts
+ *   that route to non-standard prefixes (/webhook, /sheets).
+ */
 export async function apiGet(path) {
   // If the path starts with webhook or sheets, route directly to BASE_URL instead of /api
   const url = (path.startsWith('/webhook') || path.startsWith('/sheets'))
