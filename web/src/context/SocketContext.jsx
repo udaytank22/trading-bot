@@ -4,6 +4,7 @@ import { useAuth } from './AuthContext';
 import { useToast } from '@hooks/useToast';
 import Toast from '@components/ui/toast';
 import { API_BASE_URL } from '../config/env';
+import { getAccessToken } from '../services/tokenStore';
 
 const SocketContext = createContext();
 
@@ -17,7 +18,7 @@ export const SocketProvider = ({ children }) => {
   const { toast, showToast } = useToast();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = getAccessToken();
     if (currentUser && token) {
       const newSocket = io(API_BASE_URL, {
         auth: { token },

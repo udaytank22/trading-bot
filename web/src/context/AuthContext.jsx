@@ -4,6 +4,7 @@ import axios from 'axios';
 import { STORAGE_KEYS } from '@config/constants';
 import { API_BASE_URL } from '../config/env';
 import apiClient from '../services/apiClient';
+import { setAccessToken, clearAccessToken } from '../services/tokenStore';
 
 const AuthContext = createContext(null);
 
@@ -17,6 +18,7 @@ export function AuthProvider({ children }) {
       return stored ? JSON.parse(stored) : null;
     } catch { return null; }
   });
+  const [isInitializing, setIsInitializing] = useState(true);
 
   const login = useCallback((user, token) => {
     const profile = user || { name: 'Admin', role: 'admin', email: 'admin@trademind.com' };
@@ -25,8 +27,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem(STORAGE_KEYS.IS_AUTH, 'true');
     localStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(profile));
     if (token) {
-      localStorage.setItem('token', token);
-      // Update Axios default Authorization header immediately
+      setAccessToken(token);
       try {
         apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       } catch (e) {
@@ -38,9 +39,11 @@ export function AuthProvider({ children }) {
   const logout = useCallback(() => {
     setIsAuthenticated(false);
     setCurrentUser(null);
+    clearAccessToken();
     localStorage.removeItem(STORAGE_KEYS.IS_AUTH);
     localStorage.removeItem(STORAGE_KEYS.USER_PROFILE);
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     try {
       delete apiClient.defaults.headers.common['Authorization'];
     } catch (e) {
@@ -86,6 +89,53 @@ export function AuthProvider({ children }) {
     });
   }, [currentUser]);
 
+  // On App Startup / Page Refresh: Perform silent refresh via httpOnly refresh cookie
+  useEffect(() => {
+    let isMounted = true;
+    async function initAuth() {
+      try {
+        const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {}, { withCredentials: true });
+        const resData = response.data;
+        if (resData && resData.success) {
+          const newToken = resData.accessToken || resData.token || resData.data?.accessToken || resData.data?.token;
+          if (newToken) {
+            setAccessToken(newToken);
+            apiClient.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+          }
+
+          const userObj = resData.user || resData.data?.user;
+          if (isMounted) {
+            setIsAuthenticated(true);
+            if (userObj) {
+              const profile = {
+                id: userObj.id,
+                name: userObj.employeeProfile?.fullName || userObj.name || (userObj.email?.split('@')[0]),
+                role: userObj.role?.name || userObj.role || 'User',
+                email: userObj.email,
+                roleData: userObj.role
+              };
+              setCurrentUser(profile);
+              localStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(profile));
+              localStorage.setItem(STORAGE_KEYS.IS_AUTH, 'true');
+            }
+          }
+        }
+      } catch (err) {
+        // Refresh token missing or expired: reset auth state cleanly
+        if (isMounted) {
+          logout();
+        }
+      } finally {
+        if (isMounted) {
+          setIsInitializing(false);
+        }
+      }
+    }
+
+    initAuth();
+    return () => { isMounted = false; };
+  }, []);
+
   useEffect(() => {
     const handleAuthLogout = () => {
       logout();
@@ -97,39 +147,39 @@ export function AuthProvider({ children }) {
   }, [logout]);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !isInitializing) {
       refreshUserProfile();
     }
-  }, [isAuthenticated, refreshUserProfile]);
+  }, [isAuthenticated, isInitializing, refreshUserProfile]);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || isInitializing) return;
 
-    // Proactively refresh access token every 10 minutes (since access token expires in 15m)
+    // Proactively refresh access token every 10 minutes (access token expires in 15m)
     const refreshInterval = setInterval(async () => {
       try {
         const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {}, { withCredentials: true });
 
         if (response.data && response.data.success) {
-          const newToken = response.data.data.accessToken || response.data.data.token;
-
-          localStorage.setItem('token', newToken);
-          apiClient.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+          const newToken = response.data.accessToken || response.data.token || response.data.data?.accessToken || response.data.data?.token;
+          if (newToken) {
+            setAccessToken(newToken);
+            apiClient.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+          }
         }
       } catch (err) {
         console.error('Proactive token refresh failed:', err);
-        // Only clear tokens and log out if the server explicitly rejects the refresh token (401 or 403)
         if (err.response && (err.response.status === 401 || err.response.status === 403)) {
           logout();
         }
       }
-    }, 10 * 60 * 1000); // 10 minutes
+    }, 10 * 60 * 1000);
 
     return () => clearInterval(refreshInterval);
-  }, [isAuthenticated, logout]);
+  }, [isAuthenticated, isInitializing, logout]);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, currentUser, setCurrentUser, login, logout, hasPermission, refreshUserProfile }}>
+    <AuthContext.Provider value={{ isAuthenticated, currentUser, setCurrentUser, login, logout, hasPermission, refreshUserProfile, isInitializing }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_BASE_URL } from '../config/env';
+import { getAccessToken, setAccessToken, clearAccessToken } from './tokenStore';
 
 const BASE_URL = API_BASE_URL;
 const API_PREFIX = '/api';
@@ -32,10 +33,10 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
-// Request Interceptor: Attach Auth Token if available
+// Request Interceptor: Attach in-memory Auth Token if available
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const token = getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -65,22 +66,22 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (!refreshToken) {
-          throw new Error('No refresh token available');
+        const response = await axios.post(`${BASE_URL}${API_PREFIX}/auth/refresh`, {}, { withCredentials: true });
+        const newToken = response.data?.accessToken || response.data?.token || response.data?.data?.accessToken || response.data?.data?.token;
+
+        if (!newToken) {
+          throw new Error('No access token returned from refresh');
         }
 
-        const response = await axios.post(`${BASE_URL}${API_PREFIX}/auth/refresh`, { refreshToken });
-        const { token } = response.data;
+        setAccessToken(newToken);
+        apiClient.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+        originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
 
-        localStorage.setItem('token', token);
-        apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        originalRequest.headers['Authorization'] = `Bearer ${token}`;
-
-        processQueue(null, token);
+        processQueue(null, newToken);
         return apiClient(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
+        clearAccessToken();
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
         sessionStorage.removeItem('token');
