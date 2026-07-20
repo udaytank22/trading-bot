@@ -13,6 +13,8 @@ import Select from '../../components/ui/select';
 import Button from '../../components/ui/button';
 import * as XLSX from 'xlsx';
 
+import { API_BASE_URL } from '../../config/env';
+
 const UNIT_OPTIONS = [
   { value: 'MT', label: 'MT (Metric Tons)' },
   { value: 'PCS', label: 'PCS (Pieces)' },
@@ -21,7 +23,7 @@ const UNIT_OPTIONS = [
   { value: 'M', label: 'M (Meters)' }
 ];
 
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001').trim();
+const BASE_URL = API_BASE_URL;
 
 export default function RequestProductPage() {
   const navigate = useNavigate();

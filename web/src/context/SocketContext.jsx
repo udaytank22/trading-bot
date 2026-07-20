@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 import { useToast } from '@hooks/useToast';
 import Toast from '@components/ui/toast';
+import { API_BASE_URL } from '../config/env';
 
 const SocketContext = createContext();
 
@@ -18,7 +19,7 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (currentUser && token) {
-      const newSocket = io(import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001', {
+      const newSocket = io(API_BASE_URL, {
         auth: { token },
         transports: ['websocket', 'polling']
       });

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import apiClient from '../../services/apiClient';
 import { 
   Search, ArrowLeft, Package, Clock, CheckCircle2,
   FileText, Navigation, Truck, User, Building2, ChevronRight, Plus
@@ -22,7 +22,7 @@ const TrackInquiryPage = () => {
     setInquiryData(null);
 
     try {
-      const response = await axios.get(`http://localhost:5001/api/inquiries/public/track/${inquiryId.trim()}`);
+      const response = await apiClient.get(`/inquiries/public/track/${inquiryId.trim()}`);
       if (response.data.success) {
         setInquiryData(response.data.data);
       }

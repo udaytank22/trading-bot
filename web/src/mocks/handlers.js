@@ -2,8 +2,9 @@
 // MSW REST handlers — used by all tests that make API calls
 
 import { http, HttpResponse } from 'msw';
+import { API_BASE_URL } from '../config/env';
 
-const BASE = 'http://localhost:5001/api';
+const BASE = `${API_BASE_URL}/api`;
 
 // ── Shared fixture data ──────────────────────────────────────────────────────
 export const MOCK_EMPLOYEES = [
