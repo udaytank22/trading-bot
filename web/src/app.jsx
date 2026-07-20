@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-d
 import { AuthProvider, UIProvider, SocketProvider, useAuth } from '@context';
 import AppShell from '@components/layout/AppShell';
 import PageLoader from '@components/common/PageLoader';
+import { ErrorBoundary, FeatureErrorBoundary } from '@components/common/ErrorBoundary';
 import { PUBLIC_ROUTES, PROTECTED_ROUTES } from '@config/routes';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -28,7 +29,15 @@ function ProtectedApp() {
     <AppShell>
       <Routes>
         {PROTECTED_ROUTES.map(({ path, element }) => (
-          <Route key={path} path={path} element={element} />
+          <Route
+            key={path}
+            path={path}
+            element={
+              <FeatureErrorBoundary key={path}>
+                {element}
+              </FeatureErrorBoundary>
+            }
+          />
         ))}
       </Routes>
     </AppShell>
@@ -37,23 +46,25 @@ function ProtectedApp() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <SocketProvider>
-        <UIProvider>
-          <QueryClientProvider client={queryClient}>
-            <HashRouter>
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  {PUBLIC_ROUTES.map(({ path, element }) => (
-                    <Route key={path} path={path} element={element} />
-                  ))}
-                  <Route path="*" element={<ProtectedApp />} />
-                </Routes>
-              </Suspense>
-            </HashRouter>
-          </QueryClientProvider>
-        </UIProvider>
-      </SocketProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <SocketProvider>
+          <UIProvider>
+            <QueryClientProvider client={queryClient}>
+              <HashRouter>
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    {PUBLIC_ROUTES.map(({ path, element }) => (
+                      <Route key={path} path={path} element={element} />
+                    ))}
+                    <Route path="*" element={<ProtectedApp />} />
+                  </Routes>
+                </Suspense>
+              </HashRouter>
+            </QueryClientProvider>
+          </UIProvider>
+        </SocketProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
