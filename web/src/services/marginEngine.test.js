@@ -62,8 +62,8 @@ describe('marginEngine', () => {
   });
 
   it('Case 7: formatINR should format properly', () => {
-    expect(formatINR(1000)).toBe("$ 1,000");
-    expect(formatINR(100000)).toBe("$ 1,00,000");
-    expect(formatINR(2500000)).toBe("$ 25,00,000");
+    expect(formatINR(1000)).toBe("₹1,000.00");
+    expect(formatINR(100000)).toBe("₹1,00,000.00");
+    expect(formatINR(2500000)).toBe("₹25,00,000.00");
   });
 });

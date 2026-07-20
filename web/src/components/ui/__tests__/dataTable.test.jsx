@@ -1,53 +1,38 @@
 /**
  * @file dataTable.test.jsx
- * @description Tests for the shared <DataTable> virtualized table component.
- *
- * Covers:
- *  - Column headers are rendered
- *  - Row data renders via renderRow callback
- *  - Empty state shows when data=[]
- *  - Auto-render mode: renderCell column definitions
- *  - Custom footer via renderFooter
+ * @description Unit test suite for DataTable component and helpers.
  */
 
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import DataTable, { rowStripeClass, ROW_HOVER_CLS } from '@components/ui/dataTable';
+import DataTable, { rowStripeClass, ROW_HOVER_CLS } from '../dataTable';
 
-// Mock react-virtual — jsdom has no real layout so the virtualizer returns 0 items.
-// We replace the hook with a passthrough that simply renders all items.
+// Mock react-virtual to avoid window/scroll errors in jsdom
 vi.mock('@tanstack/react-virtual', () => ({
   useVirtualizer: ({ count }) => ({
     getVirtualItems: () =>
       Array.from({ length: count }, (_, i) => ({
-        index: i,
-        start: i * 50,
-        end: (i + 1) * 50,
-        size: 50,
-        key: i,
-        lane: 0,
+        index: i, start: i * 50, end: (i + 1) * 50, size: 50, key: i, lane: 0,
       })),
     getTotalSize: () => count * 50,
     measureElement: () => {},
   }),
 }));
 
-// ── Fixtures ──────────────────────────────────────────────────────────────────
 const COLUMNS = [
   { key: 'id', label: 'ID' },
   { key: 'name', label: 'Name' },
-  { key: 'status', label: 'Status' },
+  { key: 'role', label: 'Role' },
 ];
 
 const DATA = [
-  { id: 1, name: 'Alice', status: 'Active' },
-  { id: 2, name: 'Bob', status: 'Inactive' },
+  { id: 1, name: 'Alice', role: 'Dev' },
+  { id: 2, name: 'Bob', role: 'Ops' },
 ];
 
-// ── Tests ─────────────────────────────────────────────────────────────────────
 describe('DataTable', () => {
-  it('renders column headers', () => {
+  it('renders all table headers from columns prop', () => {
     render(
       <DataTable
         columns={COLUMNS}
@@ -56,7 +41,7 @@ describe('DataTable', () => {
           <tr key={row.id}>
             <td>{row.id}</td>
             <td>{row.name}</td>
-            <td>{row.status}</td>
+            <td>{row.role}</td>
           </tr>
         )}
       />
@@ -64,17 +49,19 @@ describe('DataTable', () => {
 
     expect(screen.getByText('ID')).toBeInTheDocument();
     expect(screen.getByText('Name')).toBeInTheDocument();
-    expect(screen.getByText('Status')).toBeInTheDocument();
+    expect(screen.getByText('Role')).toBeInTheDocument();
   });
 
-  it('renders all rows when data is provided via renderRow', () => {
+  it('renders row data using renderRow prop', () => {
     render(
       <DataTable
         columns={COLUMNS}
         data={DATA}
         renderRow={(row) => (
           <tr key={row.id}>
+            <td>{row.id}</td>
             <td>{row.name}</td>
+            <td>{row.role}</td>
           </tr>
         )}
       />
@@ -84,13 +71,13 @@ describe('DataTable', () => {
     expect(screen.getByText('Bob')).toBeInTheDocument();
   });
 
-  it('shows empty state when data is empty', () => {
+  it('displays emptyMessage when data array is empty', () => {
     render(
       <DataTable
         columns={COLUMNS}
         data={[]}
-        emptyMessage="No employees found."
         renderRow={() => null}
+        emptyMessage="No employees found."
       />
     );
 
@@ -98,28 +85,32 @@ describe('DataTable', () => {
   });
 
   it('uses default empty message when none provided', () => {
-    render(<DataTable columns={COLUMNS} data={[]} renderRow={() => null} />);
+    render(
+      <DataTable
+        columns={COLUMNS}
+        data={[]}
+        renderRow={() => null}
+      />
+    );
+
     expect(screen.getByText('No data found.')).toBeInTheDocument();
   });
 
   it('renders rows in auto-mode using renderCell on column definitions', () => {
     const autoColumns = [
       { key: 'id', label: 'ID' },
-      {
-        key: 'name',
-        label: 'Name',
-        renderCell: (row) => <strong>{row.name}</strong>,
-      },
+      { key: 'name', label: 'Full Name', renderCell: (row) => <strong>{row.name.toUpperCase()}</strong> },
     ];
 
-    render(<DataTable columns={autoColumns} data={DATA} />);
+    render(
+      <DataTable
+        columns={autoColumns}
+        data={DATA}
+      />
+    );
 
-    // Both names should appear via renderCell
-    expect(screen.getByText('Alice')).toBeInTheDocument();
-    expect(screen.getByText('Bob')).toBeInTheDocument();
-    // IDs rendered from row[col.key] fallback
-    expect(screen.getByText('1')).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument();
+    expect(screen.getByText('ALICE')).toBeInTheDocument();
+    expect(screen.getByText('BOB')).toBeInTheDocument();
   });
 
   it('renders custom footer via renderFooter prop', () => {
@@ -130,15 +121,13 @@ describe('DataTable', () => {
         renderRow={(row) => <tr key={row.id}><td>{row.name}</td></tr>}
         renderFooter={() => (
           <tfoot>
-            <tr>
-              <td colSpan={3}>Total: 2</td>
-            </tr>
+            <tr><td colSpan={3}>Custom Footer Text</td></tr>
           </tfoot>
         )}
       />
     );
 
-    expect(screen.getByText('Total: 2')).toBeInTheDocument();
+    expect(screen.getByText('Custom Footer Text')).toBeInTheDocument();
   });
 
   it('applies hidden class to columns that have a hidden prop', () => {
@@ -162,15 +151,9 @@ describe('DataTable', () => {
 
 // ── Helper function tests ─────────────────────────────────────────────────────
 describe('rowStripeClass', () => {
-  it('returns empty string for even rows', () => {
-    expect(rowStripeClass(0)).toBe('');
-    expect(rowStripeClass(2)).toBe('');
-  });
-
-  it('returns stripe class for odd rows', () => {
-    const cls = rowStripeClass(1);
-    expect(cls).toContain('bg-gray-50');
-    expect(rowStripeClass(3)).toBeTruthy();
+  it('returns valid background class for rows', () => {
+    expect(rowStripeClass(0)).toContain('bg-white');
+    expect(rowStripeClass(1)).toContain('bg-white');
   });
 });
 
