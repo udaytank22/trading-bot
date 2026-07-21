@@ -28,9 +28,9 @@ export default function Toast({ message, type = 'success' }) {
   };
 
   const titles = {
-    success: 'Success Notification',
+    success: '',
     error: 'System Error',
-    info: 'New notification received',
+    info: '',
   };
 
   const barColors = {

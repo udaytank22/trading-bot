@@ -156,7 +156,7 @@ export function HeaderButton({ onClick, icon, children, color = 'gray', classNam
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex-shrink-0 focus:outline-none ${colorCls} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex-shrink-0 focus:outline-none ${colorCls} ${className}`}
     >
       {icon}
       {children}

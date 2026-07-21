@@ -70,7 +70,7 @@ vi.mock('@context', async (importOriginal) => {
         name: 'Admin',
         role: 'Admin',
         email: 'admin@trademind.com',
-        roleData: { name: 'Super Admin', permissions: [] },
+        roleData: { name: 'Admin', permissions: [] },
       },
       hasPermission: () => true,
       logout: vi.fn(),

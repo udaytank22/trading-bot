@@ -43,7 +43,7 @@ const VARIANT_CLASSES = {
 
 /** Maps size → padding + text classes */
 const SIZE_CLASSES = {
-  sm: "px-3 py-1.5 text-xs font-bold",
+  sm: "px-3 py-2.5 text-xs font-bold",
   md: "px-4 py-2 text-sm font-bold",
   lg: "px-6 py-3 text-sm font-bold",
   // Icon buttons use a square pad instead

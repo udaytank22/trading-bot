@@ -390,22 +390,16 @@ export default function InquiriesPage() {
       {loading && filteredInquiries.length === 0 ? (
         <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl opacity-40 animate-pulse" />
       ) : viewMode === "kanban" ? (
-        /* ── Kanban board (no pagination — shows all filtered) ── */
-        filteredInquiries.length > 0 ? (
-          <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
-            <InquiryKanban
-              items={filteredInquiries}
-              onView={onView}
-              onAction={handleAction}
-              onStatusChange={(id, newStatus) => updateDealStatus(id, newStatus)}
-              currentUser={currentUser}
-            />
-          </div>
-        ) : (
-          <div className="flex-1 flex w-full">
-            <EmptyState title="No inquiries found" description="Try changing your search or filter" />
-          </div>
-        )
+        /* ── Kanban board (shows all columns, with empty column message when empty) ── */
+        <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
+          <InquiryKanban
+            items={filteredInquiries}
+            onView={onView}
+            onAction={handleAction}
+            onStatusChange={(id, newStatus) => updateDealStatus(id, newStatus)}
+            currentUser={currentUser}
+          />
+        </div>
       ) : (
         /* ── Table view (with pagination) ── */
         <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg transition-colors duration-300">

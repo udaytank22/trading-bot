@@ -72,7 +72,7 @@ const createEmployee = async (data, creatorId) => {
       roleId: data.roleId || null,
       salary: data.salary ? parseFloat(data.salary) : null,
       joiningDate: data.joiningDate ? new Date(data.joiningDate) : null,
-      status: data.status || 'ACTIVE',
+      status: data.status || 'INACTIVE',
       createdById: creatorId
     }
   });
@@ -170,5 +170,63 @@ module.exports = {
   createEmployee,
   updateEmployee,
   deleteEmployee,
-  logAttendance
+  logAttendance,
+  setEmployeePassword: async (employeeId, password, creatorId) => {
+    const numericId = Number(employeeId);
+    const employee = await prisma.employee.findFirst({
+      where: { id: numericId, deletedAt: null }
+    });
+
+    if (!employee) {
+      const err = new Error('Employee not found');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    let user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { employeeProfileId: numericId },
+          { email: employee.email }
+        ],
+        deletedAt: null
+      }
+    });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    if (user) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          password: hashedPassword,
+          employeeProfileId: numericId,
+          updatedById: creatorId
+        }
+      });
+    } else {
+      let role = await prisma.role.findFirst({
+        where: {
+          name: { in: ['Employee', 'User', 'Admin'] }
+        }
+      });
+
+      if (!role) {
+        role = await prisma.role.findFirst();
+      }
+
+      user = await prisma.user.create({
+        data: {
+          email: employee.email,
+          password: hashedPassword,
+          roleId: role.id,
+          employeeProfileId: numericId,
+          createdById: creatorId,
+          isActive: true
+        }
+      });
+    }
+
+    return { id: user.id, email: user.email };
+  }
 };

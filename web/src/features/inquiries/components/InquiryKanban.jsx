@@ -122,13 +122,13 @@ const STATUS_BADGE_MAP = {
 };
 
 const ROLE_GATES = {
-  PENDING: ["Sales Executive", "User", "Sourcing Manager", "Team Leader", "Admin", "Administrator"],
-  RFQ_READY: ["Sales Executive", "User", "Sourcing Manager", "Team Leader", "Admin", "Administrator"],
-  TL_REVIEW: ["Sourcing Manager", "Team Leader", "Admin", "Administrator"],
-  ADMIN_APPROVAL: ["Admin", "Administrator"],
-  EMPLOYEE_VERIFY: ["Sales Executive", "User", "Sourcing Manager", "Team Leader", "Admin", "Administrator"],
-  CLIENT_FINAL_APPROVAL: ["Client", "Admin", "Administrator"],
-  QUOTE_SENT: ["Admin", "Administrator", "Sales Executive", "User"],
+  PENDING: ["Sales Executive", "User", "Sourcing Manager", "Team Leader", "Admin"],
+  RFQ_READY: ["Sales Executive", "User", "Sourcing Manager", "Team Leader", "Admin"],
+  TL_REVIEW: ["Sourcing Manager", "Team Leader", "Admin"],
+  ADMIN_APPROVAL: ["Admin"],
+  EMPLOYEE_VERIFY: ["Sales Executive", "User", "Sourcing Manager", "Team Leader", "Admin"],
+  CLIENT_FINAL_APPROVAL: ["Client", "Admin"],
+  QUOTE_SENT: ["Admin", "Sales Executive", "User"],
 };
 
 const AVATARS = [
@@ -215,7 +215,7 @@ function KanbanCard({
 
   const isRoleAllowed = (status, roleName) => {
     const rNameLower = roleName?.toLowerCase();
-    if (rNameLower === "admin" || rNameLower === "super admin" || rNameLower === "administrator") return true;
+    if (rNameLower === "admin") return true;
     if (rNameLower === "viewer") return false;
 
     switch (status) {
@@ -397,7 +397,7 @@ function KanbanColumn({
                     d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                   />
                 </svg>
-                <span className="text-[11px] font-bold">Empty Column</span>
+                <span className="text-[11px] font-bold">No Data</span>
               </div>
             ) : (
               cards.map((inq) => (
@@ -481,32 +481,34 @@ export default function InquiryKanban({
         </div>
       </div>
 
-      <div className="flex-shrink-0 flex items-center justify-between gap-3 pt-3 px-1 border-t border-gray-200 dark:border-[#2a2d33] mt-2 bg-white dark:bg-[#1e2128]">
+      <div className="flex-shrink-0 flex items-center justify-between gap-3 py-1 px-4 rounded-xl border border-gray-200 dark:border-[#2a2d33] mt-3 bg-white dark:bg-[#1a1d23] shadow-sm">
         <div className="flex items-center gap-3 min-w-0">
-          <span className="text-[11px] text-gray-600 dark:text-gray-400 font-bold whitespace-nowrap">
+          <span className="text-xs text-gray-600 dark:text-gray-400 font-semibold whitespace-nowrap leading-none flex items-center">
             {totalCards} {totalCards === 1 ? "inquiry" : "inquiries"} across{" "}
-            {activeStages} stages
+            {activeStages} {activeStages === 1 ? "stage" : "stages"}
           </span>
         </div>
 
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center gap-1.5 flex-shrink-0">
           <button
             type="button"
             onClick={() => scrollBoard("left")}
-            className="w-6 h-6 flex items-center justify-center rounded border border-gray-200 dark:border-[#2a2d33] bg-white dark:bg-[#1a1d23] hover:bg-gray-100 dark:hover:bg-[#242830] transition-all"
+            className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 dark:border-[#2a2d33] bg-gray-50 dark:bg-[#13151a] hover:bg-gray-100 dark:hover:bg-[#242830] transition-all text-gray-600 dark:text-gray-300"
+            title="Scroll left"
           >
-            <svg className="w-3 h-3 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
 
           <button
             type="button"
             onClick={() => scrollBoard("right")}
-            className="w-6 h-6 flex items-center justify-center rounded border border-gray-200 dark:border-[#2a2d33] bg-white dark:bg-[#1a1d23] hover:bg-gray-100 dark:hover:bg-[#242830] transition-all"
+            className="w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 dark:border-[#2a2d33] bg-gray-50 dark:bg-[#13151a] hover:bg-gray-100 dark:hover:bg-[#242830] transition-all text-gray-600 dark:text-gray-300"
+            title="Scroll right"
           >
-            <svg className="w-3 h-3 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
             </svg>
           </button>
         </div>

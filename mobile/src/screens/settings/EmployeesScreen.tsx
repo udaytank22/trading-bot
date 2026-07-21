@@ -198,7 +198,7 @@ export const EmployeesScreen = () => {
             { value: 'Sourcing Manager', label: 'Sourcing Manager' },
             { value: 'Accountant', label: 'Accountant' },
             { value: 'Logistics Coordinator', label: 'Logistics Coordinator' },
-            { value: 'Administrator', label: 'Administrator' }
+            { value: 'Admin', label: 'Admin' }
           ]}
         />
 

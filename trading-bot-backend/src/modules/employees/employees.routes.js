@@ -16,5 +16,6 @@ router.post('/', checkPermission('employees', 'create'), validate(validateCreate
 router.put('/:id', checkPermission('employees', 'update'), asyncWrapper(controller.updateEmployee));
 router.delete('/:id', checkPermission('employees', 'delete'), asyncWrapper(controller.deleteEmployee));
 router.post('/:id/attendance', checkPermission('employees', 'update'), validate(validateAttendance), asyncWrapper(controller.logAttendance));
+router.post('/:id/set-password', checkPermission('employees', 'update'), asyncWrapper(controller.setEmployeePassword));
 
 module.exports = router;

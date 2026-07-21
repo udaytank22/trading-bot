@@ -76,7 +76,6 @@ const createNotification = async (payload) => {
  */
 const notifyAdmins = async (payload) => {
   await notifyRole('Admin', payload);
-  await notifyRole('Super Admin', payload);
 };
 
 module.exports = {

@@ -10,8 +10,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 const queryClient = new QueryClient();
 
 function ProtectedApp() {
-  const { isAuthenticated, currentUser } = useAuth();
+  const { isAuthenticated, currentUser, isInitializing } = useAuth();
   const location = useLocation();
+
+  if (isInitializing && !isAuthenticated) {
+    return <PageLoader />;
+  }
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
@@ -20,7 +24,7 @@ function ProtectedApp() {
   }
 
   const roleLower = currentUser?.role?.toLowerCase();
-  const isAdmin = roleLower === 'admin' || roleLower === 'super admin';
+  const isAdmin = roleLower === 'admin';
   if (location.pathname === '/settings' && !isAdmin) {
     return <Navigate to="/" replace />;
   }

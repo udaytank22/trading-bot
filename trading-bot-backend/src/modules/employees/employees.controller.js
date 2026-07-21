@@ -97,11 +97,25 @@ const logAttendance = async (req, res) => {
   }
 };
 
+const setEmployeePassword = async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password || password.length < 6) {
+      return sendError(res, 'Password must be at least 6 characters long', [], 400);
+    }
+    const data = await service.setEmployeePassword(req.params.id, password, req.user.id);
+    return sendSuccess(res, 'Employee password set successfully. User access granted.', data);
+  } catch (error) {
+    return sendError(res, error.message, [], error.statusCode || 400);
+  }
+};
+
 module.exports = {
   getEmployees,
   getEmployee,
   createEmployee,
   updateEmployee,
   deleteEmployee,
-  logAttendance
+  logAttendance,
+  setEmployeePassword
 };

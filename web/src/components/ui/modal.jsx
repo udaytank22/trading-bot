@@ -44,15 +44,13 @@ export default function Modal({
     <>
       <div
         onClick={handleBackdropClick}
-        className={`fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-[100] transition-all duration-300 ${
-          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
+        className={`fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-[100] transition-all duration-300 ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
       />
 
       <div
-        className={`fixed inset-0 z-[101] flex items-center justify-center ${fullscreen ? "" : "p-4"} ${
-          isOpen ? "" : "pointer-events-none"
-        }`}
+        className={`fixed inset-0 z-[101] flex items-center justify-center ${fullscreen ? "" : "p-4"} ${isOpen ? "" : "pointer-events-none"
+          }`}
       >
         <form
           onSubmit={handleSubmit}
@@ -144,7 +142,7 @@ export default function Modal({
           {/* FOOTER */}
           <div
             className={`
-              ${fullscreen ? "px-6 py-2" : "px-8 py-3"} border-t ${borderColor}
+              ${fullscreen ? "px-6 py-2" : "px-8 py-1"} border-t ${borderColor}
               ${panelBg}
               flex gap-3 justify-end items-center
             `}
@@ -153,7 +151,7 @@ export default function Modal({
               type="button"
               onClick={onClose}
               className={`
-                px-5 py-2 rounded-lg
+                px-5 py-1 rounded-lg
                 ${fieldBg}
                 border border-gray-300 dark:border-[#2f3441]
                 text-gray-700 dark:text-gray-300
@@ -168,7 +166,7 @@ export default function Modal({
             <button
               type="submit"
               className="
-                rounded-lg px-5 py-2
+                rounded-lg px-5 py-1
                 bg-purple-600 hover:bg-purple-500
                 text-white font-bold
                 transition shadow-lg shadow-purple-900/30

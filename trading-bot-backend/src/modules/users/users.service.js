@@ -128,8 +128,8 @@ const deleteUser = async (id, deleterId) => {
     throw new Error('User not found');
   }
 
-  if (user.role && user.role.name === 'Super Admin') {
-    throw new Error('Super Admin user cannot be deleted');
+  if (user.role && user.role.name === 'Admin') {
+    throw new Error('Admin user cannot be deleted');
   }
 
   const updatedUser = await prisma.user.update({

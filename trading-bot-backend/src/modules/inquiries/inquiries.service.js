@@ -1002,7 +1002,7 @@ async function autoCloseExpiredRFQs() {
   if (openRFQs.length === 0) return;
 
   const systemUser = await prisma.user.findFirst({
-    where: { role: { name: 'Super Admin' } }
+    where: { role: { name: 'Admin' } }
   });
   const systemUserId = systemUser ? systemUser.id : 1;
 

@@ -78,8 +78,8 @@ const updateRolePermissions = async (id, permissionIds = []) => {
       throw new Error('Role not found');
     }
 
-    if (role.name === 'Super Admin') {
-      throw new Error('Super Admin permissions are locked and cannot be modified');
+    if (role.name === 'Admin') {
+      throw new Error('Admin permissions are locked and cannot be modified');
     }
 
     // Clear existing permissions
@@ -126,7 +126,7 @@ const deleteRole = async (id) => {
     throw new Error('Role not found');
   }
 
-  if (role.name === 'Super Admin' || role.name === 'Admin' || role.name === 'Employee') {
+  if (role.name === 'Admin' || role.name === 'Employee') {
     throw new Error(`Core role '${role.name}' cannot be deleted`);
   }
 

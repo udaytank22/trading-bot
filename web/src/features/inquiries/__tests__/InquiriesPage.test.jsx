@@ -63,7 +63,7 @@ vi.mock('../modals/AddInquiryModal', () => ({
 
 const mockAuthValue = {
   isAuthenticated: true,
-  currentUser: { id: 1, name: 'Admin', role: 'Super Admin', email: 'admin@trademind.com' },
+  currentUser: { id: 1, name: 'Admin', role: 'Admin', email: 'admin@trademind.com' },
   hasPermission: () => true,
   logout: vi.fn(),
   refreshUserProfile: vi.fn(),

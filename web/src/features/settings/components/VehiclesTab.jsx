@@ -84,23 +84,23 @@ export default function VehiclesTab() {
   const handleDownloadSample = () => {
     const dataToExport = vehicles.length > 0
       ? vehicles.map(v => ({
-          ID: v.id,
-          'Vehicle Number': v.vehicle_no || '',
-          Type: v.type || '',
-          Capacity: v.capacity || '',
-          'Driver Name': v.driver_name || '',
-          Phone: v.phone || '',
-          Status: v.status || 'Active'
-        }))
+        ID: v.id,
+        'Vehicle Number': v.vehicle_no || '',
+        Type: v.type || '',
+        Capacity: v.capacity || '',
+        'Driver Name': v.driver_name || '',
+        Phone: v.phone || '',
+        Status: v.status || 'Active'
+      }))
       : [{
-          ID: '',
-          'Vehicle Number': 'MH-12-AB-1234',
-          Type: 'Truck',
-          Capacity: '10 Tons',
-          'Driver Name': 'Rajesh Kumar',
-          Phone: '9876543210',
-          Status: 'Active'
-        }];
+        ID: '',
+        'Vehicle Number': 'MH-12-AB-1234',
+        Type: 'Truck',
+        Capacity: '10 Tons',
+        'Driver Name': 'Rajesh Kumar',
+        Phone: '9876543210',
+        Status: 'Active'
+      }];
     const ws = XLSX.utils.json_to_sheet(dataToExport);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Vehicles');
@@ -277,9 +277,9 @@ export default function VehiclesTab() {
           </tr>
         )}
       />
-      
+
       <div className="p-4 border-t border-gray-200 dark:border-[#2a2d33]">
-        <Pagination 
+        <Pagination
           currentPage={meta.currentPage}
           totalPages={meta.totalPages}
           onPageChange={handlePageChange}

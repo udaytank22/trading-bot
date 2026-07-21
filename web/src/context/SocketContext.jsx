@@ -42,9 +42,10 @@ export const SocketProvider = ({ children }) => {
   }, [currentUser]);
 
   const markAllAsRead = () => setUnreadCount(0);
+  const markOneAsRead = () => setUnreadCount(prev => Math.max(0, prev - 1));
 
   return (
-    <SocketContext.Provider value={{ socket, notifications, unreadCount, markAllAsRead, setNotifications }}>
+    <SocketContext.Provider value={{ socket, notifications, unreadCount, setUnreadCount, markAllAsRead, markOneAsRead, setNotifications }}>
       {children}
       <Toast message={toast.message} type={toast.type} />
     </SocketContext.Provider>

@@ -51,7 +51,6 @@ async function main() {
 
   // 2. Create Roles
   const roles = {
-    superAdmin: await prisma.role.create({ data: { name: 'Super Admin' } }),
     admin: await prisma.role.create({ data: { name: 'Admin' } }),
     teamLead: await prisma.role.create({ data: { name: 'Team Lead' } }),
     employee: await prisma.role.create({ data: { name: 'Employee' } }),
@@ -83,14 +82,8 @@ async function main() {
   // 4. Map permissions to Roles
   const rolePermissions = [];
 
-  // Super Admin: all permissions
+  // Admin: all permissions
   permissions.forEach((perm) => {
-    rolePermissions.push({ roleId: roles.superAdmin.id, permissionId: perm.id });
-  });
-
-  // Admin: all except settings:delete
-  permissions.forEach((perm) => {
-    if (perm.module === 'settings' && perm.action === 'delete') return;
     rolePermissions.push({ roleId: roles.admin.id, permissionId: perm.id });
   });
 

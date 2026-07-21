@@ -42,7 +42,7 @@ export default function Topbar({ onToggleSidebar }) {
     return () => clearInterval(timer);
   }, []);
   const roleLower = currentUser?.role?.toLowerCase();
-  const isAdmin = roleLower === 'admin' || roleLower === 'super admin';
+  const isAdmin = roleLower === 'admin';
 
   const [suggestions, setSuggestions] = useState([]);
 

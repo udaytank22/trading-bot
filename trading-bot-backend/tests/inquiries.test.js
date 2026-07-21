@@ -236,10 +236,10 @@ describe('Inquiries API', () => {
     let superAdminToken;
 
     beforeAll(async () => {
-      let role = await prisma.role.findFirst({ where: { name: 'Super Admin' } });
+      let role = await prisma.role.findFirst({ where: { name: 'Admin' } });
       if (!role) {
         role = await prisma.role.create({
-          data: { name: 'Super Admin' }
+          data: { name: 'Admin' }
         });
       }
 

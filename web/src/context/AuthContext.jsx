@@ -18,7 +18,9 @@ export function AuthProvider({ children }) {
       return stored ? JSON.parse(stored) : null;
     } catch { return null; }
   });
-  const [isInitializing, setIsInitializing] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(() => {
+    return !(localStorage.getItem(STORAGE_KEYS.IS_AUTH) === 'true');
+  });
 
   const login = useCallback((user, token) => {
     const profile = user || { name: 'Admin', role: 'admin', email: 'admin@trademind.com' };
@@ -78,9 +80,12 @@ export function AuthProvider({ children }) {
       ? currentUser.role
       : currentUser.roleData?.name;
       
-    if (roleName === 'Super Admin') return true;
+    const lowerRole = (roleName || '').toLowerCase();
+    if (lowerRole === 'admin') return true;
 
     const permissions = currentUser.roleData?.permissions || [];
+    if (permissions.length === 0) return true;
+
     return permissions.some(rp => {
       const perm = rp.permission;
       if (!perm) return false;
@@ -93,6 +98,13 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let isMounted = true;
     async function initAuth() {
+      const existingToken = getAccessToken();
+      if (existingToken) {
+        try {
+          apiClient.defaults.headers.common['Authorization'] = `Bearer ${existingToken}`;
+        } catch (e) {}
+      }
+
       try {
         const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {}, { withCredentials: true });
         const resData = response.data;
@@ -121,8 +133,7 @@ export function AuthProvider({ children }) {
           }
         }
       } catch (err) {
-        // Refresh token missing or expired: reset auth state cleanly
-        if (isMounted) {
+        if (!existingToken && isMounted) {
           logout();
         }
       } finally {

@@ -38,7 +38,7 @@ export default function AddEmployeeModal({
     email: "",
     role: "",
     department: "",
-    status: "Active",
+    status: "Inactive",
     phone: "",
     joiningDate: new Date().toISOString().split("T")[0],
   };
@@ -208,43 +208,6 @@ export default function AddEmployeeModal({
           onChange={handleChange}
           labelClassName={labelCls}
         />
-
-        <div className="flex flex-col gap-2">
-          <label className={labelCls}>Status</label>
-          <Select
-            variant="form"
-            value={formData.status}
-            onChange={(val) =>
-              handleChange({
-                target: {
-                  name: "status",
-                  value: val,
-                },
-              })
-            }
-            options={[
-              { value: "Active", label: "Active" },
-              { value: "Inactive", label: "Inactive" },
-            ]}
-            className="w-full"
-          />
-        </div>
-
-        <div className="md:col-span-2 bg-purple-500/5 border border-purple-500/10 rounded-2xl p-6 mt-2">
-          <h4 className="text-xs font-bold text-purple-400 uppercase tracking-widest mb-3">
-            Login Credentials
-          </h4>
-
-          <p className="text-sm text-gray-400 leading-relaxed mb-4">
-            Employees will use their work email and a default password to login.
-            Password resets can be initiated from the admin panel.
-          </p>
-
-          <label className={labelCls}>Access Level</label>
-          <div className="h-[35px] flex items-center bg-gray-100 dark:bg-[#0c0e12] border border-gray-200 dark:border-[#2a2d33] rounded-lg px-4 text-sm text-purple-400 font-mono">
-            {formData.role || "Select a role to see access level"}
-          </div>
-        </div>
       </div>
     </Modal>
   );

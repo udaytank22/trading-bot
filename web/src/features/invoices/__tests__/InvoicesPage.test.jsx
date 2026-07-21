@@ -40,7 +40,7 @@ vi.mock('@tanstack/react-virtual', () => ({
 
 const mockAuthValue = {
   isAuthenticated: true,
-  currentUser: { id: 1, name: 'Admin', role: 'Super Admin' },
+  currentUser: { id: 1, name: 'Admin', role: 'Admin' },
   hasPermission: () => true,
 };
 

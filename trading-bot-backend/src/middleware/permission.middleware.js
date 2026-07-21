@@ -12,8 +12,8 @@ const checkPermission = (module, action) => {
         return sendError(res, 'Authentication required before permission check', [], 401);
       }
 
-      // Bypass for Super Admin
-      if (user.role && user.role.name === 'Super Admin') {
+      // Bypass for Admin
+      if (user.role && user.role.name?.toLowerCase() === 'admin') {
         return next();
       }
 

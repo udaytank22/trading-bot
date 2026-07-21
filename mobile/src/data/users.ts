@@ -70,7 +70,7 @@ export const mockEmployees: Employee[] = [
 
 export const mockUser = {
   name: "Admin User",
-  role: "Administrator",
+  role: "Admin",
   email: "admin@trademind.com",
   phone: "+91 99999 88888",
   avatar: "AU",

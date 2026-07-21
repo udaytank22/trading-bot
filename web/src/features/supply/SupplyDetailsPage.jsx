@@ -20,7 +20,7 @@ export default function SupplyDetailsPage() {
   const { currentUser, hasPermission } = useAuth();
 
   const roleLower = currentUser?.role?.toLowerCase();
-  const isAdminOrClient = roleLower === 'admin' || roleLower === 'super admin' || roleLower === 'administrator' || roleLower === 'client';
+  const isAdminOrClient = roleLower === 'admin' || roleLower === 'client';
   const canUpdate = hasPermission('suppliers', 'update');
 
   const [deal, setDeal] = useState(null);

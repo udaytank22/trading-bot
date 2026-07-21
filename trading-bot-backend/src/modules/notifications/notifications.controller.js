@@ -20,9 +20,13 @@ const getNotifications = async (req, res) => {
 const markRead = async (req, res) => {
   const { id } = req.params;
   const userId = req.user.id;
+  const notifId = Number(id);
 
   const notification = await prisma.notification.updateMany({
-    where: { id, userId },
+    where: { 
+      id: isNaN(notifId) ? id : notifId,
+      userId 
+    },
     data: { isRead: true }
   });
 
@@ -49,9 +53,13 @@ const markAllRead = async (req, res) => {
 const deleteNotification = async (req, res) => {
   const { id } = req.params;
   const userId = req.user.id;
+  const notifId = Number(id);
 
   await prisma.notification.deleteMany({
-    where: { id, userId }
+    where: { 
+      id: isNaN(notifId) ? id : notifId,
+      userId 
+    }
   });
 
   return sendSuccess(res, 'Notification deleted successfully');
@@ -63,3 +71,4 @@ module.exports = {
   markAllRead,
   deleteNotification
 };
+

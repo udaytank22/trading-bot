@@ -13,3 +13,8 @@ export const logAttendance = async (id, attendanceData) => {
   const response = await apiClient.post(`/employees/${id}/attendance`, attendanceData);
   return response.data;
 };
+
+export const setEmployeePassword = async (id, password) => {
+  const response = await apiClient.post(`/employees/${id}/set-password`, { password });
+  return response.data;
+};

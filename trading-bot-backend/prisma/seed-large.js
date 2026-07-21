@@ -42,7 +42,7 @@ async function main() {
   if (!salesRepRole) {
     salesRepRole = await prisma.role.create({ data: { name: 'Sales Representative' } });
   }
-  const superAdminRole = await prisma.role.findFirst({ where: { name: 'Super Admin' } });
+  const adminRole = await prisma.role.findFirst({ where: { name: 'Admin' } });
 
   // Grant read permissions for clients, products, inquiries, and create for clients
   const permsToGrant = [

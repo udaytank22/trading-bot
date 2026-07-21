@@ -5,27 +5,33 @@
  * ensuring tokens expire automatically when the browser or tab is closed.
  */
 
-let inMemoryAccessToken = null;
+let inMemoryAccessToken = localStorage.getItem('token') || null;
 
 /**
- * Retrieves the current in-memory access token.
+ * Retrieves the current access token.
  * @returns {string|null} The access token or null if not set.
  */
 export function getAccessToken() {
-  return inMemoryAccessToken;
+  return inMemoryAccessToken || localStorage.getItem('token');
 }
 
 /**
- * Sets the in-memory access token.
+ * Sets the access token.
  * @param {string|null} token - The access token string.
  */
 export function setAccessToken(token) {
   inMemoryAccessToken = token || null;
+  if (token) {
+    localStorage.setItem('token', token);
+  } else {
+    localStorage.removeItem('token');
+  }
 }
 
 /**
- * Clears the in-memory access token.
+ * Clears the access token.
  */
 export function clearAccessToken() {
   inMemoryAccessToken = null;
+  localStorage.removeItem('token');
 }

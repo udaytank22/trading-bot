@@ -127,7 +127,7 @@ export default function RolePermissionsTab() {
 
   const handleTogglePermission = (roleId, permissionId) => {
     const role = dbRoles.find(r => r.id === roleId);
-    if (role?.name === 'Super Admin') return; // Locked
+    if (role?.name === 'Admin') return; // Locked
 
     setRolePermissionsMap(prev => {
       const next = { ...prev };
@@ -144,7 +144,7 @@ export default function RolePermissionsTab() {
 
   const handleSelectAll = (roleId) => {
     const role = dbRoles.find(r => r.id === roleId);
-    if (role?.name === 'Super Admin') return;
+    if (role?.name === 'Admin') return;
 
     setRolePermissionsMap(prev => {
       const next = { ...prev };
@@ -157,7 +157,7 @@ export default function RolePermissionsTab() {
 
   const handleResetRole = async (roleId, roleName) => {
     const role = dbRoles.find(r => r.id === roleId);
-    if (role?.name === 'Super Admin') return;
+    if (role?.name === 'Admin') return;
 
     const isConfirmed = await confirmAction({
       title: `Reset ${roleName} Access?`,
@@ -197,7 +197,7 @@ export default function RolePermissionsTab() {
       showToast('Saving changes...', 'info');
       
       const updatePromises = dbRoles
-        .filter(role => role.name !== 'Super Admin') // skip locked
+        .filter(role => role.name !== 'Admin') // skip locked Admin role
         .map(role => {
           const permissionIds = Array.from(rolePermissionsMap[role.id] || []);
           return api.roles.updateRole(role.id, { permissionIds });
@@ -310,12 +310,9 @@ export default function RolePermissionsTab() {
           let badgeText = "Custom Permissions";
           let badgeCls = "bg-blue-50 text-blue-600 border border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900/50";
 
-          if (role.name === "Super Admin") {
+          if (role.name === "Admin") {
             badgeText = "System Admin (Locked)";
             badgeCls = "bg-purple-100 text-purple-700 border border-purple-200 dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-900/60";
-          } else if (role.name === "Admin") {
-            badgeText = "Full Access";
-            badgeCls = "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50";
           } else if (role.name === "Viewer") {
             badgeText = "Read Only default";
             badgeCls = "bg-gray-100 text-gray-600 border border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700";
@@ -340,10 +337,8 @@ export default function RolePermissionsTab() {
                   <div className="flex items-center gap-2">
                     <div
                       className={`p-2 rounded-lg ${
-                        role.name === "Super Admin"
+                        role.name === "Admin"
                           ? "bg-purple-50 text-purple-600 dark:bg-purple-950/30 dark:text-purple-400"
-                          : role.name === "Admin"
-                          ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400"
                           : "bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400"
                       }`}
                     >
@@ -395,7 +390,7 @@ export default function RolePermissionsTab() {
                       </span>
                       <button
                         onClick={() => handleSelectAll(role.id)}
-                        disabled={role.name === 'Super Admin'}
+                        disabled={role.name === 'Admin'}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/30 rounded-lg transition-colors border border-purple-200 dark:border-purple-800/40 disabled:opacity-50 disabled:pointer-events-none"
                       >
                         <CheckSquare className="w-3.5 h-3.5" />
@@ -403,14 +398,14 @@ export default function RolePermissionsTab() {
                       </button>
                       <button
                         onClick={() => handleResetRole(role.id, role.name)}
-                        disabled={role.name === 'Super Admin'}
+                        disabled={role.name === 'Admin'}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors border border-red-200 dark:border-red-800/40 disabled:opacity-50 disabled:pointer-events-none"
                       >
                         <RotateCcw className="w-3.5 h-3.5" />
                         Reset Role Access
                       </button>
                     </div>
-                    {role.name === "Super Admin" && (
+                    {role.name === "Admin" && (
                       <div className="flex items-center gap-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/20 px-3 py-1.5 rounded-lg border border-purple-200/50 dark:border-purple-800/20">
                         <Lock className="w-3.5 h-3.5" />
                         Permissions managed and locked by system
@@ -445,7 +440,7 @@ export default function RolePermissionsTab() {
                                 row[action] = <span className="text-gray-300 dark:text-gray-700">—</span>;
                               } else {
                                 const checked = !!(rolePermissionsMap[role.id]?.has(permId));
-                                const disabled = role.name === 'Super Admin';
+                                const disabled = role.name === 'Admin';
                                 row[action] = (
                                   <div className="flex justify-center">
                                     <PermissionSwitch
@@ -481,7 +476,7 @@ export default function RolePermissionsTab() {
                                   const permId = groupedPermissions[module]?.[action];
                                   if (!permId) return null;
                                   const checked = !!(rolePermissionsMap[role.id]?.has(permId));
-                                  const disabled = role.name === 'Super Admin';
+                                  const disabled = role.name === 'Admin';
                                   return (
                                     <div
                                       key={action}

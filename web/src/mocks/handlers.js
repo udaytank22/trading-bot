@@ -124,7 +124,7 @@ export const handlers = [
       data: {
         id: 1,
         email: 'admin@trademind.com',
-        role: { name: 'Super Admin', permissions: [] },
+        role: { name: 'Admin', permissions: [] },
         employeeProfile: { fullName: 'Admin User' },
       },
     })

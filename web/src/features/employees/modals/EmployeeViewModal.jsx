@@ -1,8 +1,11 @@
 import React, { useState, useMemo } from "react";
+import { setEmployeePassword } from "@services/api/employees";
+import { Button } from "@components/ui";
 
 // Generate mock attendance data for a given month/year
 function generateAttendance(empId, year, month) {
-  const seed = empId.charCodeAt(empId.length - 1) + month + year;
+  const strId = String(empId || 1);
+  const seed = strId.charCodeAt(strId.length - 1) + month + year;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const today = new Date();
   const attendance = {};
@@ -48,6 +51,38 @@ export default function EmployeeViewModal({ isOpen, onClose, employee }) {
   const today = new Date();
   const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [viewYear, setViewYear] = useState(today.getFullYear());
+
+  const [showPasswordBox, setShowPasswordBox] = useState(false);
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  const handleSavePassword = async (e) => {
+    e.preventDefault();
+    if (!password || password.length < 6) {
+      setPasswordError("Password must be at least 6 characters long");
+      return;
+    }
+    setSavingPassword(true);
+    setPasswordError("");
+    setPasswordSuccess("");
+    try {
+      const res = await setEmployeePassword(employee.id, password);
+      if (res.success) {
+        setPasswordSuccess("User access granted & password set successfully!");
+        setPassword("");
+        setTimeout(() => setShowPasswordBox(false), 2000);
+      } else {
+        setPasswordError(res.message || "Failed to set password");
+      }
+    } catch (err) {
+      setPasswordError(err.response?.data?.message || err.message || "Failed to set password");
+    } finally {
+      setSavingPassword(false);
+    }
+  };
 
   const attendance = useMemo(() => {
     if (!employee) return {};
@@ -164,14 +199,24 @@ export default function EmployeeViewModal({ isOpen, onClose, employee }) {
               <p className="text-xs text-gray-500 mt-0.5">{employee.id} · {employee.department}</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-200 hover:bg-white/[0.06] rounded-xl transition-all active:scale-90"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+
+          <div className="flex items-center gap-3">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => { setShowPasswordBox(true); setPasswordSuccess(""); setPasswordError(""); }}
+            >
+              Set Password & User Access
+            </Button>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-200 hover:bg-white/[0.06] rounded-xl transition-all active:scale-90"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Body */}
@@ -190,7 +235,7 @@ export default function EmployeeViewModal({ isOpen, onClose, employee }) {
                 <DetailRow label="Department" value={employee.department} />
                 <DetailRow
                   label="Joining Date"
-                  value={new Date(employee.joiningDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  value={employee.joiningDate ? new Date(employee.joiningDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "—"}
                 />
 
                 <div className="pt-2 border-t border-gray-100 dark:border-[#2a2d33]">
@@ -299,6 +344,57 @@ export default function EmployeeViewModal({ isOpen, onClose, employee }) {
           </div>
         </div>
       </div>
+
+      {/* Set Password Popover Modal */}
+      {showPasswordBox && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowPasswordBox(false)}>
+          <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4 animate-in" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#2a2d33] pb-3">
+              <h3 className="text-sm font-bold text-gray-900 dark:text-white">Set User Password & Grant Access</h3>
+              <button onClick={() => setShowPasswordBox(false)} className="text-gray-400 hover:text-gray-200 text-xs font-bold p-1">✕</button>
+            </div>
+
+            <form onSubmit={handleSavePassword} className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 block mb-1.5">New Password</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter new password (min 6 characters)..."
+                    className="w-full px-3 py-2 text-xs bg-gray-50 dark:bg-[#13151a] border border-gray-200 dark:border-[#2a2d33] rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 pr-10 font-medium"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(prev => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 text-xs font-bold"
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </div>
+
+              {passwordError && (
+                <p className="text-xs text-red-400 font-semibold">{passwordError}</p>
+              )}
+              {passwordSuccess && (
+                <p className="text-xs text-emerald-400 font-semibold">{passwordSuccess}</p>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <Button variant="ghost" size="sm" type="button" onClick={() => setShowPasswordBox(false)}>
+                  Cancel
+                </Button>
+                <Button variant="primary" size="sm" type="submit" loading={savingPassword}>
+                  Save & Grant Access
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes modalSlideIn {

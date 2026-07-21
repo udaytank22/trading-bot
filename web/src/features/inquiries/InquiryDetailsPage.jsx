@@ -436,7 +436,7 @@ export default function InquiryDetailsPage() {
 
   const isRoleAllowed = (status, roleName) => {
     const rNameLower = roleName?.toLowerCase();
-    if (rNameLower === "admin" || rNameLower === "super admin" || rNameLower === "administrator") return true;
+    if (rNameLower === "admin") return true;
     if (rNameLower === "viewer") return false;
 
     switch (status) {
@@ -634,7 +634,7 @@ export default function InquiryDetailsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-200 dark:border-[#2a2d36] pb-2 gap-4">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => navigate('/inquiries')}
+              onClick={() => navigate(-1)}
               className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-gray-50 dark:bg-[#1e2028] dark:hover:bg-[#242830] text-gray-700 dark:text-gray-300 font-bold text-xs uppercase tracking-wider border border-gray-200 dark:border-[#2a2d36] transition-all duration-200 shadow-sm"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -810,7 +810,7 @@ export default function InquiryDetailsPage() {
                     <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Supplier Quotations</h3>
                     {deal.status === 'TL_REVIEW' && (() => {
                       const tlRole = currentUser?.role?.toLowerCase();
-                      const canAct = tlRole === 'team lead' || tlRole === 'admin' || tlRole === 'super admin' || tlRole === 'administrator';
+                      const canAct = tlRole === 'team lead' || tlRole === 'admin';
                       const totalProducts = deal.items?.length || 0;
                       const selectedCount = Object.keys(pendingSelections).length;
                       return canAct && totalProducts > 0 ? (
@@ -829,7 +829,7 @@ export default function InquiryDetailsPage() {
                     {/* Confirm Sourcing button — shown only when in TL_REVIEW and user can act */}
                     {deal.status === 'TL_REVIEW' && (() => {
                       const tlRole = currentUser?.role?.toLowerCase();
-                      const canAct = tlRole === 'team lead' || tlRole === 'admin' || tlRole === 'super admin' || tlRole === 'administrator';
+                      const canAct = tlRole === 'team lead' || tlRole === 'admin';
                       const pendingCount = Object.keys(pendingSelections).length;
                       return canAct && pendingCount > 0 ? (
                         <button
@@ -876,7 +876,7 @@ export default function InquiryDetailsPage() {
                       const isExpanded = !!expandedQuotes[quote.id];
                       const tlRole = currentUser?.role?.toLowerCase();
                       const canSelectQuote = deal.status === "TL_REVIEW" && (
-                        tlRole === "team lead" || tlRole === "admin" || tlRole === "super admin" || tlRole === "administrator"
+                        tlRole === "team lead" || tlRole === "admin"
                       );
                       // Count how many items from this quote are in pending selections
                       const quotePendingCount = (quote.items || []).filter(i =>

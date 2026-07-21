@@ -108,7 +108,7 @@ function getActionBtn(inq, onAction, currentUser) {
 
   const isRoleAllowed = (status, roleName) => {
     const rNameLower = roleName?.toLowerCase();
-    if (rNameLower === "admin" || rNameLower === "super admin" || rNameLower === "administrator") return true;
+    if (rNameLower === "admin") return true;
     if (rNameLower === "viewer") return false;
 
     switch (status) {
