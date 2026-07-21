@@ -170,7 +170,7 @@ const InquiryTable = ({ items, onView, onAction, currentUser, paginationProps })
             : `${inq._count?.items || 0} items`
         }>
           <div className="flex flex-col">
-            <span className="cursor-pointer hover:text-purple-400 transition-colors" onClick={() => onView(inq)}>{inq.inquiry_id}</span>
+            <span className="cursor-pointer text-[#0f6460] dark:text-teal-400 font-mono font-bold hover:underline transition-colors" onClick={() => onView(inq)}>{inq.inquiry_id}</span>
             {inq.products && inq.products.length > 0 ? (
               <span className="text-gray-500 text-[11px] font-normal font-sans">
                 {inq.products[0].product_name}

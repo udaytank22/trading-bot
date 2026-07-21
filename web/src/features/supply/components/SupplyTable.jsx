@@ -21,15 +21,26 @@ import {
 
 // ─── Column definitions ─────────────────────────────────────────────────────────
 const COLUMNS = [
-  { key: "sr_no", label: "#", className: "w-10 text-center" },
-  { key: "order_id", label: "Order ID" },
-  { key: "customer", label: "Customer" },
-  { key: "vessel", label: "Vessel", hidden: "hidden lg:table-cell" },
-  { key: "products", label: "Products" },
-  { key: "date", label: "Date", hidden: "hidden xl:table-cell" },
-  { key: "status", label: "Status" },
-  { key: "actions", label: "Actions", className: "text-right" },
+  { key: "sr_no", label: "#" },
+  { key: "order_id", label: "ORDER ID" },
+  { key: "customer", label: "CUSTOMER" },
+  { key: "vessel", label: "VESSEL" },
+  { key: "products", label: "PRODUCTS" },
+  { key: "date", label: "DATE" },
+  { key: "status", label: "STATUS" },
+  { key: "actions", label: "", className: "text-right" },
 ];
+
+const formatDate = (isoString) => {
+  if (!isoString) return "—";
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return "—";
+    return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  } catch (e) {
+    return "—";
+  }
+};
 
 /**
  * @param {Object}   props
@@ -44,129 +55,95 @@ const SupplyTable = ({ items, onView, onContact, onAllot, onStatusUpdate, pagina
   const renderRow = (item, idx) => (
     <tr
       key={item.id || idx}
-      className={`${ROW_HOVER_CLS} ${rowStripeClass(idx)}`}
+      className={`${ROW_HOVER_CLS} ${rowStripeClass(idx)} border-b border-[#eee8dd] dark:border-[#2a2d33]`}
     >
-      <td className="px-4 md:px-6 py-4 text-center text-gray-500 text-sm font-medium">{idx + 1}</td>
+      <td className="px-5 py-3.5 font-medium text-gray-500 dark:text-gray-400">{idx + 1}</td>
 
-      {/* ── Order ID (monospace) ─────────────────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4 font-mono text-gray-400 text-[12px] break-words">
-        <Tooltip content={item.shipmentNumber || `SH-${item.id}`}>
-          <span className="cursor-default">{item.shipmentNumber || `SH-${item.id}`}</span>
-        </Tooltip>
+      {/* ── Order ID (monospace teal link) ───────────────────────────────── */}
+      <td className="px-5 py-3.5 font-mono text-[#0f6460] dark:text-teal-400 font-medium cursor-pointer hover:underline" onClick={() => onView(item)}>
+        {item.shipmentNumber || `SH-${item.id}`}
       </td>
 
       {/* ── Customer name ───────────────────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4">
-        <Tooltip content={item.customer || item.supplier}>
-          <span className="text-gray-900 dark:text-white font-bold text-sm cursor-default">
-            {item.customer || item.supplier}
-          </span>
-        </Tooltip>
+      <td className="px-5 py-3.5 font-bold text-[#1e293b] dark:text-white">
+        {item.customer || item.supplier}
       </td>
 
       {/* ── Vessel name ───────────────────────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4 hidden lg:table-cell">
-        <Tooltip content={item.vessel || item.destination}>
-          <span className="text-gray-600 dark:text-gray-300 text-sm font-medium cursor-default">
-            {item.vessel || item.destination}
-          </span>
-        </Tooltip>
+      <td className="px-5 py-3.5 text-gray-700 dark:text-gray-300 font-medium">
+        {item.vessel || item.destination}
       </td>
 
       {/* ── First product + "+N more" badge ───────────────────────────── */}
-      <td className="px-3 md:px-6 py-4">
-        <div className="flex flex-col gap-1">
-          <Tooltip content={item.products?.map((p) => p.product_name).join(", ") || item.cargo}>
-            <span className="text-gray-600 dark:text-gray-300 text-sm cursor-default">
-              {item.products?.[0]?.product_name || item.cargo}
-            </span>
-          </Tooltip>
+      <td className="px-5 py-3.5 text-gray-700 dark:text-gray-300 font-medium">
+        <div className="flex items-center gap-1.5">
+          <span>{item.products?.[0]?.product_name || item.cargo}</span>
           {item.products && item.products.length > 1 && (
-            <Tooltip content={item.products.map((p) => p.product_name).join(", ")}>
-              <span className="inline-block w-fit px-2 py-[2px] bg-gray-100 dark:bg-gray-700/60 text-gray-600 dark:text-gray-300 text-[10px] font-bold rounded-lg cursor-default border border-gray-200 dark:border-none">
-                +{item.products.length - 1} more
-              </span>
-            </Tooltip>
+            <span className="px-2 py-[2px] bg-[#f4efe6] dark:bg-gray-700/60 text-gray-650 dark:text-gray-300 text-[10px] font-bold rounded-lg border border-[#e6e0d2] dark:border-none">
+              +{item.products.length - 1}
+            </span>
           )}
         </div>
       </td>
 
-      {/* ── Date (hidden on small screens) ────────────────────────────── */}
-      <td className="px-3 md:px-6 py-4 hidden xl:table-cell">
-        <Tooltip content={new Date(item.date).toLocaleString("en-GB")}>
-          <DateCell isoString={item.date} />
-        </Tooltip>
+      {/* ── Date formatted as e.g. "18 Jul" ───────────────────────────── */}
+      <td className="px-5 py-3.5 text-gray-700 dark:text-gray-300 font-medium">
+        {formatDate(item.date)}
       </td>
 
       {/* ── Status badge ────────────────────────────────────────────── */}
-      <td className="px-4 md:px-6 py-4">
+      <td className="px-5 py-3.5">
         <StatusBadge status={item.status} />
       </td>
 
-      {/* ── Actions: Dynamic based on Status ───────────────────────── */}
-      <td className="px-4 md:px-6 py-4 text-right">
-        <div className="flex flex-col md:flex-row justify-end gap-2">
-
-
-          {!item.isGrouped && item.status === "LOADING" && onStatusUpdate && (
-            <Button
-              variant="secondary"
-              size="sm"
-              className="border-orange-500/40 text-orange-400 hover:bg-orange-500/10"
-              onClick={() => {
-                if (confirm("Mark this cargo as loaded and advance to IN_TRANSIT?")) {
-                  onStatusUpdate(item.id, "IN_TRANSIT");
-                }
-              }}
-            >
-              Mark Loaded
-            </Button>
-          )}
-
-          {!item.isGrouped && item.status === "LOADING" && onAllot && (
-            <Button
-              variant="secondary"
-              size="sm"
-              className="border-purple-500/40 text-purple-400 hover:bg-purple-500/10"
-              onClick={() => onAllot(item)}
-            >
-              Allot Vehicle
-            </Button>
-          )}
-
-          {!item.isGrouped && (item.status === "IN_TRANSIT" || item.status === "DISPATCHED") && onStatusUpdate && (
-            <Button
-              variant="secondary"
-              size="sm"
-              className="border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
-              onClick={() => onStatusUpdate(item.id, "DELIVERED")}
-            >
-              Mark Delivered
-            </Button>
-          )}
-
-
-
-          <Button
-            variant="secondary"
-            size="sm"
-            className="border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
-            onClick={() => onView(item)}
+      {/* ── Actions: Dynamic text links ─────────────────────────────── */}
+      <td className="px-5 py-3.5 text-right space-x-3">
+        {!item.isGrouped && item.status === "LOADING" && onStatusUpdate && (
+          <span
+            onClick={() => {
+              if (confirm("Mark this cargo as loaded and advance to IN_TRANSIT?")) {
+                onStatusUpdate(item.id, "IN_TRANSIT");
+              }
+            }}
+            className="text-orange-650 dark:text-orange-400 hover:underline font-bold text-sm cursor-pointer"
           >
-            View
-          </Button>
+            Mark Loaded
+          </span>
+        )}
 
-          {!item.isGrouped && item.status === "SHIPPED" && onStatusUpdate && (
-            <Button
-              variant="secondary"
-              size="sm"
-              className="border-green-500/40 text-green-400 hover:bg-green-500/10"
-              onClick={() => onStatusUpdate(item.id, "SUPPLY")}
-            >
-              Move to Supply
-            </Button>
-          )}
-        </div>
+        {!item.isGrouped && item.status === "LOADING" && onAllot && (
+          <span
+            onClick={() => onAllot(item)}
+            className="text-purple-600 dark:text-purple-400 hover:underline font-bold text-sm cursor-pointer"
+          >
+            Allot Vehicle
+          </span>
+        )}
+
+        {!item.isGrouped && (item.status === "IN_TRANSIT" || item.status === "DISPATCHED") && onStatusUpdate && (
+          <span
+            onClick={() => onStatusUpdate(item.id, "DELIVERED")}
+            className="text-blue-600 dark:text-blue-400 hover:underline font-bold text-sm cursor-pointer"
+          >
+            Mark Delivered
+          </span>
+        )}
+
+        <span
+          onClick={() => onView(item)}
+          className="text-[#0f6460] dark:text-teal-400 hover:underline font-bold text-sm cursor-pointer"
+        >
+          View
+        </span>
+
+        {!item.isGrouped && item.status === "SHIPPED" && onStatusUpdate && (
+          <span
+            onClick={() => onStatusUpdate(item.id, "SUPPLY")}
+            className="text-emerald-600 dark:text-emerald-400 hover:underline font-bold text-sm cursor-pointer"
+          >
+            Move to Supply
+          </span>
+        )}
       </td>
     </tr>
   );

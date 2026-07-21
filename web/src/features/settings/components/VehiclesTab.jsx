@@ -1,13 +1,14 @@
 import { TOAST_MESSAGES } from '../../../constants/toastMessages';
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Select, DataTable, rowStripeClass, ROW_HOVER_CLS, Pagination, ExcelImportModal } from '@components/ui';
 import { confirmAction } from '@utils/swal';
 import { api } from '@services/api';
-import { RightDrawer, ViewDetails, Field, inputCls, EyeIcon, EditIcon, TrashIcon } from './shared';
+import { RightDrawer, ViewDetails, Field, inputCls, EyeIcon, EditIcon, TrashIcon, HeaderButton } from './shared';
 import * as XLSX from 'xlsx';
 import { useToast } from '@hooks/useToast';
 import { useAuth } from '@context';
-import { useTablePageSize } from '@hooks/useTablePageSize';
+import { usePaginatedFetch } from '@hooks/usePaginatedFetch';
+import Button from '@components/ui/button';
 
 export default function VehiclesTab() {
   const { hasPermission } = useAuth();
@@ -42,8 +43,10 @@ export default function VehiclesTab() {
 
     if (isConfirmed) {
       try {
-        await api.vehicles.deleteVehicle(id);
-        setVehicles(prev => prev.filter(v => v.id !== id));
+        const res = await api.vehicles.deleteVehicle(id);
+        if (res.success) {
+          refresh();
+        }
       } catch (e) {
         console.error('Failed to delete vehicle:', e);
       }
@@ -63,16 +66,11 @@ export default function VehiclesTab() {
       };
 
       if (editItem) {
-        await api.vehicles.updateVehicle(editItem.id, data);
-        setVehicles(prev => prev.map(v => v.id === editItem.id ? { ...v, ...data } : v));
+        const res = await api.vehicles.updateVehicle(editItem.id, data);
+        if (res.success) refresh();
       } else {
         const res = await api.vehicles.createVehicle(data);
-        if (res.success && res.data) {
-          setVehicles(prev => [...prev, res.data]);
-        } else {
-          // fallback if response format is different
-          setVehicles(prev => [...prev, { ...data, id: Date.now().toString() }]);
-        }
+        if (res.success) refresh();
       }
       setIsFormOpen(false);
       setEditItem(null);
@@ -82,8 +80,9 @@ export default function VehiclesTab() {
   };
 
   const handleDownloadSample = () => {
-    const dataToExport = vehicles.length > 0
-      ? vehicles.map(v => ({
+    const list = vehiclesData || [];
+    const dataToExport = list.length > 0
+      ? list.map(v => ({
         ID: v.id,
         'Vehicle Number': v.vehicle_no || '',
         Type: v.type || '',
@@ -152,7 +151,7 @@ export default function VehiclesTab() {
   };
 
   return (
-    <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-sm animate-fade-in flex-1 flex flex-col">
+    <div className="bg-white dark:bg-[#1a1d23] shadow-sm animate-fade-in flex-1 flex flex-col">
       <RightDrawer isOpen={!!viewItem} title="Vehicle Details" onClose={() => setViewItem(null)}>
         <ViewDetails item={viewItem} onClose={() => setViewItem(null)} />
       </RightDrawer>
@@ -175,50 +174,35 @@ export default function VehiclesTab() {
         />
       </RightDrawer>
 
-      <div className="p-2 border-b border-gray-200 dark:border-[#2a2d33] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="pb-4 border-b border-[#eee8dd] dark:border-[#2a2d33] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
         <div className="w-full sm:w-auto">
           <input
             type="text"
-            placeholder="Search products..."
+            placeholder="Search vehicles..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full sm:w-64 bg-gray-50 dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-9 px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors"
+            className="w-full sm:w-64 bg-[#faf8f5] dark:bg-[#1a1d23] border border-[#e6e0d2] dark:border-[#2a2d33] rounded-xl h-10 px-3.5 text-sm text-[#1e293b] dark:text-white placeholder:text-[#94a3b8] focus:outline-none focus:border-[#0d6e6e] transition-colors shadow-sm"
           />
         </div>
 
         <div className="flex flex-wrap items-center gap-3 justify-start sm:justify-end">
-          <button
-            onClick={handleDownloadSample}
-            className="h-9 px-4 bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Sample
-          </button>
+          <HeaderButton onClick={handleDownloadSample}>
+            Download sample
+          </HeaderButton>
 
           {canCreate && (
             <>
-              <button
-                onClick={() => setIsImportModalOpen(true)}
-                className="h-9 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
+              <HeaderButton onClick={() => setIsImportModalOpen(true)}>
                 Import
-              </button>
+              </HeaderButton>
 
-              <button
+              <Button
+                variant="primary"
                 onClick={() => setIsFormOpen(true)}
-                className="h-9 px-4 bg-purple-600 hover:bg-purple-500 text-white text-[13px] font-bold rounded-lg shadow-sm whitespace-nowrap transition-colors flex items-center gap-2"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Add Vehicle
-              </button>
+                + Add Vehicle
+              </Button>
             </>
           )}
         </div>
@@ -248,20 +232,20 @@ export default function VehiclesTab() {
         isLoading={isLoading}
         emptyMessage="No vehicles found."
         renderRow={(vehicle, i) => (
-          <tr key={vehicle.id} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
-            <td className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">{(meta.currentPage - 1) * meta.pageSize + i + 1}</td>
-            <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">{vehicle.vehicle_no}</td>
-            <td className="px-5 py-3 text-gray-700 dark:text-gray-300">{vehicle.type || '-'}</td>
-            <td className="px-5 py-3 text-gray-700 dark:text-gray-300">{vehicle.capacity || '-'}</td>
-            <td className="px-5 py-3">{vehicle.driver_name} {vehicle.phone ? `(${vehicle.phone})` : ''}</td>
-            <td className="px-5 py-3">
+          <tr key={vehicle.id} className={`${rowStripeClass(i, vehicle)} ${ROW_HOVER_CLS}`}>
+            <td className="px-5 py-3.5 font-medium text-gray-500 dark:text-gray-400">{(meta.currentPage - 1) * meta.pageSize + i + 1}</td>
+            <td className="px-5 py-3.5 font-bold text-[#1e293b] dark:text-white">{vehicle.vehicle_no}</td>
+            <td className="px-5 py-3.5 text-gray-700 dark:text-gray-300 font-medium">{vehicle.type || '-'}</td>
+            <td className="px-5 py-3.5 text-gray-700 dark:text-gray-300 font-medium">{vehicle.capacity || '-'}</td>
+            <td className="px-5 py-3.5 font-medium">{vehicle.driver_name} {vehicle.phone ? `(${vehicle.phone})` : ''}</td>
+            <td className="px-5 py-3.5">
               {vehicle.documents && vehicle.documents.length > 0 ? (
                 <span className="px-2 py-1 bg-purple-100 text-purple-600 rounded text-xs font-bold whitespace-nowrap">{vehicle.documents.length} Uploaded</span>
               ) : (
-                <span className="text-gray-400 text-xs">-</span>
+                <span className="text-gray-400 text-xs font-medium">-</span>
               )}
             </td>
-            <td className="px-5 py-3">
+            <td className="px-5 py-3.5">
               <span className={`px-2 py-1 rounded text-[11px] font-bold ${vehicle.status === 'Active'
                 ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'
                 : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
@@ -269,7 +253,7 @@ export default function VehiclesTab() {
                 {vehicle.status || 'Active'}
               </span>
             </td>
-            <td className="px-5 py-3 text-right space-x-3">
+            <td className="px-5 py-3.5 text-right space-x-3">
               <button onClick={() => setViewItem(vehicle)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" title="View"><EyeIcon /></button>
               {canUpdate && <button onClick={() => { setEditItem(vehicle); setIsFormOpen(true); }} className="text-blue-500 hover:text-blue-600 transition-colors" title="Edit"><EditIcon /></button>}
               {canDelete && <button onClick={() => handleDelete(vehicle.id)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete"><TrashIcon /></button>}
@@ -300,136 +284,220 @@ function VehicleForm({ initialData, onSave, onClose }) {
     } : { vehicle_no: '', type: '', capacity: '', driver_name: '', phone: '', documents: [], status: 'Active' }
   );
 
-  const [docName, setDocName] = useState('');
-  const [docFile, setDocFile] = useState(null);
+  const [activeStep, setActiveStep] = useState(0);
 
-  const handleAddDocument = () => {
-    if (docName && docFile) {
-      setFormData(prev => ({
-        ...prev,
-        documents: [...(prev.documents || []), { name: docName, file: docFile }]
-      }));
-      setDocName('');
-      setDocFile(null);
-      const fileInput = document.getElementById('vehicle-doc-upload');
-      if (fileInput) fileInput.value = '';
-    }
+  const steps = [
+    { label: 'Basic Info' },
+    { label: 'Driver Details' },
+    { label: 'Documents' },
+  ];
+
+  const handleNext = () => {
+    if (activeStep < steps.length - 1) setActiveStep(s => s + 1);
   };
 
-  const handleRemoveDocument = (index) => {
+  const handleBack = () => {
+    if (activeStep > 0) setActiveStep(s => s - 1);
+  };
+
+  const fileInputRef = useRef(null);
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({
+          ...prev,
+          documents: [...(prev.documents || []), { name: file.name, file: reader.result }]
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleRemoveDoc = (index) => {
     setFormData(prev => ({
       ...prev,
-      documents: prev.documents.filter((_, i) => i !== index)
+      documents: prev.documents.filter((_, idx) => idx !== index)
     }));
   };
 
-  const set = (key) => (e) => setFormData(prev => ({ ...prev, [key]: e.target.value }));
-
   return (
-    <div className="flex flex-col gap-5 h-full">
-      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4 content-start">
-        <Field label="Vehicle Registration Number">
-          <input type="text" className={inputCls} value={formData.vehicle_no} onChange={set('vehicle_no')} placeholder="e.g. MH-12-AB-1234" required />
-        </Field>
-
-        <Field label="Vehicle Type">
-          <input type="text" className={inputCls} value={formData.type} onChange={set('type')} placeholder="e.g. Truck, Van" />
-        </Field>
-
-        <Field label="Capacity">
-          <input type="text" className={inputCls} value={formData.capacity} onChange={set('capacity')} placeholder="e.g. 10 Tons" />
-        </Field>
-
-        <Field label="Driver Name">
-          <input type="text" className={inputCls} value={formData.driver_name} onChange={set('driver_name')} placeholder="e.g. Rajesh Kumar" />
-        </Field>
-
-        <Field label="Driver Phone">
-          <input type="text" className={inputCls} value={formData.phone} onChange={set('phone')} placeholder="e.g. 9876543210" />
-        </Field>
-
-        <Field label="Status">
-          <Select
-            variant="settings"
-            className={inputCls}
-            value={formData.status}
-            onChange={(val) => setFormData(prev => ({ ...prev, status: val }))}
-            options={[
-              { value: "Active", label: "Active" },
-              { value: "Inactive", label: "Inactive" }
-            ]}
-          />
-        </Field>
+    <form onSubmit={(e) => { e.preventDefault(); onSave(formData); }} className="space-y-6">
+      {/* Stepper */}
+      <div className="flex justify-between items-center mb-8 border-b border-gray-100 dark:border-gray-800 pb-4">
+        {steps.map((step, idx) => (
+          <div key={idx} className="flex items-center gap-2">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${activeStep === idx
+              ? 'bg-purple-600 text-white'
+              : activeStep > idx
+                ? 'bg-emerald-500 text-white'
+                : 'bg-gray-150 text-gray-500 dark:bg-gray-800'
+              }`}>
+              {idx + 1}
+            </div>
+            <span className={`text-[12px] font-bold ${activeStep === idx ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>
+              {step.label}
+            </span>
+            {idx < steps.length - 1 && <span className="text-gray-300 dark:text-gray-700 mx-2">&rarr;</span>}
+          </div>
+        ))}
       </div>
 
-      <div className="border-t border-gray-200 dark:border-[#2a2d33] pt-4 mt-2">
-        <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Documents</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-          <div className="sm:col-span-5">
-            <Field label="Document Name" labelClassName="text-[11px] font-bold text-gray-500 uppercase block mb-1">
-              <input type="text" className={inputCls} value={docName} onChange={e => setDocName(e.target.value)} placeholder="e.g. RC Book" />
-            </Field>
-          </div>
-          <div className="sm:col-span-5">
-            <Field label="File" labelClassName="text-[11px] font-bold text-gray-500 uppercase block mb-1">
-              <input
-                id="vehicle-doc-upload"
-                type="file"
-                className="w-full text-xs text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                      setDocFile(reader.result);
-                    };
-                    reader.readAsDataURL(file);
-                  }
-                }}
-                accept=".pdf,.jpg,.jpeg,.png"
-              />
-            </Field>
-          </div>
-          <div className="sm:col-span-2 pb-1">
+      {activeStep === 0 && (
+        <div className="space-y-4">
+          <Field label="Vehicle Number">
+            <input
+              type="text"
+              required
+              placeholder="e.g. MH-12-AB-1234"
+              value={formData.vehicle_no}
+              onChange={(e) => setFormData(p => ({ ...p, vehicle_no: e.target.value.toUpperCase() }))}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Vehicle Type">
+            <select
+              value={formData.type}
+              onChange={(e) => setFormData(p => ({ ...p, type: e.target.value }))}
+              className={inputCls}
+            >
+              <option value="">Select Type</option>
+              <option value="Truck">Truck</option>
+              <option value="Container">Container</option>
+              <option value="Dumper">Dumper</option>
+              <option value="Trailer">Trailer</option>
+              <option value="Other">Other</option>
+            </select>
+          </Field>
+          <Field label="Capacity (Tons/Kgs)">
+            <input
+              type="text"
+              placeholder="e.g. 10 Tons"
+              value={formData.capacity}
+              onChange={(e) => setFormData(p => ({ ...p, capacity: e.target.value }))}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Status">
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData(p => ({ ...p, status: e.target.value }))}
+              className={inputCls}
+            >
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </Field>
+        </div>
+      )}
+
+      {activeStep === 1 && (
+        <div className="space-y-4">
+          <Field label="Driver Name">
+            <input
+              type="text"
+              placeholder="Driver's Full Name"
+              value={formData.driver_name}
+              onChange={(e) => setFormData(p => ({ ...p, driver_name: e.target.value }))}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Driver Phone Number">
+            <input
+              type="text"
+              placeholder="Driver's Contact Number"
+              value={formData.phone}
+              onChange={(e) => setFormData(p => ({ ...p, phone: e.target.value }))}
+              className={inputCls}
+            />
+          </Field>
+        </div>
+      )}
+
+      {activeStep === 2 && (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm text-gray-600 dark:text-gray-300 font-medium mb-1.5">Vehicle Documents</label>
+            <input
+              type="file"
+              multiple
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+            />
             <button
               type="button"
-              onClick={handleAddDocument}
-              disabled={!docName || !docFile}
-              className="w-full h-9 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 text-gray-700 text-xs font-bold rounded-lg transition-colors"
+              onClick={() => fileInputRef.current.click()}
+              className="w-full h-24 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-xl flex flex-col items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors"
             >
-              Add
+              <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              <span className="text-xs text-gray-500 font-medium">Click to upload vehicle license, insurance, RC etc.</span>
             </button>
           </div>
-        </div>
 
-        {formData.documents && formData.documents.length > 0 && (
-          <div className="mt-4 space-y-2 max-h-32 overflow-y-auto custom-scrollbar pr-1">
-            {formData.documents.map((doc, idx) => (
-              <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-[#151821] border border-gray-200 dark:border-[#2a2d33] rounded-lg">
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-xs font-bold text-gray-700 dark:text-gray-300">{doc.name}</span>
-                </div>
-                <button type="button" onClick={() => handleRemoveDocument(idx)} className="text-red-500 hover:text-red-600 transition-colors">
-                  <TrashIcon className="w-4 h-4" />
-                </button>
+          {formData.documents && formData.documents.length > 0 && (
+            <div className="space-y-2 mt-4">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Uploaded Documents ({formData.documents.length})</span>
+              <div className="grid grid-cols-1 gap-2">
+                {formData.documents.map((doc, idx) => (
+                  <div key={idx} className="flex justify-between items-center p-2.5 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-150/50 dark:border-gray-800">
+                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 truncate max-w-[80%]">{doc.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveDoc(idx)}
+                      className="text-red-500 hover:text-red-600 text-xs font-bold"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Form Actions */}
+      <div className="flex justify-between items-center pt-6 border-t border-gray-150/50 dark:border-gray-850">
+        <button
+          type="button"
+          onClick={handleBack}
+          disabled={activeStep === 0}
+          className="px-4 py-2 text-sm font-bold text-gray-600 hover:text-gray-900 dark:hover:text-white disabled:opacity-50"
+        >
+          Back
+        </button>
+
+        {activeStep < steps.length - 1 ? (
+          <button
+            type="button"
+            onClick={handleNext}
+            className="px-5 py-2.5 bg-[#0d6e6e] hover:bg-[#0b5c5c] text-white text-xs font-bold rounded-xl shadow-sm"
+          >
+            Next
+          </button>
+        ) : (
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2.5 bg-[#0d6e6e] hover:bg-[#0b5c5c] text-white text-xs font-bold rounded-xl shadow-sm"
+            >
+              Save Vehicle
+            </button>
           </div>
         )}
       </div>
-
-      <div className="mt-8 flex justify-end gap-3">
-        <button onClick={onClose} className="px-4 py-2 text-[13px] font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors">
-          Cancel
-        </button>
-
-        <button onClick={() => onSave(formData)} className="px-5 py-2 text-[13px] font-bold text-white bg-purple-600 hover:bg-purple-500 rounded-lg shadow-sm transition-colors">
-          Save Details
-        </button>
-      </div>
-    </div>
+    </form>
   );
 }

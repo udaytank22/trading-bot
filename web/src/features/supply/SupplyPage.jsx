@@ -204,9 +204,19 @@ export default function SupplyPage() {
     }
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ─── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col w-full h-full pb-4">
+      {/* Page Header */}
+      <div className="mb-5">
+        <h1 className="text-3xl font-serif font-medium text-[#1e293b] dark:text-white tracking-tight">
+          Supply
+        </h1>
+        <p className="text-sm font-sans font-medium text-[#64748b] dark:text-gray-400 mt-1">
+          Track every cargo shipment from supplier dispatch to vessel delivery.
+        </p>
+      </div>
+
       {/*
        * CENTRALIZED TOOLBAR
        * "Add Supply" triggers isAddModalOpen — modal not yet implemented.
@@ -224,7 +234,7 @@ export default function SupplyPage() {
       />
 
       {/* ── Table card ─────────────────────────────────────────────────────── */}
-      <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg transition-colors duration-300">
+      <div className="flex-1 w-full bg-[#faf8f5] dark:bg-[#1a1d23] border border-[#e6e0d2] dark:border-[#2a2d33] rounded-2xl overflow-hidden flex flex-col shadow-sm transition-colors duration-300">
 
         {/*
          * SupplyTable — getStatusStyle prop removed.

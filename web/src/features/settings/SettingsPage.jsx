@@ -20,7 +20,7 @@ export default function SettingsPage() {
     { id: 'vehicles', label: 'Vehicles', module: 'vehicles' },
     { id: 'documents', label: 'Documents', module: 'documents' },
     { id: 'accounts', label: 'Accounts', module: 'bankAccounts' },
-    { id: 'permissions', label: 'Role Permissions', module: 'settings' },
+    { id: 'permissions', label: 'Role permissions', module: 'settings' },
   ];
 
   const tabs = allTabs.filter(t => hasPermission(t.module, 'read'));
@@ -29,31 +29,36 @@ export default function SettingsPage() {
   });
 
   return (
-    <div className="flex flex-col w-full min-h-full pb-4">
+    <div className="flex flex-col w-full min-h-full pb-2">
+      {/* Header Title & Subtitle */}
+      <div className="mb-5">
+        <h1 className="text-3xl font-serif font-medium text-[#1e293b] dark:text-white tracking-tight">
+          Settings
+        </h1>
+        <p className="text-sm font-sans font-medium text-[#64748b] dark:text-gray-400 mt-1">
+          Manage the records and access that power every other page.
+        </p>
+      </div>
+
       <div className="w-full flex-1 flex flex-col">
 
-        {/* Tab Bar */}
-        <div className="bg-white dark:bg-[#1a1d23] rounded-xl shadow-sm p-1.5 border border-gray-100 dark:border-[#2a2d33] mb-4">
-          <div className="flex flex-wrap items-center gap-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 sm:flex-none px-3 py-1.5 text-[13px] font-semibold rounded-lg whitespace-nowrap transition-all duration-200 border
-                  ${activeTab === tab.id
-                    ? 'bg-[#edf5ff] text-[#0070f3] border-[#bfdbfe] dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20 shadow-sm'
-                    : 'bg-transparent text-gray-600 dark:text-gray-400 border-transparent hover:bg-gray-50 dark:hover:bg-white/[0.03] hover:text-gray-900 dark:hover:text-white'
-                  }
-                `}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+        {/* Tab Bar - Underline style matching reference design */}
+        <div className="border-b border-[#e6e0d2] dark:border-[#2a2d33] flex items-center gap-6 mb-4 text-sm overflow-x-auto [::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`whitespace-nowrap transition-colors duration-200 pb-2.5 ${activeTab === tab.id
+                ? 'text-[#0d6e6e] dark:text-teal-400 font-bold border-b-2 border-[#0d6e6e] dark:border-teal-400 -mb-px'
+                : 'text-[#64748b] dark:text-gray-400 hover:text-[#1e293b] dark:hover:text-white font-semibold'
+                }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {/* Tab Content */}
-        {/* {activeTab === 'general' && <GeneralSettingsTab />} */}
         {activeTab === 'products' && <ProductsTab />}
         {activeTab === 'clients' && <ClientsTab />}
         {activeTab === 'vendors' && <VendorsTab />}

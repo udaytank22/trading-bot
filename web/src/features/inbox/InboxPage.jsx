@@ -125,9 +125,9 @@ const InboxPage = () => {
   if (!isAuthenticated) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 space-y-4">
-        <Mail className="w-16 h-16 text-gray-400" />
-        <h2 className="text-2xl font-semibold text-gray-800">Connect Your Inbox</h2>
-        <p className="text-gray-600 text-center max-w-md">
+        <Mail className="w-16 h-16 text-gray-400 dark:text-gray-500" />
+        <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">Connect Your Inbox</h2>
+        <p className="text-gray-600 dark:text-gray-400 text-center max-w-md">
           Authenticate with Gmail to view and manage your emails directly within the Trading Bot platform.
         </p>
         <button
@@ -141,15 +141,15 @@ const InboxPage = () => {
   }
 
   return (
-    <div className="h-[calc(100vh-5rem)] flex flex-col bg-white rounded-lg shadow overflow-hidden">
-      <div className="flex border-b border-gray-200 p-4 items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-          <Mail className="w-6 h-6 text-blue-600" />
+    <div className="h-[calc(100vh-5rem)] flex flex-col bg-white dark:bg-[#1a1d23] rounded-lg shadow border border-gray-200 dark:border-[#2a2d33] overflow-hidden">
+      <div className="flex border-b border-gray-200 dark:border-[#2a2d33] p-4 items-center justify-between">
+        <h1 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+          <Mail className="w-6 h-6 text-blue-600 dark:text-blue-400" />
           Inbox
         </h1>
         <button
           onClick={handleRefresh}
-          className="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-700 transition-colors"
+          className="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-200 transition-colors"
         >
           Refresh
         </button>
@@ -157,9 +157,9 @@ const InboxPage = () => {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Email List Sidebar */}
-        <div className="w-1/3 border-r border-gray-200 flex flex-col bg-gray-50">
+        <div className="w-1/3 border-r border-gray-200 dark:border-[#2a2d33] flex flex-col bg-gray-50 dark:bg-[#14161d]">
           {/* Folder Tabs */}
-          <div className="flex border-b border-gray-200 bg-white p-2">
+          <div className="flex border-b border-gray-200 dark:border-[#2a2d33] bg-white dark:bg-[#1a1d23] p-2">
             <button
               onClick={() => {
                 setFolder('inbox');
@@ -167,8 +167,8 @@ const InboxPage = () => {
               }}
               className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-colors ${
                 folder === 'inbox'
-                  ? 'bg-blue-50 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400'
+                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50'
               }`}
             >
               Inbox
@@ -180,8 +180,8 @@ const InboxPage = () => {
               }}
               className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-colors ${
                 folder === 'sent'
-                  ? 'bg-blue-50 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400'
+                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50'
               }`}
             >
               Sent Mail
@@ -189,17 +189,17 @@ const InboxPage = () => {
           </div>
 
           {/* Search Box */}
-          <div className="p-3 bg-white border-b border-gray-200">
+          <div className="p-3 bg-white dark:bg-[#1a1d23] border-b border-gray-200 dark:border-[#2a2d33]">
             <div className="relative">
               <input
                 type="text"
                 placeholder="Search emails..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-8 py-1.5 text-sm bg-gray-50 hover:bg-gray-100 focus:bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                className="w-full pl-8 pr-8 py-1.5 text-sm bg-gray-50 hover:bg-gray-100 focus:bg-white dark:bg-[#0c0e12] dark:hover:bg-gray-800/80 dark:focus:bg-[#0c0e12] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               />
               <svg
-                className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400"
+                className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400 dark:text-gray-500"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -214,7 +214,7 @@ const InboxPage = () => {
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-2 h-5 w-5 text-gray-400 hover:text-gray-600 rounded-full flex items-center justify-center focus:outline-none"
+                  className="absolute right-2.5 top-2 h-5 w-5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-full flex items-center justify-center focus:outline-none"
                 >
                   &times;
                 </button>
@@ -225,15 +225,15 @@ const InboxPage = () => {
           <div className="flex-1 overflow-y-auto" onScroll={handleScroll}>
             {loading && page === 1 && !emails.length ? (
               <div className="flex justify-center p-8">
-                <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                <Loader2 className="w-6 h-6 animate-spin text-blue-600 dark:text-blue-400" />
               </div>
             ) : error ? (
-              <div className="p-4 m-4 bg-red-50 text-red-700 rounded-md flex items-center gap-2">
+              <div className="p-4 m-4 bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-md flex items-center gap-2">
                 <AlertCircle className="w-5 h-5" />
                 {error}
               </div>
             ) : emails.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
+              <div className="p-8 text-center text-gray-500 dark:text-gray-400">
                 No matching emails found.
               </div>
             ) : (
@@ -245,12 +245,12 @@ const InboxPage = () => {
                   folder={folder}
                 />
                 {loading && page > 1 && (
-                  <div className="flex justify-center p-4 bg-white border-t border-gray-100">
-                    <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                  <div className="flex justify-center p-4 bg-white dark:bg-[#1a1d23] border-t border-gray-100 dark:border-[#2a2d33]">
+                    <Loader2 className="w-5 h-5 animate-spin text-blue-600 dark:text-blue-400" />
                   </div>
                 )}
                 {!loading && emails.length >= totalCount && totalCount > 0 && (
-                  <div className="p-4 text-center text-xs text-gray-400 bg-white border-t border-gray-100">
+                  <div className="p-4 text-center text-xs text-gray-400 dark:text-gray-500 bg-white dark:bg-[#1a1d23] border-t border-gray-100 dark:border-[#2a2d33]">
                     All emails loaded ({totalCount} total)
                   </div>
                 )}
@@ -260,19 +260,19 @@ const InboxPage = () => {
 
           {/* Email Count Summary footer */}
           {totalCount > 0 && (
-            <div className="p-3 border-t border-gray-200 bg-white flex items-center justify-between text-xs text-gray-500 font-medium">
+            <div className="p-3 border-t border-gray-200 dark:border-[#2a2d33] bg-white dark:bg-[#1a1d23] flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 font-medium">
               <span>Showing {emails.length} of {totalCount} emails</span>
-              {loading && page > 1 && <span className="text-blue-600 animate-pulse">Loading more...</span>}
+              {loading && page > 1 && <span className="text-blue-600 dark:text-blue-400 animate-pulse">Loading more...</span>}
             </div>
           )}
         </div>
 
         {/* Email Detail View */}
-        <div className="w-2/3 overflow-y-auto bg-white p-6">
+        <div className="w-2/3 overflow-y-auto bg-white dark:bg-[#1a1d23] p-6">
           {selectedEmail ? (
             <EmailDetail email={selectedEmail} />
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400">
+            <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-gray-500">
               <Mail className="w-12 h-12 mb-2 opacity-50" />
               <p>Select an email to view</p>
             </div>

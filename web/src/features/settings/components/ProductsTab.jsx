@@ -1,12 +1,12 @@
 import { TOAST_MESSAGES } from '../../../constants/toastMessages';
 import React, { useState, useMemo } from 'react';
-import { DataTable, rowStripeClass, ROW_HOVER_CLS, Pagination, ExcelImportModal } from '@components/ui';
+import { DataTable, rowStripeClass, ROW_HOVER_CLS, ExcelImportModal } from '@components/ui';
 import { confirmAction } from '@utils/swal';
 import { useAuth } from '@context';
 import { useTablePageSize } from '@hooks/useTablePageSize';
 import { useProducts } from '@hooks/queries';
 import { api } from '@services/api';
-import { RightDrawer, ViewDetails, Field, inputCls, EyeIcon, EditIcon, TrashIcon, CenterModal, HeaderButton } from './shared';
+import { RightDrawer, ViewDetails, Field, inputCls, EyeIcon, EditIcon, TrashIcon, HeaderButton } from './shared';
 import * as XLSX from 'xlsx';
 import { useToast } from '@hooks/useToast';
 import Button from '@components/ui/button';
@@ -165,7 +165,7 @@ export default function ProductsTab() {
   };
 
   return (
-    <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-sm animate-fade-in flex-1 flex flex-col">
+    <div className="bg-white dark:bg-[#1a1d23] shadow-sm animate-fade-in flex-1 flex flex-col">
       <RightDrawer isOpen={!!viewItem} title="Product Details" onClose={() => setViewItem(null)}>
         <ViewDetails item={viewItem} onClose={() => setViewItem(null)} />
       </RightDrawer>
@@ -174,7 +174,7 @@ export default function ProductsTab() {
         <ProductForm initialData={editItem} onSave={handleSave} onClose={() => { setIsFormOpen(false); setEditItem(null); }} />
       </RightDrawer>
 
-      <div className="p-2 border-b border-gray-200 dark:border-[#2a2d33] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="pb-4 border-b border-[#eee8dd] dark:border-[#2a2d33] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
         {/* Left Side - Search */}
         <div className="w-full sm:w-auto">
@@ -186,35 +186,27 @@ export default function ProductsTab() {
               setSearch(e.target.value);
               setCurrentPage(1);
             }}
-            className="w-full sm:w-64 bg-gray-50 dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-9 px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors"
+            className="w-full sm:w-64 bg-[#faf8f5] dark:bg-[#1a1d23] border border-[#e6e0d2] dark:border-[#2a2d33] rounded-xl h-10 px-3.5 text-sm text-[#1e293b] dark:text-white placeholder:text-[#94a3b8] focus:outline-none focus:border-[#0d6e6e] transition-colors shadow-sm"
           />
         </div>
 
         {/* Right Side - Buttons */}
         <div className="flex flex-wrap items-center gap-3 justify-start sm:justify-end">
-          <HeaderButton
-            onClick={handleDownloadSample}
-            color="gray"
-            icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>}
-          >
-            Sample
+          <HeaderButton onClick={handleDownloadSample}>
+            Download sample
           </HeaderButton>
 
           {canCreate && (
             <>
-              <HeaderButton
-                onClick={() => setIsImportModalOpen(true)}
-                color="emerald"
-                icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>}
-              >
+              <HeaderButton onClick={() => setIsImportModalOpen(true)}>
                 Import
               </HeaderButton>
 
               <Button
+                variant="primary"
                 onClick={() => setIsFormOpen(true)}
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                Add Product
+                + Add product
               </Button>
             </>
           )}
@@ -233,34 +225,40 @@ export default function ProductsTab() {
         maxHeight="max-h-none"
         columns={[
           { key: "srno", label: "#" },
-          { key: "id", label: "Product ID" },
-          { key: "name", label: "Name" },
-          { key: "category", label: "Category" },
+          { key: "name", label: "NAME" },
+          { key: "category", label: "CATEGORY" },
           { key: "impa", label: "IMPA" },
-          { key: "sellingPrice", label: "Selling Price" },
-          { key: "purchasePrice", label: "Purchase Price" },
-          { key: "actions", label: "Actions", className: "text-right" },
+          { key: "sellingPrice", label: "SELLING PRICE" },
+          { key: "purchasePrice", label: "PURCHASE PRICE" },
+          { key: "actions", label: "ACTIONS", className: "text-right" },
         ]}
         data={currentItems}
         isLoading={isLoading}
         emptyMessage="No products found."
         renderRow={(prod, i) => (
-          <tr key={prod.id} className={`${rowStripeClass(i)} ${ROW_HOVER_CLS}`}>
-            <td className="px-5 py-3 font-medium text-gray-500 dark:text-gray-400">{(currentPage - 1) * itemsPerPage + i + 1}</td>
-            <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{String(prod.id).slice(-8)}</td>
-            <td className="px-5 py-3 font-semibold text-gray-900 dark:text-white">{prod.name}</td>
-            <td className="px-5 py-3">
-              <span className="px-2 py-1 bg-gray-100 dark:bg-[#2a2d36] rounded text-[11px] font-bold text-gray-600 dark:text-gray-400">
-                {prod.category || 'Uncategorized'}
-              </span>
+          <tr key={prod.id} className={`${rowStripeClass(i, prod)} ${ROW_HOVER_CLS}`}>
+            <td className="px-5 py-3.5 font-medium text-gray-500 dark:text-gray-400">{(currentPage - 1) * itemsPerPage + i + 1}</td>
+            <td className="px-5 py-3.5 font-bold text-[#1e293b] dark:text-white">{prod.name}</td>
+            <td className="px-5 py-3.5 font-medium text-[#1e293b] dark:text-gray-200">
+              {prod.category || 'Uncategorized'}
             </td>
-            <td className="px-5 py-3 font-mono">{prod.impa}</td>
-            <td className="px-5 py-3">₹{parseFloat(prod.sellingPrice || 0).toFixed(2)}</td>
-            <td className="px-5 py-3">₹{parseFloat(prod.purchasePrice || 0).toFixed(2)}</td>
-            <td className="px-5 py-3 text-right space-x-3">
-              <button onClick={() => setViewItem(prod)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" title="View"><EyeIcon /></button>
-              {canUpdate && <button onClick={() => { setEditItem(prod); setIsFormOpen(true); }} className="text-blue-500 hover:text-blue-600 transition-colors" title="Edit"><EditIcon /></button>}
-              {canDelete && <button onClick={() => handleDelete(prod.id)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete"><TrashIcon /></button>}
+            <td className="px-5 py-3.5 font-mono text-[#0f6460] dark:text-teal-400 font-medium cursor-pointer hover:underline" onClick={() => setViewItem(prod)}>{prod.impa || `SKU-${prod.id}`}</td>
+            <td className="px-5 py-3.5 font-medium text-[#1e293b] dark:text-gray-200">₹{parseFloat(prod.sellingPrice || 0).toFixed(2)}</td>
+            <td className="px-5 py-3.5 font-medium text-[#1e293b] dark:text-gray-200">₹{parseFloat(prod.purchasePrice || 0).toFixed(2)}</td>
+            <td className="px-5 py-3.5 text-right space-x-3">
+              <button onClick={() => setViewItem(prod)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" title="View">
+                <EyeIcon />
+              </button>
+              {canUpdate && (
+                <button onClick={() => { setEditItem(prod); setIsFormOpen(true); }} className="text-blue-500 hover:text-blue-600 transition-colors" title="Edit">
+                  <EditIcon />
+                </button>
+              )}
+              {canDelete && (
+                <button onClick={() => handleDelete(prod.id)} className="text-red-500 hover:text-red-600 transition-colors" title="Delete">
+                  <TrashIcon />
+                </button>
+              )}
             </td>
           </tr>
         )}

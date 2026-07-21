@@ -68,9 +68,9 @@ export default function Topbar({ onToggleSidebar }) {
   return (
     <header className="h-[50px] border-b border-gray-200/60 dark:border-[#2a2d33] flex items-center justify-between px-8 bg-[#f8f9fc] dark:bg-[#0f1117] flex-shrink-0 transition-colors duration-300 relative">
       <div className="flex items-center gap-8">
-        <h1 className="text-[#1e293b] dark:text-white text-[18px] font-bold tracking-tight">
+        {/* <h1 className="text-[#1e293b] dark:text-white text-[18px] font-bold tracking-tight">
           {title}
-        </h1>
+        </h1> */}
         <div className="relative hidden md:block">
           <div className="relative">
             <svg

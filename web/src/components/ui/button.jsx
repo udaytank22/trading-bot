@@ -30,7 +30,7 @@ import React from "react";
 /** Maps variant → base Tailwind classes (no size) */
 const VARIANT_CLASSES = {
   primary:
-    "bg-gradient-to-r from-[#0B4775] to-[#2BA1E8] hover:from-[#093a61] hover:to-[#2289c9] text-white shadow-md active:scale-95 border-transparent transition-all",
+    "bg-[#0d6e6e] hover:bg-[#0b5c5c] text-white shadow-sm active:scale-95 border-transparent transition-all font-bold",
   secondary:
     "bg-transparent border border-purple-500/40 text-purple-400 hover:bg-purple-500/10",
   danger:
@@ -90,7 +90,7 @@ export default function Button({
 
   // Build class string
   const base =
-    "inline-flex items-center justify-center gap-2 rounded-lg transition-all whitespace-nowrap flex-shrink-0 focus:outline-none";
+    "inline-flex items-center justify-center gap-2 rounded-xl transition-all whitespace-nowrap flex-shrink-0 focus:outline-none";
   const variantCls =
     variant === "icon"
       ? `${ICON_COLOR_CLASSES[color] ?? ICON_COLOR_CLASSES.gray}`
@@ -107,7 +107,7 @@ export default function Button({
       {/* Spinner shown while loading */}
       {loading ? (
         <svg
-          className="animate-spin w-4 h-4"
+          className="animate-spin w-4 h-6"
           fill="none"
           viewBox="0 0 24 24"
         >

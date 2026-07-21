@@ -49,13 +49,44 @@ import { useVirtualizer } from '@tanstack/react-virtual';
  * @param {number} idx - Row index (0-based)
  * @returns {string} Tailwind class string
  */
-export function rowStripeClass(idx) {
-  return "bg-white dark:bg-[#1a1d23]";
+// ─── Shared row stripe helper (exported so individual tables can use it) ───────
+
+/**
+ * Helper to pick left vertical accent border for rows to match design.
+ * @param {Object} row - Row object if available
+ * @param {number} idx - Row index (0-based)
+ * @returns {string} Tailwind class string
+ */
+export function getRowLeftBorderClass(row, idx) {
+  const status = String(row?.status || row?.order_status || row?.cargo_status || row?.state || '').toUpperCase();
+  if (status.includes('PENDING')) return 'border-l-[4px] border-[#b8832a]';
+  if (status.includes('RFQ') || status.includes('SENT') || status.includes('SHIPPED') || status.includes('IN_TRANSIT')) return 'border-l-[4px] border-[#2563eb]';
+  if (status.includes('CONFIRMED') || status.includes('DELIVERED') || status.includes('ACTIVE') || status.includes('PAID') || status.includes('QUOTE_SENT')) return 'border-l-[4px] border-[#16a34a]';
+  if (status.includes('ADMIN') || status.includes('REVIEW') || status.includes('VERIFY') || status.includes('TL')) return 'border-l-[4px] border-[#d97706]';
+  
+  const accentColors = [
+    'border-l-[4px] border-[#b8832a]',
+    'border-l-[4px] border-[#2563eb]',
+    'border-l-[4px] border-[#16a34a]',
+    'border-l-[4px] border-[#d97706]'
+  ];
+  return accentColors[idx % accentColors.length];
+}
+
+/**
+ * Returns the background and accent border class for table rows.
+ * @param {number} idx - Row index (0-based)
+ * @param {Object} [row] - Optional row object to extract status color
+ * @returns {string} Tailwind class string
+ */
+export function rowStripeClass(idx, row) {
+  const leftBorder = getRowLeftBorderClass(row, idx);
+  return `bg-[#faf8f5] dark:bg-[#1a1d23] ${leftBorder}`;
 }
 
 /** Standard row hover class used by every table */
 export const ROW_HOVER_CLS =
-  "hover:bg-blue-50/50 dark:hover:bg-blue-900/10 transition-colors";
+  "hover:bg-[#f2ede2] dark:hover:bg-blue-900/10 transition-colors";
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
@@ -99,7 +130,7 @@ export default function DataTable({
 
   return (
     /* Outer wrapper — hides overflow for rounded corners */
-    <div className={`w-full overflow-hidden flex flex-col ${className}`}>
+    <div className={`w-full overflow-hidden flex flex-col bg-[#faf8f5] dark:bg-[#1a1d23] border border-[#e6e0d2] dark:border-[#2a2d33] rounded-2xl shadow-sm ${className}`}>
 
       {/* Scrollable container — both axes, styled scrollbar */}
       <div
@@ -111,16 +142,15 @@ export default function DataTable({
         <table className="w-full table-auto border-collapse text-sm">
 
           {/* ── HEADER ─────────────────────────────────────────────────────── */}
-          <thead className="sticky top-0 transition-all duration-300">
-            <tr className="bg-[#0B4775] shadow-sm">
+          <thead className="sticky top-0 transition-all duration-300 z-10">
+            <tr className="bg-[#f4efe6] dark:bg-[#15181e] border-b border-[#e2dcd0] dark:border-[#2a2d33]">
               {columns.map((col) => (
                 <th
                   key={col.key}
                   className={[
-                    "px-4 py-2 text-left whitespace-nowrap",
-                    "text-white",
-                    "text-[13px] font-semibold tracking-wide capitalize",
-                    "border-b border-[#0B4775]",
+                    "px-4 py-3 text-left whitespace-nowrap",
+                    "text-[#5c6470] dark:text-gray-300",
+                    "text-[11px] font-bold tracking-wider uppercase",
                     col.hidden ?? "",
                     col.className ?? "",
                   ].join(" ")}
@@ -132,7 +162,7 @@ export default function DataTable({
           </thead>
 
           {/* ── BODY ───────────────────────────────────────────────────────── */}
-          <tbody className="divide-y divide-gray-100 dark:divide-[#2a2d33]/50">
+          <tbody className="divide-y divide-[#eee8dd] dark:divide-[#2a2d33]/50 bg-[#faf8f5] dark:bg-[#1a1d23]">
             {isLoading ? (
               <tr>
                 <td colSpan={columns.length} className="p-8 text-center text-gray-500 dark:text-gray-400">
@@ -172,14 +202,14 @@ export default function DataTable({
                       key={row.id || idx}
                       ref={virtualizer.measureElement}
                       data-index={idx}
-                      className={`${ROW_HOVER_CLS} ${rowStripeClass(idx)}`}
+                      className={`${ROW_HOVER_CLS} ${rowStripeClass(idx, row)}`}
                     >
                       {columns.map((col, cIdx) => {
                         const cellValue = col.renderCell ? col.renderCell(row, idx) : row[col.key];
                         return (
                           <td
                             className={[
-                              "px-2 sm:px-3 md:px-4 py-2",
+                              "px-2 sm:px-3 md:px-4 py-3 text-sm text-[#1e293b] dark:text-gray-200 font-medium",
                               col.hidden ?? "",
                               col.className ?? "",
                               col.cellClassName ?? "",
@@ -211,7 +241,7 @@ export default function DataTable({
         </table>
       </div>
       {paginationProps && (
-        <div className=" border-t border-gray-200 dark:border-[#2a2d33] bg-white dark:bg-[#1a1d23]">
+        <div className="border-t border-[#e6e0d2] dark:border-[#2a2d33] bg-[#faf8f5] dark:bg-[#1a1d23]">
           <Pagination {...paginationProps} />
         </div>
       )}

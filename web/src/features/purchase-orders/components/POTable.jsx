@@ -24,15 +24,26 @@ import {
 
 // ─── Column definitions ─────────────────────────────────────────────────────────
 const COLUMNS = [
-  { key: "sr_no", label: "#", className: "w-10 text-center" },
+  { key: "sr_no", label: "#" },
   { key: "po_id", label: "PO ID" },
-  { key: "customer", label: "Customer" },
-  { key: "vessel", label: "Vessel", hidden: "hidden lg:table-cell" },
-  { key: "products", label: "Products" },
-  { key: "date", label: "Date", hidden: "hidden xl:table-cell" },
-  { key: "status", label: "Status" },
-  { key: "actions", label: "Actions", className: "text-right" },
+  { key: "customer", label: "CUSTOMER" },
+  { key: "vessel", label: "VESSEL" },
+  { key: "products", label: "PRODUCTS" },
+  { key: "date", label: "DATE" },
+  { key: "status", label: "STATUS" },
+  { key: "actions", label: "", className: "text-right" },
 ];
+
+const formatDate = (isoString) => {
+  if (!isoString) return "—";
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return "—";
+    return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  } catch (e) {
+    return "—";
+  }
+};
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
@@ -47,98 +58,63 @@ const POTable = ({ items, onView, onOrder, paginationProps }) => {
   const renderRow = (po, idx) => (
     <tr
       key={po.po_id}
-      className={`${ROW_HOVER_CLS} ${rowStripeClass(idx)}`}
+      className={`${ROW_HOVER_CLS} ${rowStripeClass(idx)} border-b border-[#eee8dd] dark:border-[#2a2d33]`}
     >
-      <td className="px-3 md:px-6 py-2 text-center text-gray-500 text-sm font-medium">{idx + 1}</td>
-      {/* ── PO ID (monospace) ─────────────────────────────────────────── */}
-      <td className="px-3 md:px-6 py-2 font-mono text-gray-400 text-[12px] break-words">
-        <Tooltip content={po.po_id}>
-          <span className="cursor-default">{po.po_id}</span>
-        </Tooltip>
+      <td className="px-5 py-3.5 font-medium text-gray-500 dark:text-gray-400">{idx + 1}</td>
+      
+      {/* ── PO ID (monospace teal link) ─────────────────────────────────── */}
+      <td className="px-5 py-3.5 font-mono text-[#0f6460] dark:text-teal-400 font-medium cursor-pointer hover:underline" onClick={() => onView(po)}>
+        {po.po_id}
       </td>
 
       {/* ── Customer name ─────────────────────────────────────────────── */}
-      <td className="px-3 md:px-6 py-2">
-        <Tooltip content={po.customer}>
-          <span className="text-gray-900 dark:text-white font-bold text-sm cursor-default">
-            {po.customer}
-          </span>
-        </Tooltip>
+      <td className="px-5 py-3.5 font-bold text-[#1e293b] dark:text-white">
+        {po.customer}
       </td>
 
       {/* ── Vessel name ───────────────────────────────────────────────── */}
-      <td className="px-3 md:px-6 py-2 hidden lg:table-cell">
-        <Tooltip content={po.vessel}>
-          <span className="text-gray-600 dark:text-gray-300 text-sm font-medium cursor-default">
-            {po.vessel}
-          </span>
-        </Tooltip>
+      <td className="px-5 py-3.5 text-gray-700 dark:text-gray-300 font-medium">
+        {po.vessel}
       </td>
 
       {/* ── First product + "+N more" badge ───────────────────────────── */}
-      <td className="px-3 md:px-6 py-2">
-        <div className="flex flex-col gap-1">
-          <Tooltip content={
-            po.products && po.products.length > 0
-              ? po.products.map((p) => p.product_name).join(", ")
-              : `${po._count?.items || 0} items`
-          }>
-            {po.products && po.products.length > 0 ? (
-              <span className="text-gray-600 dark:text-gray-300 text-sm cursor-default">
-                {po.products[0]?.product_name}
-              </span>
-            ) : po._count?.items > 0 ? (
-              <span className="text-gray-600 dark:text-gray-300 text-sm cursor-default">
-                {po._count.items} item{po._count.items !== 1 ? 's' : ''}
-              </span>
-            ) : (
-              <span className="text-gray-400 text-sm cursor-default">—</span>
-            )}
-          </Tooltip>
+      <td className="px-5 py-3.5 text-gray-700 dark:text-gray-300 font-medium">
+        <div className="flex items-center gap-1.5">
+          {po.products && po.products.length > 0 ? (
+            <span>{po.products[0]?.product_name}</span>
+          ) : po._count?.items > 0 ? (
+            <span>{po._count.items} item{po._count.items !== 1 ? 's' : ''}</span>
+          ) : (
+            <span>—</span>
+          )}
           {po.products && po.products.length > 1 && (
-            <Tooltip content={po.products.map((p) => p.product_name).join(", ")}>
-              <span className="inline-block w-fit px-2 py-[2px] bg-gray-100 dark:bg-gray-700/60 text-gray-600 dark:text-gray-300 text-[10px] font-bold rounded-lg cursor-default border border-gray-200 dark:border-none">
-                +{po.products.length - 1} more
-              </span>
-            </Tooltip>
+            <span className="px-2 py-[2px] bg-[#f4efe6] dark:bg-gray-700/60 text-gray-650 dark:text-gray-300 text-[10px] font-bold rounded-lg border border-[#e6e0d2] dark:border-none">
+              +{po.products.length - 1}
+            </span>
           )}
         </div>
       </td>
 
-      {/* ── Date (hidden on small screens) ────────────────────────────── */}
-      <td className="px-3 md:px-6 py-2 hidden xl:table-cell">
-        <Tooltip content={new Date(po.date).toLocaleString("en-GB")}>
-          <DateCell isoString={po.date} />
-        </Tooltip>
+      {/* ── Date formatted as e.g. "18 Jul" ───────────────────────────── */}
+      <td className="px-5 py-3.5 text-gray-700 dark:text-gray-300 font-medium">
+        {formatDate(po.date)}
       </td>
 
       {/* ── Status badge ──────────────────────────────────────────────── */}
-      <td className="px-3 md:px-6 py-2">
+      <td className="px-5 py-3.5">
         <StatusBadge status={po.status} />
       </td>
 
-      {/* ── Actions ───────────────────────────────────────────────────── */}
-      <td className="px-3 md:px-6 py-2 text-right">
-        <div className="flex items-center justify-end gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            className="border-purple-500/40 text-purple-400 hover:bg-purple-500/10"
-            onClick={() => onView(po)}
-          >
-            View
-          </Button>
-          {po.status !== "ORDERED" && onOrder && (
-            <Button
-              variant="secondary"
-              size="sm"
-              className="border-purple-500/40 text-purple-400 hover:bg-purple-500/10"
-              onClick={() => onOrder(po)}
-            >
-              Order
-            </Button>
-          )}
-        </div>
+      {/* ── Actions (teal links instead of buttons) ───────────────────── */}
+      <td className="px-5 py-3.5 text-right space-x-3">
+        <span onClick={() => onView(po)} className="text-[#0f6460] dark:text-teal-400 hover:underline font-bold text-sm cursor-pointer">
+          View
+        </span>
+        {po.status !== "ORDERED" && onOrder && (
+          <span onClick={() => onOrder(po)} className="text-blue-600 dark:text-blue-400 hover:underline font-bold text-sm cursor-pointer">
+            Order
+          </span>
+        )}
       </td>
     </tr>
   );

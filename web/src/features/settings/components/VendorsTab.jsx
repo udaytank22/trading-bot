@@ -229,7 +229,7 @@ export default function VendorsTab() {
     try {
       const rolesRes = await api.roles.getRoles();
       const clientRole = rolesRes.data.find(r => r.name === 'Client');
-      
+
       if (!clientRole) {
         Swal.fire({ icon: 'error', title: 'Error', text: 'Client role not found in the backend.', background: document.documentElement.classList.contains('dark') ? '#1a1d23' : '#ffffff', color: document.documentElement.classList.contains('dark') ? '#fff' : '#000' });
         setIsGranting(false);
@@ -313,7 +313,7 @@ export default function VendorsTab() {
   };
 
   return (
-    <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl shadow-sm animate-fade-in flex-1 flex flex-col">
+    <div className="bg-white dark:bg-[#1a1d23] shadow-sm animate-fade-in flex-1 flex flex-col">
       <RightDrawer isOpen={!!viewItem} title="Vendor Details" onClose={() => setViewItem(null)}>
         <ViewDetails item={viewItem} onClose={() => setViewItem(null)} />
         {viewItem && (
@@ -476,47 +476,39 @@ export default function VendorsTab() {
         />
       </RightDrawer>
 
-      <div className="p-2 border-b border-gray-200 dark:border-[#2a2d33] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="pb-4 border-b border-[#eee8dd] dark:border-[#2a2d33] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
         {/* Left Side - Search */}
         <div className="w-full sm:w-auto">
           <input
             type="text"
-            placeholder="Search products..."
+            placeholder="Search vendors..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
               setCurrentPage(1);
             }}
-            className="w-full sm:w-64 bg-gray-50 dark:bg-[#0f1117] border border-gray-200 dark:border-[#2a2d36] rounded-lg h-9 px-3 text-[13px] text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors"
+            className="w-full sm:w-64 bg-[#faf8f5] dark:bg-[#1a1d23] border border-[#e6e0d2] dark:border-[#2a2d33] rounded-xl h-10 px-3.5 text-sm text-[#1e293b] dark:text-white placeholder:text-[#94a3b8] focus:outline-none focus:border-[#0d6e6e] transition-colors shadow-sm"
           />
         </div>
 
         {/* Right Side - Buttons */}
         <div className="flex flex-wrap items-center gap-3 justify-start sm:justify-end">
-          <HeaderButton
-            onClick={handleDownloadSample}
-            color="gray"
-            icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>}
-          >
-            Sample
+          <HeaderButton onClick={handleDownloadSample}>
+            Download sample
           </HeaderButton>
 
           {canCreate && (
             <>
-              <HeaderButton
-                onClick={() => setIsImportModalOpen(true)}
-                color="emerald"
-                icon={<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>}
-              >
+              <HeaderButton onClick={() => setIsImportModalOpen(true)}>
                 Import
               </HeaderButton>
 
               <Button
+                variant="primary"
                 onClick={() => setIsFormOpen(true)}
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                Add Vendor
+                + Add Vendor
               </Button>
             </>
           )}

@@ -29,6 +29,7 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
   }, [productsData]);
 
   const [selectedProduct, setSelectedProduct] = useState("");
+  const [impa, setImpa] = useState("");
   const [qty, setQty] = useState("");
   const [unit, setUnit] = useState("");
 
@@ -116,8 +117,10 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
   };
 
   const addProductToInquiry = () => {
-    if (!selectedProduct) return;
-    const prodName = selectedProduct;
+    if (!selectedProduct && !impa) return;
+    const prodName = selectedProduct || (impa ? `Product (${impa})` : "");
+    const prodObj = productsData.find(p => p.name === prodName);
+    const prodImpa = impa || prodObj?.impa || "";
     if (formData.products.some(p => p.product_name.toLowerCase() === prodName.toLowerCase())) {
       Swal.fire({
         icon: "warning",
@@ -130,9 +133,10 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
     }
     setFormData(prev => ({
       ...prev,
-      products: [...prev.products, { product_name: prodName, quantity: qty, unit }]
+      products: [...prev.products, { product_name: prodName, impa: prodImpa, quantity: qty || 1, unit: unit || "pcs" }]
     }));
     setSelectedProduct("");
+    setImpa("");
     setQty(1);
     setUnit("pcs");
   };
@@ -416,8 +420,8 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
             <span className="text-sm text-gray-500 dark:text-white mb-4 tracking-wider">{formData.products.length} Items Selected</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-6 gap-4 bg-gray-50/50 dark:bg-[#0f1117]/30 p-4 rounded-2xl border border-gray-200 dark:border-[#2f3441] mb-4 items-end">
-            <div className="sm:col-span-3">
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 bg-gray-50/50 dark:bg-[#0f1117]/30 p-4 rounded-2xl border border-gray-200 dark:border-[#2f3441] mb-4 items-end">
+            <div className="sm:col-span-4">
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Select Product</label>
               <Select
                 variant="form"
@@ -428,19 +432,33 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
                   if (prodObj?.unit) {
                     setUnit(prodObj.unit);
                   }
+                  if (prodObj?.impa) {
+                    setImpa(prodObj.impa);
+                  }
                 }}
                 options={[
                   { value: "", label: "Choose a product" },
                   ...productsData.map(p => ({
                     value: p.name,
-                    label: p.name
+                    label: p.impa ? `${p.impa} - ${p.name}` : p.name
                   }))
                 ]}
                 className="w-full flex items-center"
               />
             </div>
 
-            <div className="sm:col-span-1">
+            <div className="sm:col-span-3">
+              <Field
+                label="IMPA Code"
+                type="text"
+                value={impa}
+                onChange={(e) => setImpa(e.target.value)}
+                placeholder="IMPA Code"
+                labelClassName="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
               <Field
                 label="Quantity"
                 type="number"
@@ -452,7 +470,7 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
               />
             </div>
 
-            <div className="sm:col-span-1">
+            <div className="sm:col-span-2">
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Unit</label>
               <Select
                 variant="form"
@@ -482,60 +500,84 @@ const AddInquiryModal = ({ isOpen, onClose, onSubmit }) => {
               <DataTable
                 columns={[
                   { key: 'srno', label: 'S.No.', cellClassName: 'text-sm text-gray-500 font-mono w-[60px]', renderCell: (_, idx) => idx + 1 },
-                  { key: 'product_name', label: 'Product Name', cellClassName: 'px-4 py-2', renderCell: (p, idx) => (
-                    <div className="relative z-[11111] overflow-visible">
-                      <Select
-                        variant="form"
-                        value={p.product_name}
-                        onChange={(val) => {
-                          const productObj = productsData.find(prod => prod.name === val);
-                          setFormData(prev => {
-                            const updated = [...prev.products];
-                            updated[idx] = {
-                              ...updated[idx],
-                              product_name: val,
-                              unit: productObj?.unit || updated[idx].unit || "pcs"
-                            };
-                            return { ...prev, products: updated };
-                          });
-                        }}
-                        options={productsData.map(prod => ({ value: prod.name, label: prod.name }))}
-                        placeholder="Select product"
+                  {
+                    key: 'impa', label: 'IMPA Code', cellClassName: 'px-4 py-2 w-[140px]', renderCell: (p, idx) => {
+                      const matchedProd = productsData.find(prod => prod.name === p.product_name);
+                      const displayImpa = p.impa !== undefined ? p.impa : (matchedProd?.impa || "");
+                      return (
+                        <input
+                          type="text"
+                          value={displayImpa}
+                          onChange={(e) => updateProductInList(idx, "impa", e.target.value)}
+                          placeholder="IMPA Code"
+                          className="w-full h-[36px] rounded-lg px-3 text-sm bg-white dark:bg-[#0f1117] border border-gray-300 dark:border-[#2f3441] text-gray-900 dark:text-white font-mono focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20"
+                        />
+                      );
+                    }
+                  },
+                  {
+                    key: 'product_name', label: 'Product Name', cellClassName: 'px-4 py-2', renderCell: (p, idx) => (
+                      <div className="relative z-[11111] overflow-visible">
+                        <Select
+                          variant="form"
+                          value={p.product_name}
+                          onChange={(val) => {
+                            const productObj = productsData.find(prod => prod.name === val);
+                            setFormData(prev => {
+                              const updated = [...prev.products];
+                              updated[idx] = {
+                                ...updated[idx],
+                                product_name: val,
+                                impa: productObj?.impa || updated[idx].impa || "",
+                                unit: productObj?.unit || updated[idx].unit || "pcs"
+                              };
+                              return { ...prev, products: updated };
+                            });
+                          }}
+                          options={productsData.map(prod => ({ value: prod.name, label: prod.impa ? `${prod.impa} - ${prod.name}` : prod.name }))}
+                          placeholder="Select product"
+                        />
+                      </div>
+                    )
+                  },
+                  {
+                    key: 'quantity', label: 'Quantity', cellClassName: 'px-4 py-2 w-[110px]', renderCell: (p, idx) => (
+                      <input
+                        type="number"
+                        min="1"
+                        value={p.quantity}
+                        onChange={(e) => updateProductInList(idx, "quantity", Math.max(1, parseInt(e.target.value, 10) || 1))}
+                        className="w-full h-[36px] rounded-lg px-3 text-sm bg-white dark:bg-[#0f1117] border border-gray-300 dark:border-[#2f3441] text-gray-900 dark:text-white text-center focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20"
                       />
-                    </div>
-                  )},
-                  { key: 'quantity', label: 'Quantity', cellClassName: 'px-4 py-2 w-[120px]', renderCell: (p, idx) => (
-                    <input
-                      type="number"
-                      min="1"
-                      value={p.quantity}
-                      onChange={(e) => updateProductInList(idx, "quantity", Math.max(1, parseInt(e.target.value, 10) || 1))}
-                      className="w-full h-[36px] rounded-lg px-3 text-sm bg-white dark:bg-[#0f1117] border border-gray-300 dark:border-[#2f3441] text-gray-900 dark:text-white text-center focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20"
-                    />
-                  )},
-                  { key: 'unit', label: 'Unit', cellClassName: 'px-4 py-2 w-[120px]', renderCell: (p, idx) => (
-                    <div className="relative z-[1111] overflow-visible">
-                      <Select
-                        variant="form"
-                        value={p.unit}
-                        onChange={(val) => updateProductInList(idx, "unit", val)}
-                        options={uniqueUnits.map(u => ({ value: u, label: u }))}
-                        placeholder="Select unit"
-                      />
-                    </div>
-                  )},
-                  { key: 'action', label: 'Action', cellClassName: 'px-4 py-2 text-center w-[80px]', renderCell: (_, idx) => (
-                    <button
-                      type="button"
-                      onClick={() => removeProductFromInquiry(idx)}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-colors mx-auto"
-                      title="Remove product"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  )}
+                    )
+                  },
+                  {
+                    key: 'unit', label: 'Unit', cellClassName: 'px-4 py-2 w-[120px]', renderCell: (p, idx) => (
+                      <div className="relative z-[111] overflow-visible">
+                        <Select
+                          variant="form"
+                          value={p.unit}
+                          onChange={(val) => updateProductInList(idx, "unit", val)}
+                          options={uniqueUnits.map(u => ({ value: u, label: u }))}
+                          placeholder="Select unit"
+                        />
+                      </div>
+                    )
+                  },
+                  {
+                    key: 'action', label: 'Action', cellClassName: 'px-4 py-2 text-center w-[80px]', renderCell: (_, idx) => (
+                      <button
+                        type="button"
+                        onClick={() => removeProductFromInquiry(idx)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-colors mx-auto"
+                        title="Remove product"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )
+                  }
                 ]}
                 data={formData.products}
                 emptyMessage="No products added yet. Add at least one product above."

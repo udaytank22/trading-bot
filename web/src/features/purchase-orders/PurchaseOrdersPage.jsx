@@ -160,15 +160,25 @@ export default function PurchaseOrdersPage() {
     <div className="flex flex-col w-full h-full pb-4 relative">
       <Toast message={toast.message} type={toast.type} />
 
+      {/* Page Header */}
+      <div className="mb-5">
+        <h1 className="text-3xl font-serif font-medium text-[#1e293b] dark:text-white tracking-tight">
+          Purchase orders
+        </h1>
+        <p className="text-sm font-sans font-medium text-[#64748b] dark:text-gray-400 mt-1">
+          Every order placed with a supplier, start to delivery.
+        </p>
+      </div>
+
       {/* Centralized toolbar: search + status filter + Add PO button */}
       <PageToolbar
         search={search}
         onSearchChange={(val) => { setSearch(val); handlePageChange(1); }}
-        searchPlaceholder="Search by customer or PO ID..."
+        searchPlaceholder="Search customer or PO ID..."
         filterValue={filter}
         onFilterChange={(val) => { setFilter(val); handlePageChange(1); }}
         filterOptions={[
-          { value: "All", label: "All Status" },
+          { value: "All", label: "All status" },
           { value: "PENDING", label: "Pending" },
           { value: "CONFIRMED", label: "Confirmed" },
           { value: "ORDERED", label: "Ordered" },
@@ -176,10 +186,10 @@ export default function PurchaseOrdersPage() {
           { value: "CLOSED", label: "Closed" },
         ]}
         onAdd={hasPermission('purchaseOrders', 'create') ? () => setIsAddModalOpen(true) : undefined}
-        addLabel="Add Purchase Order"
+        addLabel="Add purchase order"
       />
 
-      <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg transition-colors duration-300">
+      <div className="flex-1 w-full overflow-hidden flex flex-col duration-300">
         <POTable
           items={mappedPOs}
           onView={(po) => {

@@ -300,15 +300,26 @@ export default function InquiriesPage() {
         )}
       </div>
 
+      {/* Page Title Header */}
+      <div className="mb-4">
+        <h1 className="text-3xl font-serif font-medium text-[#1e293b] dark:text-white tracking-tight">
+          Inquiries
+        </h1>
+        <p className="text-sm font-sans font-medium text-[#64748b] dark:text-gray-400 mt-1">
+          Track every request from datasheet to confirmed deal.
+        </p>
+      </div>
+
+
       {/* Centralized toolbar: search + status filter + Add Inquiry button */}
       <PageToolbar
         search={search}
         onSearchChange={(val) => setSearch(val)}
-        searchPlaceholder="Search by buyer, vessel, ref..."
+        searchPlaceholder="Search buyer, vessel, ref..."
         filterValue={filter}
         onFilterChange={(val) => setFilter(val)}
         isMultiFilter={true}
-        filterPlaceholder="All Status"
+        filterPlaceholder="All status"
         filterOptions={[
           { value: "PENDING", label: "Datasheet" },
           { value: "RFQ_SENT", label: "RFQ sent" },
@@ -328,59 +339,41 @@ export default function InquiriesPage() {
             onChange={(val) => setClientFilter(val)}
             options={clients.map(c => ({ value: c.id, label: c.name }))}
             isMulti={true}
-            placeholder="All Customers"
+            placeholder="All customers"
             className="min-w-[160px]"
           />
         }
         rightSlot={
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              {/* Kanban View Button (Funnel) */}
+            {/* Board / Table Pill Switcher */}
+            <div className="flex items-center gap-1 bg-[#e6e0d2]/60 dark:bg-[#1f222b] p-1 rounded-xl border border-[#e6e0d2] dark:border-[#2a2d33]">
               <button
                 onClick={() => setViewMode("kanban")}
-                title="Kanban view"
-                className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all duration-200 shadow-sm ${viewMode === "kanban"
-                  ? "bg-white dark:bg-[#1a1d23] border-purple-500 text-purple-600 dark:text-purple-400 ring-1 ring-purple-500/20"
-                  : "bg-white dark:bg-[#1a1d23] border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all ${viewMode === "kanban"
+                    ? "bg-[#0a1628] text-white shadow-sm"
+                    : "text-[#64748b] dark:text-gray-400 hover:text-[#1e293b]"
                   }`}
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2.5}
-                  stroke="currentColor"
-                  className="w-4 h-4"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M6 12h12m-9 5.25h6" />
-                </svg>
+                Board
               </button>
-
-              {/* Table View Button (List) */}
               <button
                 onClick={() => setViewMode("table")}
-                title="Table view"
-                className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all duration-200 shadow-sm ${viewMode === "table"
-                  ? "bg-white dark:bg-[#1a1d23] border-purple-500 text-purple-600 dark:text-purple-400 ring-1 ring-purple-500/20"
-                  : "bg-white dark:bg-[#1a1d23] border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all ${viewMode === "table"
+                    ? "bg-[#0a1628] text-white shadow-sm"
+                    : "text-[#64748b] dark:text-gray-400 hover:text-[#1e293b]"
                   }`}
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2.5}
-                  stroke="currentColor"
-                  className="w-4 h-4"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h12M3.75 12h9M3.75 17.25h6" />
-                </svg>
+                Table
               </button>
             </div>
+
+            {/* Add Inquiry Button using centralized Button component */}
             {hasPermission("inquiries", "create") && (
-              <Button variant="primary" onClick={() => setIsAddModalOpen(true)}>
-                <PlusIcon />
-                Add Inquiry
+              <Button
+                variant="primary"
+                onClick={() => setIsAddModalOpen(true)}
+              >
+                + Add inquiry
               </Button>
             )}
           </div>

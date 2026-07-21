@@ -5,6 +5,40 @@ import { useNavigate } from "react-router-dom";
 import { api } from '@services/api';
 import { usePaginatedFetch } from '@hooks/usePaginatedFetch';
 import { PageToolbar, Pagination, Button, StatusBadge, DataTable, rowStripeClass, ROW_HOVER_CLS, DatePicker, Select } from '@components/ui';
+import { HeaderButton } from '../settings/components/shared';
+
+const INVOICE_COLUMNS = [
+  { key: "srno", label: "#" },
+  { key: "invoice", label: "INVOICE" },
+  { key: "client", label: "CLIENT" },
+  { key: "vessel", label: "VESSEL" },
+  { key: "amount", label: "AMOUNT" },
+  { key: "date", label: "DATE" },
+  { key: "status", label: "STATUS" },
+  { key: "actions", label: "", className: "text-right" }
+];
+
+const formatDate = (isoString) => {
+  if (!isoString) return "—";
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return "—";
+    return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  } catch (e) {
+    return "—";
+  }
+};
+
+const formatAmount = (num) => {
+  if (num === undefined || num === null) return "—";
+  try {
+    const parsed = parseFloat(num);
+    if (isNaN(parsed)) return "—";
+    return "₹" + Math.round(parsed).toLocaleString("en-IN");
+  } catch (e) {
+    return "—";
+  }
+};
 
 export default function InvoicesPage() {
     const { data: accountsData } = useAccounts();
@@ -28,15 +62,32 @@ export default function InvoicesPage() {
     const mappedInvoices = useMemo(() => {
         return (inquiriesData || []).map(inq => {
             const hasInvoices = inq.invoices && inq.invoices.length > 0;
+            const totalAmount = hasInvoices
+                ? inq.invoices.reduce((sum, inv) => sum + parseFloat(inv.amount || 0), 0)
+                : inq.items?.reduce((sum, item) => sum + (parseFloat(item.sellingPrice || item.unitPrice || 0) * (item.quantity || 1)), 0)
+                || 0;
+
+            let status = 'PENDING';
+            if (hasInvoices) {
+                if (inq.invoices.every(i => i.status === 'PAID')) {
+                    status = 'PAID';
+                } else if (inq.invoices.some(i => i.status === 'OVERDUE')) {
+                    status = 'OVERDUE';
+                } else {
+                    status = 'SENT';
+                }
+            }
+
             return {
                 id: `inq-${inq.id}`,
                 inquiryId: inq.id,
                 isGrouped: hasInvoices,
-                invoiceNumber: `INQ-${inq.inquiryNumber}`,
+                invoiceNumber: inq.invoices?.[0]?.invoiceNumber || `INV-${inq.inquiryNumber || inq.id.slice(-4)}`,
                 clientName: inq.client?.name || 'Unknown',
                 vesselName: inq.vesselName || 'N/A',
-                invoiceDate: inq.createdAt,
-                status: hasInvoices ? 'GROUPED' : 'PENDING',
+                invoiceDate: inq.invoices?.[0]?.createdAt || inq.createdAt,
+                amount: totalAmount,
+                status: status,
                 invoices: inq.invoices || []
             };
         });
@@ -110,55 +161,57 @@ export default function InvoicesPage() {
 
     return (
         <div className="flex flex-col w-full h-full pb-4">
+            {/* Page Header */}
+            <div className="mb-5">
+                <h1 className="text-3xl font-serif font-medium text-[#1e293b] dark:text-white tracking-tight">
+                    Invoices
+                </h1>
+                <p className="text-sm font-sans font-medium text-[#64748b] dark:text-gray-400 mt-1">
+                    Everything billed and what's still outstanding.
+                </p>
+            </div>
+
             <PageToolbar
                 search={search}
                 onSearchChange={(val) => { setSearch(val); handlePageChange(1); }}
-                searchPlaceholder="Search invoices by ID, buyer or cargo..."
+                searchPlaceholder="Search invoice, buyer or cargo..."
+                rightSlot={
+                    <HeaderButton onClick={() => console.log('Exporting invoices...')}>
+                        Export
+                    </HeaderButton>
+                }
             />
 
-            <div className="flex-1 w-full bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-xl overflow-hidden flex flex-col shadow-lg mt-4">
+            <div className="flex-1 w-full bg-[#faf8f5] dark:bg-[#1a1d23] border border-[#e6e0d2] dark:border-[#2a2d33] rounded-2xl overflow-hidden flex flex-col shadow-sm mt-4">
                 <DataTable
-                    columns={InvoicesPageSchema1}
+                    columns={INVOICE_COLUMNS}
                     data={mappedInvoices}
                     emptyMessage="No invoices found"
                     renderRow={(inv, idx) => (
-                        <tr key={inv.id} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS}`}>
-                            <td className="px-5 py-3 font-medium text-purple-600 dark:text-purple-400 font-mono">{((meta.currentPage ? meta.currentPage : 1) - 1) * (meta.pageSize ? meta.pageSize : 10) + idx + 1}</td>
-                            <td className="px-4 py-3 font-mono text-gray-500">{inv.invoiceNumber || inv.id}</td>
-                            <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{inv.clientName}</td>
-                            <td className="px-4 py-3 text-sm truncate max-w-[250px]" title={inv.vesselName}>{inv.vesselName}</td>
-                            <td className="px-4 py-3">{inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleString('en-GB') : '-'}</td>
-                            <td className="px-4 py-3">
-                                {inv.isGrouped ? (
-                                    inv.invoices.every(i => i.status === 'PAID') ? (
-                                        <div className="flex items-center gap-2">
-                                            <StatusBadge status="PAID" />
-                                            <span className="text-xs text-gray-500 font-medium">
-                                                ({inv.invoices.length} Invoices)
-                                            </span>
-                                        </div>
-                                    ) : (
-                                        <span className="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-700 text-xs font-bold uppercase tracking-wide">
-                                            {inv.invoices.length} {inv.invoices.length === 1 ? 'Invoice' : 'Invoices'}
-                                        </span>
-                                    )
-                                ) : (
-                                    <span className="px-3 py-1.5 rounded-lg bg-orange-500/10 text-orange-700 text-xs font-bold uppercase tracking-wide">
-                                        Pending Invoice
-                                    </span>
-                                )}
+                        <tr key={inv.id} className={`${rowStripeClass(idx)} ${ROW_HOVER_CLS} border-b border-[#eee8dd] dark:border-[#2a2d33]`}>
+                            <td className="px-5 py-3.5 font-medium text-gray-500 dark:text-gray-400">{((meta.currentPage ? meta.currentPage : 1) - 1) * (meta.pageSize ? meta.pageSize : 10) + idx + 1}</td>
+                            
+                            {/* Monospace teal link for Invoice Number */}
+                            <td className="px-5 py-3.5 font-mono text-[#0f6460] dark:text-teal-400 font-medium cursor-pointer hover:underline" onClick={() => navigate(`/invoices/${inv.inquiryId}`)}>
+                                {inv.invoiceNumber || inv.id}
                             </td>
-                            <td className="px-4 py-3 text-right">
-                                <div className="flex items-center justify-end gap-2">
-                                    <Button
-                                        variant="secondary"
-                                        size="sm"
-                                        className="border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
-                                        onClick={() => navigate(`/invoices/${inv.inquiryId}`)}
-                                    >
-                                        View
-                                    </Button>
-                                </div>
+                            
+                            <td className="px-5 py-3.5 font-medium text-gray-900 dark:text-white">{inv.clientName}</td>
+                            <td className="px-5 py-3.5 text-gray-700 dark:text-gray-300 font-medium">{inv.vesselName}</td>
+                            <td className="px-5 py-3.5 font-medium text-gray-900 dark:text-white">{formatAmount(inv.amount)}</td>
+                            <td className="px-5 py-3.5 text-gray-705 dark:text-gray-300 font-medium">{formatDate(inv.invoiceDate)}</td>
+                            
+                            <td className="px-5 py-3.5">
+                                <StatusBadge status={inv.status} />
+                            </td>
+                            
+                            <td className="px-5 py-3.5 text-right">
+                                <span
+                                    onClick={() => navigate(`/invoices/${inv.inquiryId}`)}
+                                    className="text-[#0f6460] dark:text-teal-400 hover:underline font-bold text-sm cursor-pointer"
+                                >
+                                    View
+                                </span>
                             </td>
                         </tr>
                     )}

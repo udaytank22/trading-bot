@@ -40,74 +40,73 @@ import { useAuth } from "@context";
 const STATUS_STYLES = {
   // ── Inquiry statuses ──────────────────────────────────────────────────────
   PENDING:
-    "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20",
+    "bg-[#fef3c7] dark:bg-amber-500/20 text-[#b45309] dark:text-amber-300 border-[#fde68a] dark:border-amber-500/30",
   RFQ_SENT:
-    "bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-500/20",
+    "bg-[#e0e7ff] dark:bg-blue-500/20 text-[#2563eb] dark:text-blue-300 border-[#c7d2fe] dark:border-blue-500/30",
   RFQ_RECEIVED:
-    "bg-purple-50 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-500/25",
+    "bg-[#e0e7ff] dark:bg-purple-500/20 text-[#4338ca] dark:text-purple-300 border-[#c7d2fe] dark:border-purple-500/30",
   CLIENT_QUOTING:
-    "bg-cyan-50 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-400 border-cyan-200 dark:border-cyan-500/25",
+    "bg-cyan-50 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-500/30",
   TL_REVIEW:
-    "bg-rose-50 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/25",
+    "bg-[#ffedd5] dark:bg-rose-500/20 text-[#9a3412] dark:text-rose-300 border-[#fed7aa] dark:border-rose-500/30",
   ADMIN_APPROVAL:
-    "bg-orange-50 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-500/25",
+    "bg-[#ffedd5] dark:bg-orange-500/20 text-[#b45309] dark:text-orange-300 border-[#fed7aa] dark:border-orange-500/30",
   EMPLOYEE_VERIFY:
-    "bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-500/25",
+    "bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-500/30",
   CLIENT_FINAL_APPROVAL:
-    "bg-violet-50 dark:bg-violet-500/20 text-violet-700 dark:text-violet-400 border-violet-200 dark:border-violet-500/25",
+    "bg-violet-50 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-500/30",
   QUOTE_SENT:
-    "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20",
+    "bg-[#dcfce7] dark:bg-emerald-500/20 text-[#15803d] dark:text-emerald-300 border-[#bbf7d0] dark:border-emerald-500/30",
   CONFIRMED:
-    "bg-teal-50 dark:bg-teal-500/20 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-500/25",
+    "bg-[#dcfce7] dark:bg-emerald-500/20 text-[#15803d] dark:text-emerald-300 border-[#bbf7d0] dark:border-emerald-500/30",
   CLOSED:
-    "bg-gray-100 dark:bg-gray-500/20 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-500/25",
+    "bg-gray-100 dark:bg-gray-700/30 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600/30",
   READY_TO_DISPATCH:
-    "bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-500/25",
+    "bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-500/30",
 
   // ── Purchase Order statuses ────────────────────────────────────────────────
-  // PENDING already defined above
   SHIPPED:
-    "bg-indigo-50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/25",
+    "bg-[#e0e7ff] dark:bg-indigo-500/20 text-[#3730a3] dark:text-indigo-300 border-[#c7d2fe] dark:border-indigo-500/30",
   ORDERED:
-    "bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/25",
-  // CONFIRMED already defined above
-  // CLOSED already defined above
+    "bg-[#e0e7ff] dark:bg-blue-500/20 text-[#2563eb] dark:text-blue-300 border-[#c7d2fe] dark:border-blue-500/30",
 
   // ── Supply / Cargo statuses ────────────────────────────────────────────────
   ORDER_PLACED:
-    "bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-500/25",
+    "bg-sky-50 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-500/30",
   DISPATCHED:
-    "bg-indigo-50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/25",
+    "bg-[#e0e7ff] dark:bg-indigo-500/20 text-[#3730a3] dark:text-indigo-300 border-[#c7d2fe] dark:border-indigo-500/30",
   LOADING:
-    "bg-purple-50 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-500/25",
+    "bg-purple-50 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-500/30",
   VEHICLE_ALLOTTED:
-    "bg-purple-50 dark:bg-purple-500/20 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-500/25",
+    "bg-purple-50 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-500/30",
   IN_TRANSIT:
-    "bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/25",
+    "bg-[#e0e7ff] dark:bg-blue-500/20 text-[#2563eb] dark:text-blue-300 border-[#c7d2fe] dark:border-blue-500/30",
   DELIVERED:
-    "bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/25",
+    "bg-[#dcfce7] dark:bg-emerald-500/20 text-[#15803d] dark:text-emerald-300 border-[#bbf7d0] dark:border-emerald-500/30",
   OUT_FOR_DELIVERY:
-    "bg-orange-50 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-500/25",
+    "bg-[#ffedd5] dark:bg-orange-500/20 text-[#b45309] dark:text-orange-300 border-[#fed7aa] dark:border-orange-500/30",
   DELIVERED_TO_VESSEL:
-    "bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/25",
+    "bg-[#dcfce7] dark:bg-emerald-500/20 text-[#15803d] dark:text-emerald-300 border-[#bbf7d0] dark:border-emerald-500/30",
   CHALLAN_RECEIVED:
-    "bg-teal-50 dark:bg-teal-500/20 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-500/25",
+    "bg-[#dcfce7] dark:bg-teal-500/20 text-[#0f6460] dark:text-teal-300 border-[#bbf7d0] dark:border-teal-500/30",
 
   // ── Employee / Account statuses ────────────────────────────────────────────
   Active:
-    "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-500 border-emerald-200 dark:border-emerald-500/20",
+    "bg-[#dcfce7] dark:bg-emerald-500/20 text-[#15803d] dark:text-emerald-300 border-[#bbf7d0] dark:border-emerald-500/30",
   Inactive:
-    "bg-gray-100 dark:bg-gray-500/10 text-gray-600 dark:text-gray-500 border-gray-200 dark:border-gray-500/20",
+    "bg-gray-100 dark:bg-gray-700/30 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600/30",
 
   // ── Invoice statuses ──────────────────────────────────────────────────────
   PENDING_INVOICE:
-    "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/20",
+    "bg-[#fef3c7] dark:bg-amber-500/20 text-[#b45309] dark:text-amber-300 border-[#fde68a] dark:border-amber-500/30",
   SENT:
-    "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/20",
+    "bg-[#e0e7ff] dark:bg-blue-500/20 text-[#2563eb] dark:text-blue-300 border-[#c7d2fe] dark:border-blue-500/30",
   PAID:
-    "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20",
+    "bg-[#dcfce7] dark:bg-emerald-500/20 text-[#15803d] dark:text-emerald-300 border-[#bbf7d0] dark:border-emerald-500/30",
+  OVERDUE:
+    "bg-[#fef2f2] dark:bg-red-900/20 text-[#ef4444] dark:text-red-300 border-[#fecaca] dark:border-red-500/30",
   "N/A":
-    "bg-gray-100 dark:bg-gray-500/10 text-gray-500 dark:text-gray-500 border-gray-200 dark:border-gray-500/20",
+    "bg-gray-100 dark:bg-gray-700/30 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600/30",
 };
 
 // ─── Label map ─────────────────────────────────────────────────────────────────
@@ -116,16 +115,17 @@ const STATUS_STYLES = {
  * If a status isn't listed here, the raw value is displayed with "_" replaced by " ".
  */
 const STATUS_LABELS = {
-  PENDING: "Datasheet",
+  PENDING: "Pending",
   RFQ_SENT: "RFQ sent",
   QUOTE_SENT: "Quoted",
   RFQ_RECEIVED: "RFQ Received",
   CLIENT_QUOTING: "Client Quoting",
   TL_REVIEW: "TL Review",
-  ADMIN_APPROVAL: "Admin Approval",
+  ADMIN_APPROVAL: "Admin review",
   EMPLOYEE_VERIFY: "Employee Verify",
   CLIENT_FINAL_APPROVAL: "Client Final Approval",
   CONFIRMED: "Confirmed",
+  OVERDUE: "Overdue",
   IN_TRANSIT: "In Transit",
   ORDERED: "Ordered",
   ORDER_PLACED: "Order Placed",
@@ -140,7 +140,7 @@ const STATUS_LABELS = {
 
 // ─── Fallback style for unknown statuses ───────────────────────────────────────
 const FALLBACK_STYLE =
-  "bg-gray-100 dark:bg-gray-500/20 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-500/25";
+  "bg-gray-100 dark:bg-gray-700/30 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-600/30";
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
@@ -163,8 +163,9 @@ export default function StatusBadge({ status }) {
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-semibold ${styleCls}`}
+      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide border shadow-sm ${styleCls}`}
     >
+      <span className="w-1.5 h-1.5 rounded-full bg-current flex-shrink-0" />
       {label}
     </span>
   );
