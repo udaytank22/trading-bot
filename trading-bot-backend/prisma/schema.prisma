@@ -615,6 +615,7 @@ model Employee {
   attendance  Attendance[]
   documents   Document[]   @relation("EmployeeDocuments")
   user        User?
+  tasks       Task[]
 
   @@index([roleId])
   @@index([createdById])
@@ -763,3 +764,23 @@ model Message {
   @@index([receiverId])
   @@index([createdAt])
 }
+
+model Task {
+  id                 Int       @id @default(autoincrement())
+  title              String
+  description        String?
+  status             String    @default("PENDING") // PENDING, CONFIRMED, COMPLETED
+  priority           String    @default("MEDIUM")  // LOW, MEDIUM, HIGH
+  dueDate            DateTime?
+  assignedEmployeeId Int?
+  assignedEmployee   Employee? @relation(fields: [assignedEmployeeId], references: [id])
+  emailId            String?   // Reference to the original email messageId
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
+
+  @@index([assignedEmployeeId])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
+

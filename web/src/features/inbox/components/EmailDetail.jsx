@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../../services/apiClient';
-import { Loader2, Reply, Trash, CornerUpRight, AlertCircle } from 'lucide-react';
+import { Loader2, Reply, Trash, CornerUpRight, AlertCircle, Sparkles, Bot, CheckCircle, Workflow, ClipboardList, RefreshCw } from 'lucide-react';
+
 
 const EmailDetail = ({ email }) => {
   const [fullEmail, setFullEmail] = useState(null);
@@ -14,6 +15,12 @@ const EmailDetail = ({ email }) => {
   const [sending, setSending] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
   const [statusType, setStatusType] = useState('success'); // 'success', 'error'
+
+  // AI assistant states
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState(null);
+  const [aiError, setAiError] = useState(null);
+
 
   useEffect(() => {
     const fetchFullEmail = async () => {
@@ -34,6 +41,9 @@ const EmailDetail = ({ email }) => {
       fetchFullEmail();
       setActiveMode('none');
       setStatusMessage(null);
+      setAiResult(null);
+      setAiError(null);
+      setAiLoading(false);
     }
   }, [email.id]);
 
@@ -47,6 +57,27 @@ const EmailDetail = ({ email }) => {
 
   const senderName = fullEmail.sender?.emailAddress?.name;
   const senderEmail = fullEmail.sender?.emailAddress?.address;
+
+  const handleAIAnalysis = async () => {
+    setAiLoading(true);
+    setAiError(null);
+    setAiResult(null);
+    try {
+      const res = await api.post('/email/process-ai', {
+        emailId: fullEmail.id,
+        subject: fullEmail.subject,
+        body: fullEmail.body?.content || fullEmail.bodyPreview,
+        senderEmail: senderEmail
+      });
+      setAiResult(res.data);
+    } catch (err) {
+      console.error('AI Analysis failed', err);
+      setAiError(err.response?.data?.message || 'Failed to analyze email with AI.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
 
   const handleReplyClick = () => {
     setActiveMode('reply');
@@ -159,6 +190,172 @@ const EmailDetail = ({ email }) => {
 
       {/* Separator line */}
       <div className="border-t border-stone-200/60 dark:border-stone-800 my-4" />
+
+      {/* AI Assistant Section */}
+      <div className="mb-6">
+        {!aiResult && !aiLoading && !aiError && (
+          <button
+            onClick={handleAIAnalysis}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-lg text-sm font-semibold shadow-md shadow-indigo-500/10 hover:shadow-lg transition-all duration-200 cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+            Analyze with TradeMind AI
+          </button>
+        )}
+
+        {aiLoading && (
+          <div className="p-4 rounded-xl border border-dashed border-violet-300 dark:border-violet-800 bg-violet-50/20 dark:bg-[#1f1d2b] flex items-center gap-4 animate-pulse">
+            <Loader2 className="w-6 h-6 animate-spin text-violet-600 dark:text-violet-400" />
+            <div>
+              <p className="text-sm font-bold text-violet-905 dark:text-violet-200">AI Agent is analyzing email...</p>
+              <p className="text-xs text-stone-500 dark:text-stone-400">Determining workflow context and extracting key entities</p>
+            </div>
+          </div>
+        )}
+
+        {aiError && (
+          <div className="p-4 rounded-xl border border-red-200 dark:border-red-800/45 bg-red-50/50 dark:bg-red-950/10 flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-red-650 dark:text-red-400" />
+            <div className="flex-1">
+              <p className="text-sm font-bold text-red-900 dark:text-red-200">AI analysis failed</p>
+              <p className="text-xs text-red-700 dark:text-red-400">{aiError}</p>
+            </div>
+            <button
+              onClick={handleAIAnalysis}
+              className="text-xs px-3 py-1 bg-white hover:bg-stone-50 dark:bg-[#2c2f3c] dark:hover:bg-[#34384a] text-stone-750 dark:text-stone-300 rounded-md border border-stone-200 dark:border-stone-750 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {aiResult && (
+          <div className="p-5 rounded-xl border border-stone-250 dark:border-stone-800 bg-stone-50/40 dark:bg-[#1a1d28] shadow-sm flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-stone-900 dark:text-white">
+                <Bot className="w-5 h-5 text-violet-600 dark:text-violet-450 animate-bounce" />
+                <span className="font-bold text-sm tracking-wide">TradeMind AI Recommendation</span>
+              </div>
+              
+              {/* Category badges */}
+              {aiResult.category === 'TASK' && (
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 flex items-center gap-1.5">
+                  <ClipboardList className="w-3.5 h-3.5" />
+                  Task Created & Assigned
+                </span>
+              )}
+              {aiResult.category === 'NEW_INQUIRY' && (
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400 flex items-center gap-1.5">
+                  <Workflow className="w-3.5 h-3.5" />
+                  New Inquiry Initialized
+                </span>
+              )}
+              {aiResult.category === 'INQUIRY_UPDATE' && (
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-sky-100 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400 flex items-center gap-1.5">
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Inquiry Status Updated
+                </span>
+              )}
+              {aiResult.category === 'UNKNOWN' && (
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-stone-100 text-stone-600 dark:bg-stone-850 dark:text-stone-400">
+                  General correspondence
+                </span>
+              )}
+            </div>
+
+            <p className="text-xs text-stone-650 dark:text-stone-400 leading-relaxed font-serif italic border-l-2 border-stone-300 dark:border-stone-700 pl-3">
+              "{aiResult.explanation}"
+            </p>
+
+            {/* Action status message */}
+            <div className="p-3 bg-[#EAF3EF] dark:bg-[#112a20]/40 border border-[#b2dcd3]/30 dark:border-emerald-900/30 rounded-lg text-xs text-[#0A5C43] dark:text-emerald-400 font-semibold flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{aiResult.message}</span>
+            </div>
+
+            {/* Structured details display */}
+            {aiResult.category === 'TASK' && aiResult.dbRecord && (
+              <div className="text-xs border border-stone-200 dark:border-[#2a2e3a] rounded-lg p-3 bg-white dark:bg-[#12141c] space-y-2">
+                <div className="flex justify-between border-b border-stone-100 dark:border-stone-800 pb-1.5">
+                  <span className="text-stone-400">Task Title</span>
+                  <span className="font-semibold text-stone-800 dark:text-stone-200">{aiResult.dbRecord.title}</span>
+                </div>
+                <div className="flex justify-between border-b border-stone-100 dark:border-stone-800 pb-1.5">
+                  <span className="text-stone-400">Assigned To</span>
+                  <span className="font-semibold text-stone-805 dark:text-stone-100">
+                    👤 {aiResult.dbRecord.assignedEmployee?.fullName || 'Unassigned'} ({aiResult.dbRecord.assignedEmployee?.designation || 'Staff'})
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-stone-400">Priority Level</span>
+                  <span className={`font-black ${
+                    aiResult.dbRecord.priority === 'HIGH' ? 'text-red-500' :
+                    aiResult.dbRecord.priority === 'MEDIUM' ? 'text-amber-500' : 'text-stone-500'
+                  }`}>
+                    {aiResult.dbRecord.priority}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {aiResult.category === 'NEW_INQUIRY' && aiResult.dbRecord && (
+              <div className="text-xs border border-stone-200 dark:border-[#2a2e3a] rounded-lg p-3 bg-white dark:bg-[#12141c] space-y-2">
+                <div className="flex justify-between border-b border-stone-100 dark:border-stone-800 pb-1.5">
+                  <span className="text-stone-400">Inquiry Number</span>
+                  <span className="font-mono font-bold text-[#0A5C43] dark:text-emerald-400">{aiResult.dbRecord.inquiryNumber}</span>
+                </div>
+                <div className="flex justify-between border-b border-stone-100 dark:border-stone-800 pb-1.5">
+                  <span className="text-stone-400">Client / Company</span>
+                  <span className="font-semibold text-stone-800 dark:text-stone-200">
+                    {aiResult.aiResult.inquiryDetails?.clientName} ({aiResult.aiResult.inquiryDetails?.company || 'No Company'})
+                  </span>
+                </div>
+                {aiResult.aiResult.inquiryDetails?.vesselName && (
+                  <div className="flex justify-between border-b border-stone-100 dark:border-stone-800 pb-1.5">
+                    <span className="text-stone-400">Vessel Reference</span>
+                    <span className="font-semibold text-stone-850 dark:text-stone-150">🚢 {aiResult.aiResult.inquiryDetails.vesselName}</span>
+                  </div>
+                )}
+                <div>
+                  <span className="text-stone-400 block mb-1">Requested Items:</span>
+                  <ul className="list-disc pl-4 space-y-1 text-stone-700 dark:text-stone-300">
+                    {(aiResult.aiResult.inquiryDetails?.items || []).map((item, idx) => (
+                      <li key={idx}>
+                        <span className="font-semibold">{item.quantity} {item.unit}</span> - {item.description}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {aiResult.category === 'INQUIRY_UPDATE' && aiResult.dbRecord && (
+              <div className="text-xs border border-stone-200 dark:border-[#2a2e3a] rounded-lg p-3 bg-white dark:bg-[#12141c] space-y-2">
+                <div className="flex justify-between border-b border-stone-100 dark:border-stone-800 pb-1.5">
+                  <span className="text-stone-400">Updated Inquiry</span>
+                  <span className="font-mono font-bold text-sky-655 dark:text-sky-400">{aiResult.aiResult.inquiryUpdateDetails?.inquiryNumber}</span>
+                </div>
+                <div>
+                  <span className="text-stone-400 block mb-1">AI Extracted Update Summary:</span>
+                  <p className="bg-stone-50 dark:bg-stone-900 p-2 rounded border border-stone-100 dark:border-stone-800 text-stone-700 dark:text-stone-300 font-sans leading-tight">
+                    {aiResult.aiResult.inquiryUpdateDetails?.remarks}
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            <div className="flex justify-end">
+              <button 
+                onClick={handleAIAnalysis}
+                className="text-stone-500 hover:text-stone-700 dark:text-stone-450 dark:hover:text-stone-200 text-xs flex items-center gap-1 font-medium transition-colors"
+              >
+                <RefreshCw className="w-3 h-3" /> Re-classify
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
 
       {/* Body Content */}
       <div className="flex-1 overflow-y-auto py-2 custom-scrollbar">

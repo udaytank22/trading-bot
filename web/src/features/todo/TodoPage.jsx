@@ -4,9 +4,11 @@
  * Supports both light and dark modes.
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Plus, MapPin, ShieldAlert, Users, Camera, ChevronLeft, ChevronRight } from "lucide-react";
 import MemoryDetailsModal from "./MemoryDetailsModal";
+import api from "../../services/apiClient";
+
 
 // ─── MOCK DATA ───────────────────────────────────────────────────────────────
 const MOCK_AGENDA = [
@@ -148,6 +150,71 @@ const CalendarWidget = () => {
 // ─── MAIN COMPONENT ────────────────────────────────────────────────────────────
 export default function TodoPage() {
   const [selectedMemory, setSelectedMemory] = useState(null);
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchTasks = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/tasks');
+      setTasks(res.data);
+    } catch (err) {
+      console.error('Failed to fetch tasks', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  const toggleTaskStatus = async (item) => {
+    if (!item.isDbTask) return;
+    const newStatus = item.rawStatus === "PENDING" ? "COMPLETED" : "PENDING";
+    try {
+      await api.put(`/tasks/${item.dbId}`, { status: newStatus });
+      fetchTasks();
+    } catch (err) {
+      console.error('Failed to update task status', err);
+    }
+  };
+
+  const dbTasksMapped = tasks.map(task => {
+    const taskDate = new Date(task.createdAt);
+    const hours = taskDate.getHours();
+    const period = hours >= 12 ? "PM" : "AM";
+    const displayHours = hours % 12 || 12;
+    const minutes = taskDate.getMinutes().toString().padStart(2, '0');
+    
+    return {
+      id: `db-${task.id}`,
+      time: `${displayHours}:${minutes}`,
+      period: period,
+      title: task.title,
+      location: task.description || "General Office Assignment",
+      status: task.status === "COMPLETED" ? "CONFIRMED" : "PENDING",
+      statusCls: task.status === "COMPLETED" 
+        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-500" 
+        : "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-500",
+      borderColor: task.priority === "HIGH" ? "border-red-500" : task.priority === "MEDIUM" ? "border-[#b388ff]" : "border-[#00e5ff]",
+      glowCls: task.priority === "HIGH" 
+        ? "dark:shadow-[-8px_0_15px_-5px_rgba(239,68,68,0.15)] shadow-[-8px_0_15px_-5px_rgba(239,68,68,0.3)]" 
+        : "dark:shadow-[-8px_0_15px_-5px_rgba(0,229,255,0.1)] shadow-[-8px_0_15px_-5px_rgba(0,229,255,0.3)]",
+      tags: task.assignedEmployee ? [
+        { icon: Users, label: `${task.assignedEmployee.fullName}\n(${task.assignedEmployee.designation || 'Staff'})` }
+      ] : [],
+      isDbTask: true,
+      dbId: task.id,
+      rawStatus: task.status
+    };
+  });
+
+  const displayAgenda = [
+    ...dbTasksMapped,
+    ...MOCK_AGENDA.filter(mock => !dbTasksMapped.some(dbTask => dbTask.title === mock.title))
+  ];
+
 
   return (
     // Background adapting between gray-50 in light mode and dark navy in dark mode
@@ -175,7 +242,7 @@ export default function TodoPage() {
 
           {/* Agenda List */}
           <div className="flex flex-col gap-4">
-            {MOCK_AGENDA.map((item) => (
+            {displayAgenda.map((item) => (
               <div
                 key={item.id}
                 className={`bg-white dark:bg-[#171a27] rounded-xl border border-gray-200 dark:border-white/5 border-l-4 ${item.borderColor} ${item.glowCls} p-5 flex flex-col md:flex-row gap-6 transition-all hover:-translate-y-[2px] shadow-sm`}
@@ -199,7 +266,11 @@ export default function TodoPage() {
                       </div>
                     </div>
                     {/* Status Badge */}
-                    <div className={`px-3 py-1.5 rounded-full text-[10px] font-bold tracking-widest transition-colors ${item.statusCls}`}>
+                    <div 
+                      onClick={() => toggleTaskStatus(item)}
+                      className={`px-3 py-1.5 rounded-full text-[10px] font-bold tracking-widest transition-colors ${item.statusCls} ${item.isDbTask ? 'cursor-pointer' : ''}`}
+                      title={item.isDbTask ? "Click to toggle completion status" : ""}
+                    >
                       {item.status}
                     </div>
                   </div>

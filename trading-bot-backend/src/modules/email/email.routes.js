@@ -18,4 +18,7 @@ router.post('/send-test', authMiddleware, emailController.sendTestEmail);
 // Send a custom email (reply, forward)
 router.post('/send', authMiddleware, emailController.sendCustomEmail);
 
+// Process email with AI and execute tasks / inquiries workflows
+router.post('/process-ai', authMiddleware, emailController.processAI);
+
 module.exports = router;

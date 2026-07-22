@@ -17,6 +17,7 @@ const envSchema = z.object({
   }).min(1, "DATABASE_URL cannot be empty"),
   GMAIL_USER: z.string().optional(),
   GMAIL_APP_PASSWORD: z.string().optional(),
+  GEMINI_API_KEY: z.string().optional(),
   OUTLOOK_CLIENT_ID: z.string().optional(),
   OUTLOOK_CLIENT_SECRET: z.string().optional(),
   OUTLOOK_REDIRECT_URI: z.string().default('http://localhost:5000/api/outlook/callback'),

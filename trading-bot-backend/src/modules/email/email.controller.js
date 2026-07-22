@@ -1,4 +1,9 @@
 const emailService = require('./email.service');
+const { analyzeEmailWithAI } = require('../../utils/ai.service');
+const tasksService = require('../tasks/tasks.service');
+const inquiriesService = require('../inquiries/inquiries.service');
+const prisma = require('../../prisma/client');
+
 
 /**
  * Get Gmail authentication status
@@ -118,10 +123,106 @@ const sendCustomEmail = async (req, res, next) => {
   }
 };
 
+/**
+ * Run AI categorization on an email and trigger workflow actions
+ */
+const processAI = async (req, res, next) => {
+  try {
+    const { emailId, subject, body, senderEmail } = req.body;
+    if (!subject || !body) {
+      return res.status(400).json({ message: 'Subject and body are required to run AI analysis' });
+    }
+
+    const aiResult = await analyzeEmailWithAI(subject, body, senderEmail);
+
+    let dbRecord = null;
+    let actionMessage = '';
+
+    if (aiResult.category === 'TASK') {
+      dbRecord = await tasksService.createTask({
+        title: aiResult.taskDetails.title,
+        description: aiResult.taskDetails.description,
+        priority: aiResult.taskDetails.priority,
+        suggestedEmployeeName: aiResult.taskDetails.suggestedEmployeeName,
+        suggestedDepartment: aiResult.taskDetails.suggestedDepartment,
+        emailId: emailId || null
+      });
+      actionMessage = `Created a new task "${dbRecord.title}" and assigned it to employee "${dbRecord.assignedEmployee ? dbRecord.assignedEmployee.fullName : 'None'}".`;
+
+    } else if (aiResult.category === 'NEW_INQUIRY') {
+      dbRecord = await inquiriesService.createPublicInquiry({
+        clientEmail: aiResult.inquiryDetails.clientEmail || senderEmail,
+        clientName: aiResult.inquiryDetails.clientName || (senderEmail ? senderEmail.split('@')[0] : 'Client'),
+        clientPhone: null,
+        company: aiResult.inquiryDetails.company || null,
+        address: null,
+        vesselName: aiResult.inquiryDetails.vesselName || null,
+        imoNumber: aiResult.inquiryDetails.imoNumber || null,
+        items: aiResult.inquiryDetails.items || []
+      });
+      actionMessage = `Created new Inquiry ${dbRecord.inquiryNumber} for client "${aiResult.inquiryDetails.clientName}".`;
+
+    } else if (aiResult.category === 'INQUIRY_UPDATE') {
+      const inquiryNum = aiResult.inquiryUpdateDetails.inquiryNumber;
+      if (!inquiryNum || inquiryNum === 'UNKNOWN') {
+        actionMessage = `Email classified as inquiry update, but no valid inquiry number was found.`;
+      } else {
+        const inquiry = await prisma.inquiry.findFirst({
+          where: {
+            inquiryNumber: { equals: inquiryNum.trim(), mode: 'insensitive' },
+            deletedAt: null
+          }
+        });
+
+        if (inquiry) {
+          // Update remarks and status history
+          await prisma.inquiryStatusHistory.create({
+            data: {
+              inquiryId: inquiry.id,
+              fromStatus: inquiry.currentStatus,
+              toStatus: inquiry.currentStatus,
+              changedById: req.user.id,
+              remarks: `[AI Email Update]: ${aiResult.inquiryUpdateDetails.remarks}`
+            }
+          });
+
+          dbRecord = await prisma.inquiry.update({
+            where: { id: inquiry.id },
+            data: {
+              remarks: inquiry.remarks 
+                ? `${inquiry.remarks}\n\n[AI Email Update]: ${aiResult.inquiryUpdateDetails.remarks}` 
+                : `[AI Email Update]: ${aiResult.inquiryUpdateDetails.remarks}`
+            }
+          });
+          actionMessage = `Found and updated Inquiry ${inquiryNum} with client updates.`;
+        } else {
+          actionMessage = `Email classified as update for Inquiry ${inquiryNum}, but it was not found in our system.`;
+        }
+      }
+    } else {
+      actionMessage = 'AI determined this email does not require automated workflow actions.';
+    }
+
+    return res.status(200).json({
+      success: true,
+      category: aiResult.category,
+      explanation: aiResult.explanation,
+      message: actionMessage,
+      aiResult,
+      dbRecord
+    });
+  } catch (error) {
+    console.error('[Email AI process] Error:', error);
+    next(error);
+  }
+};
+
 module.exports = {
   getAuthStatus,
   getEmails,
   getEmailById,
   sendTestEmail,
   sendCustomEmail,
+  processAI,
 };
+
