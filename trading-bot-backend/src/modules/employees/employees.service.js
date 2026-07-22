@@ -227,6 +227,15 @@ module.exports = {
       });
     }
 
+    // Update employee status to ACTIVE when password is set / access is granted
+    await prisma.employee.update({
+      where: { id: numericId },
+      data: {
+        status: 'ACTIVE',
+        updatedById: creatorId
+      }
+    });
+
     return { id: user.id, email: user.email };
   }
 };

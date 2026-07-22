@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { setEmployeePassword } from "@services/api/employees";
 import { Button } from "@components/ui";
 
@@ -47,7 +47,7 @@ const MONTH_NAMES = [
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export default function EmployeeViewModal({ isOpen, onClose, employee }) {
+export default function EmployeeViewModal({ isOpen, onClose, employee, onRefresh }) {
   const today = new Date();
   const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [viewYear, setViewYear] = useState(today.getFullYear());
@@ -58,6 +58,14 @@ export default function EmployeeViewModal({ isOpen, onClose, employee }) {
   const [savingPassword, setSavingPassword] = useState(false);
   const [passwordSuccess, setPasswordSuccess] = useState("");
   const [passwordError, setPasswordError] = useState("");
+
+  const [currentStatus, setCurrentStatus] = useState(null);
+
+  useEffect(() => {
+    if (employee) {
+      setCurrentStatus(employee.status);
+    }
+  }, [employee]);
 
   const handleSavePassword = async (e) => {
     e.preventDefault();
@@ -73,6 +81,10 @@ export default function EmployeeViewModal({ isOpen, onClose, employee }) {
       if (res.success) {
         setPasswordSuccess("User access granted & password set successfully!");
         setPassword("");
+        setCurrentStatus("Active");
+        if (onRefresh) {
+          onRefresh();
+        }
         setTimeout(() => setShowPasswordBox(false), 2000);
       } else {
         setPasswordError(res.message || "Failed to set password");
@@ -142,7 +154,7 @@ export default function EmployeeViewModal({ isOpen, onClose, employee }) {
 
   if (!isOpen || !employee) return null;
 
-  const statusColor = employee.status === "Active"
+  const statusColor = currentStatus === "Active"
     ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
     : "bg-gray-500/15 text-gray-400 border-gray-500/30";
 
@@ -241,7 +253,7 @@ export default function EmployeeViewModal({ isOpen, onClose, employee }) {
                 <div className="pt-2 border-t border-gray-100 dark:border-[#2a2d33]">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1.5">Status</span>
                   <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${statusColor}`}>
-                    {employee.status}
+                    {currentStatus}
                   </span>
                 </div>
               </div>

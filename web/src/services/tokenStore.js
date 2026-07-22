@@ -5,14 +5,29 @@
  * ensuring tokens expire automatically when the browser or tab is closed.
  */
 
-let inMemoryAccessToken = localStorage.getItem('token') || null;
+let inMemoryAccessToken = null;
+try {
+  if (typeof localStorage !== 'undefined') {
+    inMemoryAccessToken = localStorage.getItem('token') || null;
+  }
+} catch (e) {
+  // Ignore error in non-browser environments
+}
 
 /**
  * Retrieves the current access token.
  * @returns {string|null} The access token or null if not set.
  */
 export function getAccessToken() {
-  return inMemoryAccessToken || localStorage.getItem('token');
+  if (inMemoryAccessToken) return inMemoryAccessToken;
+  try {
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem('token');
+    }
+  } catch (e) {
+    // Ignore error
+  }
+  return null;
 }
 
 /**
@@ -21,10 +36,16 @@ export function getAccessToken() {
  */
 export function setAccessToken(token) {
   inMemoryAccessToken = token || null;
-  if (token) {
-    localStorage.setItem('token', token);
-  } else {
-    localStorage.removeItem('token');
+  try {
+    if (typeof localStorage !== 'undefined') {
+      if (token) {
+        localStorage.setItem('token', token);
+      } else {
+        localStorage.removeItem('token');
+      }
+    }
+  } catch (e) {
+    // Ignore error
   }
 }
 
@@ -33,5 +54,12 @@ export function setAccessToken(token) {
  */
 export function clearAccessToken() {
   inMemoryAccessToken = null;
-  localStorage.removeItem('token');
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('token');
+    }
+  } catch (e) {
+    // Ignore error
+  }
 }
+

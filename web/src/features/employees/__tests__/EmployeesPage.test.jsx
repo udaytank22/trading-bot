@@ -134,7 +134,7 @@ describe('EmployeesPage', () => {
 
     // The search bar should be visible immediately (no async)
     const searchInput = screen.getByPlaceholderText(
-      /Search by name, email or role/i
+      /Search name, email or role/i
     );
     expect(searchInput).toBeInTheDocument();
   });
@@ -170,7 +170,7 @@ describe('EmployeesPage', () => {
 
     // Type in search bar to filter to just "Alice"
     const searchInput = screen.getByPlaceholderText(
-      /Search by name, email or role/i
+      /Search name, email or role/i
     );
     fireEvent.change(searchInput, { target: { value: 'Alice' } });
 
@@ -186,7 +186,7 @@ describe('EmployeesPage', () => {
 
     // The filter dropdown button should exist (it shows "All Status" placeholder)
     await waitFor(() => {
-      expect(screen.getByText('All Status')).toBeInTheDocument();
+      expect(screen.getByText(/All status/i)).toBeInTheDocument();
     });
   });
 });

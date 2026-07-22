@@ -12,7 +12,7 @@ const NAV_LINKS = [
   { name: "Inventory", path: "/inventory", icon: <InventoryIcon /> },
   { name: "Employees", path: "/employees", icon: <UsersIcon /> },
   { name: "Inbox", path: "/inbox", icon: <InboxIcon /> },
-  { name: "To-Do", path: "/todo", icon: <TodoIcon /> },
+  // { name: "To-Do", path: "/todo", icon: <TodoIcon /> },
   { name: "Reports", path: "/reports", icon: <ReportsIcon /> },
 ];
 

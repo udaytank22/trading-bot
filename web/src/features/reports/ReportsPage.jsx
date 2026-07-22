@@ -14,13 +14,10 @@ import { exportToPDF, exportToExcel } from '../../utils/exportUtils';
 import PageLoader from '../../components/common/PageLoader';
 
 const REPORT_TYPES = [
-  { id: 'profit', label: 'Profit & Margins' },
-  { id: 'invoices', label: 'Invoices (AR)' },
-  { id: 'payments', label: 'Payments Received' },
-  { id: 'pipeline', label: 'Inquiry Pipeline' },
-  { id: 'inventory', label: 'Inventory & Stock' },
-  { id: 'employees', label: 'Employee Attendance' },
-  { id: 'documents', label: 'Expiring Documents' }
+  { id: 'profit', label: 'Profit & margins' },
+  { id: 'invoices', label: 'Invoices' },
+  { id: 'pipeline', label: 'Inquiry pipeline' },
+  { id: 'inventory', label: 'Inventory & stock' }
 ];
 
 export default function ReportsPage() {
@@ -31,7 +28,7 @@ export default function ReportsPage() {
 
   const loadReport = async () => {
     setLoading(true);
-    setData(null); // Clear previous tab data to prevent rendering mismatched summaries
+    setData(null);
     try {
       const filters = {};
       if (dateRange.startDate) filters.startDate = dateRange.startDate;
@@ -41,11 +38,8 @@ export default function ReportsPage() {
       switch (activeTab) {
         case 'profit': res = await getProfitReport(filters); break;
         case 'invoices': res = await getInvoiceReport(filters); break;
-        case 'payments': res = await getPaymentReport(filters); break;
         case 'pipeline': res = await getPipelineReport(); break;
         case 'inventory': res = await getInventoryReport(); break;
-        case 'employees': res = await getEmployeeReport(); break;
-        case 'documents': res = await getDocumentExpiryReport(); break;
         default: break;
       }
       setData(res?.data || res);
@@ -72,7 +66,6 @@ export default function ReportsPage() {
     exportToExcel(title, columns, tableData);
   };
 
-  // Helper to normalize data for export based on active tab
   const getExportConfig = () => {
     const toArray = (val) => Array.isArray(val) ? val : (val && Array.isArray(val.data) ? val.data : []);
 
@@ -81,14 +74,13 @@ export default function ReportsPage() {
         return {
           title: 'Profit and Margin Report',
           columns: [
-            { header: 'Inquiry No', key: 'inquiryNumber' },
-            { header: 'Client', key: 'clientName' },
-            { header: 'Vessel', key: 'vesselName' },
-            { header: 'Revenue', key: 'revenue' },
-            { header: 'Cost', key: 'cost' },
-            { header: 'Profit', key: 'profit' },
-            { header: 'Margin (%)', key: 'marginPercentage' },
-            { header: 'Date Closed', key: 'dateClosed' },
+            { header: 'INQUIRY', key: 'inquiryNumber' },
+            { header: 'CLIENT', key: 'clientName' },
+            { header: 'VESSEL', key: 'vesselName' },
+            { header: 'REVENUE', key: 'revenue' },
+            { header: 'COST', key: 'cost' },
+            { header: 'PROFIT', key: 'profit' },
+            { header: 'MARGIN', key: 'marginPercentage' }
           ],
           tableData: data.deals || []
         };
@@ -96,39 +88,22 @@ export default function ReportsPage() {
         return {
           title: 'Invoices Report',
           columns: [
-            { header: 'Invoice No', key: 'invoiceNumber' },
-            { header: 'Client', key: 'clientName' },
-            { header: 'Status', key: 'status' },
-            { header: 'Total', key: 'total' },
-            { header: 'Paid', key: 'paidAmount' },
-            { header: 'Pending', key: 'pendingAmount' },
-            { header: 'Date', key: 'invoiceDate' },
+            { header: 'INVOICE NO', key: 'invoiceNumber' },
+            { header: 'CLIENT', key: 'clientName' },
+            { header: 'STATUS', key: 'status' },
+            { header: 'TOTAL', key: 'total' },
+            { header: 'PAID', key: 'paidAmount' },
+            { header: 'PENDING', key: 'pendingAmount' },
+            { header: 'DATE', key: 'invoiceDate' },
           ],
           tableData: (data.invoices || []).map(i => ({...i, clientName: i.client?.name || 'N/A'}))
-        };
-      case 'payments':
-        return {
-          title: 'Payments Report',
-          columns: [
-            { header: 'Payment Ref', key: 'referenceNumber' },
-            { header: 'Invoice No', key: 'invoiceNumber' },
-            { header: 'Client', key: 'clientName' },
-            { header: 'Amount', key: 'amount' },
-            { header: 'Method', key: 'method' },
-            { header: 'Date', key: 'paymentDate' },
-          ],
-          tableData: (data.payments || []).map(p => ({
-            ...p, 
-            invoiceNumber: p.invoice?.invoiceNumber,
-            clientName: p.invoice?.client?.name || 'N/A'
-          }))
         };
       case 'pipeline':
         return {
           title: 'Inquiry Pipeline Report',
           columns: [
-            { header: 'Status', key: 'status' },
-            { header: 'Count', key: 'count' },
+            { header: 'STATUS', key: 'status' },
+            { header: 'COUNT', key: 'count' },
           ],
           tableData: Object.entries(data.statusCounts || {}).map(([status, count]) => ({ status, count }))
         };
@@ -137,44 +112,11 @@ export default function ReportsPage() {
           title: 'Inventory Stock Report',
           columns: [
             { header: 'IMPA', key: 'impa' },
-            { header: 'Item Name', key: 'itemName' },
-            { header: 'Category', key: 'category' },
-            { header: 'Total Qty', key: 'totalQty' },
-            { header: 'Min Level', key: 'minimumStockLevel' },
-            { header: 'Status', key: 'status' },
-          ],
-          tableData: toArray(data)
-        };
-      case 'employees':
-        return {
-          title: 'Employee Attendance Report',
-          columns: [
-            { header: 'Name', key: 'fullName' },
-            { header: 'Department', key: 'department' },
-            { header: 'Total Records', key: 'totalRecords' },
-            { header: 'Present', key: 'present' },
-            { header: 'Late', key: 'late' },
-            { header: 'Sick', key: 'sickLeave' },
-            { header: 'Off Day', key: 'offDay' },
-          ],
-          tableData: toArray(data).map(e => ({
-            ...e, 
-            totalRecords: e.attendanceStats?.totalRecords || 0,
-            present: e.attendanceStats?.present || 0,
-            late: e.attendanceStats?.late || 0,
-            sickLeave: e.attendanceStats?.sickLeave || 0,
-            offDay: e.attendanceStats?.offDay || 0,
-          }))
-        };
-      case 'documents':
-        return {
-          title: 'Expiring Documents Report',
-          columns: [
-            { header: 'Title', key: 'title' },
-            { header: 'Category', key: 'category' },
-            { header: 'Employee', key: 'employeeName' },
-            { header: 'Status', key: 'status' },
-            { header: 'Expiry Date', key: 'expiryDate' },
+            { header: 'ITEM NAME', key: 'itemName' },
+            { header: 'CATEGORY', key: 'category' },
+            { header: 'TOTAL QTY', key: 'totalQty' },
+            { header: 'MIN LEVEL', key: 'minimumStockLevel' },
+            { header: 'STATUS', key: 'status' },
           ],
           tableData: toArray(data)
         };
@@ -186,53 +128,74 @@ export default function ReportsPage() {
     if (!data) return null;
     
     if (activeTab === 'profit' && data.summary) {
+      const revenue = parseFloat(data.summary.totalRevenue) || 0;
+      const cost = parseFloat(data.summary.totalCost) || 0;
+      const profit = parseFloat(data.summary.totalProfit) || 0;
+      const margin = parseFloat(data.summary.averageMargin) || 0;
+
       return (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white dark:bg-[#1a1d23] p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-            <p className="text-sm text-gray-500">Total Revenue</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">${(data.summary.totalRevenue || 0).toLocaleString()}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+          {/* Total Revenue */}
+          <div className="bg-white dark:bg-[#1a1d23] p-5 rounded-2xl border border-stone-200/60 dark:border-stone-800 border-t-[3px] border-t-[#1D70B8] shadow-sm flex flex-col justify-between min-h-[105px]">
+            <p className="text-2xl font-bold text-stone-900 dark:text-white leading-none">
+              ₹{(revenue).toLocaleString('en-IN')}
+            </p>
+            <p className="text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider mt-2">
+              Total Revenue
+            </p>
           </div>
-          <div className="bg-white dark:bg-[#1a1d23] p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-            <p className="text-sm text-gray-500">Total Cost</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">${(data.summary.totalCost || 0).toLocaleString()}</p>
+          
+          {/* Total Cost */}
+          <div className="bg-white dark:bg-[#1a1d23] p-5 rounded-2xl border border-stone-200/60 dark:border-stone-800 border-t-[3px] border-t-[#C87E23] shadow-sm flex flex-col justify-between min-h-[105px]">
+            <p className="text-2xl font-bold text-stone-900 dark:text-white leading-none">
+              ₹{(cost).toLocaleString('en-IN')}
+            </p>
+            <p className="text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider mt-2">
+              Total Cost
+            </p>
           </div>
-          <div className="bg-white dark:bg-[#1a1d23] p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-            <p className="text-sm text-gray-500">Net Profit</p>
-            <p className="text-2xl font-bold text-emerald-600">${(data.summary.totalProfit || 0).toLocaleString()}</p>
+          
+          {/* Net Profit */}
+          <div className="bg-white dark:bg-[#1a1d23] p-5 rounded-2xl border border-stone-200/60 dark:border-stone-800 border-t-[3px] border-t-[#0E5A44] shadow-sm flex flex-col justify-between min-h-[105px]">
+            <p className="text-2xl font-bold text-stone-900 dark:text-white leading-none">
+              ₹{(profit).toLocaleString('en-IN')}
+            </p>
+            <p className="text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider mt-2">
+              Net Profit
+            </p>
           </div>
-          <div className="bg-white dark:bg-[#1a1d23] p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-            <p className="text-sm text-gray-500">Avg Margin</p>
-            <p className="text-2xl font-bold text-blue-600">{data.summary.averageMargin || '0.00'}%</p>
+          
+          {/* Avg Margin */}
+          <div className="bg-white dark:bg-[#1a1d23] p-5 rounded-2xl border border-stone-200/60 dark:border-stone-800 border-t-[3px] border-t-[#C87E23] shadow-sm flex flex-col justify-between min-h-[105px]">
+            <p className="text-2xl font-bold text-stone-900 dark:text-white leading-none">
+              {margin.toFixed(1)}%
+            </p>
+            <p className="text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider mt-2">
+              Avg Margin
+            </p>
           </div>
         </div>
       );
     }
     
     if (activeTab === 'invoices' && data.summary) {
-      return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white dark:bg-[#1a1d23] p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-            <p className="text-sm text-gray-500">Total Billed</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">${(data.summary.totalBilled || 0).toLocaleString()}</p>
-          </div>
-          <div className="bg-white dark:bg-[#1a1d23] p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-            <p className="text-sm text-gray-500">Total Paid</p>
-            <p className="text-2xl font-bold text-emerald-600">${(data.summary.totalPaid || 0).toLocaleString()}</p>
-          </div>
-          <div className="bg-white dark:bg-[#1a1d23] p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-            <p className="text-sm text-gray-500">Total Pending (AR)</p>
-            <p className="text-2xl font-bold text-red-600">${(data.summary.totalPending || 0).toLocaleString()}</p>
-          </div>
-        </div>
-      );
-    }
+      const billed = parseFloat(data.summary.totalBilled) || 0;
+      const paid = parseFloat(data.summary.totalPaid) || 0;
+      const pending = parseFloat(data.summary.totalPending) || 0;
 
-    if (activeTab === 'payments') {
       return (
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mb-6">
-          <div className="bg-white dark:bg-[#1a1d23] p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-            <p className="text-sm text-gray-500">Total Payments Received</p>
-            <p className="text-2xl font-bold text-emerald-600">${(data.totalReceived || 0).toLocaleString()}</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white dark:bg-[#1a1d23] p-5 rounded-2xl border border-stone-200/60 dark:border-stone-800 border-t-[3px] border-t-[#1D70B8] shadow-sm flex flex-col justify-between min-h-[105px]">
+            <p className="text-2xl font-bold text-stone-900 dark:text-white">₹{billed.toLocaleString('en-IN')}</p>
+            <p className="text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider mt-2">Total Billed</p>
+          </div>
+          <div className="bg-white dark:bg-[#1a1d23] p-5 rounded-2xl border border-stone-200/60 dark:border-stone-800 border-t-[3px] border-t-[#0E5A44] shadow-sm flex flex-col justify-between min-h-[105px]">
+            <p className="text-2xl font-bold text-stone-900 dark:text-white">₹{paid.toLocaleString('en-IN')}</p>
+            <p className="text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider mt-2">Total Paid</p>
+          </div>
+          <div className="bg-white dark:bg-[#1a1d23] p-5 rounded-2xl border border-stone-200/60 dark:border-stone-800 border-t-[3px] border-t-[#C87E23] shadow-sm flex flex-col justify-between min-h-[105px]">
+            <p className="text-2xl font-bold text-stone-900 dark:text-white">₹{pending.toLocaleString('en-IN')}</p>
+            <p className="text-[10px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider mt-2">Total Pending (AR)</p>
           </div>
         </div>
       );
@@ -242,14 +205,42 @@ export default function ReportsPage() {
 
   const renderTable = () => {
     if (loading) return <div className="p-8 text-center"><PageLoader /></div>;
-    if (!data) return <div className="p-8 text-center text-gray-500">No data available for this report.</div>;
+    if (!data) return <div className="p-8 text-center text-stone-500">No data available for this report.</div>;
 
     const { columns, tableData } = getExportConfig();
+
+    const mappedColumns = columns.map(col => {
+      let renderCell = undefined;
+
+      if (['revenue', 'cost', 'profit', 'total', 'paidAmount', 'pendingAmount', 'amount'].includes(col.key)) {
+        renderCell = (row) => {
+          const val = row[col.key];
+          return typeof val === 'number' ? `₹${val.toLocaleString('en-IN')}` : val;
+        };
+      } else if (col.key === 'marginPercentage') {
+        renderCell = (row) => {
+          const val = row[col.key];
+          return typeof val === 'number' ? `${val.toFixed(1)}%` : val;
+        };
+      } else if (col.key === 'inquiryNumber') {
+        renderCell = (row) => (
+          <span className="text-[#0A5C43] dark:text-emerald-400 font-semibold cursor-pointer hover:underline">
+            {row.inquiryNumber}
+          </span>
+        );
+      }
+
+      return {
+        key: col.key,
+        label: col.header,
+        renderCell
+      };
+    });
 
     return (
       <div className="overflow-x-auto">
         <DataTable
-          columns={columns.map(c => ({ key: c.key, label: c.header }))}
+          columns={mappedColumns}
           data={tableData}
           emptyMessage="No records found."
         />
@@ -258,93 +249,119 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="p-2 md:p-4 max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Reporting Module</h1>
-          <p className="text-gray-500 mt-1">Generate, analyze, and export comprehensive business reports.</p>
-        </div>
-        
-        <div className="flex gap-2">
-          <button 
-            onClick={handleExportPDF}
-            className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 rounded-lg text-sm font-medium transition-colors"
-          >
-            <FileTextIcon className="w-4 h-4" />
-            PDF
-          </button>
-          <button 
-            onClick={handleExportExcel}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/40 rounded-lg text-sm font-medium transition-colors"
-          >
-            <FileSpreadsheetIcon className="w-4 h-4" />
-            Excel
-          </button>
-        </div>
+    <div className="flex flex-col h-full min-h-[500px] w-[calc(100%+2rem)] md:w-[calc(100%+2.5rem)] bg-[#FAF8F5] dark:bg-[#12141C] -m-4 md:-m-5 p-6 md:p-8 overflow-y-auto font-sans">
+      {/* Page Header */}
+      <div className="mb-4">
+        <h1 className="text-3xl font-serif text-[#1C2024] dark:text-stone-100 mb-1 font-normal tracking-tight">Reports</h1>
+        <p className="text-sm text-stone-500 dark:text-stone-400">Generate and export business reports.</p>
       </div>
 
-      <div className="bg-white dark:bg-[#1a1d23] rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden mb-6">
-        {/* Tabs */}
-        <div className="flex overflow-x-auto border-b border-gray-200 dark:border-gray-800 custom-scrollbar">
+      {/* Tabs Row */}
+      <div className="flex border-b border-stone-200/80 dark:border-stone-850 items-center justify-between mb-6">
+        <div className="flex gap-6 overflow-x-auto custom-scrollbar">
           {REPORT_TYPES.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`whitespace-nowrap px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab.id 
-                  ? 'border-purple-600 text-purple-600 dark:text-purple-400' 
-                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+              className={`whitespace-nowrap pb-2 text-sm font-medium transition-all relative ${
+                activeTab === tab.id
+                  ? 'text-[#0A5C43] dark:text-emerald-400 font-semibold'
+                  : 'text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200'
               }`}
             >
               {tab.label}
+              {activeTab === tab.id && (
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#0A5C43] dark:bg-emerald-400" />
+              )}
             </button>
           ))}
         </div>
+      </div>
 
-        {/* Filters */}
-        {['profit', 'invoices', 'payments'].includes(activeTab) && (
-          <div className="p-4 bg-gray-50 dark:bg-gray-800/30 border-b border-gray-200 dark:border-gray-800 flex flex-wrap items-end gap-4">
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Start Date</label>
-              <input 
-                type="date" 
-                value={dateRange.startDate}
-                onChange={(e) => setDateRange(prev => ({...prev, startDate: e.target.value}))}
-                className="w-full sm:w-auto px-3 py-1.5 bg-white dark:bg-[#0c0e12] border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">End Date</label>
-              <input 
-                type="date" 
-                value={dateRange.endDate}
-                onChange={(e) => setDateRange(prev => ({...prev, endDate: e.target.value}))}
-                className="w-full sm:w-auto px-3 py-1.5 bg-white dark:bg-[#0c0e12] border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none"
-              />
-            </div>
-            <button 
-              onClick={loadReport}
-              className="px-4 py-1.5 bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-white rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
-            >
-              <FilterIcon className="w-4 h-4" /> Apply Filters
-            </button>
-            {(dateRange.startDate || dateRange.endDate) && (
-               <button 
-                onClick={() => { setDateRange({startDate: '', endDate: ''}); setTimeout(loadReport, 100); }}
-                className="px-4 py-1.5 text-gray-500 hover:text-gray-800 dark:hover:text-white text-sm font-medium transition-colors"
-             >
-               Clear
-             </button>
-            )}
-          </div>
-        )}
+      {/* Filters and Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        {/* Left: Filters */}
+        <div className="flex flex-wrap items-center gap-3">
+          {['profit', 'invoices'].includes(activeTab) && (
+            <>
+              {/* Start Date */}
+              <div className="relative flex items-center">
+                <input
+                  type="date"
+                  value={dateRange.startDate}
+                  onChange={(e) => setDateRange(prev => ({...prev, startDate: e.target.value}))}
+                  className="appearance-none bg-white dark:bg-[#1a1d23] border border-stone-250 dark:border-stone-700 text-stone-750 dark:text-stone-300 px-3 py-1.5 pr-8 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#0A5C43] focus:border-[#0A5C43] transition-colors cursor-pointer select-none font-medium shadow-sm"
+                />
+                <div className="absolute right-2.5 pointer-events-none text-stone-400">
+                  <svg className="h-3 w-3 fill-current" viewBox="0 0 20 20">
+                    <path d="M7 10l3-3 3 3H7zm0 2h6l-3 3-3-3z" />
+                  </svg>
+                </div>
+              </div>
 
-        <div className="p-6">
-          {renderSummaryCards()}
-          <div className="border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
-            {renderTable()}
-          </div>
+              {/* End Date */}
+              <div className="relative flex items-center">
+                <input
+                  type="date"
+                  value={dateRange.endDate}
+                  onChange={(e) => setDateRange(prev => ({...prev, endDate: e.target.value}))}
+                  className="appearance-none bg-white dark:bg-[#1a1d23] border border-stone-250 dark:border-stone-700 text-stone-750 dark:text-stone-300 px-3 py-1.5 pr-8 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#0A5C43] focus:border-[#0A5C43] transition-colors cursor-pointer select-none font-medium shadow-sm"
+                />
+                <div className="absolute right-2.5 pointer-events-none text-stone-400">
+                  <svg className="h-3 w-3 fill-current" viewBox="0 0 20 20">
+                    <path d="M7 10l3-3 3 3H7zm0 2h6l-3 3-3-3z" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Apply Filters */}
+              <button
+                onClick={loadReport}
+                className="px-4 py-1.5 bg-white hover:bg-stone-50 dark:bg-[#1a1d23] dark:hover:bg-stone-800 text-stone-850 dark:text-stone-200 border border-stone-250 dark:border-stone-750 font-medium rounded-lg text-sm transition-all shadow-sm"
+              >
+                Apply filters
+              </button>
+              
+              {(dateRange.startDate || dateRange.endDate) && (
+                <button
+                  onClick={() => {
+                    setDateRange({ startDate: '', endDate: '' });
+                    setTimeout(loadReport, 100);
+                  }}
+                  className="text-xs text-stone-500 hover:text-[#0A5C43] dark:text-stone-400 dark:hover:text-emerald-400 font-semibold transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </>
+          )}
         </div>
+
+        {/* Right: Exports */}
+        <div className="flex gap-2 ml-auto">
+          <button
+            onClick={handleExportPDF}
+            className="px-4 py-1.5 bg-white hover:bg-stone-50 dark:bg-[#1a1d23] dark:hover:bg-stone-800 text-stone-850 dark:text-stone-200 border border-stone-250 dark:border-stone-750 font-medium rounded-lg text-sm transition-all shadow-sm"
+          >
+            Export PDF
+          </button>
+          <button
+            onClick={handleExportExcel}
+            className="px-4 py-1.5 bg-white hover:bg-stone-50 dark:bg-[#1a1d23] dark:hover:bg-stone-800 text-stone-850 dark:text-stone-200 border border-stone-250 dark:border-stone-750 font-medium rounded-lg text-sm transition-all shadow-sm"
+          >
+            Export Excel
+          </button>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="mb-6">
+        {renderSummaryCards()}
+      </div>
+
+      {/* Table Container */}
+      <div className="bg-white dark:bg-[#181a20] rounded-2xl shadow-sm border border-stone-200/70 dark:border-stone-850 overflow-hidden p-6">
+        {renderTable()}
       </div>
     </div>
   );

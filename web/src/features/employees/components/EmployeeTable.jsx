@@ -63,15 +63,25 @@ function EmployeeCard({ emp, onEdit, onDelete, onView }) {
     };
   }, [menuOpen]);
 
+  // Determine colors for the status pill to match the mockup
+  const getStatusColors = (status) => {
+    const s = String(status || '').toLowerCase();
+    if (s === 'active') {
+      return "bg-[#E4F2E6] dark:bg-[#3b7f43]/15 text-[#3B7F43] dark:text-[#88d991]";
+    }
+    // "On leave", "Inactive", etc.
+    return "bg-[#FDF2E2] dark:bg-[#b26b22]/15 text-[#B26B22] dark:text-[#e9a45e]";
+  };
+
   return (
-    <div className="bg-white dark:bg-[#1a1d23] border border-gray-200 dark:border-[#2a2d33] rounded-2xl p-6 relative flex flex-col items-center shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-white dark:bg-[#16191f] border border-[#E6DFD5] dark:border-[#2c303b] rounded-[20px] p-6 relative flex items-center gap-5 shadow-sm hover:shadow-md transition-all">
       
       {/* 3 Dots Menu */}
       {(onEdit || onDelete) && (
         <div className="absolute top-4 right-4" ref={menuRef}>
           <button 
             onClick={() => setMenuOpen(!menuOpen)}
-            className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-[#2a2d33] transition-colors"
+            className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-[#2c303b] transition-colors"
           >
             <DotsIcon />
           </button>
@@ -81,7 +91,7 @@ function EmployeeCard({ emp, onEdit, onDelete, onView }) {
               {onEdit && (
                 <button 
                   onClick={() => { setMenuOpen(false); onEdit(emp); }}
-                  className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#2a2d33] hover:text-blue-600 transition-colors"
+                  className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#2a2d33] hover:text-[#0b5e5f] transition-colors"
                 >
                   <EditIcon /> Edit
                 </button>
@@ -99,28 +109,34 @@ function EmployeeCard({ emp, onEdit, onDelete, onView }) {
         </div>
       )}
 
-      {/* Avatar Circle */}
-      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-100 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/20 flex items-center justify-center text-purple-600 dark:text-purple-400 font-bold text-2xl shadow-inner mb-4 relative overflow-hidden border border-white dark:border-[#2a2d33] ring-4 ring-gray-50 dark:ring-[#16191f]">
+      {/* Avatar Circle - Styled as soft teal with darker text */}
+      <div className="w-14 h-14 rounded-full bg-[#E5F2F2] dark:bg-[#0A5D5E]/20 flex items-center justify-center text-[#0B5E5F] dark:text-[#52c1c3] font-bold text-lg flex-shrink-0 select-none">
         {emp.avatar}
       </div>
 
-      {/* Name and Role */}
-      <h3 
-        onClick={() => onView(emp)}
-        className="text-gray-900 dark:text-white font-bold text-sm text-center leading-tight cursor-pointer hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
-      >
-        {emp.name}
-      </h3>
-      <p className="text-gray-500 dark:text-gray-400 text-[13px] mt-1 text-center font-medium">
-        {emp.role}
-      </p>
+      {/* Info & Badges */}
+      <div className="flex-1 min-w-0 flex flex-col pr-4">
+        <h3 
+          onClick={() => onView(emp)}
+          className="text-[#1e2229] dark:text-white font-bold text-[15px] hover:text-[#0b5e5f] dark:hover:text-[#52c1c3] transition-colors cursor-pointer truncate leading-snug"
+        >
+          {emp.name}
+        </h3>
+        <p className="text-gray-500 dark:text-gray-400 text-xs font-medium truncate mt-0.5">
+          {emp.role || 'Employee'}
+        </p>
 
-      {/* Badges */}
-      <div className="mt-5 flex items-center justify-center gap-2">
-        <StatusBadge status={emp.status} />
-        <span className="px-2.5 py-1 bg-[#f4efff] dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 rounded-full text-[10px] font-bold uppercase tracking-wider">
-          {emp.department}
-        </span>
+        {/* Badges Row */}
+        <div className="mt-3 flex flex-wrap gap-2">
+          {/* Department Badge */}
+          <span className="px-2.5 py-0.5 bg-[#FAF1E6] dark:bg-[#A67B5B]/15 text-[#9E6D3B] dark:text-[#dfb28e] rounded-md text-[10px] font-bold tracking-wide uppercase">
+            {emp.department || 'Staff'}
+          </span>
+          {/* Status Badge */}
+          <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold tracking-wide ${getStatusColors(emp.status)}`}>
+            {emp.status}
+          </span>
+        </div>
       </div>
 
     </div>
@@ -133,7 +149,7 @@ export default function EmployeeTable({ employees, onEdit, onDelete, onView }) {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6 bg-gray-50/30 dark:bg-transparent">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 py-2 bg-transparent">
       {employees.map((emp) => (
         <EmployeeCard 
           key={emp.id} 
@@ -146,3 +162,4 @@ export default function EmployeeTable({ employees, onEdit, onDelete, onView }) {
     </div>
   );
 }
+
