@@ -85,6 +85,10 @@ const getAllInquiries = async (query = {}) => {
     where.clientId = parseInt(clientId, 10);
   }
 
+  if (typeof query.emailId === 'string' && query.emailId.trim() !== '') {
+    where.emailId = query.emailId;
+  }
+
   const { skip, take } = getPaginationParams(query);
 
   const includeConfig = {

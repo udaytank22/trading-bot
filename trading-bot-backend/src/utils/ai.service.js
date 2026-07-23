@@ -15,7 +15,7 @@ const analyzeEmailWithAI = async (subject, body, senderEmail) => {
     return fallbackClassification(subject, body, senderEmail);
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
 
   const prompt = `
 You are an intelligent email analyzer and workflow automation agent for TradeMind, a maritime shipping/trading ERP system.
@@ -100,7 +100,7 @@ The JSON object must have the following structure:
 
     return JSON.parse(textResponse.trim());
   } catch (error) {
-    logger.error('[AI Service] Error calling Gemini API:', error);
+    logger.error(error, '[AI Service] Error calling Gemini API.');
     return fallbackClassification(subject, body, senderEmail);
   }
 };

@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../../services/apiClient';
-import { Loader2, Reply, Trash, CornerUpRight, AlertCircle, Sparkles, Bot, CheckCircle, Workflow, ClipboardList, RefreshCw } from 'lucide-react';
+import { Loader2, Reply, Trash, CornerUpRight, AlertCircle, Sparkles, Bot, CheckCircle, Workflow, ClipboardList, RefreshCw, Paperclip } from 'lucide-react';
+import { useSocket } from '../../../context/SocketContext';
+
+
 
 
 const EmailDetail = ({ email }) => {
@@ -20,6 +23,11 @@ const EmailDetail = ({ email }) => {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState(null);
   const [aiError, setAiError] = useState(null);
+
+  // Auto-created inquiry states
+  const [existingInquiry, setExistingInquiry] = useState(null);
+  const [checkingExisting, setCheckingExisting] = useState(false);
+
 
 
   useEffect(() => {
@@ -44,8 +52,52 @@ const EmailDetail = ({ email }) => {
       setAiResult(null);
       setAiError(null);
       setAiLoading(false);
+      setExistingInquiry(null);
     }
   }, [email.id]);
+
+  useEffect(() => {
+    const checkExistingInquiry = async () => {
+      setCheckingExisting(true);
+      try {
+        const res = await api.get(`/inquiries?emailId=${encodeURIComponent(email.id)}`);
+        if (res.data && res.data.length > 0) {
+          setExistingInquiry(res.data[0]);
+        } else {
+          setExistingInquiry(null);
+        }
+      } catch (err) {
+        console.error('Failed to check existing inquiry', err);
+        setExistingInquiry(null);
+      } finally {
+        setCheckingExisting(false);
+      }
+    };
+
+    if (email?.id) {
+      checkExistingInquiry();
+    }
+  }, [email.id]);
+
+  const { socket } = useSocket();
+
+  useEffect(() => {
+    if (!socket || !email?.id) return;
+
+    const handleEmailProcessed = (data) => {
+      if (data.emailId === email.id) {
+        if (data.result && data.result.status === 'created') {
+          setExistingInquiry(data.result.inquiry);
+        }
+      }
+    };
+
+    socket.on('email_processed', handleEmailProcessed);
+    return () => {
+      socket.off('email_processed', handleEmailProcessed);
+    };
+  }, [socket, email?.id]);
+
 
   if (loading || !fullEmail) {
     return (
@@ -77,6 +129,28 @@ const EmailDetail = ({ email }) => {
       setAiLoading(false);
     }
   };
+
+  const handleAttachmentDownload = async (filename) => {
+    try {
+      const response = await api.get(
+        `/email/emails/${encodeURIComponent(fullEmail.id)}/attachments/${encodeURIComponent(filename)}`,
+        { responseType: 'blob' }
+      );
+      
+      const blob = new Blob([response.data], { type: response.headers['content-type'] });
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (err) {
+      console.error('Failed to download attachment', err);
+    }
+  };
+
 
 
   const handleReplyClick = () => {
@@ -193,7 +267,113 @@ const EmailDetail = ({ email }) => {
 
       {/* AI Assistant Section */}
       <div className="mb-6">
-        {!aiResult && !aiLoading && !aiError && (
+        {checkingExisting ? (
+          <div className="p-4 rounded-xl border border-stone-200 bg-stone-50/20 dark:bg-[#1a1d28] flex items-center gap-3 animate-pulse">
+            <Loader2 className="w-5 h-5 animate-spin text-stone-500" />
+            <span className="text-xs text-stone-500">Checking for auto-created inquiries...</span>
+          </div>
+        ) : existingInquiry ? (
+          <div className="p-5 rounded-xl border border-emerald-250 dark:border-emerald-800 bg-emerald-50/15 dark:bg-[#112a20]/30 shadow-sm flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-[#0A5C43] dark:text-emerald-400">
+                <Bot className="w-5 h-5 animate-pulse" />
+                <span className="font-bold text-sm tracking-wide">AI Sourcing Agent (Auto-Ingested)</span>
+              </div>
+              
+              <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 ${
+                existingInquiry.needsReview 
+                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400' 
+                  : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400'
+              }`}>
+                {existingInquiry.needsReview ? (
+                  <>
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    Needs Manual Review
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    Auto-Created (High Confidence)
+                  </>
+                )}
+              </span>
+            </div>
+
+            <div className="text-xs text-stone-600 dark:text-stone-400">
+              This email was automatically parsed and imported. Vessel matching was completed.
+            </div>
+
+            {/* Extracted Details Table */}
+            <div className="text-xs border border-stone-200 dark:border-[#2a2e3a] rounded-lg p-4 bg-white dark:bg-[#12141c] space-y-3">
+              <div className="grid grid-cols-2 gap-4 pb-2 border-b border-stone-100 dark:border-stone-800">
+                <div>
+                  <span className="text-stone-400 block mb-0.5">Vessel Name</span>
+                  <span className="font-bold text-stone-850 dark:text-stone-100">🚢 {existingInquiry.vesselName || 'Unknown'}</span>
+                </div>
+                <div>
+                  <span className="text-stone-400 block mb-0.5">IMO Number</span>
+                  <span className="font-semibold text-stone-800 dark:text-stone-200">{existingInquiry.imoNumber || 'Not specified'}</span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 pb-2 border-b border-stone-100 dark:border-stone-800">
+                <div>
+                  <span className="text-stone-400 block mb-0.5">Port / Location</span>
+                  <span className="font-semibold text-stone-800 dark:text-stone-200">📍 {existingInquiry.port || 'Not specified'}</span>
+                </div>
+                <div>
+                  <span className="text-stone-400 block mb-0.5">ETA / ETD</span>
+                  <span className="font-semibold text-stone-800 dark:text-stone-200">
+                    {existingInquiry.eta ? `ETA: ${existingInquiry.eta}` : 'ETA: Not specified'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pb-2 border-b border-stone-100 dark:border-stone-800">
+                <div>
+                  <span className="text-stone-400 block mb-0.5">RFQ Reference</span>
+                  <span className="font-mono font-semibold text-stone-850 dark:text-stone-150">#{existingInquiry.rfqNumber || existingInquiry.inquiryNumber}</span>
+                </div>
+                <div>
+                  <span className="text-stone-400 block mb-0.5">Currency / Terms</span>
+                  <span className="font-semibold text-stone-800 dark:text-stone-200">{existingInquiry.currency || 'USD'} | {existingInquiry.paymentTerms || 'COD'}</span>
+                </div>
+              </div>
+
+              {existingInquiry.specialInstructions && (
+                <div className="pb-2 border-b border-stone-100 dark:border-stone-800">
+                  <span className="text-stone-400 block mb-0.5">Special Instructions</span>
+                  <p className="text-stone-700 dark:text-stone-300 italic">"{existingInquiry.specialInstructions}"</p>
+                </div>
+              )}
+
+              {/* Items List */}
+              <div>
+                <span className="text-stone-400 block mb-1">Parsed Inquiry Items ({existingInquiry.items?.length || 0}):</span>
+                {existingInquiry.items && existingInquiry.items.length > 0 ? (
+                  <ul className="list-disc pl-4 space-y-1 text-stone-700 dark:text-stone-300">
+                    {existingInquiry.items.map((item, idx) => (
+                      <li key={idx}>
+                        <span className="font-bold">{item.quantity} {item.unit || 'PCS'}</span> - {item.description}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <span className="text-stone-500 italic">No line items parsed. Check attachments.</span>
+                )}
+              </div>
+            </div>
+            
+            {existingInquiry.needsReview && (
+              <div className="p-3 bg-amber-50 dark:bg-amber-955/20 border border-amber-200/50 dark:border-amber-900/40 rounded-lg text-xs text-amber-800 dark:text-amber-400 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>Some metadata fields or line items have low confidence and require validation in the **Inquiries** module.</span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            {!aiResult && !aiLoading && !aiError && (
           <button
             onClick={handleAIAnalysis}
             className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-lg text-sm font-semibold shadow-md shadow-indigo-500/10 hover:shadow-lg transition-all duration-200 cursor-pointer"
@@ -354,7 +534,10 @@ const EmailDetail = ({ email }) => {
             </div>
           </div>
         )}
-      </div>
+      </>
+    )}
+  </div>
+
 
 
       {/* Body Content */}
@@ -368,6 +551,28 @@ const EmailDetail = ({ email }) => {
           <pre className="whitespace-pre-wrap font-sans text-stone-800 dark:text-stone-200 text-[15px] leading-relaxed">
             {fullEmail.body?.content || fullEmail.bodyPreview}
           </pre>
+        )}
+
+        {/* Attachments Section */}
+        {fullEmail.attachments && fullEmail.attachments.length > 0 && (
+          <div className="mt-8 pt-4 border-t border-stone-200/60 dark:border-stone-800">
+            <div className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-3">
+              Attachments ({fullEmail.attachments.length})
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {fullEmail.attachments.map((att, index) => (
+                <button 
+                  key={index} 
+                  onClick={() => handleAttachmentDownload(att.filename)}
+                  className="flex items-center gap-2 px-3 py-2 bg-[#fcfbfa] hover:bg-stone-50 dark:bg-[#1a1d23] dark:hover:bg-[#20242e] border border-[#e6e0d2] dark:border-[#2a2d33] rounded-xl text-xs font-medium text-[#1e293b] dark:text-white shadow-sm transition-all duration-150 cursor-pointer"
+                  title="Click to download attachment"
+                >
+                  <Paperclip className="w-3.5 h-3.5 text-stone-400 dark:text-stone-550" />
+                  <span>{att.filename || 'Unnamed Attachment'}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         )}
       </div>
 

@@ -136,7 +136,7 @@ export default function ProductsTab() {
       validProducts.push({
         id: rawId > 0 ? rawId : undefined,
         name: row.Name,
-        impa: row.IMPA || `IMPA-${Date.now().toString().slice(-4)}`,
+        impa: row.IMPA || `IMPA-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
         category: row.Category || 'General',
         unit: row.Unit || 'pcs',
         sellingPrice: parseFloat(row["Selling Price"]) || 0,

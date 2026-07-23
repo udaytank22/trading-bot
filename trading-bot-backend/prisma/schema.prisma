@@ -182,6 +182,19 @@ model Inquiry {
   assignedTeamLeadId   Int?
   expectedDeliveryDate DateTime?
   remarks              String?
+  // AI-Assisted Sourcing metadata
+  isAiGenerated        Boolean                @default(false)
+  needsReview          Boolean                @default(false)
+  aiConfidence         Json?
+  port                 String?
+  deliveryLocation     String?
+  eta                  String?
+  etd                  String?
+  specialInstructions  String?
+  rfqNumber            String?
+  currency             String?                @default("USD")
+  paymentTerms         String?
+  emailId              String?
   // Inventory auto-fulfillment fields
   inventoryFulfilled   Boolean                @default(false)
   supplyStatus         String?

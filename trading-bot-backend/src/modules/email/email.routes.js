@@ -12,6 +12,9 @@ router.get('/emails', authMiddleware, emailController.getEmails);
 // Fetch single email by ID
 router.get('/emails/:id', authMiddleware, emailController.getEmailById);
 
+// Get email attachment
+router.get('/emails/:id/attachments/:filename', authMiddleware, emailController.getEmailAttachment);
+
 // Send a test email (for verifying SMTP setup)
 router.post('/send-test', authMiddleware, emailController.sendTestEmail);
 

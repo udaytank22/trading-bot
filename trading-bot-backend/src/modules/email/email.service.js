@@ -292,6 +292,11 @@ const fetchInboxEmails = (page = 1, limit = 50, search = '', folder = 'inbox', r
                     contentType: parsed.html ? 'html' : 'text',
                     content: parsed.html || parsed.text || '',
                   },
+                  attachments: (parsed.attachments || []).map(att => ({
+                    filename: att.filename || 'attachment',
+                    contentType: att.contentType || 'application/octet-stream',
+                    content: att.content // Buffer
+                  })),
                   receivedDateTime: parsed.date?.toISOString() || new Date().toISOString(),
                   isRead: false,
                 });
@@ -432,6 +437,58 @@ const startEmailListener = () => {
           if (global.io) {
             global.io.emit('new_email', { count: numNewMsgs });
           }
+
+          // Trigger automated background fetch & AI parsing
+          const totalMessages = box.messages.total;
+          const startSeq = Math.max(1, totalMessages - numNewMsgs + 1);
+          const fetchRange = `${startSeq}:${totalMessages}`;
+
+          logger.info(`[IMAP Listener] Fetching sequence range for processing: ${fetchRange}`);
+          const f = persistentImap.seq.fetch(fetchRange, {
+            bodies: '',
+            struct: true
+          });
+
+          f.on('message', (msg) => {
+            msg.on('body', (stream) => {
+              simpleParser(stream, async (err, parsed) => {
+                if (err) {
+                  logger.error('[IMAP Listener] SimpleParser error on new mail:', err);
+                  return;
+                }
+
+                try {
+                  const parsedEmail = {
+                    id: parsed.messageId || `msg-${Date.now()}-${Math.random()}`,
+                    subject: parsed.subject || '(No Subject)',
+                    sender: {
+                      emailAddress: {
+                        name: parsed.from?.value?.[0]?.name || '',
+                        address: parsed.from?.value?.[0]?.address || '',
+                      },
+                    },
+                    body: {
+                      contentType: parsed.html ? 'html' : 'text',
+                      content: parsed.html || parsed.text || '',
+                    },
+                    bodyPreview: (parsed.text || '').substring(0, 200),
+                    attachments: parsed.attachments || [],
+                    receivedDateTime: parsed.date?.toISOString() || new Date().toISOString()
+                  };
+
+                  const { processIncomingEmail } = require('../../utils/ai.emailProcessor');
+                  const result = await processIncomingEmail(parsedEmail);
+                  logger.info(`[IMAP Listener] Auto-processed new email ID: ${parsedEmail.id} result: ${result.status}`);
+
+                  if (global.io) {
+                    global.io.emit('email_processed', { emailId: parsedEmail.id, result });
+                  }
+                } catch (procErr) {
+                  logger.error('[IMAP Listener] Error in background AI processing:', procErr);
+                }
+              });
+            });
+          });
         });
       });
     });
