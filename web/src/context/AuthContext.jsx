@@ -4,7 +4,7 @@ import axios from 'axios';
 import { STORAGE_KEYS } from '@config/constants';
 import { API_BASE_URL } from '../config/env';
 import apiClient from '../services/apiClient';
-import { setAccessToken, clearAccessToken } from '../services/tokenStore';
+import { getAccessToken, setAccessToken, clearAccessToken } from '../services/tokenStore';
 
 const AuthContext = createContext(null);
 

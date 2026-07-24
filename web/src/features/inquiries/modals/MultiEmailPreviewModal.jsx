@@ -30,7 +30,7 @@ const EmailDraftCard = ({ rfq, inquiryId, buyerName, allProducts }) => {
 
       <div className="p-6 text-[13px] text-gray-800">
         <div className="space-y-1 mb-6 pb-4 border-b border-gray-100">
-          <div className="flex"><span className="w-16 text-gray-400 font-bold uppercase text-[10px]">To:</span> <span className="font-bold">{rfq.supplierName} &lt;supplier@trademind.com&gt;</span></div>
+          <div className="flex"><span className="w-16 text-gray-400 font-bold uppercase text-[10px]">To:</span> <span className="font-bold">{rfq.supplierName} &lt;{rfq.supplierEmail || 'supplier@trademind.com'}&gt;</span></div>
           <div className="flex"><span className="w-16 text-gray-400 font-bold uppercase text-[10px]">Subject:</span> <span className="font-bold">Request for Quotation - Ref: {inquiryId}</span></div>
         </div>
 

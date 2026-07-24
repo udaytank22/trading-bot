@@ -18,6 +18,7 @@ const RFQModal = ({ isOpen, onClose, onSubmit, deal, isPageMode }) => {
         return {
           supplierId: supplierData.id,
           supplierName: supplierData.name,
+          supplierEmail: supplierData.email,
           products: deal.products.filter(p => {
             const productCategory = getProductCategory(p.product_name);
             return (supplierData.categories || []).some(cat => cat.toLowerCase() === (productCategory || "").toLowerCase());

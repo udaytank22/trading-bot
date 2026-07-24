@@ -58,19 +58,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
  * @returns {string} Tailwind class string
  */
 export function getRowLeftBorderClass(row, idx) {
-  const status = String(row?.status || row?.order_status || row?.cargo_status || row?.state || '').toUpperCase();
-  if (status.includes('PENDING')) return 'border-l-[4px] border-[#b8832a]';
-  if (status.includes('RFQ') || status.includes('SENT') || status.includes('SHIPPED') || status.includes('IN_TRANSIT')) return 'border-l-[4px] border-[#2563eb]';
-  if (status.includes('CONFIRMED') || status.includes('DELIVERED') || status.includes('ACTIVE') || status.includes('PAID') || status.includes('QUOTE_SENT')) return 'border-l-[4px] border-[#16a34a]';
-  if (status.includes('ADMIN') || status.includes('REVIEW') || status.includes('VERIFY') || status.includes('TL')) return 'border-l-[4px] border-[#d97706]';
-  
-  const accentColors = [
-    'border-l-[4px] border-[#b8832a]',
-    'border-l-[4px] border-[#2563eb]',
-    'border-l-[4px] border-[#16a34a]',
-    'border-l-[4px] border-[#d97706]'
-  ];
-  return accentColors[idx % accentColors.length];
+  return '';
 }
 
 /**

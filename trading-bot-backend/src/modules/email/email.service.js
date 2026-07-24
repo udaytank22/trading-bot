@@ -50,11 +50,32 @@ const sendRFQEmail = async (inquiry) => {
     return;
   }
 
-  // Collect unique suppliers who have quotes for this inquiry
+  // Collect unique suppliers assigned to this inquiry
   const suppliers = [];
   const seenEmails = new Set();
 
-  if (inquiry.supplierQuotes && inquiry.supplierQuotes.length > 0) {
+  if (inquiry.suppliers && inquiry.suppliers.length > 0) {
+    for (const ins of inquiry.suppliers) {
+      const supplier = ins.supplier;
+      const email = supplier?.email;
+      if (email && !seenEmails.has(email)) {
+        seenEmails.add(email);
+        suppliers.push({
+          name: supplier.name || 'Valued Supplier',
+          email,
+          items: (inquiry.items || []).map(item => ({
+            description: item.description || 'Product',
+            quantity: item.quantity || 1,
+            unit: item.unit || 'PCS',
+            specs: item.remarks || '',
+          })),
+        });
+      }
+    }
+  }
+
+  // Fallback to checking supplierQuotes just in case they exist
+  if (suppliers.length === 0 && inquiry.supplierQuotes && inquiry.supplierQuotes.length > 0) {
     for (const quote of inquiry.supplierQuotes) {
       const email = quote.supplier?.email;
       if (email && !seenEmails.has(email)) {
@@ -67,8 +88,8 @@ const sendRFQEmail = async (inquiry) => {
             return {
               description: inquiryItem?.description || 'Product',
               quantity: inquiryItem?.quantity || item.quantity,
-              unit: inquiryItem?.unit || 'MT',
-              specs: inquiryItem?.specs || '',
+              unit: inquiryItem?.unit || 'PCS',
+              specs: inquiryItem?.remarks || '',
             };
           }),
         });
@@ -76,9 +97,9 @@ const sendRFQEmail = async (inquiry) => {
     }
   }
 
-  // If no supplier quotes yet, send to all items as a generic RFQ
+  // If no suppliers found, log and return
   if (suppliers.length === 0) {
-    console.log('ℹ️ No supplier quotes found. No RFQ emails to send.');
+    console.log('ℹ️ No suppliers found for this inquiry. No RFQ emails to send.');
     return;
   }
 
@@ -291,6 +312,7 @@ const fetchInboxEmails = (page = 1, limit = 50, search = '', folder = 'inbox', r
                   body: {
                     contentType: parsed.html ? 'html' : 'text',
                     content: parsed.html || parsed.text || '',
+                    text: parsed.text || '',
                   },
                   attachments: (parsed.attachments || []).map(att => ({
                     filename: att.filename || 'attachment',
@@ -470,6 +492,7 @@ const startEmailListener = () => {
                     body: {
                       contentType: parsed.html ? 'html' : 'text',
                       content: parsed.html || parsed.text || '',
+                      text: parsed.text || '',
                     },
                     bodyPreview: (parsed.text || '').substring(0, 200),
                     attachments: parsed.attachments || [],
@@ -477,12 +500,13 @@ const startEmailListener = () => {
                   };
 
                   const { processIncomingEmail } = require('../../utils/ai.emailProcessor');
-                  const result = await processIncomingEmail(parsedEmail);
-                  logger.info(`[IMAP Listener] Auto-processed new email ID: ${parsedEmail.id} result: ${result.status}`);
-
-                  if (global.io) {
-                    global.io.emit('email_processed', { emailId: parsedEmail.id, result });
-                  }
+                   const result = await processIncomingEmail(parsedEmail);
+                   logger.info(`[IMAP Listener] Auto-processed new email ID: ${parsedEmail.id} result: ${result.status}`);
+ 
+                   if (global.io) {
+                     global.io.emit('new_email_received', { email: parsedEmail });
+                     global.io.emit('email_processed', { emailId: parsedEmail.id, result });
+                   }
                 } catch (procErr) {
                   logger.error('[IMAP Listener] Error in background AI processing:', procErr);
                 }

@@ -38,7 +38,7 @@ const generateInquiryNumber = async () => {
 const processIncomingEmail = async (email) => {
   const messageId = email.id || `msg-${Date.now()}-${Math.random()}`;
   const subject = email.subject || '';
-  const body = email.body?.content || email.bodyPreview || '';
+  const body = email.body?.text || email.body?.content || email.bodyPreview || '';
   const senderEmail = email.sender?.emailAddress?.address || '';
   const senderName = email.sender?.emailAddress?.name || '';
   

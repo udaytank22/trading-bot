@@ -28,6 +28,7 @@ const InboxPage = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
 
+  const [toast, setToast] = useState(null);
   const { socket } = useSocket();
 
   useEffect(() => {
@@ -37,17 +38,48 @@ const InboxPage = () => {
   useEffect(() => {
     if (!socket) return;
 
-    const handleNewEmail = () => {
-      // Refresh list to show new emails on page 1
-      setPage(1);
-      fetchEmails(1, search, folder);
+    const handleNewEmailReceived = (data) => {
+      const newMail = data.email;
+      if (!newMail) return;
+
+      // 1. Silently prepend to emails list if we are in inbox folder and it matches current search
+      if (folder === 'inbox') {
+        const matchesSearch = !search ||
+          newMail.subject.toLowerCase().includes(search.toLowerCase()) ||
+          (newMail.sender?.emailAddress?.name || '').toLowerCase().includes(search.toLowerCase()) ||
+          (newMail.sender?.emailAddress?.address || '').toLowerCase().includes(search.toLowerCase()) ||
+          (newMail.body?.content || '').toLowerCase().includes(search.toLowerCase());
+
+        if (matchesSearch) {
+          setEmails(prev => {
+            if (prev.some(e => e.id === newMail.id)) return prev;
+            return [newMail, ...prev];
+          });
+          setTotalCount(prev => prev + 1);
+        }
+      }
+
+      // 2. Show beautiful floating toast notification
+      setToast({
+        id: newMail.id,
+        sender: newMail.sender?.emailAddress?.name || newMail.sender?.emailAddress?.address || 'Unknown Sender',
+        subject: newMail.subject || '(No Subject)',
+        email: newMail
+      });
     };
 
-    socket.on('new_email', handleNewEmail);
+    socket.on('new_email_received', handleNewEmailReceived);
     return () => {
-      socket.off('new_email', handleNewEmail);
+      socket.off('new_email_received', handleNewEmailReceived);
     };
   }, [socket, search, folder]);
+
+  // Auto-dismiss toast after 8 seconds
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 8000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   useEffect(() => {
     // Check if we just redirected back from auth
@@ -66,7 +98,7 @@ const InboxPage = () => {
       }
       const res = await api.get(`/email/emails?page=${pageNumber}&limit=${limit}&search=${encodeURIComponent(currentSearch)}&folder=${currentFolder}`);
       const newEmails = res.data;
-      
+
       setEmails(prev => {
         if (pageNumber === 1) return newEmails;
         const existingIds = new Set(prev.map(e => e.id));
@@ -141,7 +173,7 @@ const InboxPage = () => {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6.5rem)] min-h-[500px] w-[calc(100%+2rem)] md:w-[calc(100%+2.5rem)] bg-[#FAF8F5] dark:bg-[#12141C] -m-4 md:-m-5 p-6 md:p-8 overflow-hidden font-sans">
+    <div className="flex flex-col h-[calc(110vh-6.5rem)] min-h-[500px] w-[calc(100%+2rem)] md:w-[calc(100%+2.5rem)] bg-[#FAF8F5] dark:bg-[#12141C] -m-4 md:-m-5 p-6 md:p-8 overflow-hidden font-sans">
       {/* Page Header */}
       <div className="mb-4">
         <h1 className="text-3xl font-serif text-[#1C2024] dark:text-stone-100 mb-1 font-normal tracking-tight">Inbox</h1>
@@ -156,11 +188,10 @@ const InboxPage = () => {
               setFolder('inbox');
               setPage(1);
             }}
-            className={`pb-2 text-sm font-medium transition-all relative ${
-              folder === 'inbox'
+            className={`pb-2 text-sm font-medium transition-all relative ${folder === 'inbox'
                 ? 'text-[#0A5C43] dark:text-emerald-400 font-semibold'
                 : 'text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200'
-            }`}
+              }`}
           >
             Inbox
             {folder === 'inbox' && (
@@ -172,11 +203,10 @@ const InboxPage = () => {
               setFolder('sent');
               setPage(1);
             }}
-            className={`pb-2 text-sm font-medium transition-all relative ${
-              folder === 'sent'
+            className={`pb-2 text-sm font-medium transition-all relative ${folder === 'sent'
                 ? 'text-[#0A5C43] dark:text-emerald-400 font-semibold'
                 : 'text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200'
-            }`}
+              }`}
           >
             Sent mail
             {folder === 'sent' && (
@@ -288,6 +318,44 @@ const InboxPage = () => {
           )}
         </div>
       </div>
+
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-white dark:bg-[#1e222b] border-l-4 border-emerald-500 dark:border-l-[#10b981] rounded-xl shadow-2xl p-4 flex gap-3 border border-stone-200 dark:border-stone-850 animate-in fade-in slide-in-from-bottom-5 duration-300">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span className="text-[10px] font-bold tracking-wider text-stone-400 dark:text-stone-500 uppercase">New Email Received</span>
+            </div>
+            <p className="text-xs font-bold text-stone-800 dark:text-stone-100 truncate mb-0.5">
+              {toast.sender}
+            </p>
+            <p className="text-xs text-stone-500 dark:text-stone-400 truncate">
+              {toast.subject}
+            </p>
+          </div>
+          <div className="flex flex-col gap-1 justify-center shrink-0">
+            <button
+              onClick={() => {
+                setSelectedEmail(toast.email);
+                setToast(null);
+              }}
+              className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/40 text-[#0a5c43] dark:text-[#34d399] text-xs font-bold rounded-lg transition-colors cursor-pointer"
+            >
+              View
+            </button>
+            <button
+              onClick={() => setToast(null)}
+              className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 text-xs py-1 transition-colors cursor-pointer font-medium"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
