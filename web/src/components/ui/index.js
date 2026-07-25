@@ -34,6 +34,7 @@ export { default as DateCell } from "./dateCell";
 export { default as DataTable, rowStripeClass, ROW_HOVER_CLS } from "./dataTable";
 
 // ── Layout / chrome components ─────────────────────────────────────────────────
+export { default as PageContainer } from "./pageContainer";
 export { default as PageToolbar } from "./pageToolbar";
 export { default as Pagination } from "./pagination";
 export { default as EmptyState } from "./emptyState";

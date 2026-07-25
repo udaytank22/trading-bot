@@ -14,12 +14,6 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col w-full h-full pb-6">
-      {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">User Profile</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your account settings and preferences.</p>
-      </div>
-
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Left Column: Profile Card */}
         <div className="w-full lg:w-[350px] flex flex-col gap-6">

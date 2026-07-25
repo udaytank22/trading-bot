@@ -82,7 +82,7 @@ export default function Sidebar({ isOpen }) {
             to={link.path}
             end={link.path === "/"}
             className={({ isActive }) =>
-              `flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all duration-200 ${isActive
+              `flex items-center justify-between px-3 py-2 rounded-xl transition-all duration-200 ${isActive
                 ? "bg-[#0e2b37] border border-[#164e5e] text-white font-semibold shadow-[0_0_15px_rgba(20,77,89,0.3)]"
                 : "bg-transparent border border-transparent text-[#8b9cb4] hover:bg-white/[0.04] hover:text-white font-medium"
               }`

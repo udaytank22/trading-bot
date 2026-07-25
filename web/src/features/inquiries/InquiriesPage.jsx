@@ -34,7 +34,7 @@ import { useToast } from '@hooks/useToast';
 import InquiryTable from './components/InquiryTable';
 import InquiryKanban from './components/InquiryKanban';
 import AddInquiryModal from './modals/AddInquiryModal';
-import { Toast, PageToolbar, Pagination, Button, EmptyState, Select } from '@components/ui';
+import { Toast, PageToolbar, Pagination, Button, EmptyState, Select, PageContainer } from '@components/ui';
 
 function PlusIcon() {
   return (
@@ -221,94 +221,11 @@ export default function InquiriesPage() {
 
 
   return (
-    <div className="flex flex-col w-full h-full pb-4 relative overflow-hidden min-w-0">
+    <PageContainer
+      title="Inquiries"
+      subtitle="Track every request from datasheet to confirmed deal."
+    >
       <Toast message={toast.message} type={toast.type} />
-
-      {/* ── Real-time new inquiry popup (top-right) ── */}
-      <div
-        style={{
-          position: 'fixed',
-          top: '1.25rem',
-          right: '1.25rem',
-          zIndex: 9999,
-          transition: 'all 0.35s cubic-bezier(0.34,1.56,0.64,1)',
-          transform: newInquiryAlert ? 'translateX(0) scale(1)' : 'translateX(120%) scale(0.9)',
-          opacity: newInquiryAlert ? 1 : 0,
-          pointerEvents: newInquiryAlert ? 'auto' : 'none',
-        }}
-      >
-        {newInquiryAlert && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '0.75rem',
-              background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
-              border: '1px solid rgba(139,92,246,0.4)',
-              borderRadius: '1rem',
-              padding: '1rem 1.25rem',
-              boxShadow: '0 8px 32px rgba(99,60,180,0.35), 0 2px 8px rgba(0,0,0,0.3)',
-              minWidth: '300px',
-              maxWidth: '360px',
-            }}
-          >
-            {/* Icon */}
-            <div style={{
-              width: '2.25rem', height: '2.25rem', borderRadius: '0.625rem',
-              background: 'rgba(139,92,246,0.25)', display: 'flex',
-              alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            }}>
-              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#a78bfa" strokeWidth={2.2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-
-            {/* Content */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: '0.7rem', color: '#a78bfa', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                New Inquiry
-              </p>
-              <p style={{ margin: '0.15rem 0 0.25rem', fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>
-                {newInquiryAlert.inquiryNumber}
-              </p>
-              <p style={{ margin: 0, fontSize: '0.78rem', color: '#c4b5fd', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {newInquiryAlert.client?.name || 'Unknown client'}
-              </p>
-              <button
-                onClick={() => { navigate(`/inquiries/${newInquiryAlert.id}`); setNewInquiryAlert(null); }}
-                style={{
-                  marginTop: '0.5rem', fontSize: '0.72rem', color: '#7c3aed',
-                  background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)',
-                  borderRadius: '0.375rem', padding: '0.2rem 0.6rem', cursor: 'pointer',
-                  fontWeight: 600, transition: 'background 0.2s',
-                }}
-              >
-                View →
-              </button>
-            </div>
-
-            {/* Close */}
-            <button
-              onClick={() => setNewInquiryAlert(null)}
-              style={{ background: 'none', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: '0.1rem', lineHeight: 1, flexShrink: 0 }}
-            >
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Page Title Header */}
-      <div className="mb-4">
-        <h1 className="text-3xl font-serif font-medium text-[#1e293b] dark:text-white tracking-tight">
-          Inquiries
-        </h1>
-        <p className="text-sm font-sans font-medium text-[#64748b] dark:text-gray-400 mt-1">
-          Track every request from datasheet to confirmed deal.
-        </p>
-      </div>
 
 
       {/* Centralized toolbar: search + status filter + Add Inquiry button */}
@@ -350,8 +267,8 @@ export default function InquiriesPage() {
               <button
                 onClick={() => setViewMode("kanban")}
                 className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all ${viewMode === "kanban"
-                    ? "bg-[#0a1628] text-white shadow-sm"
-                    : "text-[#64748b] dark:text-gray-400 hover:text-[#1e293b]"
+                  ? "bg-[#0a1628] text-white shadow-sm"
+                  : "text-[#64748b] dark:text-gray-400 hover:text-[#1e293b]"
                   }`}
               >
                 Board
@@ -359,8 +276,8 @@ export default function InquiriesPage() {
               <button
                 onClick={() => setViewMode("table")}
                 className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all ${viewMode === "table"
-                    ? "bg-[#0a1628] text-white shadow-sm"
-                    : "text-[#64748b] dark:text-gray-400 hover:text-[#1e293b]"
+                  ? "bg-[#0a1628] text-white shadow-sm"
+                  : "text-[#64748b] dark:text-gray-400 hover:text-[#1e293b]"
                   }`}
               >
                 Table
@@ -428,6 +345,6 @@ export default function InquiriesPage() {
         onClose={() => setIsAddModalOpen(false)}
         onSubmit={handleAddInquiry}
       />
-    </div>
+    </PageContainer>
   );
 }

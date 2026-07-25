@@ -4,7 +4,7 @@ import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from '@services/api';
 import { usePaginatedFetch } from '@hooks/usePaginatedFetch';
-import { PageToolbar, Pagination, Button, StatusBadge, DataTable, rowStripeClass, ROW_HOVER_CLS, DatePicker, Select } from '@components/ui';
+import { PageToolbar, Pagination, Button, StatusBadge, DataTable, rowStripeClass, ROW_HOVER_CLS, DatePicker, Select, PageContainer } from '@components/ui';
 import { HeaderButton } from '../settings/components/shared';
 
 const INVOICE_COLUMNS = [
@@ -160,16 +160,10 @@ export default function InvoicesPage() {
     };
 
     return (
-        <div className="flex flex-col w-full h-full pb-4">
-            {/* Page Header */}
-            <div className="mb-5">
-                <h1 className="text-3xl font-serif font-medium text-[#1e293b] dark:text-white tracking-tight">
-                    Invoices
-                </h1>
-                <p className="text-sm font-sans font-medium text-[#64748b] dark:text-gray-400 mt-1">
-                    Everything billed and what's still outstanding.
-                </p>
-            </div>
+        <PageContainer
+            title="Invoices"
+            subtitle="Everything billed and what's still outstanding."
+        >
 
             <PageToolbar
                 search={search}
@@ -349,6 +343,6 @@ export default function InvoicesPage() {
                     </div>
                 </div>
             )}
-        </div>
+        </PageContainer>
     );
 }

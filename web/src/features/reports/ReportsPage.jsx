@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { DownloadIcon, FilterIcon, FileTextIcon, RefreshCwIcon, FileSpreadsheetIcon } from 'lucide-react';
-import { DataTable } from '../../components/ui';
+import { DataTable, PageContainer } from '../../components/ui';
 import { 
   getPipelineReport, 
   getProfitReport, 
@@ -249,12 +249,11 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-[500px] w-[calc(100%+2rem)] md:w-[calc(100%+2.5rem)] bg-[#FAF8F5] dark:bg-[#12141C] -m-4 md:-m-5 p-6 md:p-8 overflow-y-auto font-sans">
-      {/* Page Header */}
-      <div className="mb-4">
-        <h1 className="text-3xl font-serif text-[#1C2024] dark:text-stone-100 mb-1 font-normal tracking-tight">Reports</h1>
-        <p className="text-sm text-stone-500 dark:text-stone-400">Generate and export business reports.</p>
-      </div>
+    <PageContainer
+      title="Reports"
+      subtitle="Generate and export business reports."
+      className="overflow-y-auto"
+    >
 
       {/* Tabs Row */}
       <div className="flex border-b border-stone-200/80 dark:border-stone-850 items-center justify-between mb-6">
@@ -363,6 +362,6 @@ export default function ReportsPage() {
       <div className="bg-white dark:bg-[#181a20] rounded-2xl shadow-sm border border-stone-200/70 dark:border-stone-850 overflow-hidden p-6">
         {renderTable()}
       </div>
-    </div>
+    </PageContainer>
   );
 }

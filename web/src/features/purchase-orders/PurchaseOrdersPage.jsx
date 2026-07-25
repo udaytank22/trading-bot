@@ -24,7 +24,7 @@ import { usePaginatedFetch } from '@hooks/usePaginatedFetch';
 import AddPurchaseOrderModal from './modals/AddPurchaseOrderModal';
 import POTable from './components/POTable';
 import POEmailModal from './modals/POEmailModal';
-import { Toast, PageToolbar, Pagination, EmptyState } from '@components/ui';
+import { Toast, PageToolbar, Pagination, EmptyState, PageContainer } from '@components/ui';
 
 
 
@@ -157,18 +157,11 @@ export default function PurchaseOrdersPage() {
 
   // ─── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col w-full h-full pb-4 relative">
+    <PageContainer
+      title="Purchase orders"
+      subtitle="Every order placed with a supplier, start to delivery."
+    >
       <Toast message={toast.message} type={toast.type} />
-
-      {/* Page Header */}
-      <div className="mb-5">
-        <h1 className="text-3xl font-serif font-medium text-[#1e293b] dark:text-white tracking-tight">
-          Purchase orders
-        </h1>
-        <p className="text-sm font-sans font-medium text-[#64748b] dark:text-gray-400 mt-1">
-          Every order placed with a supplier, start to delivery.
-        </p>
-      </div>
 
       {/* Centralized toolbar: search + status filter + Add PO button */}
       <PageToolbar
@@ -231,6 +224,6 @@ export default function PurchaseOrdersPage() {
         onClose={() => setIsEmailModalOpen(false)}
         onStatusUpdate={updatePOStatus}
       />
-    </div>
+    </PageContainer>
   );
 }

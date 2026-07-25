@@ -6,19 +6,32 @@ import ChatDrawer from "../chat/chatDrawer";
 const PAGE_TITLES = {
   "/": "Dashboard",
   "/inquiries": "Inquiries",
+  "/client-rfqs": "Supplier Quotations",
   "/purchase-orders": "Purchase Orders",
   "/supply": "Supply",
-  "/profit": "Profit Report",
-  "/profile": "Profile",
-  "/accounts": "Accounts",
+  "/invoices": "Invoices",
   "/employees": "Employees",
+  "/accounts": "Accounts",
+  "/inventory": "Inventory",
+  "/profit": "Profit Report",
   "/documents": "Documents",
   "/notifications": "Notifications",
   "/todo": "To-Do",
-  "/settings": "Settings",
-  "/inventory": "Inventory",
   "/inbox": "Inbox",
-  "/invoices": "Invoices",
+  "/settings": "Settings",
+  "/profile": "Profile",
+  "/reports": "Reports",
+};
+
+const getPageTitle = (pathname) => {
+  if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
+  if (pathname.startsWith('/inquiries/')) return 'Inquiry Details';
+  if (pathname.startsWith('/purchase-orders/')) return 'Purchase Order Details';
+  if (pathname.startsWith('/supply/')) return 'Supply Details';
+  if (pathname.startsWith('/invoices/')) return 'Invoice Details';
+  
+  const match = Object.entries(PAGE_TITLES).find(([key]) => key !== '/' && pathname.startsWith(key));
+  return match ? match[1] : 'Dashboard';
 };
 
 export default function Topbar({ onToggleSidebar }) {
@@ -27,7 +40,7 @@ export default function Topbar({ onToggleSidebar }) {
   const { unreadCount } = useSocket() || { unreadCount: 0 };
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const title = PAGE_TITLES[pathname] ?? "Dashboard";
+  const title = getPageTitle(pathname);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -67,10 +80,10 @@ export default function Topbar({ onToggleSidebar }) {
 
   return (
     <header className="h-[50px] border-b border-gray-200/60 dark:border-[#2a2d33] flex items-center justify-between px-8 bg-[#f8f9fc] dark:bg-[#0f1117] flex-shrink-0 transition-colors duration-300 relative">
-      <div className="flex items-center gap-8">
-        {/* <h1 className="text-[#1e293b] dark:text-white text-[18px] font-bold tracking-tight">
+      <div className="flex items-center gap-6 md:gap-8">
+        <h1 className="text-[#1C2024] dark:text-stone-100 text-lg font-serif font-semibold tracking-tight shrink-0">
           {title}
-        </h1> */}
+        </h1>
         <div className="relative hidden md:block">
           <div className="relative">
             <svg

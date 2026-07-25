@@ -355,16 +355,22 @@ Respond with a strictly formatted JSON object (no markdown formatting like \`\`\
           await tx.inquiryItem.createMany({ data: itemsToCreate });
         }
 
+        // Helper to get a valid user ID for status history logging
+        const systemUser = await tx.user.findFirst({ where: { deletedAt: null }, orderBy: { id: 'asc' }, select: { id: true } });
+        const systemUserId = systemUser?.id;
+
         // Logs status history
-        await tx.inquiryStatusHistory.create({
-          data: {
-            inquiryId: inq.id,
-            fromStatus: 'NONE',
-            toStatus: 'PENDING',
-            changedById: 1, // Attributed to system admin
-            remarks: `Auto-ingested via AI Sourcing Agent. Confidence: ${Math.round(aiResult.confidenceScore * 100)}%. Review Required: ${lowConfidence}`
-          }
-        });
+        if (systemUserId) {
+          await tx.inquiryStatusHistory.create({
+            data: {
+              inquiryId: inq.id,
+              fromStatus: 'NONE',
+              toStatus: 'PENDING',
+              changedById: systemUserId, // Attributed to valid system user
+              remarks: `Auto-ingested via AI Sourcing Agent. Confidence: ${Math.round(aiResult.confidenceScore * 100)}%. Review Required: ${lowConfidence}`
+            }
+          });
+        }
 
         return inq;
       });
@@ -391,15 +397,20 @@ Respond with a strictly formatted JSON object (no markdown formatting like \`\`\
 
       // Record status log and update remarks
       const updatedInq = await prisma.$transaction(async (tx) => {
-        await tx.inquiryStatusHistory.create({
-          data: {
-            inquiryId: inquiry.id,
-            fromStatus: inquiry.currentStatus,
-            toStatus: inquiry.currentStatus,
-            changedById: 1,
-            remarks: `[AI Email Update]: ${update.remarks}`
-          }
-        });
+        const systemUser = await tx.user.findFirst({ where: { deletedAt: null }, orderBy: { id: 'asc' }, select: { id: true } });
+        const systemUserId = systemUser?.id;
+
+        if (systemUserId) {
+          await tx.inquiryStatusHistory.create({
+            data: {
+              inquiryId: inquiry.id,
+              fromStatus: inquiry.currentStatus,
+              toStatus: inquiry.currentStatus,
+              changedById: systemUserId,
+              remarks: `[AI Email Update]: ${update.remarks}`
+            }
+          });
+        }
 
         return await tx.inquiry.update({
           where: { id: inquiry.id },

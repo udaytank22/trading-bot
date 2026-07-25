@@ -28,7 +28,7 @@ import EmployeeTable from './components/EmployeeTable';
 import AddEmployeeModal from './modals/AddEmployeeModal';
 import EmployeeViewModal from './modals/EmployeeViewModal';
 import { confirmAction } from '@utils/swal';
-import { Toast, PageToolbar, Pagination } from '@components/ui';
+import { Toast, PageToolbar, Pagination, PageContainer } from '@components/ui';
 
 // ─── Filter options for the status dropdown ────────────────────────────────────
 const FILTER_OPTIONS = [
@@ -153,19 +153,12 @@ export default function EmployeesPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="-m-4 md:-m-5 p-4 -md:p-8 dark:bg-[#0c0e12] flex flex-col w-full h-full min-h-screen relative transition-colors duration-300">
+    <PageContainer
+      title="Employees"
+      subtitle="Everyone with access to TradeMind."
+    >
       {/* Global toast notification */}
       <Toast message={toast.message} type={toast.type} />
-
-      {/* Elegant Serif Title and Subtitle */}
-      <div className="mb-6">
-        <h1 className="text-[32px] font-serif text-[#1e2229] dark:text-white font-normal tracking-wide">
-          Employees
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Everyone with access to TradeMind.
-        </p>
-      </div>
 
       {/* Custom Mockup-aligned Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -291,6 +284,6 @@ export default function EmployeesPage() {
         employee={employeeToView}
         onRefresh={refresh}
       />
-    </div>
+    </PageContainer>
   );
 }

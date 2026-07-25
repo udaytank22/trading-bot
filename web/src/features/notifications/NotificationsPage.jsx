@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Bell, CheckCircle, Info, AlertTriangle, MessageSquare, Trash2, Check, RefreshCw, Loader2, ExternalLink } from "lucide-react";
 import { getNotifications, markRead as apiMarkRead, markAllRead as apiMarkAllRead, deleteNotification as apiDeleteNotification } from '@services/api/notifications';
 import { useSocket } from '@context';
+import { PageContainer } from '@components/ui';
 
 const typeStyles = {
   inquiry: { icon: MessageSquare, color: "text-purple-500", bg: "bg-purple-500/10" },
@@ -186,12 +187,10 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div>
-          <h2 className="text-[15px] font-bold text-gray-900 dark:text-white">Notifications</h2>
-          <p className="text-gray-500 dark:text-gray-400 text-xs">Stay updated with your latest activities</p>
-        </div>
+    <PageContainer
+      title="Notifications"
+      subtitle="Stay updated with your latest activities"
+      rightSlot={
         <div className="flex items-center gap-2">
           <button 
             onClick={() => fetchNotifications(true)}
@@ -211,7 +210,8 @@ export default function NotificationsPage() {
             Mark all as read
           </button>
         </div>
-      </div>
+      }
+    >
 
       {loading ? (
         <div className="bg-white dark:bg-[#161922] border border-gray-200 dark:border-white/10 rounded-xl p-12 text-center flex flex-col items-center justify-center gap-3 shadow-sm">
@@ -292,7 +292,7 @@ export default function NotificationsPage() {
           </div>
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 }
 

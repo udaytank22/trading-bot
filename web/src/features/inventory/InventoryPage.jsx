@@ -2,7 +2,7 @@ import { InventoryPageSchema1 } from '@config/tableSchemas';
 import React, { useMemo, useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { confirmAction } from '@utils/swal';
-import { PageToolbar, DataTable, rowStripeClass, ROW_HOVER_CLS } from '@components/ui';
+import { PageToolbar, DataTable, rowStripeClass, ROW_HOVER_CLS, PageContainer } from '@components/ui';
 import {
   getInventoryItem,
   createInventoryItem,
@@ -246,9 +246,12 @@ export default function InventoryPage() {
   ];
 
   return (
-    <div className="flex flex-col w-full h-full pb-4">
-      <div className="w-full flex-1 flex flex-col mt-4">
-        
+    <PageContainer
+      title="Inventory Management"
+      subtitle="Track every transaction of your inventory."
+    >
+      <div className="w-full flex-1 flex flex-col">
+
         {/* VIEW DETAILS DRAWER */}
         <RightDrawer
           isOpen={!!viewItem}
@@ -438,6 +441,6 @@ export default function InventoryPage() {
           </div>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }

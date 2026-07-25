@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import AccountPage from '@features/accounts/AccountPage';
 import { useAuth } from '@context';
+import { PageContainer } from '@components/ui';
 
 import ProductsTab from './components/ProductsTab';
 import ClientsTab from './components/ClientsTab';
@@ -29,16 +30,11 @@ export default function SettingsPage() {
   });
 
   return (
-    <div className="flex flex-col w-full min-h-full pb-2">
-      {/* Header Title & Subtitle */}
-      <div className="mb-5">
-        <h1 className="text-3xl font-serif font-medium text-[#1e293b] dark:text-white tracking-tight">
-          Settings
-        </h1>
-        <p className="text-sm font-sans font-medium text-[#64748b] dark:text-gray-400 mt-1">
-          Manage the records and access that power every other page.
-        </p>
-      </div>
+    <PageContainer
+      title="Settings"
+      subtitle="Manage the records and access that power every other page."
+      className="pb-2"
+    >
 
       <div className="w-full flex-1 flex flex-col">
 
@@ -68,6 +64,6 @@ export default function SettingsPage() {
         {activeTab === 'accounts' && <AccountPage />}
         {activeTab === 'permissions' && <RolePermissionsTab />}
       </div>
-    </div>
+    </PageContainer>
   );
 }

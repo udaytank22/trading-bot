@@ -4,6 +4,7 @@ import { Mail, Loader2, AlertCircle } from 'lucide-react';
 import EmailList from './components/EmailList';
 import EmailDetail from './components/EmailDetail';
 import { useSocket } from '../../context/SocketContext';
+import { PageContainer } from '../../components/ui';
 
 const InboxPage = () => {
   const [emails, setEmails] = useState([]);
@@ -173,12 +174,10 @@ const InboxPage = () => {
   }
 
   return (
-    <div className="flex flex-col h-[calc(110vh-6.5rem)] min-h-[500px] w-[calc(100%+2rem)] md:w-[calc(100%+2.5rem)] bg-[#FAF8F5] dark:bg-[#12141C] -m-4 md:-m-5 p-6 md:p-8 overflow-hidden font-sans">
-      {/* Page Header */}
-      <div className="mb-4">
-        <h1 className="text-3xl font-serif text-[#1C2024] dark:text-stone-100 mb-1 font-normal tracking-tight">Inbox</h1>
-        <p className="text-sm text-stone-500 dark:text-stone-400">Supplier and buyer correspondence in one place.</p>
-      </div>
+    <PageContainer
+      title="Inbox"
+      subtitle="Supplier and buyer correspondence in one place."
+    >
 
       {/* Tabs Row */}
       <div className="flex border-b border-stone-200/80 dark:border-stone-850 items-center justify-between mb-6">
@@ -356,7 +355,7 @@ const InboxPage = () => {
           </div>
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 };
 

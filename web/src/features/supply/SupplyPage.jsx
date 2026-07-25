@@ -8,7 +8,7 @@ import AddSupplyModal from './modals/AddSupplyModal';
 import AllotVehicleModal from '@features/employees/modals/AllotVehicleModal';
 import SupplyTable from './components/SupplyTable';
 
-import { PageToolbar, Pagination } from '@components/ui';
+import { PageToolbar, Pagination, PageContainer } from '@components/ui';
 
 /**
  * @file SupplyPage.jsx
@@ -206,16 +206,10 @@ export default function SupplyPage() {
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col w-full h-full pb-4">
-      {/* Page Header */}
-      <div className="mb-5">
-        <h1 className="text-3xl font-serif font-medium text-[#1e293b] dark:text-white tracking-tight">
-          Supply
-        </h1>
-        <p className="text-sm font-sans font-medium text-[#64748b] dark:text-gray-400 mt-1">
-          Track every cargo shipment from supplier dispatch to vessel delivery.
-        </p>
-      </div>
+    <PageContainer
+      title="Supply"
+      subtitle="Track every cargo shipment from supplier dispatch to vessel delivery."
+    >
 
       {/*
        * CENTRALIZED TOOLBAR
@@ -310,6 +304,6 @@ export default function SupplyPage() {
           setSupplyData((prev) => [newSupply, ...prev]);
         }}
       />
-    </div>
+    </PageContainer>
   );
 }
