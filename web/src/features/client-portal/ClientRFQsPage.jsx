@@ -10,6 +10,11 @@ import { RightDrawer } from "../settings/components/shared";
 export default function ClientRFQsPage() {
   const { currentUser } = useAuth();
 
+  const isInternalUser = useMemo(() => {
+    const roleLower = (currentUser?.role || '').toLowerCase();
+    return ['admin', 'super admin', 'team lead', 'employee'].includes(roleLower);
+  }, [currentUser]);
+
   // State
   const [suppliers, setSuppliers] = useState([]);
   const [selectedSupplierId, setSelectedSupplierId] = useState("");
@@ -37,8 +42,12 @@ export default function ClientRFQsPage() {
   const loadData = async () => {
     setLoading(true);
     try {
+      const supplierParams = isInternalUser 
+        ? { limit: 200 } 
+        : { email: currentUser?.email };
+
       const results = await Promise.allSettled([
-        api.suppliers.getSuppliers(),
+        api.suppliers.getSuppliers(supplierParams),
         api.inquiries.getInquiries({ includeAll: true }),
         api.shipments.getShipments(),
         api.invoices.getInvoices(),
@@ -76,8 +85,10 @@ export default function ClientRFQsPage() {
         const matched = suppliersRes.data.find(s => s.email.toLowerCase() === currentUser?.email?.toLowerCase());
         if (matched) {
           setSelectedSupplierId(matched.id);
-        } else {
+        } else if (isInternalUser) {
           setSelectedSupplierId(suppliersRes.data[0].id);
+        } else {
+          setSelectedSupplierId(""); // No supplier matched for external user
         }
       }
     } catch (err) {
@@ -835,7 +846,7 @@ export default function ClientRFQsPage() {
               {matchedSupplier.company ? `${matchedSupplier.name} (${matchedSupplier.company})` : matchedSupplier.name}
             </span>
           </div>
-        ) : (
+        ) : isInternalUser ? (
           <div className="flex items-center gap-3">
             <label className="text-xs font-semibold text-gray-400 dark:text-gray-550 uppercase tracking-wider">
               Active Supplier Profile:
@@ -853,6 +864,15 @@ export default function ClientRFQsPage() {
               }))}
               className="min-w-[200px]"
             />
+          </div>
+        ) : (
+          <div className="flex items-center gap-2.5 bg-red-500/10 border border-red-550/20 px-4 py-2 rounded-xl">
+            <span className="text-xs font-semibold text-gray-400 dark:text-gray-550 uppercase tracking-wider">
+              Supplier Profile:
+            </span>
+            <span className="text-sm font-bold text-red-650 dark:text-red-400">
+              No supplier profile found
+            </span>
           </div>
         )}
       </div>

@@ -158,6 +158,283 @@ const sendRFQEmail = async (inquiry) => {
 };
 
 /**
+ * Send RFQ Closed emails to all assigned suppliers for an inquiry
+ * @param {Object} inquiry - Full inquiry object (with items, suppliers/supplierQuotes)
+ */
+const sendRFQClosedEmail = async (inquiry) => {
+  if (!config.GMAIL_USER || !config.GMAIL_APP_PASSWORD) {
+    console.warn('⚠️ Gmail not configured. Skipping RFQ closed email dispatch.');
+    return;
+  }
+
+  // Collect unique suppliers assigned to this inquiry
+  const suppliers = [];
+  const seenEmails = new Set();
+
+  if (inquiry.suppliers && inquiry.suppliers.length > 0) {
+    for (const ins of inquiry.suppliers) {
+      const supplier = ins.supplier;
+      const email = supplier?.email;
+      if (email && !seenEmails.has(email)) {
+        seenEmails.add(email);
+        suppliers.push({
+          name: supplier.name || 'Valued Supplier',
+          email,
+        });
+      }
+    }
+  }
+
+  // Fallback to checking supplierQuotes just in case they exist
+  if (suppliers.length === 0 && inquiry.supplierQuotes && inquiry.supplierQuotes.length > 0) {
+    for (const quote of inquiry.supplierQuotes) {
+      const email = quote.supplier?.email;
+      if (email && !seenEmails.has(email)) {
+        seenEmails.add(email);
+        suppliers.push({
+          name: quote.supplier?.name || 'Valued Supplier',
+          email,
+        });
+      }
+    }
+  }
+
+  // If no suppliers found, log and return
+  if (suppliers.length === 0) {
+    console.log('ℹ️ No suppliers found for this inquiry. No RFQ closed emails to send.');
+    return;
+  }
+
+  // Send an email to each supplier
+  for (const supplier of suppliers) {
+    const html = `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;">
+        <div style="background:#ef4444;padding:20px;border-radius:8px 8px 0 0;">
+          <h2 style="color:white;margin:0;">Request for Quotation Closed</h2>
+          <p style="color:#fee2e2;margin:4px 0 0;">Ref: ${inquiry.inquiryNumber}</p>
+        </div>
+        <div style="padding:24px;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 8px 8px;">
+          <p>Dear ${supplier.name},</p>
+          <p>This is to inform you that the Request for Quotation (RFQ) with reference number <strong>${inquiry.inquiryNumber}</strong> has now been closed. We are no longer accepting new quotes or updates for this request.</p>
+          
+          <p>We sincerely appreciate the time and effort you put into preparing your quotations. If your quotation is selected for this requirement, our sourcing team will contact you shortly with the purchase order details.</p>
+
+          <p>Thank you for your continued partnership.</p>
+          <br/>
+          <p style="font-weight:bold;">TradeMind Sourcing Team</p>
+          <p style="color:#6b7280;font-size:12px;">contact@trademind.com | +91-9876543210</p>
+        </div>
+      </div>
+    `;
+
+    try {
+      await sendEmail({
+        to: supplier.email,
+        subject: `RFQ Closed Notification - Ref: ${inquiry.inquiryNumber}`,
+        html,
+      });
+    } catch (err) {
+      console.error(`❌ Failed to send RFQ closed email to ${supplier.email}:`, err.message);
+    }
+  }
+};
+
+/**
+ * Send RFQ Closed email to the client of the inquiry
+ * @param {Object} inquiry - Full inquiry object (with client)
+ */
+const sendClientRFQClosedEmail = async (inquiry) => {
+  if (!config.GMAIL_USER || !config.GMAIL_APP_PASSWORD) {
+    console.warn('⚠️ Gmail not configured. Skipping client RFQ closed email.');
+    return;
+  }
+
+  const clientEmail = inquiry.client?.email;
+  const clientName = inquiry.client?.name || 'Valued Client';
+
+  if (!clientEmail) {
+    console.warn('⚠️ No client email found for inquiry', inquiry.inquiryNumber);
+    return;
+  }
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;">
+      <div style="background:#7c3aed;padding:20px;border-radius:8px 8px 0 0;">
+        <h2 style="color:white;margin:0;">Inquiry Update</h2>
+        <p style="color:#e9d5ff;margin:4px 0 0;">Ref: ${inquiry.inquiryNumber}</p>
+      </div>
+      <div style="padding:24px;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 8px 8px;">
+        <p>Dear ${clientName.split(' ')[0]},</p>
+        <p>We are pleased to inform you that the initial sourcing and bidding phase for your inquiry with reference number <strong>${inquiry.inquiryNumber}</strong> has been completed.</p>
+        
+        <p>Our sourcing team is currently compiling and reviewing the quotations received from our network of verified suppliers. We are working diligently to apply the best wholesale rates and build a competitive final quotation for your review.</p>
+
+        <p>You will receive the final quotation via email shortly. You can also track the status of your inquiry in your Client Portal.</p>
+
+        <p>Thank you for choosing TradeMind. If you have any immediate questions, feel free to reply to this email.</p>
+        <br/>
+        <p style="font-weight:bold;">TradeMind Sourcing Team</p>
+        <p style="color:#6b7280;font-size:12px;">contact@trademind.com | +91-9876543210</p>
+      </div>
+    </div>
+  `;
+
+  try {
+    await sendEmail({
+      to: clientEmail,
+      subject: `Inquiry Update - Sourcing Review In Progress: ${inquiry.inquiryNumber}`,
+      html,
+    });
+  } catch (err) {
+    console.error(`❌ Failed to send client RFQ closed email to ${clientEmail}:`, err.message);
+  }
+};
+
+/**
+ * Send Purchase Order email to the supplier
+ * @param {Object} po - Full purchase order object (with items, supplier, client, inquiry)
+ */
+const sendSupplierPOEmail = async (po) => {
+  if (!config.GMAIL_USER || !config.GMAIL_APP_PASSWORD) {
+    console.warn('⚠️ Gmail not configured. Skipping supplier PO email dispatch.');
+    return;
+  }
+
+  const supplierEmail = po.supplier?.email;
+  const supplierName = po.supplier?.name || 'Valued Supplier';
+
+  if (!supplierEmail) {
+    console.warn('⚠️ No supplier email found for PO', po.poNumber);
+    return;
+  }
+
+  const itemsRows = (po.items || [])
+    .map(item => `
+      <tr>
+        <td style="padding:10px;border:1px solid #e5e7eb;">${item.product?.name || item.productName || 'Product'}</td>
+        <td style="padding:10px;border:1px solid #e5e7eb;text-align:center;">${item.quantity}</td>
+        <td style="padding:10px;border:1px solid #e5e7eb;text-align:right;font-family:monospace;font-weight:bold;">₹${parseFloat(item.totalPrice || 0).toLocaleString('en-IN')}</td>
+      </tr>
+    `)
+    .join('');
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;">
+      <div style="background:#10b981;padding:20px;border-radius:8px 8px 0 0;">
+        <h2 style="color:white;margin:0;">Official Purchase Order</h2>
+        <p style="color:#d1fae5;margin:4px 0 0;">PO Ref: ${po.poNumber}</p>
+      </div>
+      <div style="padding:24px;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 8px 8px;">
+        <p>Dear ${supplierName},</p>
+        <p>We are pleased to place the following Purchase Order for the upcoming requirements.</p>
+
+        <table style="width:100%;border-collapse:collapse;margin:20px 0;">
+          <thead>
+            <tr style="background:#f3f4f6;">
+              <th style="padding:10px;border:1px solid #e5e7eb;text-align:left;">PRODUCT</th>
+              <th style="padding:10px;border:1px solid #e5e7eb;text-align:center;">QTY</th>
+              <th style="padding:10px;border:1px solid #e5e7eb;text-align:right;">TOTAL PRICE</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsRows}
+          </tbody>
+        </table>
+
+        <p>Please review and confirm receipt of this purchase order. Our logistics team will get in touch regarding delivery and dispatch instructions.</p>
+
+        <p>Thank you for your partnership.</p>
+        <br/>
+        <p style="font-weight:bold;">TradeMind Procurement Team</p>
+        <p style="color:#6b7280;font-size:12px;">contact@trademind.com | +91-9876543210</p>
+      </div>
+    </div>
+  `;
+
+  try {
+    await sendEmail({
+      to: supplierEmail,
+      subject: `Official Purchase Order - ${po.poNumber}`,
+      html,
+    });
+  } catch (err) {
+    console.error(`❌ Failed to send supplier PO email to ${supplierEmail}:`, err.message);
+  }
+};
+
+/**
+ * Send PO Issued email to the client
+ * @param {Object} po - Full purchase order object (with client, inquiry, items)
+ */
+const sendClientPOIssuedEmail = async (po) => {
+  if (!config.GMAIL_USER || !config.GMAIL_APP_PASSWORD) {
+    console.warn('⚠️ Gmail not configured. Skipping client PO issued email.');
+    return;
+  }
+
+  const clientEmail = po.client?.email;
+  const clientName = po.client?.name || 'Valued Customer';
+
+  if (!clientEmail) {
+    console.warn('⚠️ No client email found for PO', po.poNumber);
+    return;
+  }
+
+  const itemsRows = (po.items || [])
+    .map(item => `
+      <tr>
+        <td style="padding:10px;border:1px solid #e5e7eb;">${item.product?.name || item.productName || 'Product'}</td>
+        <td style="padding:10px;border:1px solid #e5e7eb;text-align:center;">${item.quantity}</td>
+      </tr>
+    `)
+    .join('');
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;">
+      <div style="background:#7c3aed;padding:20px;border-radius:8px 8px 0 0;">
+        <h2 style="color:white;margin:0;">Order Confirmation - PO Issued</h2>
+        <p style="color:#e9d5ff;margin:4px 0 0;">Inquiry Ref: ${po.inquiry?.inquiryNumber || '—'}</p>
+      </div>
+      <div style="padding:24px;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 8px 8px;">
+        <p>Dear ${clientName.split(' ')[0]},</p>
+        <p>We are pleased to inform you that your purchase order has been successfully processed and issued to our fulfillment vendor.</p>
+        
+        <p>Below are the details of the items currently in fulfillment:</p>
+
+        <table style="width:100%;border-collapse:collapse;margin:20px 0;">
+          <thead>
+            <tr style="background:#f3f4f6;">
+              <th style="padding:10px;border:1px solid #e5e7eb;text-align:left;">PRODUCT</th>
+              <th style="padding:10px;border:1px solid #e5e7eb;text-align:center;">QTY</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsRows}
+          </tbody>
+        </table>
+
+        <p>Our operations team is now coordinating cargo dispatch and shipment tracking. We will update you with shipping references as soon as the items are dispatched.</p>
+
+        <p>Thank you for your order! If you need any assistance, feel free to contact us.</p>
+        <br/>
+        <p style="font-weight:bold;">TradeMind Sourcing Team</p>
+        <p style="color:#6b7280;font-size:12px;">contact@trademind.com | +91-9876543210</p>
+      </div>
+    </div>
+  `;
+
+  try {
+    await sendEmail({
+      to: clientEmail,
+      subject: `Order Confirmation - Purchase Order Issued: ${po.poNumber}`,
+      html,
+    });
+  } catch (err) {
+    console.error(`❌ Failed to send client PO issued email to ${clientEmail}:`, err.message);
+  }
+};
+
+/**
  * Send quotation email to the client for an inquiry
  * @param {Object} inquiry - Full inquiry object (with items, clientQuotations, client)
  */
@@ -536,6 +813,10 @@ module.exports = {
   sendEmail,
   sendRFQEmail,
   sendQuoteEmail,
+  sendRFQClosedEmail,
+  sendClientRFQClosedEmail,
+  sendSupplierPOEmail,
+  sendClientPOIssuedEmail,
   fetchInboxEmails,
   fetchEmailById,
   startEmailListener,
