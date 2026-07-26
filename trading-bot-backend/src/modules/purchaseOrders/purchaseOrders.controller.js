@@ -2,6 +2,7 @@ const service = require('./purchaseOrders.service');
 const { sendSuccess, sendError } = require('../../utils/response');
 
 const { createNotification } = require('../notifications/notifications.service');
+const emailService = require('../email/email.service');
 
 /**
  * Get all purchase orders
@@ -91,7 +92,14 @@ const sendEmail = async (req, res) => {
 
   const po = await service.sendPOEmail(req.params.id, req.user.id);
 
-  
+  // Dispatch emails asynchronously (non-blocking)
+  emailService.sendSupplierPOEmail(old).catch(err => {
+    console.error('Background supplier PO email dispatch failed:', err.message);
+  });
+
+  emailService.sendClientPOIssuedEmail(old).catch(err => {
+    console.error('Background client PO issued email dispatch failed:', err.message);
+  });
 
   await createNotification({
     userId: req.user.id,

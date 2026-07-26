@@ -9,6 +9,10 @@ const { getPaginationParams } = require('../../utils/queryHelper');
 const getAllSuppliers = async (query = {}) => {
   const where = { deletedAt: null };
 
+  if (query.email) {
+    where.email = { equals: query.email, mode: 'insensitive' };
+  }
+
   const { skip, take } = getPaginationParams(query);
 
   const [suppliers, total] = await Promise.all([

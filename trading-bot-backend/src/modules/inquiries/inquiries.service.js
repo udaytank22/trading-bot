@@ -2,6 +2,7 @@ const prisma = require('../../prisma/client');
 const { createNotification, notifyAdmins } = require('../notifications/notifications.service');
 
 const inventoryService = require('../inventory/inventory.service');
+const emailService = require('../email/email.service');
 
 /**
  * Helper to generate unique sequential inquiry number
@@ -532,7 +533,7 @@ const submitSupplierQuote = async (id, data, userId) => {
  * Manually Close RFQ Action (RFQ_SENT -> TL_REVIEW)
  */
 const closeRFQ = async (id, userId, remarks = 'RFQ closed manually') => {
-  return await prisma.$transaction(async (tx) => {
+  const updated = await prisma.$transaction(async (tx) => {
     const inquiry = await tx.inquiry.findUnique({ where: { id } });
     if (!inquiry || inquiry.currentStatus !== 'RFQ_SENT') {
       throw new Error(`Inquiry status must be RFQ_SENT. Current: ${inquiry ? inquiry.currentStatus : 'NOT FOUND'}`);
@@ -557,6 +558,22 @@ const closeRFQ = async (id, userId, remarks = 'RFQ closed manually') => {
 
     return updated;
   });
+
+  // Fetch full inquiry and send emails to assigned suppliers and the client asynchronously (non-blocking)
+  getInquiryById(updated.id).then((fullInquiry) => {
+    if (fullInquiry) {
+      emailService.sendRFQClosedEmail(fullInquiry).catch((err) => {
+        console.error('Background RFQ closed email dispatch failed:', err.message);
+      });
+      emailService.sendClientRFQClosedEmail(fullInquiry).catch((err) => {
+        console.error('Background client RFQ closed email dispatch failed:', err.message);
+      });
+    }
+  }).catch((err) => {
+    console.error('Failed to retrieve inquiry details for RFQ closed emails:', err.message);
+  });
+
+  return updated;
 };
 
 /**

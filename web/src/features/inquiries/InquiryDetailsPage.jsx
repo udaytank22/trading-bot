@@ -412,9 +412,9 @@ export default function InquiryDetailsPage() {
       text: 'This will update the client quotation draft with the chosen supplier prices.',
       showCancelButton: true,
       confirmButtonText: 'Confirm Sourcing',
-      background: '#1a1d23',
-      color: '#fff',
-      confirmButtonColor: '#7c3aed'
+      background: '#ffffffff',
+      color: '#000000ff',
+      confirmButtonColor: '#000000ff'
     });
     if (!ok.isConfirmed) return;
     setIsConfirmingSource(true);
