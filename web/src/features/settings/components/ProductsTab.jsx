@@ -222,7 +222,6 @@ export default function ProductsTab() {
       />
 
       <DataTable
-        maxHeight="max-h-none"
         columns={[
           { key: "srno", label: "#" },
           { key: "name", label: "NAME" },

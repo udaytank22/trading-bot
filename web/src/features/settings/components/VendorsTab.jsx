@@ -524,7 +524,6 @@ export default function VendorsTab() {
       />
 
       <DataTable
-        maxHeight="max-h-none"
         columns={[
           { key: "srno", label: "#", className: "w-12 text-center" },
           { key: "id", label: "Vendor ID", className: "w-32" },

@@ -231,7 +231,6 @@ export default function ClientsTab() {
       />
 
       <DataTable
-        maxHeight="max-h-none"
         columns={[
           { key: "srno", label: "#" },
           { key: "id", label: "Client ID" },

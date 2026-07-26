@@ -217,7 +217,6 @@ export default function VehiclesTab() {
       />
 
       <DataTable
-        maxHeight="max-h-none"
         columns={[
           { key: "srno", label: "#" },
           { key: "vehicle_no", label: "Vehicle Number" },

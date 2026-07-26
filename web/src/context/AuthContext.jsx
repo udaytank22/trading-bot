@@ -75,11 +75,11 @@ export function AuthProvider({ children }) {
 
   const hasPermission = useCallback((moduleName, actionName) => {
     if (!currentUser) return false;
-    
+
     const roleName = typeof currentUser.role === 'string'
       ? currentUser.role
       : currentUser.roleData?.name;
-      
+
     const lowerRole = (roleName || '').toLowerCase();
     if (lowerRole === 'admin') return true;
 
@@ -90,7 +90,7 @@ export function AuthProvider({ children }) {
       const perm = rp.permission;
       if (!perm) return false;
       return perm.module.toLowerCase() === moduleName.toLowerCase() &&
-             perm.action.toLowerCase() === actionName.toLowerCase();
+        perm.action.toLowerCase() === actionName.toLowerCase();
     });
   }, [currentUser]);
 
@@ -102,7 +102,7 @@ export function AuthProvider({ children }) {
       if (existingToken) {
         try {
           apiClient.defaults.headers.common['Authorization'] = `Bearer ${existingToken}`;
-        } catch (e) {}
+        } catch (e) { }
       }
 
       try {
